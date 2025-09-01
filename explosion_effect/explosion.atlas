@@ -1,0 +1,336 @@
+
+explosion.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40001
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40002
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40003
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40004
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40005
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40006
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+
+explosion2.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40007
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40008
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40009
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40010
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40011
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40012
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+
+explosion3.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40013
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40014
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40015
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40016
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40017
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40018
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+
+explosion4.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40019
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40020
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40021
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40022
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40023
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40024
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+
+explosion5.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40025
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40026
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40027
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40028
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40029
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40030
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+
+explosion6.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40031
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40032
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40033
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40034
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40035
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40036
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+
+explosion7.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+Sem título-40037
+  rotate: false
+  xy: 2, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40038
+  rotate: false
+  xy: 804, 4
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40039
+  rotate: false
+  xy: 2, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40040
+  rotate: false
+  xy: 804, 606
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40041
+  rotate: false
+  xy: 2, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1
+Sem título-40042
+  rotate: false
+  xy: 804, 1208
+  size: 800, 600
+  orig: 800, 600
+  offset: 0, 0
+  index: -1

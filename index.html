@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gioco Spaziale - Stile DarkOrbit</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            text-align: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        #canvasContainer {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            width: 100%;
+            max-height: calc(100vh - 200px); /* Spazio per UI sotto */
+        }
+        
+        #gameCanvas {
+            border: 2px solid #444;
+            background: #000;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 2px solid #4a90e2;
+            border-radius: 5px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .fullscreen-btn:hover {
+            background: rgba(74, 144, 226, 0.8);
+            border-color: #ffffff;
+        }
+        
+        /* Modalità schermo intero */
+        #gameCanvas.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999;
+            border: none;
+        }
+        
+        /* Responsive per schermi piccoli */
+        @media (max-width: 1920px) {
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+        #gameInfo {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 2px solid #444;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .info-item {
+            background: #333;
+            padding: 10px 20px;
+            border-radius: 5px;
+            min-width: 100px;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="canvasContainer">
+            <canvas id="gameCanvas" width="1920" height="1080"></canvas>
+            <button id="fullscreenBtn" class="fullscreen-btn">⛶ Schermo Intero</button>
+        </div>
+        
+        <div id="gameInfo">
+            <div class="info-item">
+                <div class="info-label">Posizione</div>
+                <div id="position">0, 0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">FPS</div>
+                <div id="fps">0</div>
+            </div>
+                    <div class="info-item">
+            <div class="info-label">Velocità</div>
+            <div id="speed">4</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Stato</div>
+            <div id="state">Ferma</div>
+        </div>
+        </div>
+        
+        <div id="instructions" style="margin: 0; padding: 15px; color: #aaa; font-size: 12px; background: rgba(0, 0, 0, 0.6); border-top: 1px solid #333; width: 100%; box-sizing: border-box;">
+            <div><strong>Controlli:</strong></div>
+                    <div><strong>Click Sinistro:</strong> Muovi la nave spaziale</div>
+        <div><strong>Click Destro:</strong> Seleziona nemici per combattimento</div>
+        <div><strong>Combattimento:</strong> CTRL per avviare/fermare attacco automatico</div>
+        <div><strong>Minimappa:</strong> Usa la minimappa per navigazione rapida</div>
+        <div><strong>Movimento Fluido:</strong> La nave segue il mouse in tempo reale</div>
+        <div><strong>Camera Seguente:</strong> La vista segue automaticamente la nave</div>
+            <div><strong>Mondo Infinito:</strong> Esplora lo spazio infinito!</div>
+        </div>
+    </div>
+
+    <script>
+        // Gestione schermo intero
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('gameCanvas');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            
+            // Funzione per attivare/disattivare schermo intero
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    // Entra in schermo intero
+                    if (canvas.requestFullscreen) {
+                        canvas.requestFullscreen();
+                    } else if (canvas.webkitRequestFullscreen) {
+                        canvas.webkitRequestFullscreen();
+                    } else if (canvas.msRequestFullscreen) {
+                        canvas.msRequestFullscreen();
+                    }
+                } else {
+                    // Esci da schermo intero
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            }
+            
+            // Event listener per il pulsante
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            // Event listener per cambiamenti schermo intero
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('msfullscreenchange', handleFullscreenChange);
+            
+            function handleFullscreenChange() {
+                if (document.fullscreenElement || 
+                    document.webkitFullscreenElement || 
+                    document.msFullscreenElement) {
+                    // Schermo intero attivo
+                    canvas.classList.add('fullscreen');
+                    fullscreenBtn.textContent = '⛶ Esci Schermo Intero';
+                    
+                    // Ridimensiona canvas per adattarsi allo schermo
+                    resizeCanvasToScreen();
+                } else {
+                    // Schermo intero disattivato
+                    canvas.classList.remove('fullscreen');
+                    fullscreenBtn.textContent = '⛶ Schermo Intero';
+                    
+                    // Ripristina dimensioni originali
+                    canvas.width = 1920;
+                    canvas.height = 1080;
+                }
+            }
+            
+            // Ridimensiona canvas per adattarsi allo schermo
+            function resizeCanvasToScreen() {
+                const screenWidth = window.screen.width;
+                const screenHeight = window.screen.height;
+                
+                canvas.width = screenWidth;
+                canvas.height = screenHeight;
+                
+                // Notifica al gioco del cambio dimensioni
+                if (window.gameInstance) {
+                    window.gameInstance.handleResize(screenWidth, screenHeight);
+                }
+            }
+            
+            // Gestione ridimensionamento finestra
+            window.addEventListener('resize', function() {
+                if (document.fullscreenElement) {
+                    resizeCanvasToScreen();
+                } else {
+                    // Ridimensionamento responsive per finestra normale
+                    resizeCanvasToWindow();
+                }
+            });
+            
+            // Ridimensiona canvas per adattarsi alla finestra
+            function resizeCanvasToWindow() {
+                const container = document.getElementById('canvasContainer');
+                const containerRect = container.getBoundingClientRect();
+                
+                // Calcola le dimensioni ottimali mantenendo le proporzioni
+                const maxWidth = containerRect.width - 40; // Margini
+                const maxHeight = containerRect.height - 40;
+                
+                const aspectRatio = 1920 / 1080; // Proporzioni originali
+                
+                let newWidth, newHeight;
+                
+                if (maxWidth / maxHeight > aspectRatio) {
+                    // Container più largo che alto
+                    newHeight = maxHeight;
+                    newWidth = maxHeight * aspectRatio;
+                } else {
+                    // Container più alto che largo
+                    newWidth = maxWidth;
+                    newHeight = maxWidth / aspectRatio;
+                }
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // Notifica al gioco del cambio dimensioni
+                if (window.gameInstance) {
+                    window.gameInstance.handleResize(newWidth, newHeight);
+                }
+            }
+            
+            // Ridimensiona al caricamento della pagina
+            window.addEventListener('load', function() {
+                if (!document.fullscreenElement) {
+                    resizeCanvasToWindow();
+                }
+            });
+        });
+    </script>
+    
+    <script type="module" src="game.js"></script>
+</body>
+</html>
