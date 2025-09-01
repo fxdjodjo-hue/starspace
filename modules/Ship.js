@@ -18,6 +18,11 @@ export class Ship {
         this.isMoving = false;
         this.direction = 0; // Angolo in radianti
         this.rotation = 0;  // Rotazione visiva
+        
+        // Sistema di fluttuazione
+        this.floatingOffset = 0;
+        this.floatingSpeed = 0.02;
+        this.floatingAmplitude = 2; // Ampiezza della fluttuazione in pixel
 
         
         // Sistema di combattimento con proiettili
@@ -61,6 +66,10 @@ export class Ship {
     }
     
     update() {
+        // Aggiorna la fluttuazione della nave
+        this.floatingOffset += this.floatingSpeed;
+        const floatingY = Math.sin(this.floatingOffset) * this.floatingAmplitude;
+        
         // Log dello stato della nave ogni 60 frame (circa 1 secondo) - solo per debug
         // if (window.gameInstance && window.gameInstance.frameCount % 60 === 0) {
         //     console.log('🚀 DEBUG Stato nave - isMoving:', this.isMoving, 'enginePlaying:', window.gameInstance.audioManager?.enginePlaying, 'stoppedFrames:', this.stoppedFrames);
@@ -125,7 +134,8 @@ export class Ship {
     draw(ctx, camera) {
         ctx.save();
         // Applica la camera per centrare la nave sullo schermo
-        ctx.translate(this.x - camera.x, this.y - camera.y);
+        const floatingY = Math.sin(this.floatingOffset) * this.floatingAmplitude;
+        ctx.translate(this.x - camera.x, this.y - camera.y + floatingY);
         ctx.rotate(this.rotation);
         
         // Disegna la nave spaziale
