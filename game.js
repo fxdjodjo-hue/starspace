@@ -153,6 +153,9 @@ class Game {
         this.ship.updateSprite();
         this.ship.updateTrail();
         
+        // Controlla collisioni bonus box IMMEDIATAMENTE dopo il movimento della nave
+        this.checkBonusBoxCollisions();
+        
         // Aggiorna effetti di esplosione
         this.explosionManager.update();
         
@@ -200,6 +203,12 @@ class Game {
             const spaceStationButtonY = 70;
             if (mousePos.x >= buttonX && mousePos.x <= buttonX + buttonSize &&
                 mousePos.y >= spaceStationButtonY && mousePos.y <= spaceStationButtonY + buttonSize) {
+                // Se il pannello si sta aprendo, riproduci il suono
+                if (!this.spaceStationPanel.isOpen) {
+                    if (this.audioManager) {
+                        this.audioManager.playStationPanelOpenSound();
+                    }
+                }
                 this.spaceStationPanel.toggle();
                 this.input.resetMouseJustPressed();
                 return; // Esci per evitare altri click
@@ -503,18 +512,32 @@ class Game {
         });
     }
     
+    // Controllo collisioni bonus box separato per massima reattività
+    checkBonusBoxCollisions() {
+        this.bonusBoxes = this.bonusBoxes.filter(box => {
+            if (!box.active) return false;
+            
+            // Controlla collisione con la nave IMMEDIATAMENTE
+            if (box.checkCollision(this.ship)) {
+                // Riproduci suono di raccolta PRIMA della raccolta per maggiore reattività
+                if (this.audioManager) {
+                    this.audioManager.playCollectingSound();
+                }
+                
+                box.collect(this.ship);
+                return false; // Rimuovi la bonus box dopo la raccolta
+            }
+            
+            return true;
+        });
+    }
+    
     updateBonusBoxes() {
         this.bonusBoxes = this.bonusBoxes.filter(box => {
             if (!box.active) return false;
             
             // Aggiorna l'animazione
             box.update();
-            
-            // Controlla collisione con la nave
-            if (box.checkCollision(this.ship)) {
-                box.collect(this.ship);
-                return false; // Rimuovi la bonus box dopo la raccolta
-            }
             
             return true;
         });
@@ -785,6 +808,11 @@ class Game {
         console.log('🚀 Pannello stazione spaziale aperto!');
         this.spaceStationPanel.open();
         this.notifications.add('🚀 Stazione Spaziale - Pannello aperto!', 120, 'info');
+        
+        // Riproduci suono di apertura pannello
+        if (this.audioManager) {
+            this.audioManager.playStationPanelOpenSound();
+        }
     }
     
     // Disegna le notifiche di zona
@@ -1462,5 +1490,12 @@ class Game {
 
 // Avvia il gioco quando la pagina è caricata
 window.addEventListener('load', () => {
-    new Game();
+    const game = new Game();
+    
+    // Riproduci suono di system ready dopo un breve delay
+    setTimeout(() => {
+        if (game.audioManager) {
+            game.audioManager.playSystemReadySound();
+        }
+    }, 1000); // 1 secondo di delay per permettere il caricamento completo
 });

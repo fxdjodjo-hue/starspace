@@ -8,7 +8,7 @@ export class ParallaxBackground {
 
         this.parallaxLayers = 3; // 3 livelli di profondità
         this.starsPerLayer = 150; // Numero di stelle per livello
-        this.nebulaeCount = 80; // Numero di nebulose per coprire tutta la mappa
+        this.nebulaeCount = 40; // Numero di nebulose per coprire tutta la mappa (meno ma più visibili)
         
         this.initializeStars();
         this.initializeNebulae();
@@ -48,10 +48,10 @@ export class ParallaxBackground {
             const nebula = {
                 x: Math.random() * this.width * 8 - this.width * 4, // Estende molto oltre i bordi per coprire tutta la mappa
                 y: Math.random() * this.height * 8 - this.height * 4,
-                width: Math.random() * 300 + 200, // Larghezza variabile
-                height: Math.random() * 200 + 150, // Altezza variabile
+                width: Math.random() * 150 + 100, // Larghezza variabile (più piccola)
+                height: Math.random() * 100 + 80, // Altezza variabile (più piccola)
                 color: this.getRandomNebulaColor(),
-                opacity: Math.random() * 0.3 + 0.1, // Opacità variabile
+                opacity: Math.random() * 0.4 + 0.2, // Opacità variabile (più visibile)
                 layer: Math.floor(Math.random() * 3), // Livello di profondità
                 speed: (Math.random() * 0.05 + 0.02), // Velocità di movimento
                 pulse: Math.random() * Math.PI * 2, // Per effetto pulsante
@@ -64,14 +64,16 @@ export class ParallaxBackground {
     
     getRandomNebulaColor() {
         const colors = [
-            { r: 138, g: 43, b: 226 }, // Viola
+            { r: 138, g: 43, b: 226 }, // Viola brillante
             { r: 75, g: 0, b: 130 },   // Indaco
-            { r: 25, g: 25, b: 112 },  // Blu scuro
+            { r: 30, g: 144, b: 255 }, // Blu reale
             { r: 72, g: 61, b: 139 },  // Blu ardesia
             { r: 106, g: 90, b: 205 }, // Viola medio
             { r: 123, g: 104, b: 238 }, // Viola chiaro
             { r: 147, g: 112, b: 219 }, // Viola medio
-            { r: 186, g: 85, b: 211 }   // Viola orchidea
+            { r: 186, g: 85, b: 211 },  // Viola orchidea
+            { r: 0, g: 191, b: 255 },   // Blu cielo
+            { r: 138, g: 43, b: 226 }   // Viola extra
         ];
         
         return colors[Math.floor(Math.random() * colors.length)];
@@ -177,8 +179,9 @@ export class ParallaxBackground {
                 screenX + nebula.width/2, screenY + nebula.height/2, Math.max(nebula.width, nebula.height)/2
             );
             
-            gradient.addColorStop(0, `rgba(${nebula.color.r}, ${nebula.color.g}, ${nebula.color.b}, 0.8)`);
-            gradient.addColorStop(0.5, `rgba(${nebula.color.r}, ${nebula.color.g}, ${nebula.color.b}, 0.3)`);
+            gradient.addColorStop(0, `rgba(${nebula.color.r}, ${nebula.color.g}, ${nebula.color.b}, 0.9)`);
+            gradient.addColorStop(0.3, `rgba(${nebula.color.r}, ${nebula.color.g}, ${nebula.color.b}, 0.6)`);
+            gradient.addColorStop(0.7, `rgba(${nebula.color.r}, ${nebula.color.g}, ${nebula.color.b}, 0.3)`);
             gradient.addColorStop(1, `rgba(${nebula.color.r}, ${nebula.color.g}, ${nebula.color.b}, 0)`);
             
             ctx.fillStyle = gradient;

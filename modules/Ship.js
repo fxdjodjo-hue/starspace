@@ -119,10 +119,16 @@ export class Ship {
             this.shieldEffect.reset();
         }
         
-        // Log dello stato della nave ogni 60 frame (circa 1 secondo) - solo per debug
-        // if (window.gameInstance && window.gameInstance.frameCount % 60 === 0) {
-        //     console.log('🚀 DEBUG Stato nave - isMoving:', this.isMoving, 'enginePlaying:', window.gameInstance.audioManager?.enginePlaying, 'stoppedFrames:', this.stoppedFrames);
-        // }
+        // Controlla il suono del motore
+        if (window.gameInstance && window.gameInstance.audioManager) {
+            if (this.isMoving && !window.gameInstance.audioManager.enginePlaying) {
+                // Nave in movimento ma motore spento - accendi
+                window.gameInstance.audioManager.startEngineSound();
+            } else if (!this.isMoving && window.gameInstance.audioManager.enginePlaying) {
+                // Nave ferma ma motore acceso - spegni
+                window.gameInstance.audioManager.stopEngineSound();
+            }
+        }
         
         // Aggiorna rotazione per puntare verso il target SOLO durante il combattimento
         if (this.isInCombat && this.selectedTarget && this.selectedTarget.active) {

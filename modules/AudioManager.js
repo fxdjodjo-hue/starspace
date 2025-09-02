@@ -8,6 +8,11 @@ export class AudioManager {
         this.enabled = true;
         this.backgroundMusic = null;
         this.musicPlaying = false;
+        this.engineAudio = null;
+        this.enginePlaying = false;
+        
+        // Suono collecting dedicato per massima reattività
+        this.collectingAudio = null;
         
 
     }
@@ -68,12 +73,77 @@ export class AudioManager {
         this.playSound('death', 1.0 * this.sfxVolume);
     }
     
+    // Avvia il suono del motore
+    startEngineSound() {
+        if (!this.enabled || !this.sounds['engine']) return;
+        
+        // Se il motore non sta già suonando, avvialo
+        if (!this.enginePlaying) {
+            this.engineAudio = this.sounds['engine'].cloneNode();
+            this.engineAudio.volume = this.masterVolume * this.sfxVolume * 0.3; // Volume più basso
+            this.engineAudio.loop = true; // Loop continuo
+            this.engineAudio.play().catch(e => {
+                console.log('🔇 Errore avvio motore:', e);
+            });
+            this.enginePlaying = true;
+            console.log('🔊 Motore avviato!');
+        }
+    }
+    
+    // Ferma il suono del motore
+    stopEngineSound() {
+        if (this.engineAudio && this.enginePlaying) {
+            this.engineAudio.pause();
+            this.engineAudio.currentTime = 0;
+            this.enginePlaying = false;
+            console.log('🔇 Motore fermato!');
+        }
+    }
+    
+    // Riproduci suono apertura pannello stazione
+    playStationPanelOpenSound() {
+        this.playSound('stationpanel_open', 0.8 * this.sfxVolume);
+    }
+    
+    // Riproduci suono di avvio sistema
+    playSystemReadySound() {
+        this.playSound('system_ready', 1.0 * this.sfxVolume);
+    }
+    
+    // Riproduci suono raccolta bonus box
+    playCollectingSound() {
+        if (!this.enabled) return;
+        
+        // Usa suono dedicato per massima reattività
+        if (!this.collectingAudio && this.sounds.collecting) {
+            this.collectingAudio = this.sounds.collecting.cloneNode();
+            this.collectingAudio.preload = 'auto';
+            this.collectingAudio.load();
+        }
+        
+        if (this.collectingAudio) {
+            this.collectingAudio.currentTime = 0; // Reset al inizio
+            this.collectingAudio.volume = 1.0 * this.sfxVolume;
+            this.collectingAudio.play().catch(e => console.log('Errore riproduzione collecting:', e));
+        }
+    }
+    
     // Imposta volume principale
     setMasterVolume(volume) {
         this.masterVolume = Math.max(0, Math.min(1, volume));
         // Aggiorna volume della musica di sottofondo
         if (this.backgroundMusic) {
             this.backgroundMusic.volume = this.masterVolume * this.musicVolume;
+        }
+        
+        // Aggiorna volume del motore
+        if (this.engineAudio) {
+            this.engineAudio.volume = this.masterVolume * this.sfxVolume * 0.3;
+        }
+        
+        // Aggiorna volume del suono collecting se attivo
+        if (this.collectingAudio) {
+            this.collectingAudio.volume = this.masterVolume * this.sfxVolume;
         }
 
     }
@@ -99,6 +169,16 @@ export class AudioManager {
         this.loadSound('missile', 'sounds/rocket_1.wav');
         this.loadSound('explosion', 'sounds/explosion.mp3'); // File fornito dall'utente
         this.loadSound('death', 'sounds/death.mp3'); // Suono di morte del player
+        this.loadSound('engine', 'sounds/engine.mp3'); // Suono del motore
+        this.loadSound('stationpanel_open', 'sounds/stationpanel_open.mp3'); // Suono apertura pannello stazione
+        this.loadSound('system_ready', 'sounds/system_ready.mp3'); // Suono di avvio sistema
+        this.loadSound('collecting', 'sounds/collecting.mp3'); // Suono raccolta bonus box
+        
+        // Pre-carica aggressivamente il suono collecting per evitare ritardi
+        if (this.sounds.collecting) {
+            this.sounds.collecting.preload = 'auto';
+            this.sounds.collecting.load();
+        }
 
         
         // Carica la musica di sottofondo
@@ -110,7 +190,7 @@ export class AudioManager {
     
     // Carica la musica di sottofondo
     loadBackgroundMusic() {
-        this.backgroundMusic = new Audio('sounds/background-music.mp3');
+        this.backgroundMusic = new Audio(`sounds/background-music.mp3?v=${Date.now()}`);
         this.backgroundMusic.preload = 'auto';
         this.backgroundMusic.volume = this.masterVolume * this.musicVolume;
         this.backgroundMusic.loop = true; // Riproduci in loop
@@ -164,6 +244,16 @@ export class AudioManager {
     // Imposta volume effetti sonori
     setSfxVolume(volume) {
         this.sfxVolume = Math.max(0, Math.min(1, volume));
+        
+        // Aggiorna volume del motore
+        if (this.engineAudio) {
+            this.engineAudio.volume = this.masterVolume * this.sfxVolume * 0.3;
+        }
+        
+        // Aggiorna volume del suono collecting se attivo
+        if (this.collectingAudio) {
+            this.collectingAudio.volume = this.masterVolume * this.sfxVolume;
+        }
     }
     
 
