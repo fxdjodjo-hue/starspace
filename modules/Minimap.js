@@ -9,8 +9,10 @@ export class Minimap {
         this.margin = 10;
         this.x = width - this.gridWidth - this.margin;
         this.y = height - this.gridHeight - this.margin;
-        this.mapSize = 10000;
-        this.scale = this.gridHeight / this.mapSize; // Usa l'altezza per lo scale
+        this.mapWidth = 16000;  // Larghezza del mondo
+        this.mapHeight = 10000; // Altezza del mondo
+        this.scaleX = this.gridWidth / this.mapWidth;   // Scale per larghezza
+        this.scaleY = this.gridHeight / this.mapHeight; // Scale per altezza
         this.isVisible = true;
     }
     
@@ -26,8 +28,8 @@ export class Minimap {
             console.log(`✅ Click dentro minimappa!`);
             
             // Converti coordinate schermo in coordinate mondo
-            const worldX = (mouseX - this.x) / this.scale;
-            const worldY = (mouseY - this.y) / this.scale;
+            const worldX = (mouseX - this.x) / this.scaleX;
+            const worldY = (mouseY - this.y) / this.scaleY;
             
             console.log(`🌍 Coordinate mondo: (${worldX}, ${worldY})`);
             
@@ -88,19 +90,19 @@ export class Minimap {
         
         // Disegna la stazione spaziale (punto giallo)
         if (spaceStation && spaceStation.active) {
-            spaceStation.drawMinimap(ctx, this.x, this.y, this.gridWidth, this.mapSize);
+            spaceStation.drawMinimap(ctx, this.x, this.y, this.gridWidth, this.mapWidth);
         }
         
         // Disegna gli asteroidi interattivi (punti arancioni)
         for (let asteroid of interactiveAsteroids) {
             if (asteroid.active || asteroid.isRespawning) {
-                const asteroidX = this.x + (asteroid.x * this.scale);
-                const asteroidY = this.y + (asteroid.y * this.scale);
+                const asteroidX = this.x + (asteroid.x * this.scaleX);
+                const asteroidY = this.y + (asteroid.y * this.scaleY);
                 
                 // Disegna l'orbita (cerchio tratteggiato)
-                const orbitCenterX = this.x + (asteroid.originalX * this.scale);
-                const orbitCenterY = this.y + (asteroid.originalY * this.scale);
-                const orbitRadius = asteroid.orbitRadius * this.scale;
+                const orbitCenterX = this.x + (asteroid.originalX * this.scaleX);
+                const orbitCenterY = this.y + (asteroid.originalY * this.scaleY);
+                const orbitRadius = asteroid.orbitRadius * this.scaleX;
                 
                 ctx.strokeStyle = 'rgba(255, 140, 0, 0.3)';
                 ctx.lineWidth = 1;
@@ -119,8 +121,8 @@ export class Minimap {
         }
         
         // Disegna la nave (sempre punto blu per la minimappa)
-        const shipX = this.x + (ship.x * this.scale);
-        const shipY = this.y + (ship.y * this.scale);
+        const shipX = this.x + (ship.x * this.scaleX);
+        const shipY = this.y + (ship.y * this.scaleY);
         
         // Usa sempre il punto blu per la minimappa (più pulito e leggibile)
         ctx.fillStyle = '#4a90e2';
@@ -130,8 +132,8 @@ export class Minimap {
         
         // Disegna il target se la nave si sta muovendo (punto verde)
         if (ship.isMoving) {
-            const targetX = this.x + (ship.targetX * this.scale);
-            const targetY = this.y + (ship.targetY * this.scale);
+            const targetX = this.x + (ship.targetX * this.scaleX);
+            const targetY = this.y + (ship.targetY * this.scaleY);
             
             // Disegna la linea dal player al target
             ctx.strokeStyle = '#ffffff';
@@ -171,19 +173,25 @@ export class Minimap {
         
         const keyStars = [
             { x: 0, y: 0 },
-            { x: 5000, y: 0 },
-            { x: 10000, y: 0 },
+            { x: 4000, y: 0 },
+            { x: 8000, y: 0 },
+            { x: 12000, y: 0 },
+            { x: 16000, y: 0 },
             { x: 0, y: 5000 },
-            { x: 5000, y: 5000 },
-            { x: 10000, y: 5000 },
+            { x: 4000, y: 5000 },
+            { x: 8000, y: 5000 },
+            { x: 12000, y: 5000 },
+            { x: 16000, y: 5000 },
             { x: 0, y: 10000 },
-            { x: 5000, y: 10000 },
-            { x: 10000, y: 10000 }
+            { x: 4000, y: 10000 },
+            { x: 8000, y: 10000 },
+            { x: 12000, y: 10000 },
+            { x: 16000, y: 10000 }
         ];
         
         for (const star of keyStars) {
-            const starX = this.x + (star.x * this.scale);
-            const starY = this.y + (star.y * this.scale);
+            const starX = this.x + (star.x * this.scaleX);
+            const starY = this.y + (star.y * this.scaleY);
             ctx.fillRect(starX - 1, starY - 1, 2, 2);
         }
     }
@@ -194,6 +202,9 @@ export class Minimap {
         this.height = height;
         this.x = width - this.gridWidth - this.margin;
         this.y = height - this.gridHeight - this.margin;
+        // Ricalcola gli scale
+        this.scaleX = this.gridWidth / this.mapWidth;
+        this.scaleY = this.gridHeight / this.mapHeight;
     }
     
     // Mostra/nascondi la minimappa
@@ -209,8 +220,8 @@ export class Minimap {
             if (!enemy.active) return;
             
             // Calcola posizione dell'NPC nella minimappa
-            const enemyX = this.x + (enemy.x * this.scale);
-            const enemyY = this.y + (enemy.y * this.scale);
+            const enemyX = this.x + (enemy.x * this.scaleX);
+            const enemyY = this.y + (enemy.y * this.scaleY);
             
             // Colore basato sul tipo di nemico
             let color;

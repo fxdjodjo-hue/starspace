@@ -31,7 +31,7 @@ class Game {
 
         
         // Inizializza tutti i moduli
-        this.ship = new Ship(this.width / 2, this.height / 2);
+        this.ship = new Ship(8000, 5000); // Centro del rettangolo 16000x10000
         this.camera = new Camera(this.width, this.height);
         this.input = new Input(this.canvas);
         this.world = new World(this.width, this.height);
@@ -59,18 +59,20 @@ class Game {
         this.maxBonusBoxes = 100; // 100 bonus box per riempire la mappa
         
         // Stazione spaziale
-        this.spaceStation = new SpaceStation(0, 0); // Al centro della mappa
+        this.spaceStation = new SpaceStation(8000, 5000); // Al centro del rettangolo 16000x10000
         
-        // Asteroidi interattivi nella zona giocabile (1000-9000 range)
+        // Asteroidi interattivi distribuiti nel rettangolo 16000x10000
         this.interactiveAsteroids = [
-            new InteractiveAsteroid(7000, 2000),    // Alto-destra
-            new InteractiveAsteroid(3000, 2000),    // Alto-sinistra
-            new InteractiveAsteroid(7000, 7000),    // Basso-destra
-            new InteractiveAsteroid(3000, 7000),    // Basso-sinistra
-            new InteractiveAsteroid(8000, 3000),    // Estremo alto-destra
+            new InteractiveAsteroid(12000, 2000),   // Alto-destra
+            new InteractiveAsteroid(4000, 2000),    // Alto-sinistra
+            new InteractiveAsteroid(12000, 8000),   // Basso-destra
+            new InteractiveAsteroid(4000, 8000),    // Basso-sinistra
+            new InteractiveAsteroid(14000, 3000),   // Estremo alto-destra
             new InteractiveAsteroid(2000, 8000),    // Estremo basso-sinistra
-            new InteractiveAsteroid(5000, 8000),    // Basso centro
-            new InteractiveAsteroid(2000, 3000)     // Estremo alto-sinistra
+            new InteractiveAsteroid(8000, 8000),    // Basso centro
+            new InteractiveAsteroid(2000, 3000),    // Estremo alto-sinistra
+            new InteractiveAsteroid(10000, 1000),   // Centro-alto
+            new InteractiveAsteroid(6000, 9000)     // Centro-basso
         ];
         
         // Sistema notifiche di zona
@@ -220,7 +222,7 @@ class Game {
         // Gestisci click nel pannello stazione spaziale
         if (this.spaceStationPanel.isOpen && this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
-            if (this.spaceStationPanel.handleClick(mousePos.x, mousePos.y, this.ship.upgradeManager)) {
+            if (this.spaceStationPanel.handleClick(mousePos.x, mousePos.y, this.ship.upgradeManager, this.width, this.height)) {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal pannello
             }
@@ -328,7 +330,7 @@ class Game {
             } else {
                 // Click destro nel mondo - prova minimappa
                 const minimapHandled = this.minimap.handleClick(mousePos.x, mousePos.y, this.ship, true);
-                console.log(`🎮 Game: Minimap handled right click: ${minimapHandled}`);
+
             }
             
             // Resetta il flag del flag del click destro rilasciato
@@ -389,7 +391,7 @@ class Game {
             const newNickname = prompt('Inserisci il tuo nickname:', this.playerProfile.getNickname());
             if (newNickname && newNickname.trim().length > 0) {
                 this.playerProfile.setNickname(newNickname.trim());
-                console.log('👤 Nickname cambiato in:', this.playerProfile.getNickname());
+
             }
         }
         
@@ -560,8 +562,8 @@ class Game {
                 
                 do {
                     // Spawn in tutta la mappa
-                    x = Math.random() * 12000; // 0-12000
-                    y = Math.random() * 12000; // 0-12000
+                    x = Math.random() * 16000; // 0-16000 (larghezza)
+                    y = Math.random() * 10000; // 0-10000 (altezza)
                     attempts++;
                 } while (attempts < maxAttempts && this.isTooCloseToShip(x, y, 200));
                 
@@ -586,28 +588,23 @@ class Game {
         if (this.enemySpawnTimer >= this.enemySpawnRate) {
             this.enemySpawnTimer = 0;
             
-            // Spawn nemico casuale in posizioni visibili
-            const side = Math.floor(Math.random() * 4);
-            let x, y;
+            // Spawn nemico casuale in tutta la mappa rettangolare
+            // Evita solo un'area centrale intorno al player per non spawnare troppo vicino
+            const playerX = this.ship.x;
+            const playerY = this.ship.y;
+            const avoidRadius = 800; // Raggio di evitamento dal player
             
-            switch (side) {
-                case 0: // Top
-                    x = Math.random() * 8000 + 1000; // 1000-9000
-                    y = Math.random() * 2000 + 500;  // 500-2500
-                break;
-                case 1: // Right
-                    x = Math.random() * 2000 + 7000; // 7000-9000
-                    y = Math.random() * 8000 + 1000; // 1000-9000
-                break;
-                case 2: // Bottom
-                    x = Math.random() * 8000 + 1000; // 1000-9000
-                    y = Math.random() * 2000 + 7000; // 7000-9000
-                break;
-                case 3: // Left
-                    x = Math.random() * 2000 + 500;  // 500-2500
-                    y = Math.random() * 8000 + 1000; // 1000-9000
-                break;
-            }
+            let x, y;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            do {
+                // Spawn in tutta la mappa rettangolare
+                x = Math.random() * 16000; // 0-16000 (larghezza completa)
+                y = Math.random() * 10000; // 0-10000 (altezza completa)
+                attempts++;
+            } while (attempts < maxAttempts && 
+                     Math.sqrt((x - playerX) ** 2 + (y - playerY) ** 2) < avoidRadius);
             
             // Solo nemici Barracuda
             const newEnemy = new Enemy(x, y, 'barracuda');
@@ -634,9 +631,9 @@ class Game {
             const maxAttempts = 5; // Riduciamo i tentativi per velocità
             
             do {
-                // Spawn in tutta la mappa (0-12000 per coprire tutto)
-                x = Math.random() * 12000; // 0-12000
-                y = Math.random() * 12000; // 0-12000
+                // Spawn in tutta la mappa (0-16000 x 0-10000 per coprire tutto)
+                x = Math.random() * 16000; // 0-16000 (larghezza)
+                y = Math.random() * 10000; // 0-10000 (altezza)
                 attempts++;
             } while (attempts < maxAttempts && this.isTooCloseToShip(x, y, 200)); // Riduciamo la distanza minima
             
@@ -779,7 +776,7 @@ class Game {
         
         // Disegna pannello potenziamenti se aperto
         if (this.upgradePanelOpen) {
-            console.log('Disegno pannello potenziamenti...');
+
             this.drawUpgradePanel();
         }
         
@@ -805,7 +802,7 @@ class Game {
     
     // Apre il pannello della stazione spaziale
     openSpaceStationPanel() {
-        console.log('🚀 Pannello stazione spaziale aperto!');
+
         this.spaceStationPanel.open();
         this.notifications.add('🚀 Stazione Spaziale - Pannello aperto!', 120, 'info');
         
@@ -1394,10 +1391,8 @@ class Game {
         const damageButtonY = panelY + 245;
         if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
             mouseY >= damageButtonY && mouseY <= damageButtonY + buttonHeight) {
-            console.log('Click su pulsante Danno');
             if (this.ship.upgradeManager.tryUpgrade('damage')) {
                 this.ship.updateStats(); // Aggiorna le statistiche della nave
-                console.log('Danno aggiornato a:', this.ship.projectileDamage);
             }
             return true;
         }
@@ -1406,10 +1401,8 @@ class Game {
         const speedButtonY = panelY + 295;
         if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
             mouseY >= speedButtonY && mouseY <= speedButtonY + buttonHeight) {
-            console.log('Click su pulsante Velocità');
             if (this.ship.upgradeManager.tryUpgrade('speed')) {
                 this.ship.updateStats(); // Aggiorna le statistiche della nave
-                console.log('Velocità aggiornata a:', this.ship.speed);
             }
             return true;
         }

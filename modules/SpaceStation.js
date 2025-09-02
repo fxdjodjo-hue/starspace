@@ -120,12 +120,14 @@ export class SpaceStation {
     }
     
     // Disegna il segnalino nella minimappa
-    drawMinimap(ctx, minimapX, minimapY, minimapSize, worldSize) {
+    drawMinimap(ctx, minimapX, minimapY, minimapWidth, mapWidth) {
         if (!this.active) return;
         
-        // Calcola la posizione nella minimappa
-        const minimapPosX = minimapX + (this.x / worldSize) * minimapSize;
-        const minimapPosY = minimapY + (this.y / worldSize) * minimapSize;
+        // Calcola la posizione nella minimappa usando gli scale corretti
+        const scaleX = minimapWidth / mapWidth;
+        const scaleY = 160 / 10000; // gridHeight / mapHeight
+        const minimapPosX = minimapX + (this.x * scaleX);
+        const minimapPosY = minimapY + (this.y * scaleY);
         
         // Disegna il segnalino giallo
         ctx.fillStyle = '#ffff00';

@@ -11,7 +11,7 @@ export class AlienSprite {
     
     async load() {
         try {
-            console.log('🛸 Tentativo di caricamento alien sprite...');
+
             
             // Carica l'atlas
             const atlasResponse = await fetch('./alien60.atlas');
@@ -19,7 +19,7 @@ export class AlienSprite {
                 throw new Error(`Errore caricamento atlas: ${atlasResponse.status}`);
             }
             const atlasText = await atlasResponse.text();
-            console.log('📄 Atlas caricato, testo:', atlasText.substring(0, 100) + '...');
+
             
             // Carica l'immagine
             const image = new Image();
@@ -27,7 +27,6 @@ export class AlienSprite {
             
             await new Promise((resolve, reject) => {
                 image.onload = () => {
-                    console.log('🖼️ Immagine caricata:', image.width, 'x', image.height);
                     resolve();
                 };
                 image.onerror = (error) => {
@@ -40,8 +39,7 @@ export class AlienSprite {
             this.parseAtlas(atlasText);
             this.loaded = true;
             
-            console.log('🛸 Alien sprite caricato con successo!');
-            console.log(`📊 Parsed ${this.frames.length} frames from atlas`);
+
             
         } catch (error) {
             console.error('❌ Errore caricamento alien sprite:', error);
@@ -97,7 +95,7 @@ export class AlienSprite {
             this.frames.push(currentFrame);
         }
         
-        console.log(`📊 Parsed ${this.frames.length} frames from atlas`);
+
     }
     
     update() {

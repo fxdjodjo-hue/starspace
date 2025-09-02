@@ -218,7 +218,7 @@ export class Ship {
         // Disegna effetto riparazione se attivo
         if (this.isRepairing) {
             const screenPos = camera.worldToScreen(this.x, this.y);
-            console.log('🔧 Ship: Disegno effetto riparazione a', screenPos.x, screenPos.y);
+
             this.repairEffect.draw(ctx, screenPos.x, screenPos.y, 0.3);
         }
         

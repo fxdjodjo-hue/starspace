@@ -99,7 +99,7 @@ export class BonusBox {
         } else {
             // Debug: mostra che sta usando il fallback
             if (Math.random() < 0.001) {
-                console.log('🔧 BonusBox: Usando fallback geometrico - sprite non caricato');
+
             }
             // Fallback geometrico con colori basati sul tipo
             let color;

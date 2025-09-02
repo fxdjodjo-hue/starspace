@@ -12,21 +12,15 @@ export class ShieldEffect {
     
     async load() {
         try {
-            console.log('🛡️ Tentativo di caricamento shield effect...');
-            
             // Carica il file atlas
             const atlasResponse = await fetch('shieldrestore/shieldrestore.atlas');
             const atlasText = await atlasResponse.text();
-            console.log('📄 Atlas shield caricato, testo:', atlasText.substring(0, 200) + '...');
             
             // Carica l'immagine
             this.image = new Image();
             this.image.onload = () => {
-                console.log('🖼️ Immagine shield caricata:', this.image.width, 'x', this.image.height);
                 this.parseAtlas(atlasText);
                 this.loaded = true;
-                console.log('🛡️ Shield effect caricato con successo!');
-                console.log(`📊 Parsed ${this.frames.length} frames from shield atlas`);
             };
             this.image.src = 'shieldrestore/shieldstore.png';
             
@@ -94,9 +88,7 @@ export class ShieldEffect {
             this.frames.push(currentFrame);
         }
         
-        console.log(`📊 Parsed ${this.frames.length} frames from shield atlas`);
-        console.log('🛡️ Primi 3 frame:', this.frames.slice(0, 3));
-        console.log('🛡️ Ultimi 3 frame:', this.frames.slice(-3));
+
     }
     
     update() {
@@ -106,7 +98,6 @@ export class ShieldEffect {
         if (this.animationTimer >= 1) {
             this.animationTimer = 0;
             this.currentFrame = (this.currentFrame + 1) % this.frames.length;
-            console.log(`🛡️ ShieldEffect: Frame aggiornato a ${this.currentFrame}/${this.frames.length}`);
         }
     }
     
@@ -117,13 +108,11 @@ export class ShieldEffect {
     
     draw(ctx, x, y, scale = 1) {
         if (!this.loaded || this.frames.length === 0) {
-            console.log('🛡️ ShieldEffect: Non caricato o nessun frame');
             return;
         }
         
         const frame = this.frames[this.currentFrame];
         if (!frame) {
-            console.log('🛡️ ShieldEffect: Frame non trovato:', this.currentFrame);
             return;
         }
         

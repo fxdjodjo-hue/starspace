@@ -56,3 +56,4 @@ export class PlayerProfile {
         return this.tempNickname;
     }
 }
+

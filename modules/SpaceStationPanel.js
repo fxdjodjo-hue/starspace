@@ -350,17 +350,18 @@ export class SpaceStationPanel {
         ctx.fillText('×', x + 15, y + 20);
     }
     
-    handleClick(mouseX, mouseY, upgradeManager) {
+    handleClick(mouseX, mouseY, upgradeManager, canvasWidth, canvasHeight) {
         if (!this.isOpen) return false;
         
         const panelWidth = 600;
         const panelHeight = 500;
-        const panelX = (window.innerWidth - panelWidth) / 2;
-        const panelY = (window.innerHeight - panelHeight) / 2;
+        const panelX = (canvasWidth - panelWidth) / 2;
+        const panelY = (canvasHeight - panelHeight) / 2;
         
         // Controlla click su pulsante chiudi
         if (mouseX >= panelX + panelWidth - 40 && mouseX <= panelX + panelWidth - 10 &&
             mouseY >= panelY + 10 && mouseY <= panelY + 40) {
+
             this.close();
             return true;
         }
@@ -370,15 +371,17 @@ export class SpaceStationPanel {
         const categoryHeight = 40;
         const categoryWidth = (panelWidth - 40) / this.categories.length;
         
-        this.categories.forEach((category, index) => {
+        for (let index = 0; index < this.categories.length; index++) {
+            const category = this.categories[index];
             const categoryX = panelX + 20 + (index * categoryWidth);
             
             if (mouseX >= categoryX && mouseX <= categoryX + categoryWidth &&
                 mouseY >= categoryY && mouseY <= categoryY + categoryHeight) {
+
                 this.setCategory(category.id);
                 return true;
             }
-        });
+        }
         
         // Controlla click sui pulsanti upgrade
         if (this.currentCategory === 'upgrades' && upgradeManager) {
@@ -402,8 +405,10 @@ export class SpaceStationPanel {
                     const buttonX = contentX + contentWidth - buttonWidth - 15;
                     const buttonY = itemY + (itemHeight - buttonHeight) / 2;
                     
-                    if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
-                        mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+                    // Area cliccabile più grande per maggiore precisione
+                    const clickMargin = 5;
+                    if (mouseX >= buttonX - clickMargin && mouseX <= buttonX + buttonWidth + clickMargin &&
+                        mouseY >= buttonY - clickMargin && mouseY <= buttonY + buttonHeight + clickMargin) {
                         // Tenta l'upgrade
                         if (upgradeManager.credits >= nextLevelData.cost) {
                             const success = upgradeManager.tryUpgrade(upgradeKey);

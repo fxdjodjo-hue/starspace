@@ -64,7 +64,7 @@ export class Enemy {
         try {
             await this.sprite.load();
             this.spriteLoaded = true;
-            console.log('🛸 Sprite caricato per nemico:', this.type);
+
         } catch (error) {
             console.error('❌ Errore caricamento sprite per nemico:', error);
             this.spriteLoaded = false;
@@ -101,11 +101,11 @@ export class Enemy {
         this.x += this.vx;
         this.y += this.vy;
         
-        // Mantieni i nemici dentro i confini della mappa
-        if (this.x < 1000) this.x = 1000;
-        if (this.x > 9000) this.x = 9000;
-        if (this.y < 1000) this.y = 1000;
-        if (this.y > 9000) this.y = 9000;
+        // Mantieni i nemici dentro i confini della mappa rettangolare
+        if (this.x < 500) this.x = 500;
+        if (this.x > 15500) this.x = 15500; // 16000 - 500
+        if (this.y < 500) this.y = 500;
+        if (this.y > 9500) this.y = 9500; // 10000 - 500
     }
     
     takeDamage(damage) {

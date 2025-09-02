@@ -12,21 +12,15 @@ export class RepairEffect {
     
     async load() {
         try {
-            console.log('🔧 Tentativo di caricamento repair effect...');
-            
             // Carica il file atlas
             const atlasResponse = await fetch('hprestore/hprestore.atlas');
             const atlasText = await atlasResponse.text();
-            console.log('📄 Atlas caricato, testo:', atlasText.substring(0, 200) + '...');
             
             // Carica l'immagine
             this.image = new Image();
             this.image.onload = () => {
-                console.log('🖼️ Immagine caricata:', this.image.width, 'x', this.image.height);
                 this.parseAtlas(atlasText);
                 this.loaded = true;
-                console.log('🔧 Repair effect caricato con successo!');
-                console.log(`📊 Parsed ${this.frames.length} frames from atlas`);
             };
             this.image.src = 'hprestore/hprestore.png';
             
@@ -94,9 +88,7 @@ export class RepairEffect {
             this.frames.push(currentFrame);
         }
         
-        console.log(`📊 Parsed ${this.frames.length} frames from atlas`);
-        console.log('🔧 Primi 3 frame:', this.frames.slice(0, 3));
-        console.log('🔧 Ultimi 3 frame:', this.frames.slice(-3));
+
     }
     
     update() {
@@ -106,7 +98,6 @@ export class RepairEffect {
         if (this.animationTimer >= 1) {
             this.animationTimer = 0;
             this.currentFrame = (this.currentFrame + 1) % this.frames.length;
-            console.log(`🔧 RepairEffect: Frame aggiornato a ${this.currentFrame}/${this.frames.length}`);
         }
     }
     
@@ -117,13 +108,11 @@ export class RepairEffect {
     
     draw(ctx, x, y, scale = 1) {
         if (!this.loaded || this.frames.length === 0) {
-            console.log('🔧 RepairEffect: Non caricato o nessun frame');
             return;
         }
         
         const frame = this.frames[this.currentFrame];
         if (!frame) {
-            console.log('🔧 RepairEffect: Frame non trovato:', this.currentFrame);
             return;
         }
         

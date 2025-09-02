@@ -5,16 +5,18 @@ export class World {
         this.height = height;
         this.stars = this.generateStars();
         this.gridSize = 100;
-        this.mapSize = 10000; // Dimensione totale della mappa
-        this.sectorSize = 1000; // Dimensione di ogni settore
+        this.mapWidth = 16000; // Larghezza totale della mappa (8 settori)
+        this.mapHeight = 10000; // Altezza totale della mappa (5 settori)
+        this.sectorWidth = 2000; // Larghezza di ogni settore (16000/8)
+        this.sectorHeight = 2000; // Altezza di ogni settore (10000/5)
     }
     
     generateStars() {
         const stars = [];
         for (let i = 0; i < 200; i++) { // Più stelle per la mappa più grande
             stars.push({
-                x: (i * 37) % this.mapSize,
-                y: (i * 73) % this.mapSize,
+                x: (i * 37) % this.mapWidth,
+                y: (i * 73) % this.mapHeight,
                 size: (i % 3) + 1
             });
         }
@@ -74,12 +76,12 @@ export class World {
         // Calcola le coordinate del rettangolo sullo schermo
         const left = 0 - camera.x;
         const top = 0 - camera.y;
-        const right = this.mapSize - camera.x;
-        const bottom = this.mapSize - camera.y;
+        const right = this.mapWidth - camera.x;
+        const bottom = this.mapHeight - camera.y;
         
         // Disegna solo le parti visibili del rettangolo
         if (left < this.width && right > 0 && top < this.height && bottom > 0) {
-            ctx.strokeRect(left, top, this.mapSize, this.mapSize);
+            ctx.strokeRect(left, top, this.mapWidth, this.mapHeight);
         }
     }
     

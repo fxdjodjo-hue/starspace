@@ -2,8 +2,10 @@
 export class SectorSystem {
     constructor() {
         this.sectors = [];
-        this.sectorSize = 1250; // Dimensione di ogni settore (10000/8 = 1250)
-        this.mapSize = 10000;
+        this.sectorWidth = 2000; // Larghezza di ogni settore (16000/8 = 2000)
+        this.sectorHeight = 2000; // Altezza di ogni settore (10000/5 = 2000)
+        this.mapWidth = 16000;
+        this.mapHeight = 10000;
         this.rows = ['A', 'B', 'C', 'D', 'F']; // 5 righe (saltando E come nell'immagine)
         this.cols = [1, 2, 3, 4, 5, 6, 7, 8]; // 8 colonne
         
@@ -33,17 +35,17 @@ export class SectorSystem {
         for (let rowIndex = 0; rowIndex < this.rows.length; rowIndex++) {
             for (let colIndex = 0; colIndex < this.cols.length; colIndex++) {
                 const sectorId = this.rows[rowIndex] + this.cols[colIndex];
-                const x = colIndex * this.sectorSize;
-                const y = rowIndex * this.sectorSize;
+                const x = colIndex * this.sectorWidth;
+                const y = rowIndex * this.sectorHeight;
                 
                 this.sectors.push({
                     id: sectorId,
                     x: x,
                     y: y,
-                    width: this.sectorSize,
-                    height: this.sectorSize,
-                    centerX: x + this.sectorSize / 2,
-                    centerY: y + this.sectorSize / 2,
+                    width: this.sectorWidth,
+                    height: this.sectorHeight,
+                    centerX: x + this.sectorWidth / 2,
+                    centerY: y + this.sectorHeight / 2,
                     row: this.rows[rowIndex],
                     col: this.cols[colIndex],
                     rowIndex: rowIndex,
@@ -90,8 +92,8 @@ export class SectorSystem {
     
     // Trova il settore in cui si trova una posizione
     getSectorAt(x, y) {
-        const colIndex = Math.floor(x / this.sectorSize);
-        const rowIndex = Math.floor(y / this.sectorSize);
+        const colIndex = Math.floor(x / this.sectorWidth);
+        const rowIndex = Math.floor(y / this.sectorHeight);
         
         if (rowIndex >= 0 && rowIndex < this.rows.length && 
             colIndex >= 0 && colIndex < this.cols.length) {

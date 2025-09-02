@@ -89,3 +89,4 @@ export class RankSystem {
         return rank ? honor >= rank.minHonor : false;
     }
 }
+

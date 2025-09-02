@@ -25,7 +25,7 @@ export class AudioManager {
         this.sounds[name] = audio;
         
         audio.oncanplaythrough = () => {
-            console.log(`🔊 Audio caricato: ${name}`);
+            // Audio caricato
         };
         
         audio.onerror = (e) => {
@@ -86,7 +86,7 @@ export class AudioManager {
                 console.log('🔇 Errore avvio motore:', e);
             });
             this.enginePlaying = true;
-            console.log('🔊 Motore avviato!');
+
         }
     }
     
@@ -184,7 +184,7 @@ export class AudioManager {
         // Carica la musica di sottofondo
         this.loadBackgroundMusic();
         
-        console.log('🔊 Audio Manager inizializzato con i tuoi file audio!');
+
 
     }
     
