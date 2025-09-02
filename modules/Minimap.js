@@ -3,9 +3,9 @@ export class Minimap {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        // Dimensioni corrette per la griglia 8x5 (proporzioni 8:5)
-        this.gridHeight = 120; // Altezza
-        this.gridWidth = 192; // Larghezza (8/5 * 120 = 192)
+        // Dimensioni corrette per la griglia 8x5 (proporzioni 8:5) - Ingrandite
+        this.gridHeight = 160; // Altezza (era 120)
+        this.gridWidth = 256; // Larghezza (era 192, 8/5 * 160 = 256)
         this.margin = 10;
         this.x = width - this.gridWidth - this.margin;
         this.y = height - this.gridHeight - this.margin;
@@ -16,20 +16,23 @@ export class Minimap {
     
     // Gestisce i click sulla minimappa
     handleClick(mouseX, mouseY, ship, isRightClick = false) {
-        // Solo i click destri attivano la minimappa
-        if (!isRightClick) {
-            return false;
-        }
+        console.log(`🎯 Minimap.handleClick: mouse(${mouseX}, ${mouseY}), rightClick: ${isRightClick}`);
+        console.log(`🎯 Ship.isMoving: ${ship.isMoving}, currentTarget: ${this.currentTarget ? 'exists' : 'null'}`);
         
-        // Controlla se il click è dentro la minimappa
+        // Controlla se il click è dentro la minimappa (sia destro che sinistro)
         if (mouseX >= this.x && mouseX <= this.x + this.gridWidth && 
             mouseY >= this.y && mouseY <= this.y + this.gridHeight) {
+            
+            console.log(`✅ Click dentro minimappa!`);
             
             // Converti coordinate schermo in coordinate mondo
             const worldX = (mouseX - this.x) / this.scale;
             const worldY = (mouseY - this.y) / this.scale;
             
-            // Click minimappa gestito
+            console.log(`🌍 Coordinate mondo: (${worldX}, ${worldY})`);
+            
+            // Pulisci eventuali target precedenti
+            this.currentTarget = null;
             
             // Imposta il target della nave
             ship.setTarget(worldX, worldY);
@@ -37,9 +40,12 @@ export class Minimap {
             // Salva il target per il movimento continuo
             this.currentTarget = { x: worldX, y: worldY };
             
+            console.log(`🚀 Target impostato: (${worldX}, ${worldY}), ship.isMoving: ${ship.isMoving}`);
+            
             return true; // Click gestito
         }
         
+        console.log(`❌ Click fuori minimappa`);
         return false; // Click non nella minimappa
     }
     
@@ -48,13 +54,13 @@ export class Minimap {
         return this.currentTarget;
     }
     
-    // Pulisce il target quando la nave arriva a destinazione
+    // Pulisce il target corrente
     clearTarget() {
         this.currentTarget = null;
     }
     
     // Disegna la minimappa
-    draw(ctx, ship, camera, enemies = [], sectorSystem = null) {
+    draw(ctx, ship, camera, enemies = [], sectorSystem = null, spaceStation = null, interactiveAsteroids = []) {
         if (!this.isVisible) return;
         
         // Sfondo della minimappa
@@ -65,7 +71,7 @@ export class Minimap {
         ctx.strokeRect(this.x, this.y, this.gridWidth, this.gridHeight);
         
         // Disegna il rettangolo della mappa completa
-        ctx.strokeStyle = '#ff0000';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x, this.y, this.gridWidth, this.gridHeight);
         
@@ -79,6 +85,38 @@ export class Minimap {
         
         // Disegna gli NPC nella minimappa
         this.drawEnemies(ctx, enemies);
+        
+        // Disegna la stazione spaziale (punto giallo)
+        if (spaceStation && spaceStation.active) {
+            spaceStation.drawMinimap(ctx, this.x, this.y, this.gridWidth, this.mapSize);
+        }
+        
+        // Disegna gli asteroidi interattivi (punti arancioni)
+        for (let asteroid of interactiveAsteroids) {
+            if (asteroid.active || asteroid.isRespawning) {
+                const asteroidX = this.x + (asteroid.x * this.scale);
+                const asteroidY = this.y + (asteroid.y * this.scale);
+                
+                // Disegna l'orbita (cerchio tratteggiato)
+                const orbitCenterX = this.x + (asteroid.originalX * this.scale);
+                const orbitCenterY = this.y + (asteroid.originalY * this.scale);
+                const orbitRadius = asteroid.orbitRadius * this.scale;
+                
+                ctx.strokeStyle = 'rgba(255, 140, 0, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath();
+                ctx.arc(orbitCenterX, orbitCenterY, orbitRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Disegna l'asteroide (grigio se in respawn, arancione se attivo)
+                ctx.fillStyle = asteroid.isRespawning ? '#888888' : '#FF8C00';
+                ctx.beginPath();
+                ctx.arc(asteroidX, asteroidY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
         
         // Disegna la nave (sempre punto blu per la minimappa)
         const shipX = this.x + (ship.x * this.scale);
@@ -94,6 +132,18 @@ export class Minimap {
         if (ship.isMoving) {
             const targetX = this.x + (ship.targetX * this.scale);
             const targetY = this.y + (ship.targetY * this.scale);
+            
+            // Disegna la linea dal player al target
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3, 3]); // Linea tratteggiata
+            ctx.beginPath();
+            ctx.moveTo(shipX, shipY);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset del tratteggio
+            
+            // Disegna il punto target
             ctx.fillStyle = '#00ff00';
             ctx.beginPath();
             ctx.arc(targetX, targetY, 2, 0, Math.PI * 2);
@@ -165,14 +215,8 @@ export class Minimap {
             // Colore basato sul tipo di nemico
             let color;
             switch (enemy.type) {
-                case 'basic':
-                    color = '#ff4444'; // Rosso
-                    break;
-                case 'fast':
-                    color = '#ff8844'; // Arancione
-                    break;
-                case 'tank':
-                    color = '#880000'; // Rosso scuro
+                case 'barracuda':
+                    color = '#ff4444'; // Rosso per Barracuda
                     break;
                 default:
                     color = '#ff4444';
@@ -191,8 +235,8 @@ export class Minimap {
             
             // Se l'NPC è selezionato, aggiungi un indicatore speciale
             if (enemy.isSelected) {
-                // Cerchio rosso più grande per target selezionato
-                ctx.strokeStyle = '#ff0000';
+                // Cerchio bianco più grande per target selezionato
+                ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(enemyX, enemyY, 4, 0, Math.PI * 2);

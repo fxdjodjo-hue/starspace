@@ -24,9 +24,36 @@ export class Renderer {
         // Usa lo sprite animato se disponibile, altrimenti fallback al triangolo
         if (ship.sprite && ship.sprite.isLoaded) {
             const screenPos = camera.worldToScreen(ship.x, ship.y);
-            ship.sprite.draw(this.ctx, screenPos.x, screenPos.y, ship.rotation, ship.size);
+            const floatingY = Math.sin(ship.floatingOffset) * ship.floatingAmplitude;
+            ship.sprite.draw(this.ctx, screenPos.x, screenPos.y, ship.rotation, ship.size, floatingY);
         } else {
             ship.draw(this.ctx, camera);
+        }
+        
+        // Disegna effetto riparazione se attivo
+        if (ship.isRepairing) {
+            const screenPos = camera.worldToScreen(ship.x, ship.y);
+            if (ship.repairEffect) {
+                ship.repairEffect.draw(this.ctx, screenPos.x, screenPos.y, 1.0);
+            }
+        } else {
+            // Reset animazione quando la riparazione si ferma
+            if (ship.repairEffect) {
+                ship.repairEffect.reset();
+            }
+        }
+        
+        // Disegna effetto riparazione scudo se attivo
+        if (ship.isShieldRepairing) {
+            const screenPos = camera.worldToScreen(ship.x, ship.y);
+            if (ship.shieldEffect) {
+                ship.shieldEffect.draw(this.ctx, screenPos.x, screenPos.y, 1.0);
+            }
+        } else {
+            // Reset animazione quando la riparazione scudo si ferma
+            if (ship.shieldEffect) {
+                ship.shieldEffect.reset();
+            }
         }
     }
     

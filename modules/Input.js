@@ -15,6 +15,10 @@ export class Input {
         this.keys = {};
         this.ctrlPressed = false;
         this.ctrlJustPressed = false; // Flag per toggle del combattimento
+        this.rPressed = false;
+        this.rJustPressed = false; // Flag per toggle della riparazione
+        this.sPressed = false;
+        this.sJustPressed = false; // Flag per toggle della riparazione scudo
         
         // Inizializza Set per i tasti appena premuti
         this.keysJustPressed = new Set();
@@ -78,10 +82,32 @@ export class Input {
                 this.ctrlPressed = true;
                 this.ctrlJustPressed = true; // Flag per toggle
             }
+            
+            // Gestisci R per riparazione
+            if (e.code === 'KeyR') {
+                this.rPressed = true;
+                this.rJustPressed = true; // Flag per toggle
+            }
+            
+            // Gestisci S per riparazione scudo
+            if (e.code === 'KeyS') {
+                this.sPressed = true;
+                this.sJustPressed = true; // Flag per toggle
+            }
         });
         
         document.addEventListener('keyup', (e) => {
             this.keys[e.code] = false;
+            
+            // Gestisci rilascio R
+            if (e.code === 'KeyR') {
+                this.rPressed = false;
+            }
+            
+            // Gestisci rilascio S
+            if (e.code === 'KeyS') {
+                this.sPressed = false;
+            }
         });
         
         // Previeni il menu contestuale del tasto destro
@@ -183,6 +209,32 @@ export class Input {
         this.ctrlJustPressed = false;
     }
     
+    // Controlla se R è premuto
+    isRPressed() {
+        return this.rPressed;
+    }
+    
+    isRJustPressed() {
+        return this.rJustPressed;
+    }
+    
+    resetRJustPressed() {
+        this.rJustPressed = false;
+    }
+    
+    // Controlla se S è premuto
+    isSPressed() {
+        return this.sPressed;
+    }
+    
+    isSJustPressed() {
+        return this.sJustPressed;
+    }
+    
+    resetSJustPressed() {
+        this.sJustPressed = false;
+    }
+    
     // Controlla se un tasto è stato appena premuto
     isKeyJustPressed(key) {
         return this.keysJustPressed.has(key);
@@ -201,5 +253,10 @@ export class Input {
     // Controlla se c'è stato movimento della rotella
     hasWheelMovement() {
         return this.mouse.wheelDelta !== 0;
+    }
+    
+    // Ottieni il delta della rotella
+    getWheelDelta() {
+        return this.mouse.wheelDelta;
     }
 }

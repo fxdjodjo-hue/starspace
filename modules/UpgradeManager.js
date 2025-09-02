@@ -2,13 +2,14 @@
 export class UpgradeManager {
     constructor() {
         // Valute attuali
-        this.credits = 0;
+        this.credits = 1000; // Crediti di test per verificare il sistema
         this.uridium = 0;
         
         // Livelli attuali delle statistiche
         this.damageLevel = 1;
         this.speedLevel = 1;
         this.hpLevel = 1;
+        this.shieldLevel = 1;
         
         // Configurazione degli upgrade
         this.upgrades = {
@@ -59,6 +60,22 @@ export class UpgradeManager {
                     { level: 9, value: 200, cost: 7680, description: '+150 HP' },
                     { level: 10, value: 220, cost: 15360, description: '+170 HP' }
                 ]
+            },
+            shield: {
+                name: 'Scudo',
+                baseValue: 30,
+                levels: [
+                    { level: 1, value: 30, cost: 0, description: 'Base' },
+                    { level: 2, value: 45, cost: 80, description: '+15 Scudo' },
+                    { level: 3, value: 60, cost: 160, description: '+30 Scudo' },
+                    { level: 4, value: 75, cost: 320, description: '+45 Scudo' },
+                    { level: 5, value: 90, cost: 640, description: '+60 Scudo' },
+                    { level: 6, value: 105, cost: 1280, description: '+75 Scudo' },
+                    { level: 7, value: 120, cost: 2560, description: '+90 Scudo' },
+                    { level: 8, value: 135, cost: 5120, description: '+105 Scudo' },
+                    { level: 9, value: 150, cost: 10240, description: '+120 Scudo' },
+                    { level: 10, value: 165, cost: 20480, description: '+135 Scudo' }
+                ]
             }
         };
     }
@@ -89,6 +106,7 @@ export class UpgradeManager {
             case 'damage': return this.damageLevel;
             case 'speed': return this.speedLevel;
             case 'hp': return this.hpLevel;
+            case 'shield': return this.shieldLevel;
             default: return 1;
         }
     }
@@ -142,6 +160,9 @@ export class UpgradeManager {
                 break;
             case 'hp':
                 this.hpLevel = upgradeInfo.nextLevel;
+                break;
+            case 'shield':
+                this.shieldLevel = upgradeInfo.nextLevel;
                 break;
         }
         

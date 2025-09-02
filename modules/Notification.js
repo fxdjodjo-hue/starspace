@@ -2,7 +2,7 @@
 export class Notification {
     constructor() {
         this.notifications = [];
-        this.defaultDuration = 120; // 2 secondi a 60 FPS
+        this.defaultDuration = 600; // 10 secondi a 60 FPS
     }
     
     // Aggiungi una notifica

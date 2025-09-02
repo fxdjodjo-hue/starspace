@@ -93,7 +93,7 @@ export class ShipSprite {
         return Math.min(frameIndex, this.frameCount - 1);
     }
     
-    draw(ctx, x, y, rotation, size) {
+    draw(ctx, x, y, rotation, size, floatingY = 0) {
         if (!this.isLoaded || !this.image || this.frames.length === 0) return;
         
         // Calcola il frame corretto basandosi sulla rotazione
@@ -105,7 +105,7 @@ export class ShipSprite {
         const shipSize = size * 3;
         
         ctx.save();
-        ctx.translate(x, y);
+        ctx.translate(x, y + floatingY);
         
         // Disegna il frame corrente con dimensione aumentata
         ctx.drawImage(
@@ -118,7 +118,7 @@ export class ShipSprite {
     }
     
     // Metodo per disegnare senza rotazione (per la minimappa)
-    drawStatic(ctx, x, y, size) {
+    drawStatic(ctx, x, y, size, floatingY = 0) {
         if (!this.isLoaded || !this.image || this.frames.length === 0) return;
         
         const frame = this.frames[0]; // Usa il primo frame per la minimappa
@@ -130,7 +130,7 @@ export class ShipSprite {
         ctx.drawImage(
             this.image,
             frame.x, frame.y, frame.width, frame.height,
-            x - shipSize/2, y - shipSize/2, shipSize, shipSize
+            x - shipSize/2, y - shipSize/2 + floatingY, shipSize, shipSize
         );
     }
 }

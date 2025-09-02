@@ -24,7 +24,7 @@ export class SectorSystem {
         this.gridImage.onerror = () => {
             console.error('❌ Errore nel caricamento della griglia settori');
         };
-        this.gridImage.src = 'PhotoRoom-20231006_123442.png';
+        this.gridImage.src = 'grid.png';
     }
     
     initializeSectors() {

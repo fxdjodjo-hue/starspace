@@ -6,6 +6,8 @@ import { UpgradeManager } from './UpgradeManager.js';
 import { ShipSprite } from './ShipSprite.js';
 import { MissileSprite } from './MissileSprite.js';
 import { TrailSystem } from './TrailSystem.js';
+import { RepairEffect } from './RepairEffect.js';
+import { ShieldEffect } from './ShieldEffect.js';
 
 export class Ship {
     constructor(x, y, size = 40) {
@@ -28,6 +30,13 @@ export class Ship {
         // Sistema di combattimento con proiettili
         this.maxHP = 50; // Valore base più basso
         this.hp = this.maxHP;
+        
+        // Sistema scudo
+        this.maxShield = 30; // Valore base
+        this.shield = this.maxShield;
+        this.shieldRegenRate = 1; // Rigenerazione scudo per secondo
+        this.shieldRegenDelay = 3000; // Ritardo prima della rigenerazione (3 secondi)
+        this.lastDamageTime = 0;
         this.selectedTarget = null;
         this.isInCombat = false;
         this.projectiles = [];
@@ -51,6 +60,14 @@ export class Ship {
         // Sistema di potenziamenti
         this.upgradeManager = new UpgradeManager();
         
+        // Sistema di riparazione automatica
+        this.autoRepairDelay = 300; // 5 secondi (300 frame a 60 FPS)
+        this.lastCombatTime = 0; // Tempo dell'ultimo combattimento
+        this.repairRate = 5; // HP riparati per secondo
+        this.shieldRepairRate = 3; // Scudo riparato per secondo
+        this.repairEffect = new RepairEffect();
+        this.shieldEffect = new ShieldEffect();
+        
         // Sistema di sprite animati
         this.sprite = new ShipSprite();
         this.missileSprite = new MissileSprite();
@@ -63,12 +80,38 @@ export class Ship {
         
         // Carica lo sprite del missile
         this.missileSprite.load();
+        
+        // Carica l'effetto di riparazione
+        this.repairEffect.load();
+        
+        // Carica l'effetto di riparazione scudo
+        this.shieldEffect.load();
     }
     
     update() {
         // Aggiorna la fluttuazione della nave
         this.floatingOffset += this.floatingSpeed;
         const floatingY = Math.sin(this.floatingOffset) * this.floatingAmplitude;
+        
+        // Rigenerazione scudo
+        this.updateShield();
+        
+        // Sistema di riparazione automatica
+        this.updateAutoRepair();
+        
+        // Aggiorna effetto riparazione
+        if (this.isRepairing) {
+            this.repairEffect.update();
+        } else {
+            this.repairEffect.reset();
+        }
+        
+        // Aggiorna effetto riparazione scudo
+        if (this.isShieldRepairing) {
+            this.shieldEffect.update();
+        } else {
+            this.shieldEffect.reset();
+        }
         
         // Log dello stato della nave ogni 60 frame (circa 1 secondo) - solo per debug
         // if (window.gameInstance && window.gameInstance.frameCount % 60 === 0) {
@@ -97,6 +140,8 @@ export class Ship {
             const dy = this.targetY - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
+
+            
             if (distance > 5) {
                 // Calcola direzione di movimento
                 this.direction = Math.atan2(dy, dx);
@@ -107,11 +152,11 @@ export class Ship {
                 
                 this.x += moveX;
                 this.y += moveY;
-                
 
             } else {
                 // Arrivato al target
                 this.isMoving = false;
+
                 // Emetti evento di arrivo
                 this.onArrival && this.onArrival();
             }
@@ -157,6 +202,13 @@ export class Ship {
         ctx.fillRect(-this.size/2 - 5, -this.size/4, 5, this.size/2);
         
         ctx.restore();
+        
+        // Disegna effetto riparazione se attivo
+        if (this.isRepairing) {
+            const screenPos = camera.worldToScreen(this.x, this.y);
+            console.log('🔧 Ship: Disegno effetto riparazione a', screenPos.x, screenPos.y);
+            this.repairEffect.draw(ctx, screenPos.x, screenPos.y, 0.3);
+        }
         
         // Disegna tutti i proiettili
         this.projectiles.forEach(projectile => {
@@ -258,6 +310,15 @@ export class Ship {
         this.fireTimer++;
         if (this.fireTimer >= this.fireRate) {
             this.fireTimer = 0;
+            
+            // Interrompi il mining se attivo (sei in combattimento)
+            if (window.gameInstance && window.gameInstance.interactiveAsteroids) {
+                for (let asteroid of window.gameInstance.interactiveAsteroids) {
+                    if (asteroid.miningActive) {
+                        asteroid.interruptMining('attacco');
+                    }
+                }
+            }
             
             // Sparo un proiettile
             this.fireProjectile();
@@ -545,28 +606,56 @@ export class Ship {
         }
     }
     
-    // Disegna barra HP
+    // Disegna barre HP e Scudo minimali
     drawHealthBar(ctx, camera) {
-        const barWidth = 60;
+        const barX = this.x - camera.x - 40;
+        const barY = this.y - camera.y - this.size/2 - 40;
+        const barWidth = 80;
         const barHeight = 8;
-        const barX = this.x - camera.x - barWidth/2;
-        const barY = this.y - camera.y - this.size/2 - 20;
+        const barSpacing = 0;
         
-        // Sfondo barra HP
-        ctx.fillStyle = '#333333';
+        // SCUDO - Barra superiore
+        const shieldPercentage = this.shield / this.maxShield;
+        
+        // Sfondo scudo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.fillRect(barX, barY, barWidth, barHeight);
         
-        // Barra HP attuale
+        // Barra scudo attiva
+        if (shieldPercentage > 0) {
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillRect(barX, barY, barWidth * shieldPercentage, barHeight);
+        }
+        
+        // HP - Barra inferiore
+        const hpBarY = barY + barHeight + barSpacing;
         const hpPercentage = this.hp / this.maxHP;
-        const currentWidth = barWidth * hpPercentage;
         
-        ctx.fillStyle = '#00ff00';
-        ctx.fillRect(barX, barY, currentWidth, barHeight);
+        // Sfondo HP
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(barX, hpBarY, barWidth, barHeight);
         
-        // Bordo barra HP
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(barX, barY, currentWidth, barHeight);
+        // Barra HP attiva
+        if (hpPercentage > 0) {
+            ctx.fillStyle = hpPercentage > 0.3 ? '#7ED321' : '#F5A623';
+            ctx.fillRect(barX, hpBarY, barWidth * hpPercentage, barHeight);
+        }
+        
+        // Testo dentro le barre
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Testo scudo (dentro la barra)
+        if (barWidth * shieldPercentage > 25) { // Solo se c'è abbastanza spazio
+            ctx.fillText(`${Math.floor(this.shield)}/${this.maxShield}`, barX + barWidth/2, barY + barHeight/2);
+        }
+        
+        // Testo HP (dentro la barra)
+        if (barWidth * hpPercentage > 25) { // Solo se c'è abbastanza spazio
+            ctx.fillText(`${Math.floor(this.hp)}/${this.maxHP}`, barX + barWidth/2, hpBarY + barHeight/2);
+        }
     }
     
     // Disegna target selezionato
@@ -602,9 +691,7 @@ export class Ship {
     // Calcola l'esperienza guadagnata per tipo di nemico
     getExpForEnemyType(enemyType) {
         switch (enemyType) {
-            case 'basic': return 100;    // 100 XP per nemico basic
-            case 'fast': return 150;     // 150 XP per nemico fast
-            case 'tank': return 300;     // 300 XP per nemico tank
+            case 'barracuda': return 100;    // 100 XP per nemico Barracuda
             default: return 100;
         }
     }
@@ -612,9 +699,7 @@ export class Ship {
     // Ottieni crediti per tipo di nemico
     getCreditsForEnemyType(enemyType) {
         switch (enemyType) {
-            case 'basic': return 10;
-            case 'fast': return 15;
-            case 'tank': return 25;
+            case 'barracuda': return 10;
             default: return 10;
         }
     }
@@ -622,9 +707,7 @@ export class Ship {
     // Ottieni uridium per tipo di nemico (valuta premium, quantità ridotta)
     getUridiumForEnemyType(enemyType) {
         switch (enemyType) {
-            case 'basic': return 2;
-            case 'fast': return 3;
-            case 'tank': return 5;
+            case 'barracuda': return 2;
             default: return 2;
         }
     }
@@ -632,9 +715,7 @@ export class Ship {
     // Ottieni onore per tipo di nemico (per il rango)
     getHonorForEnemyType(enemyType) {
         switch (enemyType) {
-            case 'basic': return 5;
-            case 'fast': return 8;
-            case 'tank': return 12;
+            case 'barracuda': return 5;
             default: return 5;
         }
     }
@@ -672,5 +753,82 @@ export class Ship {
         this.maxHP = this.getCurrentHP();
         this.speed = this.getCurrentSpeed();
         this.hp = Math.min(this.hp, this.maxHP); // Non superare il max HP
+        this.maxShield = this.getCurrentShield();
+        this.shield = Math.min(this.shield, this.maxShield); // Non superare il max scudo
+    }
+    
+    // Aggiorna la rigenerazione dello scudo
+    updateShield() {
+        const currentTime = Date.now();
+        
+        // Se è passato abbastanza tempo dall'ultimo danno e lo scudo non è al massimo
+        if (currentTime - this.lastDamageTime >= this.shieldRegenDelay && this.shield < this.maxShield) {
+            this.shield += this.shieldRegenRate / 60; // 60 FPS
+            this.shield = Math.min(this.shield, this.maxShield);
+        }
+    }
+    
+    // Applica danno (prima allo scudo, poi agli HP)
+    takeDamage(damage) {
+        this.lastDamageTime = Date.now();
+        this.lastCombatTime = Date.now(); // Traccia il tempo dell'ultimo combattimento
+        
+        // Interrompi il mining se attivo
+        if (window.gameInstance && window.gameInstance.interactiveAsteroids) {
+            for (let asteroid of window.gameInstance.interactiveAsteroids) {
+                if (asteroid.miningActive) {
+                    asteroid.interruptMining('danno');
+                }
+            }
+        }
+        
+        if (this.shield > 0) {
+            // Danno allo scudo
+            const shieldDamage = Math.min(damage, this.shield);
+            this.shield -= shieldDamage;
+            damage -= shieldDamage;
+        }
+        
+        if (damage > 0) {
+            // Danno rimanente agli HP
+            this.hp -= damage;
+            this.hp = Math.max(0, this.hp);
+        }
+    }
+    
+    // Ottieni valore attuale dello scudo
+    getCurrentShield() {
+        return this.upgradeManager.getValue('shield');
+    }
+    
+    // Sistema di riparazione automatica
+    updateAutoRepair() {
+        const currentTime = Date.now();
+        const timeSinceCombat = currentTime - this.lastCombatTime;
+        
+        // Se sono passati 5 secondi dall'ultimo combattimento
+        if (timeSinceCombat >= this.autoRepairDelay * 16.67) { // 300 frame * 16.67ms = 5 secondi
+            // Ripara HP se necessario
+            if (this.hp < this.maxHP) {
+                this.isRepairing = true;
+                const repairAmount = this.repairRate / 60; // Per frame
+                this.hp = Math.min(this.maxHP, this.hp + repairAmount);
+            } else {
+                this.isRepairing = false;
+            }
+            
+            // Ripara scudo se necessario
+            if (this.shield < this.maxShield) {
+                this.isShieldRepairing = true;
+                const repairAmount = this.shieldRepairRate / 60; // Per frame
+                this.shield = Math.min(this.maxShield, this.shield + repairAmount);
+            } else {
+                this.isShieldRepairing = false;
+            }
+        } else {
+            // Se siamo ancora in combattimento, ferma la riparazione
+            this.isRepairing = false;
+            this.isShieldRepairing = false;
+        }
     }
 }

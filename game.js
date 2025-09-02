@@ -15,6 +15,11 @@ import { RankSystem } from './modules/RankSystem.js';
 import { PlayerProfile } from './modules/PlayerProfile.js';
 import { AudioManager } from './modules/AudioManager.js';
 import { SettingsPanel } from './modules/SettingsPanel.js';
+import { BonusBox } from './modules/BonusBox.js';
+import { SpaceStation } from './modules/SpaceStation.js';
+import { ZoneNotification } from './modules/ZoneNotification.js';
+import { SpaceStationPanel } from './modules/SpaceStationPanel.js';
+import { InteractiveAsteroid } from './modules/InteractiveAsteroid.js';
 
 class Game {
     constructor() {
@@ -22,6 +27,7 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width;
         this.height = this.canvas.height;
+
         
         // Inizializza tutti i moduli
         this.ship = new Ship(this.width / 2, this.height / 2);
@@ -44,6 +50,36 @@ class Game {
         this.enemies = [];
         this.enemySpawnTimer = 0;
         this.enemySpawnRate = 60; // Ogni 1 secondo (60 FPS)
+        
+        // Sistema bonus box
+        this.bonusBoxes = [];
+        this.bonusBoxSpawnTimer = 0;
+        this.bonusBoxSpawnRate = 10; // Ogni 10 frame per riempire velocemente
+        this.maxBonusBoxes = 100; // 100 bonus box per riempire la mappa
+        
+        // Stazione spaziale
+        this.spaceStation = new SpaceStation(0, 0); // Al centro della mappa
+        
+        // Asteroidi interattivi nella zona giocabile (1000-9000 range)
+        this.interactiveAsteroids = [
+            new InteractiveAsteroid(7000, 2000),    // Alto-destra
+            new InteractiveAsteroid(3000, 2000),    // Alto-sinistra
+            new InteractiveAsteroid(7000, 7000),    // Basso-destra
+            new InteractiveAsteroid(3000, 7000),    // Basso-sinistra
+            new InteractiveAsteroid(8000, 3000),    // Estremo alto-destra
+            new InteractiveAsteroid(2000, 8000),    // Estremo basso-sinistra
+            new InteractiveAsteroid(5000, 8000),    // Basso centro
+            new InteractiveAsteroid(2000, 3000)     // Estremo alto-sinistra
+        ];
+        
+        // Sistema notifiche di zona
+        this.zoneNotifications = new ZoneNotification();
+        
+        // Pannello stazione spaziale
+        this.spaceStationPanel = new SpaceStationPanel();
+        
+        // Pannello statistiche (apribile/chiudibile)
+        this.statsPanelOpen = false;
         
         // Pannello potenziamenti
         this.upgradePanelOpen = false;
@@ -143,6 +179,26 @@ class Game {
                 this.input.resetMouseJustPressed();
                 return; // Esci per evitare altri click
             }
+            
+            // Gestisci click su pulsante Space Station
+            const spaceStationButtonY = 70;
+            if (mousePos.x >= buttonX && mousePos.x <= buttonX + buttonSize &&
+                mousePos.y >= spaceStationButtonY && mousePos.y <= spaceStationButtonY + buttonSize) {
+                this.spaceStationPanel.toggle();
+                this.input.resetMouseJustPressed();
+                return; // Esci per evitare altri click
+            }
+        }
+        
+        // Click sinistro sulla minimappa rimosso - la minimappa funziona solo con click destro
+        
+        // Gestisci click nel pannello stazione spaziale
+        if (this.spaceStationPanel.isOpen && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            if (this.spaceStationPanel.handleClick(mousePos.x, mousePos.y, this.ship.upgradeManager)) {
+                this.input.resetMouseJustPressed();
+                return; // Click gestito dal pannello
+            }
         }
         
         // Gestisci click nel pannello impostazioni (solo al primo click)
@@ -164,15 +220,50 @@ class Game {
         if (this.input.isLeftClickJustReleased()) {
             this.settingsPanel.stopDragging();
             // Ferma il movimento della nave quando l'utente smette di cliccare
-            this.ship.stopMovement();
+            // MA solo se non c'è un target attivo dalla minimappa
+            if (!this.minimap.currentTarget) {
+                this.ship.stopMovement();
+            }
+        }
+        
+        // Gestisci click destro sul pannello statistiche
+        if (this.input.isRightClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            const panelX = 15;
+            const panelY = 15;
+            
+            // Se il pannello è chiuso, controlla click destro sull'icona
+            if (!this.statsPanelOpen) {
+                const iconSize = 40;
+                if (mousePos.x >= panelX && mousePos.x <= panelX + iconSize &&
+                    mousePos.y >= panelY && mousePos.y <= panelY + iconSize) {
+                    this.statsPanelOpen = true;
+                    return;
+                }
+            } else {
+                // Se il pannello è aperto, controlla click destro sul pulsante di chiusura
+                const panelWidth = 220;
+                const closeButtonSize = 20;
+                const closeButtonX = panelX + panelWidth - closeButtonSize - 10;
+                const closeButtonY = panelY + 10;
+                
+                if (mousePos.x >= closeButtonX && mousePos.x <= closeButtonX + closeButtonSize &&
+                    mousePos.y >= closeButtonY && mousePos.y <= closeButtonY + closeButtonSize) {
+                    this.statsPanelOpen = false;
+                    return;
+                }
+            }
         }
         
         // Reset del flag click appena premuto
         this.input.resetMouseJustPressed();
         
-        // Gestisci input per il movimento (solo se il pannello non è aperto e non si sta facendo drag)
-        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider) {
+        // Gestisci input per il movimento (solo se non si sta facendo drag)
+        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen) {
             const mousePos = this.input.getMousePosition();
+            
+            // Pulisci il target della minimappa quando si inizia il movimento normale
+            this.minimap.currentTarget = null;
             
             // Click sinistro - movimento nave
             const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
@@ -183,10 +274,23 @@ class Game {
         }
         
         // Gestisci click destro per selezione target E minimappa (solo se il pannello non è aperto)
-        if (this.input.isRightClickJustReleased() && !this.upgradePanelOpen) {
+        if (this.input.isRightClickJustReleased() && !this.upgradePanelOpen && !this.spaceStationPanel.isOpen) {
             const mousePos = this.input.getMousePosition();
+            const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
             
-            // Prima controlla se il click destro è su un nemico
+            // Prima controlla se il click destro è su un asteroide interattivo
+            for (let asteroid of this.interactiveAsteroids) {
+                if (asteroid.active && asteroid.checkCollision(worldPos.x, worldPos.y)) {
+                    if (asteroid.canInteract(this.ship)) {
+                        asteroid.startMining(this.ship);
+                    } else {
+                        asteroid.showNotification('⛏️ Avvicinati all\'asteroide per iniziare il mining!');
+                    }
+                    return;
+                }
+            }
+            
+            // Poi controlla se il click destro è su un nemico
             const clickedEnemy = this.getEnemyAtPosition(mousePos.x, mousePos.y);
             if (clickedEnemy) {
                 // Click destro su nemico - seleziona target
@@ -196,7 +300,8 @@ class Game {
                 this.notifications.targetSelected(clickedEnemy.type);
             } else {
                 // Click destro nel mondo - prova minimappa
-                this.minimap.handleClick(mousePos.x, mousePos.y, this.ship, true);
+                const minimapHandled = this.minimap.handleClick(mousePos.x, mousePos.y, this.ship, true);
+                console.log(`🎮 Game: Minimap handled right click: ${minimapHandled}`);
             }
             
             // Resetta il flag del flag del click destro rilasciato
@@ -220,11 +325,13 @@ class Game {
             this.input.resetCtrlJustPressed();
         }
         
-        // Gestisci P per aprire/chiudere pannello potenziamenti
-        if (this.input.isKeyJustPressed('KeyP')) {
-            this.upgradePanelOpen = !this.upgradePanelOpen;
-            console.log('Pannello potenziamenti:', this.upgradePanelOpen ? 'APERTO' : 'CHIUSO');
-        }
+        // Riparazione automatica - gestita in Ship.js
+        
+        // Pannello potenziamenti rimosso - ora disponibile nella stazione spaziale
+        // if (this.input.isKeyJustPressed('KeyP')) {
+        //     this.upgradePanelOpen = !this.upgradePanelOpen;
+        //     console.log('Pannello potenziamenti:', this.upgradePanelOpen ? 'APERTO' : 'CHIUSO');
+        // }
         
         // Comando per aggiungere crediti (tasto C)
         if (this.input.isKeyJustPressed('KeyC')) {
@@ -261,15 +368,7 @@ class Game {
             this.input.resetLeftClickReleased();
         }
         
-        // Controlla se c'è un target dalla minimappa per il movimento continuo
-        // SOLO se non c'è stato un click recente nel mondo
-        const minimapTarget = this.minimap.getCurrentTarget();
-        if (minimapTarget && this.ship.isMoving && !this.input.hasRecentClick()) {
-            // Continua a muovere verso il target della minimappa
-            this.ship.setTarget(minimapTarget.x, minimapTarget.y);
-            
-            // Movimento continuo minimappa attivo
-        }
+        // Sistema di movimento continuo minimappa rimosso - la nave si muove una volta verso il target
         
         // Aggiorna il mondo
         this.world.update();
@@ -328,8 +427,42 @@ class Game {
         // Aggiorna nemici
         this.updateEnemies();
         
+        // Aggiorna bonus box
+        this.updateBonusBoxes();
+        
+        // Aggiorna stazione spaziale
+        this.spaceStation.update();
+        this.spaceStation.checkAndShowMessage(this.ship, this);
+        
+        // Aggiorna asteroidi interattivi
+        for (let asteroid of this.interactiveAsteroids) {
+            asteroid.update();
+        }
+        
+        // Il mining non si interrompe più per distanza - solo per danno o attacchi
+        
+        // Controlla interazione con la stazione spaziale (tasto E)
+        this.checkSpaceStationInteraction();
+        
+        // Gestisci tasto ESC per chiudere il pannello stazione spaziale
+        if (this.input.isKeyJustPressed('Escape') && this.spaceStationPanel.isOpen) {
+            this.spaceStationPanel.close();
+        }
+        
+        // Tasto D per ricevere danno (test)
+        if (this.input.isKeyJustPressed('KeyD')) {
+            this.ship.takeDamage(10);
+            this.notifications.add('💥 Danno ricevuto per test!', 200, 'warning');
+        }
+        
+        // Aggiorna notifiche di zona
+        this.zoneNotifications.update();
+        
         // Spawn nemici
         this.spawnEnemies();
+        
+        // Spawn bonus box
+        this.spawnBonusBoxes();
         
         // Aggiorna notifiche
         this.notifications.update();
@@ -342,7 +475,51 @@ class Game {
         });
     }
     
-
+    updateBonusBoxes() {
+        this.bonusBoxes = this.bonusBoxes.filter(box => {
+            if (!box.active) return false;
+            
+            // Aggiorna l'animazione
+            box.update();
+            
+            // Controlla collisione con la nave
+            if (box.checkCollision(this.ship)) {
+                box.collect(this.ship);
+                return false; // Rimuovi la bonus box dopo la raccolta
+            }
+            
+            return true;
+        });
+        
+        // Respawna bonus box se ne mancano per mantenere la mappa piena
+        this.respawnBonusBoxes();
+    }
+    
+    // Respawna bonus box per mantenere la mappa piena
+    respawnBonusBoxes() {
+        const activeBonusBoxes = this.bonusBoxes.filter(box => box.active);
+        const missingBoxes = this.maxBonusBoxes - activeBonusBoxes.length;
+        
+        if (missingBoxes > 0) {
+            // Spawna le bonus box mancanti
+            for (let i = 0; i < missingBoxes; i++) {
+                let x, y;
+                let attempts = 0;
+                const maxAttempts = 10;
+                
+                do {
+                    // Spawn in tutta la mappa
+                    x = Math.random() * 12000; // 0-12000
+                    y = Math.random() * 12000; // 0-12000
+                    attempts++;
+                } while (attempts < maxAttempts && this.isTooCloseToShip(x, y, 200));
+                
+                // Crea bonus box casuale
+                const bonusBox = BonusBox.createRandom(x, y);
+                this.bonusBoxes.push(bonusBox);
+            }
+        }
+    }
     
     // Sistema di collisioni rimosso - ora gestito da Ship.js per i crediti
     
@@ -381,13 +558,49 @@ class Game {
                 break;
             }
             
-            // Tipo nemico casuale
-            const types = ['basic', 'fast', 'tank'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            
-            const newEnemy = new Enemy(x, y, type);
+            // Solo nemici Barracuda
+            const newEnemy = new Enemy(x, y, 'barracuda');
             this.enemies.push(newEnemy);
         }
+    }
+    
+    // Sistema di spawning bonus box
+    spawnBonusBoxes() {
+        this.bonusBoxSpawnTimer++;
+        
+        // Controlla se abbiamo già raggiunto il limite di bonus box
+        const activeBonusBoxes = this.bonusBoxes.filter(box => box.active);
+        if (activeBonusBoxes.length >= this.maxBonusBoxes) {
+            return; // Non spawnare più bonus box se abbiamo già 100
+        }
+        
+        if (this.bonusBoxSpawnTimer >= this.bonusBoxSpawnRate) {
+            this.bonusBoxSpawnTimer = 0;
+            
+            // Spawn bonus box in tutta la mappa
+            let x, y;
+            let attempts = 0;
+            const maxAttempts = 5; // Riduciamo i tentativi per velocità
+            
+            do {
+                // Spawn in tutta la mappa (0-12000 per coprire tutto)
+                x = Math.random() * 12000; // 0-12000
+                y = Math.random() * 12000; // 0-12000
+                attempts++;
+            } while (attempts < maxAttempts && this.isTooCloseToShip(x, y, 200)); // Riduciamo la distanza minima
+            
+            // Crea bonus box casuale
+            const bonusBox = BonusBox.createRandom(x, y);
+            this.bonusBoxes.push(bonusBox);
+        }
+    }
+    
+    // Controlla se una posizione è troppo vicina alla nave
+    isTooCloseToShip(x, y, minDistance) {
+        const distance = Math.sqrt(
+            Math.pow(x - this.ship.x, 2) + Math.pow(y - this.ship.y, 2)
+        );
+        return distance < minDistance;
     }
     
     // Controlla se un click è su un nemico
@@ -436,6 +649,21 @@ class Game {
             }
         });
         
+        // Disegna bonus box
+        this.bonusBoxes.forEach(box => {
+            if (box.active) {
+                box.draw(this.ctx, this.camera);
+            }
+        });
+        
+        // Disegna stazione spaziale
+        this.spaceStation.draw(this.ctx, this.camera);
+        
+        // Disegna asteroidi interattivi
+        for (let asteroid of this.interactiveAsteroids) {
+            asteroid.draw(this.ctx, this.camera);
+        }
+        
         // Disegna la nave
         this.renderer.drawShip(this.ship, this.camera);
         
@@ -469,10 +697,19 @@ class Game {
         this.ctx.restore();
         
         // Disegna la minimappa (separata dal renderer, non influenzata dallo zoom)
-        this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem);
+        this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem, this.spaceStation, this.interactiveAsteroids);
         
         // Disegna le notifiche (sempre sopra tutto, non influenzate dallo zoom)
         this.notifications.draw(this.ctx);
+        
+        // Disegna le notifiche di zona
+        this.drawZoneNotifications();
+        
+        // Aggiorna e disegna il pannello della stazione spaziale
+        if (this.spaceStationPanel.isOpen) {
+            this.spaceStationPanel.update();
+        }
+        this.spaceStationPanel.draw(this.ctx, this.canvas.width, this.canvas.height, this.ship.upgradeManager);
         
         // Disegna informazioni esperienza e livello (non influenzate dallo zoom)
         this.drawExperienceInfo();
@@ -482,6 +719,9 @@ class Game {
         
         // Disegna pulsante impostazioni
         this.drawSettingsButton();
+        
+        // Disegna pulsante Space Station
+        this.drawSpaceStationButton();
         
         // Disegna pannello impostazioni se aperto
         this.settingsPanel.draw(this.ctx);
@@ -493,6 +733,86 @@ class Game {
         }
     }
     
+    // Controlla l'interazione con la stazione spaziale
+    checkSpaceStationInteraction() {
+        // Controlla se il tasto E è stato premuto
+        if (this.input.keysJustPressed.has('KeyE')) {
+            // Se il pannello è già aperto, chiudilo
+            if (this.spaceStationPanel.isOpen) {
+                this.spaceStationPanel.close();
+            } else {
+                // Controlla se la nave è abbastanza vicina alla stazione
+                if (this.spaceStation.canInteract(this.ship)) {
+                    this.openSpaceStationPanel();
+                }
+            }
+        }
+    }
+    
+    // Apre il pannello della stazione spaziale
+    openSpaceStationPanel() {
+        console.log('🚀 Pannello stazione spaziale aperto!');
+        this.spaceStationPanel.open();
+        this.notifications.add('🚀 Stazione Spaziale - Pannello aperto!', 120, 'info');
+    }
+    
+    // Disegna le notifiche di zona
+    drawZoneNotifications() {
+        const activeNotifications = this.zoneNotifications.getActiveNotifications();
+        if (activeNotifications.length === 0) return;
+        
+        // Posizione delle notifiche di zona (centro alto dello schermo)
+        const startX = this.canvas.width / 2;
+        const startY = 100;
+        const spacing = 60;
+        
+        activeNotifications.forEach((notification, index) => {
+            const y = startY + (index * spacing);
+            
+            // Applica l'alpha per il fade
+            this.ctx.save();
+            this.ctx.globalAlpha = notification.alpha;
+            
+            // Testo principale (tutto maiuscolo, senza emoji)
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 24px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Effetto glow sottile
+            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+            this.ctx.shadowBlur = 10;
+            
+            // Rimuovi emoji e rendi tutto maiuscolo
+            const cleanMessage = notification.message.replace(/[🚀🎯💎💰]/g, '').trim().toUpperCase();
+            
+            // Dividi il messaggio in righe
+            const lines = cleanMessage.split('\n');
+            
+            // Disegna ogni riga
+            lines.forEach((line, index) => {
+                if (index === 0) {
+                    // Prima riga (SPACESTATION) - più grande
+                    this.ctx.fillText(line, startX, y + (index * 25));
+                } else if (index === 1) {
+                    // Seconda riga (SAFE ZONE) - media
+                    this.ctx.shadowBlur = 0; // Reset shadow
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.fillText(line, startX, y + (index * 25));
+                } else {
+                    // Terza riga ([PREMI E]) - più piccola
+                    this.ctx.shadowBlur = 0; // Reset shadow
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    this.ctx.font = 'bold 12px Arial';
+                    this.ctx.fillText(line, startX, y + (index * 25));
+                }
+            });
+            
+            this.ctx.restore();
+        });
+    }
+    
     // Disegna informazioni esperienza e livello (angolo sinistro alto)
     drawExperienceInfo() {
         const expInfo = this.ship.experience.getLevelInfo();
@@ -500,6 +820,12 @@ class Game {
         // Dimensioni e posizione del pannello
         const panelX = 15;
         const panelY = 15;
+        
+        // Se il pannello è chiuso, mostra solo l'icona
+        if (!this.statsPanelOpen) {
+            this.drawStatsIcon(panelX, panelY);
+            return;
+        }
         const panelWidth = 220;
         const panelHeight = 140;
         const cornerRadius = 8;
@@ -543,37 +869,67 @@ class Game {
         this.ctx.font = '14px Arial';
         this.ctx.fillText(`Uridium: ${this.ship.upgradeManager.getUridium()}`, panelX + 20, panelY + 98);
         
-        // Rank e Onore (oro) - per il rango
-        const currentRank = this.rankSystem.getCurrentRank(this.ship.getHonor());
-        const rankProgress = this.rankSystem.getRankProgress(this.ship.getHonor());
-        
+        // Onore (oro)
         this.ctx.fillStyle = '#ffaa00';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(`${currentRank.symbol} ${currentRank.name}`, panelX + 20, panelY + 118);
+        this.ctx.fillText(`Onore: ${this.ship.getHonor()}`, panelX + 20, panelY + 118);
         
-        // Barra di progresso del rank (solo se non è al massimo)
-        if (rankProgress.needed > 0) {
-            const barWidth = 180;
-            const barHeight = 4;
-            const barX = panelX + 20;
-            const barY = panelY + 130;
-            
-            // Sfondo barra
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-            this.ctx.fillRect(barX, barY, barWidth, barHeight);
-            
-            // Progresso barra
-            this.ctx.fillStyle = '#ffaa00';
-            this.ctx.fillRect(barX, barY, barWidth * rankProgress.progress, barHeight);
-            
-            // Testo progresso
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            this.ctx.font = '10px Arial';
-            this.ctx.textAlign = 'right';
-            this.ctx.fillText(`${rankProgress.needed.toLocaleString()}`, panelX + panelWidth - 20, panelY + 140);
-        }
+        // Pulsante di chiusura (X)
+        const closeButtonSize = 20;
+        const closeButtonX = panelX + panelWidth - closeButtonSize - 10;
+        const closeButtonY = panelY + 10;
+        
+        // Sfondo pulsante chiusura
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.beginPath();
+        this.ctx.roundRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize, 3);
+        this.ctx.fill();
+        
+        // Bordo pulsante chiusura
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+        
+        // X del pulsante chiusura
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(closeButtonX + 5, closeButtonY + 5);
+        this.ctx.lineTo(closeButtonX + closeButtonSize - 5, closeButtonY + closeButtonSize - 5);
+        this.ctx.moveTo(closeButtonX + closeButtonSize - 5, closeButtonY + 5);
+        this.ctx.lineTo(closeButtonX + 5, closeButtonY + closeButtonSize - 5);
+        this.ctx.stroke();
         
         // Barra XP rimossa per uniformare il layout
+    }
+    
+    // Disegna l'icona delle statistiche quando il pannello è chiuso
+    drawStatsIcon(x, y) {
+        const iconSize = 40;
+        const cornerRadius = 6;
+        
+        // Sfondo dell'icona
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.beginPath();
+        this.ctx.roundRect(x, y, iconSize, iconSize, cornerRadius);
+        this.ctx.fill();
+        
+        // Bordo
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+        
+        // Icona (livello)
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 14px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText('L', x + iconSize/2, y + iconSize/2 - 3);
+        
+        // Numero del livello
+        this.ctx.fillStyle = '#ffaa00';
+        this.ctx.font = 'bold 10px Arial';
+        this.ctx.fillText(this.ship.experience.getLevelInfo().level.toString(), x + iconSize/2, y + iconSize/2 + 8);
     }
     
     // Disegna il nickname del giocatore sotto la nave
@@ -599,13 +955,26 @@ class Game {
     drawSkillbar() {
         const slotSize = 50;
         const slotSpacing = 5;
-        const totalWidth = (slotSize * 6) + (slotSpacing * 5); // 6 slot + 5 spazi
-        const panelX = (this.width - totalWidth) / 2; // Centrato
+        const autoattackIconSize = 30; // Dimensioni icone autoattack più piccole
+        const autoattackSpacing = 5;
+        
+        // Calcola posizione per 4 slot (3-6) invece di 6
+        const totalWidth = (slotSize * 4) + (slotSpacing * 3); // 4 slot + 3 spazi
+        const autoattackWidth = (autoattackIconSize * 2) + autoattackSpacing; // 2 icone autoattack
+        const totalSkillbarWidth = totalWidth + autoattackWidth + 20; // +20 per spazio tra autoattack e skillbar
+        
+        const panelX = (this.width - totalSkillbarWidth) / 2; // Centrato
         const panelY = this.height - slotSize - 30; // In basso con margine
         
-        // Disegna 6 slot (per ora solo il primo è usato)
-        for (let i = 0; i < 6; i++) {
-            const slotX = panelX + (i * (slotSize + slotSpacing));
+        // Disegna icone autoattack a sinistra
+        this.drawAutoattackIcons(panelX, panelY, autoattackIconSize, autoattackSpacing);
+        
+        // Posizione della skillbar principale (slots 3-6)
+        const skillbarX = panelX + autoattackWidth + 20;
+        
+        // Disegna 4 slot (3-6) - gli slot 1 e 2 sono ora icone autoattack separate
+        for (let i = 0; i < 4; i++) {
+            const slotX = skillbarX + (i * (slotSize + slotSpacing));
             const slotY = panelY;
             
             // Sfondo dello slot
@@ -619,8 +988,44 @@ class Game {
             this.roundRect(slotX, slotY, slotSize, slotSize, 6);
                 this.ctx.stroke();
             
-            // Se è il primo slot (autoattack)
-            if (i === 0) {
+            // Gli slot 1 e 2 sono ora icone autoattack separate a sinistra
+            // Questi slot (1-4) sono liberi per altre abilità
+            
+            // Numero del tasto (1-4)
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.font = 'bold 10px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText((i + 1).toString(), slotX + slotSize/2, slotY + slotSize - 5);
+        }
+    }
+    
+    // Disegna le icone autoattack a sinistra della skillbar
+    drawAutoattackIcons(startX, startY, iconSize, spacing) {
+        const iconY = startY + (50 - iconSize) / 2; // Centra verticalmente rispetto agli slot
+        
+        // Icona autoattack (proiettili)
+        const autoattackX = startX;
+        this.drawAutoattackIcon(autoattackX, iconY, iconSize, 'autoattack');
+        
+        // Icona missili
+        const missileX = startX + iconSize + spacing;
+        this.drawAutoattackIcon(missileX, iconY, iconSize, 'missile');
+    }
+    
+    // Disegna una singola icona autoattack
+    drawAutoattackIcon(x, y, size, type) {
+        // Sfondo dell'icona
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.roundRect(x, y, size, size, 4);
+        this.ctx.fill();
+        
+        // Bordo dell'icona
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 1;
+        this.roundRect(x, y, size, size, 4);
+        this.ctx.stroke();
+        
+        if (type === 'autoattack') {
                 // Calcola il progresso del cooldown solo se in combattimento
                 const fireRate = this.ship.fireRate;
                 const fireTimer = this.ship.fireTimer;
@@ -629,95 +1034,83 @@ class Game {
                 // Overlay di cooldown (grigio scuro) solo se in combattimento
                 if (cooldownProgress > 0 && this.ship.isInCombat) {
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    this.roundRect(slotX, slotY, slotSize, slotSize, 6);
+                this.roundRect(x, y, size, size, 4);
         this.ctx.fill();
         
                     // Barra di cooldown verticale
-                    const cooldownHeight = slotSize * cooldownProgress;
+                const cooldownHeight = size * cooldownProgress;
                     this.ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
-                    this.roundRect(slotX, slotY + slotSize - cooldownHeight, slotSize, cooldownHeight, 6);
+                this.roundRect(x, y + size - cooldownHeight, size, cooldownHeight, 4);
         this.ctx.fill();
     }
     
                 // Icona dell'autoattack (cerchio con freccia)
-                // Grigio se in cooldown e in combattimento, blu se pronto o non in combattimento
                 this.ctx.fillStyle = (cooldownProgress > 0 && this.ship.isInCombat) ? 'rgba(150, 150, 150, 0.8)' : '#4a90e2';
         this.ctx.beginPath();
-                this.ctx.arc(slotX + slotSize/2, slotY + slotSize/2, 15, 0, Math.PI * 2);
+            this.ctx.arc(x + size/2, y + size/2, size/3, 0, Math.PI * 2);
         this.ctx.fill();
         
                 // Freccia al centro
                 this.ctx.fillStyle = '#ffffff';
         this.ctx.beginPath();
-                this.ctx.moveTo(slotX + slotSize/2 - 5, slotY + slotSize/2);
-                this.ctx.lineTo(slotX + slotSize/2 + 5, slotY + slotSize/2);
-                this.ctx.lineTo(slotX + slotSize/2, slotY + slotSize/2 - 8);
+            this.ctx.moveTo(x + size/2 - 3, y + size/2);
+            this.ctx.lineTo(x + size/2 + 3, y + size/2);
+            this.ctx.lineTo(x + size/2, y + size/2 - 5);
                     this.ctx.closePath();
         this.ctx.fill();
                 
                 // Testo del cooldown solo se in combattimento
                 if (cooldownProgress > 0 && this.ship.isInCombat) {
                     this.ctx.fillStyle = '#ffffff';
-                    this.ctx.font = 'bold 10px Arial';
+                this.ctx.font = 'bold 8px Arial';
                     this.ctx.textAlign = 'center';
                     const cooldownText = Math.ceil((fireRate - fireTimer) / 60 * 10) / 10;
-                    this.ctx.fillText(cooldownText.toString(), slotX + slotSize/2, slotY + slotSize/2 + 3);
-                }
+                this.ctx.fillText(cooldownText.toString(), x + size/2, y + size/2 + 2);
+            }
+        } else if (type === 'missile') {
+            // Calcola il progresso del cooldown dei missili
+            const missileFireRate = this.ship.missileFireRate;
+            const missileTimer = this.ship.missileTimer;
+            const missileCooldownProgress = this.ship.isInCombat ? missileTimer / missileFireRate : 0;
+            
+            // Overlay di cooldown (grigio scuro) solo se in combattimento
+            if (missileCooldownProgress > 0 && this.ship.isInCombat) {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                this.roundRect(x, y, size, size, 4);
+                this.ctx.fill();
+                
+                // Barra di cooldown verticale
+                const cooldownHeight = size * missileCooldownProgress;
+                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.8)'; // Arancione per i missili
+                this.roundRect(x, y + size - cooldownHeight, size, cooldownHeight, 4);
+                this.ctx.fill();
             }
             
-            // Se è il secondo slot (missili)
-            if (i === 1) {
-                // Calcola il progresso del cooldown dei missili
-                const missileFireRate = this.ship.missileFireRate;
-                const missileTimer = this.ship.missileTimer;
-                const missileCooldownProgress = this.ship.isInCombat ? missileTimer / missileFireRate : 0;
-                
-                // Overlay di cooldown (grigio scuro) solo se in combattimento
-                if (missileCooldownProgress > 0 && this.ship.isInCombat) {
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    this.roundRect(slotX, slotY, slotSize, slotSize, 6);
-                    this.ctx.fill();
-        
-                    // Barra di cooldown verticale
-                    const cooldownHeight = slotSize * missileCooldownProgress;
-                    this.ctx.fillStyle = 'rgba(255, 165, 0, 0.8)'; // Arancione per i missili
-                    this.roundRect(slotX, slotY + slotSize - cooldownHeight, slotSize, cooldownHeight, 6);
-                    this.ctx.fill();
-                }
-    
-                // Icona dei missili (cerchio con razzo)
-                // Grigio se in cooldown e in combattimento, arancione se pronto o non in combattimento
-                this.ctx.fillStyle = (missileCooldownProgress > 0 && this.ship.isInCombat) ? 'rgba(150, 150, 150, 0.8)' : '#ff6600';
-                this.ctx.beginPath();
-                this.ctx.arc(slotX + slotSize/2, slotY + slotSize/2, 15, 0, Math.PI * 2);
-                this.ctx.fill();
-        
-                // Razzo al centro (forma di missile)
+            // Icona dei missili (cerchio con razzo)
+            this.ctx.fillStyle = (missileCooldownProgress > 0 && this.ship.isInCombat) ? 'rgba(150, 150, 150, 0.8)' : '#ff6600';
+            this.ctx.beginPath();
+            this.ctx.arc(x + size/2, y + size/2, size/3, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Razzo al centro (forma di missile)
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.beginPath();
+            // Corpo del razzo
+            this.ctx.moveTo(x + size/2 - 2, y + size/2 + 4);
+            this.ctx.lineTo(x + size/2 + 2, y + size/2 + 4);
+            this.ctx.lineTo(x + size/2 + 1, y + size/2 - 4);
+            this.ctx.lineTo(x + size/2 - 1, y + size/2 - 4);
+            this.ctx.closePath();
+            this.ctx.fill();
+            
+            // Testo del cooldown solo se in combattimento
+            if (missileCooldownProgress > 0 && this.ship.isInCombat) {
                 this.ctx.fillStyle = '#ffffff';
-                this.ctx.beginPath();
-                // Corpo del razzo
-                this.ctx.moveTo(slotX + slotSize/2 - 3, slotY + slotSize/2 + 6);
-                this.ctx.lineTo(slotX + slotSize/2 + 3, slotY + slotSize/2 + 6);
-                this.ctx.lineTo(slotX + slotSize/2 + 2, slotY + slotSize/2 - 6);
-                this.ctx.lineTo(slotX + slotSize/2 - 2, slotY + slotSize/2 - 6);
-                this.ctx.closePath();
-                this.ctx.fill();
-                
-                // Testo del cooldown solo se in combattimento
-                if (missileCooldownProgress > 0 && this.ship.isInCombat) {
-                    this.ctx.fillStyle = '#ffffff';
-                    this.ctx.font = 'bold 10px Arial';
-                    this.ctx.textAlign = 'center';
-                    const cooldownText = Math.ceil((missileFireRate - missileTimer) / 60 * 10) / 10;
-                    this.ctx.fillText(cooldownText.toString(), slotX + slotSize/2, slotY + slotSize/2 + 3);
-                }
-            }
-            
-            // Numero del tasto (1-6)
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            this.ctx.font = 'bold 10px Arial';
+                this.ctx.font = 'bold 8px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText((i + 1).toString(), slotX + slotSize/2, slotY + slotSize - 5);
+                const cooldownText = Math.ceil((missileFireRate - missileTimer) / 60 * 10) / 10;
+                this.ctx.fillText(cooldownText.toString(), x + size/2, y + size/2 + 2);
+            }
         }
     }
     
@@ -984,12 +1377,12 @@ class Game {
         const buttonY = 20;
         
         // Sfondo del pulsante
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillStyle = '#000000';
         this.roundRect(buttonX, buttonY, buttonSize, buttonSize, 8);
         this.ctx.fill();
         
         // Bordo del pulsante
-        this.ctx.strokeStyle = '#0f3460';
+        this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
         
@@ -998,6 +1391,32 @@ class Game {
         this.ctx.font = '20px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.fillText('⚙', buttonX + buttonSize/2, buttonY + buttonSize/2 + 7);
+        
+        // Ripristina allineamento
+        this.ctx.textAlign = 'left';
+    }
+    
+    // Disegna pulsante Space Station
+    drawSpaceStationButton() {
+        const buttonSize = 40;
+        const buttonX = this.width - buttonSize - 20;
+        const buttonY = 70; // Sotto il pulsante impostazioni
+        
+        // Sfondo del pulsante
+        this.ctx.fillStyle = '#000000';
+        this.roundRect(buttonX, buttonY, buttonSize, buttonSize, 8);
+        this.ctx.fill();
+        
+        // Bordo del pulsante
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        
+        // Icona Space Station
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '20px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('🚀', buttonX + buttonSize/2, buttonY + buttonSize/2 + 7);
         
         // Ripristina allineamento
         this.ctx.textAlign = 'left';
