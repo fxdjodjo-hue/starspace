@@ -8,7 +8,7 @@ import { Minimap } from './modules/Minimap.js';
 import { Enemy } from './modules/Enemy.js';
 import { Notification } from './modules/Notification.js';
 import { SectorSystem } from './modules/SectorSystem.js';
-import { ExplosionManager } from './modules/ExplosionEffect.js';
+import { ExplosionEffect } from './modules/ExplosionEffect.js';
 import { ParallaxBackground } from './modules/ParallaxBackground.js';
 import { AmbientEffects } from './modules/AmbientEffects.js';
 import { RankSystem } from './modules/RankSystem.js';
@@ -38,7 +38,7 @@ class Game {
         this.minimap = new Minimap(this.width, this.height);
         this.sectorSystem = new SectorSystem();
         this.notifications = new Notification();
-        this.explosionManager = new ExplosionManager();
+        this.explosionManager = new ExplosionEffect();
         this.parallaxBackground = new ParallaxBackground(this.width, this.height);
         this.ambientEffects = new AmbientEffects(this.width, this.height);
         this.rankSystem = new RankSystem();
@@ -94,6 +94,9 @@ class Game {
         
         // Inizializza l'audio
         this.audioManager.loadAllSounds();
+        
+        // Carica l'effetto esplosione
+        this.explosionManager.load();
         
         // Test del suono del motore dopo il caricamento
 
