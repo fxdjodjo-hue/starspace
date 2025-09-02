@@ -63,6 +63,11 @@ export class AudioManager {
         this.playSound('explosion', 0.9 * this.sfxVolume);
     }
     
+    // Riproduci suono di morte del player
+    playDeathSound() {
+        this.playSound('death', 1.0 * this.sfxVolume);
+    }
+    
     // Imposta volume principale
     setMasterVolume(volume) {
         this.masterVolume = Math.max(0, Math.min(1, volume));
@@ -93,6 +98,7 @@ export class AudioManager {
         this.loadSound('laser', 'sounds/laser_1.wav');
         this.loadSound('missile', 'sounds/rocket_1.wav');
         this.loadSound('explosion', 'sounds/explosion.mp3'); // File fornito dall'utente
+        this.loadSound('death', 'sounds/death.mp3'); // Suono di morte del player
 
         
         // Carica la musica di sottofondo

@@ -19,6 +19,8 @@ export class Input {
         this.rJustPressed = false; // Flag per toggle della riparazione
         this.sPressed = false;
         this.sJustPressed = false; // Flag per toggle della riparazione scudo
+        this.dPressed = false;
+        this.dJustPressed = false; // Flag per test morte player
         
         // Inizializza Set per i tasti appena premuti
         this.keysJustPressed = new Set();
@@ -94,6 +96,12 @@ export class Input {
                 this.sPressed = true;
                 this.sJustPressed = true; // Flag per toggle
             }
+            
+            // Gestisci D per test morte player
+            if (e.code === 'KeyD') {
+                this.dPressed = true;
+                this.dJustPressed = true; // Flag per toggle
+            }
         });
         
         document.addEventListener('keyup', (e) => {
@@ -107,6 +115,11 @@ export class Input {
             // Gestisci rilascio S
             if (e.code === 'KeyS') {
                 this.sPressed = false;
+            }
+            
+            // Gestisci rilascio D
+            if (e.code === 'KeyD') {
+                this.dPressed = false;
             }
         });
         
@@ -233,6 +246,19 @@ export class Input {
     
     resetSJustPressed() {
         this.sJustPressed = false;
+    }
+    
+    // Controlla se D è premuto
+    isDPressed() {
+        return this.dPressed;
+    }
+    
+    isDJustPressed() {
+        return this.dJustPressed;
+    }
+    
+    resetDJustPressed() {
+        this.dJustPressed = false;
     }
     
     // Controlla se un tasto è stato appena premuto

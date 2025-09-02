@@ -21,6 +21,11 @@ export class Renderer {
     }
     
     drawShip(ship, camera) {
+        // Non disegnare la nave se è morta
+        if (ship.isDead) {
+            return;
+        }
+        
         // Usa lo sprite animato se disponibile, altrimenti fallback al triangolo
         if (ship.sprite && ship.sprite.isLoaded) {
             const screenPos = camera.worldToScreen(ship.x, ship.y);

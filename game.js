@@ -20,6 +20,7 @@ import { SpaceStation } from './modules/SpaceStation.js';
 import { ZoneNotification } from './modules/ZoneNotification.js';
 import { SpaceStationPanel } from './modules/SpaceStationPanel.js';
 import { InteractiveAsteroid } from './modules/InteractiveAsteroid.js';
+import { DeathPopup } from './modules/DeathPopup.js';
 
 class Game {
     constructor() {
@@ -74,6 +75,9 @@ class Game {
         
         // Sistema notifiche di zona
         this.zoneNotifications = new ZoneNotification();
+        
+        // Popup di morte
+        this.deathPopup = new DeathPopup();
         
         // Pannello stazione spaziale
         this.spaceStationPanel = new SpaceStationPanel();
@@ -167,6 +171,15 @@ class Game {
             this.input.resetRightClickReleased();
             this.input.resetCtrlJustPressed();
             // NON uscire dalla funzione update - permette al gioco di continuare
+        }
+        
+        // Gestisci click su popup di morte (priorità massima)
+        if (this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            if (this.deathPopup.handleClick(mousePos.x, mousePos.y, this.ship)) {
+                this.input.resetMouseJustPressed();
+                return; // Click gestito dal popup
+            }
         }
         
         // Gestisci click su pulsante impostazioni (solo al primo click)
@@ -268,9 +281,11 @@ class Game {
             // Pulisci il target della minimappa quando si inizia il movimento normale
             this.minimap.currentTarget = null;
             
-            // Click sinistro - movimento nave
-            const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
-            this.ship.setTarget(worldPos.x, worldPos.y);
+            // Click sinistro - movimento nave (solo se la nave non è morta)
+            if (!this.ship.isDead) {
+                const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
+                this.ship.setTarget(worldPos.x, worldPos.y);
+            }
             
             // Click nel mondo gestito - Pulisce il target della minimappa
             this.minimap.clearTarget();
@@ -326,6 +341,12 @@ class Game {
             
             // Reset del flag per evitare spam
             this.input.resetCtrlJustPressed();
+        }
+        
+        // Gestisci D per test morte player (solo se il pannello non è aperto)
+        if (this.input.isDJustPressed() && !this.upgradePanelOpen) {
+            this.ship.takeDamage(this.ship.hp); // Danno sufficiente per uccidere il player
+            this.input.resetDJustPressed();
         }
         
         // Riparazione automatica - gestita in Ship.js
@@ -395,7 +416,11 @@ class Game {
     }
     
     updateCombat() {
-        // Aggiorna combattimento della nave
+        // Aggiorna combattimento della nave (solo se non è morta)
+        if (this.ship.isDead) {
+            return;
+        }
+        
         const combatResult = this.ship.updateCombat(this.explosionManager);
 
         
@@ -734,6 +759,9 @@ class Game {
             console.log('Disegno pannello potenziamenti...');
             this.drawUpgradePanel();
         }
+        
+        // Disegna popup di morte (sempre sopra tutto)
+        this.deathPopup.draw(this.ctx);
     }
     
     // Controlla l'interazione con la stazione spaziale

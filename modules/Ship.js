@@ -30,6 +30,7 @@ export class Ship {
         // Sistema di combattimento con proiettili
         this.maxHP = 50; // Valore base più basso
         this.hp = this.maxHP;
+        this.isDead = false; // Traccia se la nave è morta
         
         // Sistema scudo
         this.maxShield = 30; // Valore base
@@ -89,6 +90,11 @@ export class Ship {
     }
     
     update() {
+        // Se la nave è morta, non aggiornare nulla
+        if (this.isDead) {
+            return;
+        }
+        
         // Aggiorna la fluttuazione della nave
         this.floatingOffset += this.floatingSpeed;
         const floatingY = Math.sin(this.floatingOffset) * this.floatingAmplitude;
@@ -793,8 +799,69 @@ export class Ship {
             // Danno rimanente agli HP
             this.hp -= damage;
             this.hp = Math.max(0, this.hp);
+            
+            // Controlla se il player è morto
+            if (this.hp <= 0) {
+                this.handlePlayerDeath();
+            }
         }
     }
+    
+    // Gestisce la morte del player
+    handlePlayerDeath() {
+        // Imposta la nave come morta
+        this.isDead = true;
+        
+        // Crea animazione esplosione
+        if (window.gameInstance && window.gameInstance.explosionManager) {
+            window.gameInstance.explosionManager.createExplosion(this.x, this.y, 'player');
+        }
+        
+        // Riproduci suono di esplosione quando la nave esplode
+        if (window.gameInstance && window.gameInstance.audioManager) {
+            window.gameInstance.audioManager.playExplosionSound();
+        }
+        
+
+        
+        // Trova la stazione spaziale più vicina
+        const nearestStation = this.findNearestSpaceStation();
+        
+        // Mostra popup di morte invece di respawn automatico
+        if (window.gameInstance && window.gameInstance.deathPopup) {
+            window.gameInstance.deathPopup.show(this.x, this.y, nearestStation);
+        }
+        
+        // Notifica la morte
+        if (window.gameInstance && window.gameInstance.notifications) {
+            window.gameInstance.notifications.add('💀 Sei morto! Clicca RESPAWN per continuare', 'death');
+        }
+    }
+    
+    // Trova la stazione spaziale più vicina
+    findNearestSpaceStation() {
+        if (!window.gameInstance || !window.gameInstance.spaceStations) {
+            return null;
+        }
+        
+        let nearestStation = null;
+        let minDistance = Infinity;
+        
+        window.gameInstance.spaceStations.forEach(station => {
+            const distance = Math.sqrt(
+                Math.pow(station.x - this.x, 2) + Math.pow(station.y - this.y, 2)
+            );
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestStation = station;
+            }
+        });
+        
+        return nearestStation;
+    }
+    
+
     
     // Ottieni valore attuale dello scudo
     getCurrentShield() {
