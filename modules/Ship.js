@@ -54,6 +54,24 @@ export class Ship {
         this.missileSpeed = 4;
         this.maxMissiles = 3; // Massimo 3 missili contemporaneamente
         
+        // Sistema selezione armi
+        this.selectedLaser = 'x1'; // x1, x2, x3
+        this.selectedMissile = 'r1'; // r1, r2, r3
+        
+        // Configurazioni laser
+        this.laserConfigs = {
+            x1: { damage: 20, fireRate: 60, speed: 8, color: '#ff0000' },
+            x2: { damage: 35, fireRate: 45, speed: 10, color: '#ff6600' },
+            x3: { damage: 50, fireRate: 30, speed: 12, color: '#ffaa00' }
+        };
+        
+        // Configurazioni missili
+        this.missileConfigs = {
+            r1: { damage: 50, fireRate: 180, speed: 4, color: '#00ff00' },
+            r2: { damage: 80, fireRate: 150, speed: 5, color: '#00aaff' },
+            r3: { damage: 120, fireRate: 120, speed: 6, color: '#ff00ff' }
+        };
+        
         // Sistema di esperienza e onore
         this.experience = new Experience();
         this.honor = 0;
@@ -78,6 +96,9 @@ export class Ship {
         
         // Inizializza le statistiche basate sui potenziamenti
         this.updateStats();
+        
+        // Applica le configurazioni delle armi selezionate
+        this.applyWeaponConfigs();
         
         // Carica lo sprite del missile
         this.missileSprite.load();
@@ -908,5 +929,50 @@ export class Ship {
             this.isRepairing = false;
             this.isShieldRepairing = false;
         }
+    }
+    
+    // Sistema di selezione armi
+    selectLaser(laserType) {
+        if (this.laserConfigs[laserType]) {
+            this.selectedLaser = laserType;
+            this.applyWeaponConfigs();
+            return true;
+        }
+        return false;
+    }
+    
+    selectMissile(missileType) {
+        if (this.missileConfigs[missileType]) {
+            this.selectedMissile = missileType;
+            this.applyWeaponConfigs();
+            return true;
+        }
+        return false;
+    }
+    
+    applyWeaponConfigs() {
+        // Applica configurazione laser selezionata
+        const laserConfig = this.laserConfigs[this.selectedLaser];
+        if (laserConfig) {
+            this.projectileDamage = laserConfig.damage;
+            this.fireRate = laserConfig.fireRate;
+            this.projectileSpeed = laserConfig.speed;
+        }
+        
+        // Applica configurazione missile selezionata
+        const missileConfig = this.missileConfigs[this.selectedMissile];
+        if (missileConfig) {
+            this.missileDamage = missileConfig.damage;
+            this.missileFireRate = missileConfig.fireRate;
+            this.missileSpeed = missileConfig.speed;
+        }
+    }
+    
+    getSelectedLaserInfo() {
+        return this.laserConfigs[this.selectedLaser];
+    }
+    
+    getSelectedMissileInfo() {
+        return this.missileConfigs[this.selectedMissile];
     }
 }

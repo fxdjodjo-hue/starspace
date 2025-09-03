@@ -27,6 +27,8 @@ import { EMP } from './modules/EMP.js';
 import { Leech } from './modules/Leech.js';
 import { Inventory } from './modules/Inventory.js';
 import { InventoryItem } from './modules/InventoryItem.js';
+import { DreadspireBackground } from './modules/DreadspireBackground.js';
+import { CategorySkillbar } from './modules/CategorySkillbar.js';
 
 
 class Game {
@@ -47,6 +49,9 @@ class Game {
         this.notifications = new Notification();
         this.explosionManager = new ExplosionEffect();
         this.parallaxBackground = new ParallaxBackground(this.width, this.height);
+        this.dreadspireBackground = new DreadspireBackground();
+        this.categorySkillbar = new CategorySkillbar();
+        this.categorySkillbar.setGame(this);
         this.ambientEffects = new AmbientEffects(this.width, this.height);
         this.rankSystem = new RankSystem();
         this.playerProfile = new PlayerProfile();
@@ -125,6 +130,9 @@ class Game {
         // Carica l'effetto esplosione
         this.explosionManager.load();
         
+        // Carica il background Dreadspire
+        this.dreadspireBackground.loadImages();
+        
         // Test del suono del motore dopo il caricamento
 
         
@@ -181,6 +189,9 @@ class Game {
     update() {
         // Aggiorna la nave
         this.ship.update();
+        
+        // Aggiorna la CategorySkillbar
+        this.categorySkillbar.update();
         this.ship.updateSprite();
         this.ship.updateTrail();
         
@@ -348,6 +359,15 @@ class Game {
         if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             
+            // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
+                const movementDistance = this.input.mouse.movementDistance || 0;
+                if (movementDistance <= 5) {
+                    return; // Solo se è un click effettivo, non navigazione
+                }
+                // Se è navigazione (movimento > 5px), continua il movimento anche sopra la skillbar
+            }
+            
             // Pulisci il target della minimappa quando si inizia il movimento normale
             this.minimap.currentTarget = null;
             
@@ -445,45 +465,7 @@ class Game {
 
         }
         
-        // Attiva smartbomb (tasto 1 - primo slot skillbar)
-        if (this.input.isKeyJustPressed('Digit1')) {
-            if (this.smartbomb.activate(this.ship, this.enemies, this.explosionManager)) {
-                this.notifications.add('💣 Smartbomb attivata!', 200, 'info');
-            } else {
-                const remaining = Math.ceil(this.smartbomb.getCooldownRemaining() / 1000);
-                this.notifications.add(`⏰ Smartbomb in cooldown: ${remaining}s`, 200, 'warning');
-            }
-        }
-        
-        // Attiva FastRepair (tasto 2 - secondo slot skillbar)
-        if (this.input.isKeyJustPressed('Digit2')) {
-            if (this.fastRepair.activate(this.ship)) {
-                this.notifications.add('🔧 FastRepair attivato!', 200, 'info');
-            } else {
-                const remaining = Math.ceil(this.fastRepair.getCooldownRemaining() / 1000);
-                this.notifications.add(`⏰ FastRepair in cooldown: ${remaining}s`, 200, 'warning');
-            }
-        }
-        
-        // Attiva EMP (tasto 3 - terzo slot skillbar)
-        if (this.input.isKeyJustPressed('Digit3')) {
-            if (this.emp.activate(this.ship, this.enemies)) {
-                this.notifications.add('⚡ EMP attivato!', 200, 'info');
-            } else {
-                const remaining = Math.ceil(this.emp.getCooldownRemaining() / 1000);
-                this.notifications.add(`⏰ EMP in cooldown: ${remaining}s`, 200, 'warning');
-            }
-        }
-        
-        // Attiva Leech (tasto 4 - quarto slot skillbar)
-        if (this.input.isKeyJustPressed('Digit4')) {
-            if (this.leech.activate(this.ship)) {
-                this.notifications.add('🩸 Leech attivato!', 200, 'info');
-            } else {
-                const remaining = Math.ceil(this.leech.getCooldownRemaining() / 1000);
-                this.notifications.add(`⏰ Leech in cooldown: ${remaining}s`, 200, 'warning');
-            }
-        }
+        // Le skills ora sono gestite dalla CategorySkillbar
         
         // Comando per cambiare nickname (tasto N)
         if (this.input.isKeyJustPressed('KeyN')) {
@@ -509,10 +491,15 @@ class Game {
             this.input.resetLeftClickReleased();
         }
         
-        // Gestisci click sulla skillbar
+        // Gestisci click sulla CategorySkillbar
         if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
-            this.handleSkillbarClick(mousePos.x, mousePos.y);
+            
+            const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
+            if (handled) {
+                this.input.resetLeftClickReleased();
+                return; // Esci subito per evitare che la nave si muova
+            }
         }
         
         // Sistema di movimento continuo minimappa rimosso - la nave si muove una volta verso il target
@@ -799,6 +786,9 @@ class Game {
         // Disegna sfondo parallax
         this.parallaxBackground.draw(this.ctx, this.camera);
         
+        // Disegna background Dreadspire (sopra il parallax)
+        this.dreadspireBackground.draw(this.ctx, this.camera);
+        
         // Disegna effetti ambientali
         this.ambientEffects.draw(this.ctx, this.camera);
         
@@ -886,8 +876,8 @@ class Game {
         // Disegna informazioni esperienza e livello (non influenzate dallo zoom)
         this.drawExperienceInfo();
         
-        // Disegna skillbar MMORPG (non influenzata dallo zoom)
-        this.drawSkillbar();
+        // Disegna CategorySkillbar (non influenzata dallo zoom)
+        this.drawCategorySkillbar();
         
         // Disegna pulsante impostazioni
         this.drawSettingsButton();
@@ -1104,31 +1094,46 @@ class Game {
     
     // Disegna l'icona delle statistiche quando il pannello è chiuso
     drawStatsIcon(x, y) {
+        this.drawStandardIcon(x, y, 'L', this.ship.experience.getLevelInfo().level.toString());
+    }
+    
+    // Metodo standardizzato per disegnare le icone UI
+    drawStandardIcon(x, y, mainText, subText = null) {
         const iconSize = 40;
-        const cornerRadius = 6;
+        const cornerRadius = 8;
         
         // Sfondo dell'icona
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillStyle = '#000000';
         this.ctx.beginPath();
         this.ctx.roundRect(x, y, iconSize, iconSize, cornerRadius);
         this.ctx.fill();
         
-        // Bordo
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 1;
+        // Bordo dell'icona
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
         this.ctx.stroke();
         
-        // Icona (livello)
+        // Testo principale
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 14px Arial';
+        this.ctx.font = 'bold 16px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText('L', x + iconSize/2, y + iconSize/2 - 3);
         
-        // Numero del livello
-        this.ctx.fillStyle = '#ffaa00';
-        this.ctx.font = 'bold 10px Arial';
-        this.ctx.fillText(this.ship.experience.getLevelInfo().level.toString(), x + iconSize/2, y + iconSize/2 + 8);
+        if (subText) {
+            // Se c'è un sottotesto, posiziona il testo principale più in alto
+            this.ctx.fillText(mainText, x + iconSize/2, y + iconSize/2 - 4);
+            
+            // Sottotesto
+            this.ctx.fillStyle = '#ffaa00';
+            this.ctx.font = 'bold 10px Arial';
+            this.ctx.fillText(subText, x + iconSize/2, y + iconSize/2 + 8);
+        } else {
+            // Solo testo principale centrato
+            this.ctx.fillText(mainText, x + iconSize/2, y + iconSize/2 + 2);
+        }
+        
+        // Ripristina allineamento
+        this.ctx.textAlign = 'left';
     }
     
     // Disegna il nickname del giocatore sotto la nave
@@ -1148,6 +1153,16 @@ class Game {
         
         // Ripristina l'allineamento del testo
         this.ctx.textAlign = 'left';
+    }
+    
+    // Disegna CategorySkillbar
+    drawCategorySkillbar() {
+        // Posiziona la skillbar in basso al centro
+        const x = (this.width - 600) / 2; // 600 è la larghezza della skillbar
+        const y = this.height - 80; // 80px dal basso
+        
+        this.categorySkillbar.setPosition(x, y);
+        this.categorySkillbar.draw(this.ctx);
     }
     
     // Disegna skillbar MMORPG
@@ -1582,6 +1597,67 @@ class Game {
         return false;
     }
     
+    // Gestisce i click sulla CategorySkillbar
+    handleCategorySkillbarClick(mouseX, mouseY) {
+        return this.categorySkillbar.handleClick(mouseX, mouseY);
+    }
+    
+    // Controlla se il click è sulla CategorySkillbar
+    isClickOnCategorySkillbar(mouseX, mouseY) {
+        // Posizione della skillbar
+        const x = (this.width - 600) / 2; // 600 è la larghezza della skillbar
+        const y = this.height - 80; // 80px dal basso
+        const barWidth = 600;
+        const barHeight = 60;
+        
+        // Zona di sicurezza (stessa logica della CategorySkillbar)
+        const skillbarMargin = 5;
+        let skillbarLeft = x - skillbarMargin;
+        let skillbarRight = x + barWidth + skillbarMargin;
+        let skillbarTop = y - skillbarMargin;
+        let skillbarBottom = y + barHeight + skillbarMargin;
+        
+        // Se una categoria è aperta, estendi i bounds per includere il menu a tendina
+        if (this.categorySkillbar.activeCategory) {
+            const category = this.categorySkillbar.categories[this.categorySkillbar.getCategoryKeyByName(this.categorySkillbar.activeCategory)];
+            if (category) {
+                const itemsPerRow = 4;
+                const rows = Math.ceil(category.items.length / itemsPerRow);
+                const itemSize = 50;
+                const itemSpacing = 10;
+                const totalHeight = rows * (itemSize + itemSpacing) + itemSpacing;
+                const menuTop = y - totalHeight - 10;
+                skillbarTop = Math.min(skillbarTop, menuTop - skillbarMargin);
+            }
+        }
+        
+        // Controlla se il click è nella zona di sicurezza
+        if (mouseX >= skillbarLeft && mouseX <= skillbarRight && mouseY >= skillbarTop && mouseY <= skillbarBottom) {
+            return true;
+        }
+        
+        // Se una categoria è aperta, controlla anche il menu a tendina
+        if (this.categorySkillbar.activeCategory) {
+            const category = this.categorySkillbar.categories[this.categorySkillbar.getCategoryKeyByName(this.categorySkillbar.activeCategory)];
+            if (category) {
+                const itemsPerRow = 4;
+                const rows = Math.ceil(category.items.length / itemsPerRow);
+                const itemSize = 50;
+                const itemSpacing = 10;
+                const totalHeight = rows * (itemSize + itemSpacing) + itemSpacing;
+                
+                const menuX = x;
+                const menuY = y - totalHeight - 10;
+                
+                if (mouseX >= menuX && mouseX <= menuX + barWidth && mouseY >= menuY && mouseY <= menuY + totalHeight) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
     // Gestisce i click sulla skillbar
     handleSkillbarClick(mouseX, mouseY) {
         const slotSize = 50;
@@ -1657,24 +1733,7 @@ class Game {
         const buttonX = this.width - buttonSize - 20;
         const buttonY = 20;
         
-        // Sfondo del pulsante
-        this.ctx.fillStyle = '#000000';
-        this.roundRect(buttonX, buttonY, buttonSize, buttonSize, 8);
-        this.ctx.fill();
-        
-        // Bordo del pulsante
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        // Icona ingranaggio
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = '20px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('⚙', buttonX + buttonSize/2, buttonY + buttonSize/2 + 7);
-        
-        // Ripristina allineamento
-        this.ctx.textAlign = 'left';
+        this.drawStandardIcon(buttonX, buttonY, '⚙');
     }
     
     // Disegna pulsante Space Station
@@ -1683,24 +1742,7 @@ class Game {
         const buttonX = this.width - buttonSize - 20;
         const buttonY = 70; // Sotto il pulsante impostazioni
         
-        // Sfondo del pulsante
-        this.ctx.fillStyle = '#000000';
-        this.roundRect(buttonX, buttonY, buttonSize, buttonSize, 8);
-        this.ctx.fill();
-        
-        // Bordo del pulsante
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        // Icona Space Station
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = '20px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('🚀', buttonX + buttonSize/2, buttonY + buttonSize/2 + 7);
-        
-        // Ripristina allineamento
-        this.ctx.textAlign = 'left';
+        this.drawStandardIcon(buttonX, buttonY, '🚀');
     }
     
     gameLoop() {
