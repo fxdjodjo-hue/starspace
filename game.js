@@ -25,6 +25,8 @@ import { Smartbomb } from './modules/Smartbomb.js';
 import { FastRepair } from './modules/FastRepair.js';
 import { EMP } from './modules/EMP.js';
 import { Leech } from './modules/Leech.js';
+import { Inventory } from './modules/Inventory.js';
+import { InventoryItem } from './modules/InventoryItem.js';
 
 
 class Game {
@@ -100,6 +102,9 @@ class Game {
         // Leech
         this.leech = new Leech();
         
+        // Inventario
+        this.inventory = new Inventory();
+        
         // Pannello statistiche (apribile/chiudibile)
         this.statsPanelOpen = false;
         
@@ -130,6 +135,14 @@ class Game {
         
         // Applica le impostazioni salvate
         this.settingsPanel.applyAudioSettings();
+        
+        // Aggiungi oggetti di esempio all'inventario (prima di caricare)
+        this.initializeInventory();
+        
+        // Carica l'inventario (solo se non è stato inizializzato)
+        if (this.inventory.items.length === 0) {
+            this.inventory.load();
+        }
         
         // Rendi l'istanza del gioco disponibile globalmente per il ridimensionamento
         window.gameInstance = this;
@@ -189,6 +202,9 @@ class Game {
         // Aggiorna Leech
         this.leech.update(this.ship);
         
+        // Aggiorna inventario
+        this.inventory.update();
+        
         // Aggiorna la camera
         this.camera.update(this.ship);
         
@@ -212,6 +228,21 @@ class Game {
             if (this.deathPopup.handleClick(mousePos.x, mousePos.y, this.ship, this.width, this.height)) {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal popup
+            }
+        }
+        
+        // Gestisci movimento del mouse per l'inventario
+        if (this.inventory.isOpen) {
+            const mousePos = this.input.getMousePosition();
+            this.inventory.handleMouseMove(mousePos.x, mousePos.y, this.width, this.height);
+        }
+        
+        // Gestisci click sull'inventario
+        if (this.input.isLeftClickJustReleased() && this.inventory.isOpen) {
+            const mousePos = this.input.getMousePosition();
+            if (this.inventory.handleClick(mousePos.x, mousePos.y, this.width, this.height)) {
+                this.input.resetLeftClickReleased();
+                return; // Click gestito dall'inventario
             }
         }
         
@@ -276,7 +307,7 @@ class Game {
             this.settingsPanel.stopDragging();
             // Ferma il movimento della nave quando l'utente smette di cliccare
             // MA solo se non c'è un target attivo dalla minimappa E l'inventario non è aperto
-            if (!this.minimap.currentTarget) {
+            if (!this.minimap.currentTarget && !this.inventory.isOpen) {
                 this.ship.stopMovement();
             }
         }
@@ -314,7 +345,7 @@ class Game {
         this.input.resetMouseJustPressed();
         
         // Gestisci input per il movimento (solo se non si sta facendo drag)
-        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen) {
+        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             
             // Pulisci il target della minimappa quando si inizia il movimento normale
@@ -331,7 +362,7 @@ class Game {
         }
         
         // Gestisci click destro per selezione target E minimappa (solo se il pannello non è aperto)
-        if (this.input.isRightClickJustReleased() && !this.upgradePanelOpen && !this.spaceStationPanel.isOpen) {
+        if (this.input.isRightClickJustReleased() && !this.upgradePanelOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
             
@@ -463,6 +494,11 @@ class Game {
             }
         }
         
+        // Comando per aprire/chiudere inventario (tasto I)
+        if (this.input.isKeyJustPressed('KeyI')) {
+            this.inventory.toggle();
+        }
+        
 
         
         // Gestisci click sui pulsanti di upgrade
@@ -474,7 +510,7 @@ class Game {
         }
         
         // Gestisci click sulla skillbar
-        if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen) {
+        if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             this.handleSkillbarClick(mousePos.x, mousePos.y);
         }
@@ -491,8 +527,8 @@ class Game {
         // Reset dei flag dei tasti
         this.input.resetKeysJustPressed();
         
-        // Gestisci zoom con rotella del mouse
-        if (this.input.hasWheelMovement()) {
+        // Gestisci zoom con rotella del mouse (solo se l'inventario non è aperto)
+        if (this.input.hasWheelMovement() && !this.inventory.isOpen) {
             if (this.input.mouse.wheelDelta > 0) {
                 this.camera.zoomIn();
             } else if (this.input.mouse.wheelDelta < 0) {
@@ -870,6 +906,25 @@ class Game {
         
         // Disegna popup di morte (sempre sopra tutto)
         this.deathPopup.draw(this.ctx, this.width, this.height);
+        
+        // Disegna inventario
+        this.inventory.draw(this.ctx, this.width, this.height);
+    }
+    
+    // Inizializza l'inventario con oggetti di esempio
+    initializeInventory() {
+        // Aggiungi alcuni oggetti di esempio se l'inventario è vuoto
+        if (this.inventory.items.length === 0) {
+            const exampleItems = InventoryItem.createExampleItems();
+            
+            // Aggiungi più oggetti per testare il sistema a 5 slot
+            for (let i = 0; i < exampleItems.length; i++) {
+                // Aggiungi 2-3 copie di ogni oggetto per testare l'equipaggiamento multiplo
+                for (let j = 0; j < 2; j++) {
+                    this.inventory.addItem(exampleItems[i]);
+                }
+            }
+        }
     }
     
     // Controlla l'interazione con la stazione spaziale
