@@ -165,6 +165,19 @@ export class SpaceStation {
             Math.pow(this.x - ship.x, 2) + Math.pow(this.y - ship.y, 2)
         );
         
+        // Gestisci il suono ambientale della stazione
+        if (distance < 1000) {
+            // Se non stiamo già riproducendo il suono, avvialo
+            if (gameInstance && gameInstance.audioManager && !gameInstance.audioManager.spaceStationAmbientAudio) {
+                gameInstance.audioManager.startSpaceStationAmbientSound();
+            }
+        } else {
+            // Se siamo troppo lontani, ferma il suono
+            if (gameInstance && gameInstance.audioManager && gameInstance.audioManager.spaceStationAmbientAudio) {
+                gameInstance.audioManager.stopSpaceStationAmbientSound();
+            }
+        }
+        
         // Se la nave è entro 1000 pixel dalla stazione, mostra il messaggio
         if (distance < 1000) {
             if (gameInstance && gameInstance.zoneNotifications) {

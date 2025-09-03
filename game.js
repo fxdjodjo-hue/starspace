@@ -21,6 +21,11 @@ import { ZoneNotification } from './modules/ZoneNotification.js';
 import { SpaceStationPanel } from './modules/SpaceStationPanel.js';
 import { InteractiveAsteroid } from './modules/InteractiveAsteroid.js';
 import { DeathPopup } from './modules/DeathPopup.js';
+import { Smartbomb } from './modules/Smartbomb.js';
+import { FastRepair } from './modules/FastRepair.js';
+import { EMP } from './modules/EMP.js';
+import { Leech } from './modules/Leech.js';
+
 
 class Game {
     constructor() {
@@ -28,7 +33,6 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width;
         this.height = this.canvas.height;
-
         
         // Inizializza tutti i moduli
         this.ship = new Ship(8000, 5000); // Centro del rettangolo 16000x10000
@@ -83,6 +87,18 @@ class Game {
         
         // Pannello stazione spaziale
         this.spaceStationPanel = new SpaceStationPanel();
+        
+        // Smartbomb
+        this.smartbomb = new Smartbomb();
+        
+        // FastRepair
+        this.fastRepair = new FastRepair();
+        
+        // EMP
+        this.emp = new EMP();
+        
+        // Leech
+        this.leech = new Leech();
         
         // Pannello statistiche (apribile/chiudibile)
         this.statsPanelOpen = false;
@@ -161,6 +177,18 @@ class Game {
         // Aggiorna effetti di esplosione
         this.explosionManager.update();
         
+        // Aggiorna smartbomb
+        this.smartbomb.update(16); // 16ms = ~60fps
+        
+        // Aggiorna FastRepair
+        this.fastRepair.update();
+        
+        // Aggiorna EMP
+        this.emp.update();
+        
+        // Aggiorna Leech
+        this.leech.update(this.ship);
+        
         // Aggiorna la camera
         this.camera.update(this.ship);
         
@@ -181,7 +209,7 @@ class Game {
         // Gestisci click su popup di morte (priorità massima)
         if (this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
-            if (this.deathPopup.handleClick(mousePos.x, mousePos.y, this.ship)) {
+            if (this.deathPopup.handleClick(mousePos.x, mousePos.y, this.ship, this.width, this.height)) {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal popup
             }
@@ -247,7 +275,7 @@ class Game {
         if (this.input.isLeftClickJustReleased()) {
             this.settingsPanel.stopDragging();
             // Ferma il movimento della nave quando l'utente smette di cliccare
-            // MA solo se non c'è un target attivo dalla minimappa
+            // MA solo se non c'è un target attivo dalla minimappa E l'inventario non è aperto
             if (!this.minimap.currentTarget) {
                 this.ship.stopMovement();
             }
@@ -386,6 +414,46 @@ class Game {
 
         }
         
+        // Attiva smartbomb (tasto 1 - primo slot skillbar)
+        if (this.input.isKeyJustPressed('Digit1')) {
+            if (this.smartbomb.activate(this.ship, this.enemies, this.explosionManager)) {
+                this.notifications.add('💣 Smartbomb attivata!', 200, 'info');
+            } else {
+                const remaining = Math.ceil(this.smartbomb.getCooldownRemaining() / 1000);
+                this.notifications.add(`⏰ Smartbomb in cooldown: ${remaining}s`, 200, 'warning');
+            }
+        }
+        
+        // Attiva FastRepair (tasto 2 - secondo slot skillbar)
+        if (this.input.isKeyJustPressed('Digit2')) {
+            if (this.fastRepair.activate(this.ship)) {
+                this.notifications.add('🔧 FastRepair attivato!', 200, 'info');
+            } else {
+                const remaining = Math.ceil(this.fastRepair.getCooldownRemaining() / 1000);
+                this.notifications.add(`⏰ FastRepair in cooldown: ${remaining}s`, 200, 'warning');
+            }
+        }
+        
+        // Attiva EMP (tasto 3 - terzo slot skillbar)
+        if (this.input.isKeyJustPressed('Digit3')) {
+            if (this.emp.activate(this.ship, this.enemies)) {
+                this.notifications.add('⚡ EMP attivato!', 200, 'info');
+            } else {
+                const remaining = Math.ceil(this.emp.getCooldownRemaining() / 1000);
+                this.notifications.add(`⏰ EMP in cooldown: ${remaining}s`, 200, 'warning');
+            }
+        }
+        
+        // Attiva Leech (tasto 4 - quarto slot skillbar)
+        if (this.input.isKeyJustPressed('Digit4')) {
+            if (this.leech.activate(this.ship)) {
+                this.notifications.add('🩸 Leech attivato!', 200, 'info');
+            } else {
+                const remaining = Math.ceil(this.leech.getCooldownRemaining() / 1000);
+                this.notifications.add(`⏰ Leech in cooldown: ${remaining}s`, 200, 'warning');
+            }
+        }
+        
         // Comando per cambiare nickname (tasto N)
         if (this.input.isKeyJustPressed('KeyN')) {
             const newNickname = prompt('Inserisci il tuo nickname:', this.playerProfile.getNickname());
@@ -395,12 +463,20 @@ class Game {
             }
         }
         
+
+        
         // Gestisci click sui pulsanti di upgrade
         if (this.input.isLeftClickJustReleased() && this.upgradePanelOpen) {
             const mousePos = this.input.getMousePosition();
             this.handleUpgradeClick(mousePos.x, mousePos.y);
             // Reset del flag per evitare spam
             this.input.resetLeftClickReleased();
+        }
+        
+        // Gestisci click sulla skillbar
+        if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen) {
+            const mousePos = this.input.getMousePosition();
+            this.handleSkillbarClick(mousePos.x, mousePos.y);
         }
         
         // Sistema di movimento continuo minimappa rimosso - la nave si muove una volta verso il target
@@ -730,6 +806,18 @@ class Game {
         // Disegna effetti di esplosione
         this.explosionManager.draw(this.ctx, this.camera);
         
+        // Disegna smartbomb
+        this.smartbomb.draw(this.ctx, this.camera);
+        
+        // Disegna FastRepair
+        this.fastRepair.draw(this.ctx, this.camera, this.ship.x, this.ship.y);
+        
+        // Disegna EMP
+        this.emp.draw(this.ctx, this.camera, this.ship.x, this.ship.y);
+        
+        // Disegna Leech
+        this.leech.draw(this.ctx, this.camera, this.ship.x, this.ship.y);
+        
         // Disegna barra HP della nave
         this.ship.drawHealthBar(this.ctx, this.camera);
         
@@ -781,7 +869,7 @@ class Game {
         }
         
         // Disegna popup di morte (sempre sopra tutto)
-        this.deathPopup.draw(this.ctx);
+        this.deathPopup.draw(this.ctx, this.width, this.height);
     }
     
     // Controlla l'interazione con la stazione spaziale
@@ -1025,10 +1113,10 @@ class Game {
         // Disegna icone autoattack a sinistra
         this.drawAutoattackIcons(panelX, panelY, autoattackIconSize, autoattackSpacing);
         
-        // Posizione della skillbar principale (slots 3-6)
+        // Posizione della skillbar principale (slots 1-4)
         const skillbarX = panelX + autoattackWidth + 20;
         
-        // Disegna 4 slot (3-6) - gli slot 1 e 2 sono ora icone autoattack separate
+        // Disegna 4 slot (1-4) - skillbar principale
         for (let i = 0; i < 4; i++) {
             const slotX = skillbarX + (i * (slotSize + slotSpacing));
             const slotY = panelY;
@@ -1044,8 +1132,25 @@ class Game {
             this.roundRect(slotX, slotY, slotSize, slotSize, 6);
                 this.ctx.stroke();
             
-            // Gli slot 1 e 2 sono ora icone autoattack separate a sinistra
-            // Questi slot (1-4) sono liberi per altre abilità
+            // Slot 1 (primo slot) - Smartbomb
+            if (i === 0) {
+                this.smartbomb.drawIcon(this.ctx, slotX, slotY, slotSize, this.smartbomb.canUse());
+            }
+            
+            // Slot 2 (secondo slot) - FastRepair
+            if (i === 1) {
+                this.fastRepair.drawIcon(this.ctx, slotX, slotY, slotSize, this.fastRepair.canUse());
+            }
+            
+            // Slot 3 (terzo slot) - EMP
+            if (i === 2) {
+                this.emp.drawIcon(this.ctx, slotX, slotY, slotSize, this.emp.canUse());
+            }
+            
+            // Slot 4 (quarto slot) - Leech
+            if (i === 3) {
+                this.leech.drawIcon(this.ctx, slotX, slotY, slotSize, this.leech.canUse());
+            }
             
             // Numero del tasto (1-4)
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
@@ -1420,6 +1525,75 @@ class Game {
         }
         
         return false;
+    }
+    
+    // Gestisce i click sulla skillbar
+    handleSkillbarClick(mouseX, mouseY) {
+        const slotSize = 50;
+        const slotSpacing = 5;
+        const autoattackIconSize = 30;
+        const autoattackSpacing = 5;
+        
+        // Calcola posizione per 4 slot (3-6) invece di 6
+        const totalWidth = (slotSize * 4) + (slotSpacing * 3);
+        const autoattackWidth = (autoattackIconSize * 2) + autoattackSpacing;
+        const totalSkillbarWidth = totalWidth + autoattackWidth + 20;
+        
+        const panelX = (this.width - totalSkillbarWidth) / 2;
+        const panelY = this.height - slotSize - 30;
+        const skillbarX = panelX + autoattackWidth + 20;
+        
+        // Controlla click sui 4 slot della skillbar
+        for (let i = 0; i < 4; i++) {
+            const slotX = skillbarX + (i * (slotSize + slotSpacing));
+            const slotY = panelY;
+            
+            if (mouseX >= slotX && mouseX <= slotX + slotSize &&
+                mouseY >= slotY && mouseY <= slotY + slotSize) {
+                
+                // Slot 1 (primo slot) - Smartbomb
+                if (i === 0) {
+                    if (this.smartbomb.activate(this.ship, this.enemies, this.explosionManager)) {
+                        this.notifications.add('💣 Smartbomb attivata!', 200, 'info');
+                    } else {
+                        const remaining = Math.ceil(this.smartbomb.getCooldownRemaining() / 1000);
+                        this.notifications.add(`⏰ Smartbomb in cooldown: ${remaining}s`, 200, 'warning');
+                    }
+                }
+                
+                // Slot 2 (secondo slot) - FastRepair
+                if (i === 1) {
+                    if (this.fastRepair.activate(this.ship)) {
+                        this.notifications.add('🔧 FastRepair attivato!', 200, 'info');
+                    } else {
+                        const remaining = Math.ceil(this.fastRepair.getCooldownRemaining() / 1000);
+                        this.notifications.add(`⏰ FastRepair in cooldown: ${remaining}s`, 200, 'warning');
+                    }
+                }
+                
+                // Slot 3 (terzo slot) - EMP
+                if (i === 2) {
+                    if (this.emp.activate(this.ship, this.enemies)) {
+                        this.notifications.add('⚡ EMP attivato!', 200, 'info');
+                    } else {
+                        const remaining = Math.ceil(this.emp.getCooldownRemaining() / 1000);
+                        this.notifications.add(`⏰ EMP in cooldown: ${remaining}s`, 200, 'warning');
+                    }
+                }
+                
+                // Slot 4 (quarto slot) - Leech
+                if (i === 3) {
+                    if (this.leech.activate(this.ship)) {
+                        this.notifications.add('🩸 Leech attivato!', 200, 'info');
+                    } else {
+                        const remaining = Math.ceil(this.leech.getCooldownRemaining() / 1000);
+                        this.notifications.add(`⏰ Leech in cooldown: ${remaining}s`, 200, 'warning');
+                    }
+                }
+                // Altri slot per future abilità
+                break;
+            }
+        }
     }
     
     // Disegna pulsante impostazioni

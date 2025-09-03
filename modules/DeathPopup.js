@@ -23,12 +23,12 @@ export class DeathPopup {
         this.nearestStation = null;
     }
 
-    handleClick(x, y, ship) {
+    handleClick(x, y, ship, canvasWidth, canvasHeight) {
         if (!this.isVisible) return false;
 
         // Controlla se il click è sul pulsante respawn
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
         const buttonX = centerX - 100;
         const buttonY = centerY + 50;
         const buttonWidth = 200;
@@ -88,16 +88,16 @@ export class DeathPopup {
         }
     }
 
-    draw(ctx) {
+    draw(ctx, canvasWidth, canvasHeight) {
         if (!this.isVisible) return;
 
         // Sfondo semi-trasparente
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         // Popup centrale
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
         const popupWidth = 400;
         const popupHeight = 200;
 

@@ -62,7 +62,7 @@ export class Ship {
         this.upgradeManager = new UpgradeManager();
         
         // Sistema di riparazione automatica
-        this.autoRepairDelay = 300; // 5 secondi (300 frame a 60 FPS)
+        this.autoRepairDelay = 600; // 10 secondi (600 frame a 60 FPS)
         this.lastCombatTime = 0; // Tempo dell'ultimo combattimento
         this.repairRate = 5; // HP riparati per secondo
         this.shieldRepairRate = 3; // Scudo riparato per secondo
@@ -279,6 +279,7 @@ export class Ship {
             this.isInCombat = !this.isInCombat;
             if (this.isInCombat) {
                 this.combatTimer = 0;
+                this.lastCombatTime = Date.now(); // Aggiorna il tempo dell'ultimo combattimento
             } else {
                 // Se il combattimento si ferma, deattiva tutti i proiettili attivi
                 this.projectiles.forEach(projectile => {
@@ -498,6 +499,14 @@ export class Ship {
 
                 // Proiettile colpisce il target
                 this.selectedTarget.takeDamage(this.projectileDamage);
+                
+                // Aggiorna il tempo dell'ultimo combattimento (stiamo infliggendo danno)
+                this.lastCombatTime = Date.now();
+                
+                // Processa il danno per il Leech
+                if (window.gameInstance && window.gameInstance.leech) {
+                    window.gameInstance.leech.processDamageDealt(this.projectileDamage, this, this.selectedTarget.x, this.selectedTarget.y);
+                }
 
                 projectile.deactivate();
                 
@@ -547,6 +556,14 @@ export class Ship {
             if (missile.checkCollision(this.selectedTarget)) {
                 // Missile colpisce il target
                 this.selectedTarget.takeDamage(this.missileDamage);
+                
+                // Aggiorna il tempo dell'ultimo combattimento (stiamo infliggendo danno)
+                this.lastCombatTime = Date.now();
+                
+                // Processa il danno per il Leech
+                if (window.gameInstance && window.gameInstance.leech) {
+                    window.gameInstance.leech.processDamageDealt(this.missileDamage, this, this.selectedTarget.x, this.selectedTarget.y);
+                }
                 
                 // Rimuovi il missile
                 this.missiles.splice(i, 1);
@@ -772,9 +789,10 @@ export class Ship {
     // Aggiorna la rigenerazione dello scudo
     updateShield() {
         const currentTime = Date.now();
+        const timeSinceCombat = currentTime - this.lastCombatTime;
         
-        // Se è passato abbastanza tempo dall'ultimo danno e lo scudo non è al massimo
-        if (currentTime - this.lastDamageTime >= this.shieldRegenDelay && this.shield < this.maxShield) {
+        // Se sono passati 10 secondi dall'ultimo combattimento e lo scudo non è al massimo
+        if (timeSinceCombat >= this.autoRepairDelay * 16.67 && this.shield < this.maxShield) {
             this.shield += this.shieldRegenRate / 60; // 60 FPS
             this.shield = Math.min(this.shield, this.maxShield);
         }
@@ -846,25 +864,12 @@ export class Ship {
     
     // Trova la stazione spaziale più vicina
     findNearestSpaceStation() {
-        if (!window.gameInstance || !window.gameInstance.spaceStations) {
+        if (!window.gameInstance || !window.gameInstance.spaceStation) {
             return null;
         }
         
-        let nearestStation = null;
-        let minDistance = Infinity;
-        
-        window.gameInstance.spaceStations.forEach(station => {
-            const distance = Math.sqrt(
-                Math.pow(station.x - this.x, 2) + Math.pow(station.y - this.y, 2)
-            );
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestStation = station;
-            }
-        });
-        
-        return nearestStation;
+        // Nel gioco c'è solo una stazione spaziale, quindi la restituiamo direttamente
+        return window.gameInstance.spaceStation;
     }
     
 
@@ -879,8 +884,8 @@ export class Ship {
         const currentTime = Date.now();
         const timeSinceCombat = currentTime - this.lastCombatTime;
         
-        // Se sono passati 5 secondi dall'ultimo combattimento
-        if (timeSinceCombat >= this.autoRepairDelay * 16.67) { // 300 frame * 16.67ms = 5 secondi
+        // Se sono passati 10 secondi dall'ultimo combattimento
+        if (timeSinceCombat >= this.autoRepairDelay * 16.67) { // 600 frame * 16.67ms = 10 secondi
             // Ripara HP se necessario
             if (this.hp < this.maxHP) {
                 this.isRepairing = true;

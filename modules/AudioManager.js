@@ -10,6 +10,8 @@ export class AudioManager {
         this.musicPlaying = false;
         this.engineAudio = null;
         this.enginePlaying = false;
+        this.spaceStationAmbientAudio = null;
+        this.fadeInterval = null;
         
         // Suono collecting dedicato per massima reattività
         this.collectingAudio = null;
@@ -73,6 +75,20 @@ export class AudioManager {
         this.playSound('death', 1.0 * this.sfxVolume);
     }
     
+    // Riproduci suono smartbomb
+    playSmartbombSound() {
+        this.playSound('smartbomb', 1.2 * this.sfxVolume);
+    }
+
+    playFastRepairSound() {
+        this.playSound('fastrepair', 1.0 * this.sfxVolume);
+    }
+    
+    // Riproduci suono EMP
+    playEMPSound() {
+        this.playSound('emp', 1.0 * this.sfxVolume);
+    }
+    
     // Avvia il suono del motore
     startEngineSound() {
         if (!this.enabled || !this.sounds['engine']) return;
@@ -104,6 +120,72 @@ export class AudioManager {
     playStationPanelOpenSound() {
         this.playSound('stationpanel_open', 0.8 * this.sfxVolume);
     }
+    
+    // Avvia suono ambientale stazione spaziale
+    startSpaceStationAmbientSound() {
+        if (!this.enabled || !this.sounds['spacestation_ambient'] || this.spaceStationAmbientAudio) return;
+        
+        // Ferma eventuali fade in corso
+        if (this.fadeInterval) {
+            clearInterval(this.fadeInterval);
+        }
+        
+        // Avvia il suono della stazione a volume 0
+        this.spaceStationAmbientAudio = this.sounds['spacestation_ambient'].cloneNode();
+        this.spaceStationAmbientAudio.loop = true;
+        this.spaceStationAmbientAudio.volume = 0;
+        this.spaceStationAmbientAudio.play().catch(e => {
+            console.log('🔇 Errore riproduzione suono ambientale stazione:', e);
+        });
+        
+        // Fade in del suono della stazione
+        this.fadeInSpaceStationSound();
+        
+        console.log('🏭 Suono ambientale stazione avviato (con fade in)');
+    }
+    
+    // Ferma suono ambientale stazione spaziale
+    stopSpaceStationAmbientSound() {
+        if (this.spaceStationAmbientAudio) {
+            // Ferma eventuali fade in corso
+            if (this.fadeInterval) {
+                clearInterval(this.fadeInterval);
+                this.fadeInterval = null;
+            }
+            
+            // Ferma immediatamente il suono della stazione
+            this.spaceStationAmbientAudio.pause();
+            this.spaceStationAmbientAudio.currentTime = 0;
+            this.spaceStationAmbientAudio = null;
+            
+            console.log('🔇 Suono ambientale stazione fermato immediatamente');
+        }
+    }
+    
+    // Fade in del suono della stazione
+    fadeInSpaceStationSound() {
+        const targetVolume = this.masterVolume * this.sfxVolume * 0.3;
+        const fadeSteps = 60; // 60 step per 3 secondi
+        const stepTime = 50; // 50ms per step
+        let currentStep = 0;
+        
+        this.fadeInterval = setInterval(() => {
+            currentStep++;
+            const progress = currentStep / fadeSteps;
+            
+            // Fade in graduale
+            if (this.spaceStationAmbientAudio) {
+                this.spaceStationAmbientAudio.volume = targetVolume * progress;
+            }
+            
+            if (currentStep >= fadeSteps) {
+                clearInterval(this.fadeInterval);
+                console.log('🎵 Fade in stazione completato');
+            }
+        }, stepTime);
+    }
+    
+
     
     // Riproduci suono di avvio sistema
     playSystemReadySound() {
@@ -145,6 +227,11 @@ export class AudioManager {
         if (this.collectingAudio) {
             this.collectingAudio.volume = this.masterVolume * this.sfxVolume;
         }
+        
+        // Aggiorna volume del suono ambientale della stazione
+        if (this.spaceStationAmbientAudio) {
+            this.spaceStationAmbientAudio.volume = this.masterVolume * this.sfxVolume * 0.3;
+        }
 
     }
     
@@ -171,8 +258,12 @@ export class AudioManager {
         this.loadSound('death', 'sounds/death.mp3'); // Suono di morte del player
         this.loadSound('engine', 'sounds/engine.mp3'); // Suono del motore
         this.loadSound('stationpanel_open', 'sounds/stationpanel_open.mp3'); // Suono apertura pannello stazione
+        this.loadSound('spacestation_ambient', 'sounds/spacestationsounds.mp3'); // Suono ambientale stazione spaziale
         this.loadSound('system_ready', 'sounds/system_ready.mp3'); // Suono di avvio sistema
         this.loadSound('collecting', 'sounds/collecting.mp3'); // Suono raccolta bonus box
+        this.loadSound('smartbomb', 'skills/smartbomb/weird-space-sound-03-344943.mp3');
+        this.loadSound('fastrepair', 'skills/fastrepair/fastrepair.mp3'); // Suono FastRepair
+        this.loadSound('emp', 'skills/emp/emp.mp3'); // Suono EMP
         
         // Pre-carica aggressivamente il suono collecting per evitare ritardi
         if (this.sounds.collecting) {
@@ -254,6 +345,11 @@ export class AudioManager {
         if (this.collectingAudio) {
             this.collectingAudio.volume = this.masterVolume * this.sfxVolume;
         }
+        
+        // Aggiorna volume del suono ambientale della stazione
+        if (this.spaceStationAmbientAudio) {
+            this.spaceStationAmbientAudio.volume = this.masterVolume * this.sfxVolume * 0.3;
+        }
     }
     
 
@@ -263,6 +359,14 @@ export class AudioManager {
     // Cleanup completo dell'audio
     cleanup() {
         this.stopBackgroundMusic();
+        this.stopSpaceStationAmbientSound();
+        
+        // Ferma eventuali fade in corso
+        if (this.fadeInterval) {
+            clearInterval(this.fadeInterval);
+            this.fadeInterval = null;
+        }
+        
         // Pulisci tutti i suoni
         Object.values(this.sounds).forEach(audio => {
             if (audio) {

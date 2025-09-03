@@ -1,0 +1,16 @@
+# GitHub Pages configuration
+title: "MMORPG Spaziale"
+description: "Un gioco spaziale MMORPG stile DarkOrbit"
+baseurl: "/MMORPG"
+url: "https://tuousername.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - .gitignore
+  - _config.yml

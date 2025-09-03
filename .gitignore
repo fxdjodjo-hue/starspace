@@ -1,0 +1,32 @@
+# File di sistema
+.DS_Store
+Thumbs.db
+
+# File temporanei
+*.tmp
+*.temp
+*~
+
+# Log files
+*.log
+
+# Node modules (se aggiungerai build tools in futuro)
+node_modules/
+npm-debug.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build files (se aggiungerai build process)
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+
+# Cache files
+.cache/

@@ -1,62 +1,146 @@
-# MMORPG Semplice per Browser
+# 🚀 MMORPG Spaziale - Gioco Browser
 
-Un MMORPG 2D semplice creato con HTML5 Canvas e JavaScript vanilla.
+Un gioco spaziale MMORPG stile DarkOrbit sviluppato in JavaScript vanilla con Canvas HTML5.
 
-## Caratteristiche Attuali
+## 🎮 Caratteristiche
 
-- **Personaggio Giocabile**: Un cerchio verde che rappresenta il tuo personaggio
-- **Sistema di Movimento**: Controlli fluidi con frecce direzionali o WASD
-- **Camera Seguente**: La vista segue automaticamente il tuo personaggio
-- **Mappa Griglia**: Una mappa 50x50 tile con pattern alternato
-- **UI Informazioni**: Mostra posizione e FPS in tempo reale
-- **Movimento Diagonale**: Movimento normalizzato per velocità costante
+### ✨ **Sistema di Gioco**
+- **Nave Spaziale**: Controllo fluido con mouse
+- **Combattimento**: Sistema di combattimento automatico contro nemici
+- **Esplorazione**: Mondo spaziale infinito (16000x10000)
+- **Progressione**: Sistema di livelli, esperienza e onore
+- **Economia**: Crediti, Uridium e sistema di upgrade
 
-## Come Giocare
+### 🎯 **Meccaniche di Gioco**
+- **Movimento**: Click sinistro per muovere la nave
+- **Combattimento**: Click destro per selezionare nemici, CTRL per attacco automatico
+- **Skills**: 4 abilità speciali (Smartbomb, FastRepair, EMP, Leech)
+- **Stazione Spaziale**: Upgrade e potenziamenti (tasto E)
+- **Minimappa**: Navigazione rapida e selezione target
 
-1. Apri `index.html` nel tuo browser
-2. Usa le **frecce direzionali** o **WASD** per muoverti
-3. Esplora la mappa - il personaggio si muove fluidamente
-4. La camera segue automaticamente il tuo movimento
+### 🎨 **Sistema Visivo**
+- **Grafica**: Sprites 2D con effetti di particelle
+- **UI**: Interfaccia moderna con tema scuro
+- **Effetti**: Esplosioni, scie, effetti ambientali
+- **Audio**: Musica di sottofondo e effetti sonori
 
-## Controlli
+## 🕹️ Controlli
 
-- **↑ / W**: Muovi verso l'alto
-- **↓ / S**: Muovi verso il basso
-- **← / A**: Muovi verso sinistra
-- **→ / D**: Muovi verso destra
+| Tasto/Azione | Funzione |
+|--------------|----------|
+| **Click Sinistro** | Muovi la nave spaziale |
+| **Click Destro** | Seleziona nemici per combattimento |
+| **CTRL** | Avvia/ferma attacco automatico |
+| **E** | Interagisci con la stazione spaziale |
+| **1-4** | Attiva abilità speciali |
+| **C** | Aggiungi crediti (test) |
+| **U** | Aggiungi uridium (test) |
+| **O** | Aggiungi onore (test) |
+| **D** | Test morte e respawn |
+| **N** | Cambia nickname |
+| **⛶** | Schermo intero |
 
-## Struttura del Progetto
+## 🚀 Demo Online
 
-- `index.html` - File HTML principale con interfaccia
-- `game.js` - Logica del gioco e sistema di rendering
-- `README.md` - Questa documentazione
+**Gioca subito**: [GitHub Pages Demo](https://tuousername.github.io/MMORPG)
 
-## Tecnologie Utilizzate
+## 🛠️ Installazione Locale
 
-- HTML5 Canvas per il rendering
-- JavaScript ES6+ per la logica del gioco
-- CSS per lo styling dell'interfaccia
-- RequestAnimationFrame per il loop del gioco
+### Prerequisiti
+- Browser moderno con supporto ES6 modules
+- Server locale (per i moduli ES6)
 
-## Prossimi Sviluppi
+### Setup
+```bash
+# Clona il repository
+git clone https://github.com/tuousername/MMORPG.git
+cd MMORPG
 
-- Aggiunta di altri giocatori (multiplayer)
-- Sistema di combattimento
-- Inventario e oggetti
-- Chat e comunicazione
-- Mappe più complesse con ostacoli
-- Sistema di quest e missioni
+# Avvia un server locale (esempio con Python)
+python -m http.server 8000
 
-## Come Eseguire
+# Oppure con Node.js
+npx serve .
 
-1. Scarica tutti i file nella stessa cartella
-2. Apri `index.html` con un browser moderno
-3. Inizia a giocare!
+# Apri il browser su http://localhost:8000
+```
 
-## Requisiti
+## 📁 Struttura del Progetto
 
-- Browser moderno con supporto HTML5 Canvas
-- JavaScript abilitato
-- Nessuna installazione richiesta - funziona offline
+```
+MMORPG/
+├── index.html              # File principale HTML
+├── game.js                 # Logica principale del gioco
+├── modules/                # Moduli del gioco
+│   ├── Ship.js            # Sistema nave spaziale
+│   ├── Camera.js          # Sistema camera
+│   ├── Input.js           # Gestione input
+│   ├── World.js           # Mondo di gioco
+│   ├── Renderer.js        # Sistema di rendering
+│   ├── Minimap.js         # Minimappa
+│   ├── Enemy.js           # Sistema nemici
+│   ├── SpaceStation.js    # Stazione spaziale
+│   ├── AudioManager.js    # Gestione audio
+│   └── ...                # Altri moduli
+├── sounds/                 # File audio
+├── resources/              # Risorse grafiche
+├── skills/                 # Abilità speciali
+└── README.md              # Questo file
+```
 
+## 🎯 Roadmap
 
+### ✅ Completato
+- [x] Sistema di movimento e camera
+- [x] Combattimento base
+- [x] Sistema di upgrade
+- [x] Stazione spaziale
+- [x] Minimappa
+- [x] Sistema di notifiche
+- [x] Audio e effetti sonori
+
+### 🔄 In Sviluppo
+- [ ] Sistema di inventario
+- [ ] Più tipi di nemici
+- [ ] Sistema di quest
+- [ ] Boss battles
+
+### 📋 Pianificato
+- [ ] Multiplayer online
+- [ ] Sistema di clan
+- [ ] Eventi speciali
+- [ ] Mobile support
+
+## 🎨 Tecnologie Utilizzate
+
+- **HTML5 Canvas** - Rendering grafico
+- **JavaScript ES6+** - Logica di gioco
+- **CSS3** - Styling e layout
+- **Web Audio API** - Gestione audio
+- **LocalStorage** - Salvataggio progressi
+
+## 🤝 Contributi
+
+I contributi sono benvenuti! Per contribuire:
+
+1. Fork del repository
+2. Crea un branch per la tua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit delle modifiche (`git commit -m 'Add some AmazingFeature'`)
+4. Push al branch (`git push origin feature/AmazingFeature`)
+5. Apri una Pull Request
+
+## 📝 Licenza
+
+Questo progetto è distribuito sotto licenza MIT. Vedi `LICENSE` per maggiori informazioni.
+
+## 👨‍💻 Sviluppatore
+
+Sviluppato con ❤️ per la community gaming.
+
+## 🐛 Bug Reports
+
+Se trovi bug o hai suggerimenti, apri una [Issue](https://github.com/tuousername/MMORPG/issues).
+
+---
+
+**Buon gioco! 🚀**
