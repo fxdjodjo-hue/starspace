@@ -1,4 +1,6 @@
 // Modulo Missile per i missili del combattimento
+import { MissileSmoke } from './MissileSmoke.js';
+
 export class Missile {
     constructor(x, y, targetX, targetY, speed = 4, damage = 50) {
         this.x = x;
@@ -11,6 +13,9 @@ export class Missile {
         this.radius = 8;
         this.rotation = 0;
         this.lifetime = 300; // 5 secondi a 60fps
+        
+        // Sistema fumo
+        this.smoke = new MissileSmoke();
         
         // Calcola direzione iniziale - SEMPLICE
         const dx = this.targetX - this.x;
@@ -68,6 +73,9 @@ export class Missile {
         this.x += this.vx;
         this.y += this.vy;
         
+        // Aggiorna l'effetto fumo
+        this.smoke.update(16); // 16ms = ~60fps
+        
         // Riduci la vita
         this.lifetime--;
         if (this.lifetime <= 0) {
@@ -78,6 +86,9 @@ export class Missile {
     // Disegna il missile
     draw(ctx, camera) {
         if (!this.active) return;
+        
+        // Disegna prima l'effetto fumo (dietro al missile)
+        this.smoke.draw(ctx, camera, this);
         
         // Posizione relativa alla camera
         const screenX = this.x - camera.x;
