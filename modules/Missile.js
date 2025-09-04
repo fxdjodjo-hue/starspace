@@ -74,7 +74,7 @@ export class Missile {
         this.y += this.vy;
         
         // Aggiorna l'effetto fumo
-        this.smoke.update(16); // 16ms = ~60fps
+        this.smoke.update(this); // Passa il missile per la scia
         
         // Riduci la vita
         this.lifetime--;

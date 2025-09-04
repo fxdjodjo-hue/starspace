@@ -6,9 +6,12 @@ export class MissileSmoke {
         this.frameWidth = 90;
         this.frameHeight = 90;
         this.totalFrames = 20;
-        this.currentFrame = 0;
-        this.animationSpeed = 0.3; // Velocità animazione
-        this.frameTime = 0;
+        
+        // Sistema scia fumo
+        this.smokeTrail = []; // Array di particelle di fumo
+        this.maxTrailLength = 15; // Massimo numero di particelle nella scia
+        this.smokeSpawnRate = 0; // Timer per spawnare nuove particelle
+        this.smokeSpawnInterval = 3; // Ogni 3 frame una nuova particella
         
         this.loadSmokeImage();
     }
@@ -26,45 +29,78 @@ export class MissileSmoke {
         };
     }
     
-    // Aggiorna l'animazione del fumo
-    update(deltaTime) {
-        if (!this.smokeLoaded) return;
+    // Aggiorna la scia di fumo
+    update(missile) {
+        if (!this.smokeLoaded || !missile.active) return;
         
-        this.frameTime += deltaTime;
-        if (this.frameTime >= this.animationSpeed) {
-            this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
-            this.frameTime = 0;
+        // Spawna nuove particelle di fumo
+        this.smokeSpawnRate++;
+        if (this.smokeSpawnRate >= this.smokeSpawnInterval) {
+            this.smokeSpawnRate = 0;
+            
+            // Aggiungi una nuova particella di fumo dietro al missile
+            const smokeOffset = 25; // Distanza dietro al missile
+            const smokeX = missile.x - missile.vx * smokeOffset / missile.speed;
+            const smokeY = missile.y - missile.vy * smokeOffset / missile.speed;
+            
+            this.smokeTrail.push({
+                x: smokeX,
+                y: smokeY,
+                frame: 0,
+                life: this.totalFrames, // Vita della particella
+                alpha: 0.8
+            });
+            
+            // Debug: verifica che le particelle vengano create
+            console.log('💨 Particella fumo creata, totale:', this.smokeTrail.length);
+        }
+        
+        // Aggiorna tutte le particelle esistenti
+        this.smokeTrail = this.smokeTrail.filter(particle => {
+            particle.frame++;
+            particle.life--;
+            particle.alpha = particle.life / this.totalFrames; // Fade out
+            
+            return particle.life > 0;
+        });
+        
+        // Limita la lunghezza della scia
+        if (this.smokeTrail.length > this.maxTrailLength) {
+            this.smokeTrail.shift(); // Rimuovi la particella più vecchia
         }
     }
     
-    // Disegna l'effetto fumo dietro al missile
+    // Disegna la scia di fumo dietro al missile
     draw(ctx, camera, missile) {
         if (!this.smokeLoaded || !missile.active) return;
         
+        // Debug: verifica se ci sono particelle da disegnare
+        if (this.smokeTrail.length > 0) {
+            console.log('💨 Disegnando', this.smokeTrail.length, 'particelle di fumo');
+        }
+        
         ctx.save();
         
-        // Calcola la posizione del missile sullo schermo
-        const screenX = missile.x - camera.x;
-        const screenY = missile.y - camera.y;
-        
-        // Calcola la posizione del fumo (dietro al missile)
-        const smokeOffset = 30; // Distanza dietro al missile
-        const smokeX = screenX - missile.vx * smokeOffset / missile.speed;
-        const smokeY = screenY - missile.vy * smokeOffset / missile.speed;
-        
-        // Calcola il frame corrente
-        const frameX = this.currentFrame * this.frameWidth;
-        
-        // Imposta trasparenza per effetto fumo
-        ctx.globalAlpha = 0.6;
-        
-        // Disegna il frame corrente del fumo
-        const smokeSize = 60; // Dimensione del fumo
-        ctx.drawImage(
-            this.smokeImage,
-            frameX, 0, this.frameWidth, this.frameHeight, // Source rectangle
-            smokeX - smokeSize/2, smokeY - smokeSize/2, smokeSize, smokeSize // Destination rectangle
-        );
+        // Disegna tutte le particelle della scia
+        this.smokeTrail.forEach((particle, index) => {
+            // Calcola la posizione sullo schermo
+            const screenX = particle.x - camera.x;
+            const screenY = particle.y - camera.y;
+            
+            // Calcola il frame da disegnare
+            const frameX = particle.frame * this.frameWidth;
+            
+            // Imposta trasparenza per effetto fumo
+            ctx.globalAlpha = particle.alpha * 0.6;
+            
+            // Disegna la particella di fumo
+            const smokeSize = 50; // Dimensione del fumo
+            ctx.drawImage(
+                this.smokeImage,
+                frameX, 0, this.frameWidth, this.frameHeight, // Source rectangle
+                screenX - smokeSize/2, screenY - smokeSize/2, smokeSize, smokeSize // Destination rectangle
+            );
+        });
         
         ctx.restore();
     }
