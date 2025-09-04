@@ -161,6 +161,11 @@ export class SpaceStation {
     checkAndShowMessage(ship, gameInstance) {
         if (!this.active) return;
         
+        // Controlla se la stazione dovrebbe essere visibile nella mappa corrente
+        if (gameInstance && gameInstance.mapManager && !gameInstance.mapManager.shouldShowSpaceStation()) {
+            return;
+        }
+        
         const distance = Math.sqrt(
             Math.pow(this.x - ship.x, 2) + Math.pow(this.y - ship.y, 2)
         );

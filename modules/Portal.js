@@ -88,6 +88,11 @@ export class Portal {
             this.isAnimating = true;
             this.animationStartTime = Date.now();
             this.animationFrame = 0;
+            
+            // Riproduci suono salto portale
+            if (this.game && this.game.audioManager) {
+                this.game.audioManager.playPortalJumpSound();
+            }
         }
     }
     

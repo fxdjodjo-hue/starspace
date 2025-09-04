@@ -99,8 +99,8 @@ export class Minimap {
         // Disegna gli NPC nella minimappa
         this.drawEnemies(ctx, enemies);
         
-        // Disegna la stazione spaziale (punto giallo)
-        if (spaceStation && spaceStation.active) {
+        // Disegna la stazione spaziale (punto giallo) solo se presente nella mappa corrente
+        if (spaceStation && spaceStation.active && mapManager && mapManager.shouldShowSpaceStation()) {
             spaceStation.drawMinimap(ctx, this.x, this.y, this.gridWidth, this.mapWidth);
         }
         
@@ -245,8 +245,17 @@ export class Minimap {
             // Colore basato sul tipo di nemico
             let color;
             switch (enemy.type) {
-                case 'barracuda':
-                    color = '#ff4444'; // Rosso per Barracuda
+                case 'npc_x1':
+                    color = '#4a90e2'; // Blu per X1 Patrol
+                    break;
+                case 'npc_x2':
+                    color = '#e74c3c'; // Rosso per X2 Elite
+                    break;
+                case 'npc_x3':
+                    color = '#9b59b6'; // Viola per X3 Guardian
+                    break;
+                case 'barracuda': // Fallback per compatibilità
+                    color = '#ff4444';
                     break;
                 default:
                     color = '#ff4444';

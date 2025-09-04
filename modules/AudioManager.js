@@ -16,6 +16,10 @@ export class AudioManager {
         // Suono collecting dedicato per massima reattività
         this.collectingAudio = null;
         
+        // Suoni portale dedicati per massima reattività
+        this.portalJumpAudio = null;
+        this.portalDoneAudio = null;
+        
 
     }
     
@@ -87,6 +91,47 @@ export class AudioManager {
     // Riproduci suono EMP
     playEMPSound() {
         this.playSound('emp', 1.0 * this.sfxVolume);
+    }
+    
+    // Riproduci suono teletrasporto
+    playTeleportSound() {
+        this.playSound('teleport', 1.0 * this.sfxVolume);
+    }
+    
+    // Riproduci suono salto portale
+    playPortalJumpSound() {
+        if (!this.enabled) return;
+        
+        // Usa suono dedicato per massima reattività
+        if (!this.portalJumpAudio && this.sounds.portalJump) {
+            this.portalJumpAudio = this.sounds.portalJump.cloneNode();
+            this.portalJumpAudio.preload = 'auto';
+            this.portalJumpAudio.load();
+        }
+        
+        if (this.portalJumpAudio) {
+            this.portalJumpAudio.currentTime = 0; // Reset al inizio
+            this.portalJumpAudio.volume = this.masterVolume * this.sfxVolume;
+            this.portalJumpAudio.play().catch(e => console.log('Errore riproduzione portalJump:', e));
+        }
+    }
+    
+    // Riproduci suono arrivo portale
+    playPortalDoneSound() {
+        if (!this.enabled) return;
+        
+        // Usa suono dedicato per massima reattività
+        if (!this.portalDoneAudio && this.sounds.portalDone) {
+            this.portalDoneAudio = this.sounds.portalDone.cloneNode();
+            this.portalDoneAudio.preload = 'auto';
+            this.portalDoneAudio.load();
+        }
+        
+        if (this.portalDoneAudio) {
+            this.portalDoneAudio.currentTime = 0; // Reset al inizio
+            this.portalDoneAudio.volume = this.masterVolume * this.sfxVolume;
+            this.portalDoneAudio.play().catch(e => console.log('Errore riproduzione portalDone:', e));
+        }
     }
     
     // Avvia il suono del motore
@@ -232,6 +277,14 @@ export class AudioManager {
             this.collectingAudio.volume = this.masterVolume * this.sfxVolume;
         }
         
+        // Aggiorna volume dei suoni portale se attivi
+        if (this.portalJumpAudio) {
+            this.portalJumpAudio.volume = this.masterVolume * this.sfxVolume;
+        }
+        if (this.portalDoneAudio) {
+            this.portalDoneAudio.volume = this.masterVolume * this.sfxVolume;
+        }
+        
         // Aggiorna volume del suono ambientale della stazione
         if (this.spaceStationAmbientAudio) {
             this.spaceStationAmbientAudio.volume = this.masterVolume * this.sfxVolume * 0.3;
@@ -268,11 +321,24 @@ export class AudioManager {
         this.loadSound('smartbomb', 'skills/smartbomb/weird-space-sound-03-344943.mp3');
         this.loadSound('fastrepair', 'skills/fastrepair/fastrepair.mp3'); // Suono FastRepair
         this.loadSound('emp', 'skills/emp/emp.mp3'); // Suono EMP
+        this.loadSound('teleport', 'ZetaGate/tpsounds/portalSounds.mp3'); // Suono teletrasporto
+        this.loadSound('portalJump', 'ZetaGate/tpsounds/2_portalJump0.mp3'); // Suono salto portale
+        this.loadSound('portalDone', 'ZetaGate/tpsounds/1_portalDone.mp3'); // Suono arrivo portale
         
-        // Pre-carica aggressivamente il suono collecting per evitare ritardi
+        // Pre-carica aggressivamente i suoni critici per evitare ritardi
         if (this.sounds.collecting) {
             this.sounds.collecting.preload = 'auto';
             this.sounds.collecting.load();
+        }
+        
+        // Pre-carica i suoni del portale per massima reattività
+        if (this.sounds.portalJump) {
+            this.sounds.portalJump.preload = 'auto';
+            this.sounds.portalJump.load();
+        }
+        if (this.sounds.portalDone) {
+            this.sounds.portalDone.preload = 'auto';
+            this.sounds.portalDone.load();
         }
 
         
@@ -348,6 +414,14 @@ export class AudioManager {
         // Aggiorna volume del suono collecting se attivo
         if (this.collectingAudio) {
             this.collectingAudio.volume = this.masterVolume * this.sfxVolume;
+        }
+        
+        // Aggiorna volume dei suoni portale se attivi
+        if (this.portalJumpAudio) {
+            this.portalJumpAudio.volume = this.masterVolume * this.sfxVolume;
+        }
+        if (this.portalDoneAudio) {
+            this.portalDoneAudio.volume = this.masterVolume * this.sfxVolume;
         }
         
         // Aggiorna volume del suono ambientale della stazione

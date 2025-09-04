@@ -34,8 +34,8 @@ import { QuestTracker } from './modules/QuestTracker.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
 import { HomePanel } from './modules/HomePanel.js';
 import { MapManager } from './modules/MapManager.js';
+import { MapSystem } from './modules/MapSystem.js';
 import { RadiationSystem } from './modules/RadiationSystem.js';
-import { LoginScreen } from './modules/LoginScreen.js';
 
 
 
@@ -45,7 +45,6 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width;
         this.height = this.canvas.height;
-        this.frameCount = 0;
         
         // Inizializza tutti i moduli
         this.ship = new Ship(8000, 5000); // Centro del rettangolo 16000x10000
@@ -67,12 +66,10 @@ class Game {
         this.audioManager = new AudioManager();
         this.settingsPanel = new SettingsPanel(this);
         this.radiationSystem = new RadiationSystem();
-        this.loginScreen = new LoginScreen(this);
             
             // Sistema di combattimento
         this.enemies = [];
-        this.enemySpawnTimer = 0;
-        this.enemySpawnRate = 60; // Ogni 1 secondo (60 FPS)
+        // Sistema di spawning automatico rimosso - ora gestito da MapInstance
         
         // Sistema bonus box
         this.bonusBoxes = [];
@@ -132,6 +129,9 @@ class Game {
         
         // Sistema di gestione mappe e portali
         this.mapManager = new MapManager(this);
+        
+        // Sistema visualizzazione mappe
+        this.mapSystem = new MapSystem();
         
         // Sistema icone UI (in alto a sinistra)
         this.iconSystemUI = [];
@@ -260,33 +260,9 @@ class Game {
         this.ambientEffects.updateSize(newWidth, newHeight);
     }
     
-    // Gestisce l'input per la schermata di login
-    handleLoginInput() {
-        // Gestisci tasti premuti
-        this.input.keysJustPressed.forEach(key => {
-            this.loginScreen.handleKeyPress(key);
-        });
-        
-        // Gestisci tasti tenuti premuti per caratteri speciali
-        if (this.input.keys['Backspace']) {
-            this.loginScreen.handleKeyPress('Backspace');
-        }
-        if (this.input.keys['Enter']) {
-            this.loginScreen.handleKeyPress('Enter');
-        }
-    }
     
     update() {
-        this.frameCount++;
         
-        // Se la schermata di login è visibile, gestisci input e aggiorna
-        if (this.loginScreen.isVisible) {
-            // Gestisci input da tastiera per la schermata di login
-            this.handleLoginInput();
-            
-            this.loginScreen.update();
-            return;
-        }
         
         // Aggiorna la nave
         this.ship.update();
@@ -347,29 +323,7 @@ class Game {
             // NON uscire dalla funzione update - permette al gioco di continuare
         }
         
-        // Debug input mouse generale
-        if (this.input.isMouseJustPressed()) {
-            console.log('🖱️ Click rilevato in generale!');
-        } else {
-            // Debug ogni 60 frame per non spammare
-            if (this.frameCount % 60 === 0) {
-                console.log('🔍 Nessun click rilevato, frame:', this.frameCount);
-            }
-        }
         
-        // Debug input mouse
-        if (this.loginScreen.isVisible) {
-            console.log('🔍 Login screen visibile, isMouseJustPressed:', this.input.isMouseJustPressed());
-        }
-        
-        // Gestisci click su schermata di login (priorità massima quando visibile)
-        if (this.loginScreen.isVisible && this.input.isMouseJustPressed()) {
-            const mousePos = this.input.getMousePosition();
-            console.log('🖱️ Click rilevato nel game.js:', mousePos.x, mousePos.y);
-            this.loginScreen.handleClick(mousePos.x, mousePos.y);
-            this.input.resetMouseJustPressed();
-            return;
-        }
         
         // Gestisci click su popup di morte
         if (this.input.isMouseJustPressed()) {
@@ -380,11 +334,6 @@ class Game {
             }
         }
         
-        // Gestisci movimento del mouse per la schermata di login
-        if (this.loginScreen.isVisible) {
-            const mousePos = this.input.getMousePosition();
-            this.loginScreen.handleMouseMove(mousePos.x, mousePos.y);
-        }
         
         // Gestisci movimento del mouse per l'inventario
         if (this.inventory.isOpen) {
@@ -592,7 +541,7 @@ class Game {
         }
         
         // Gestisci input per il movimento (solo se non si sta facendo drag e non si è sopra il tracker o icone UI)
-        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.isOpen && !this.questTracker.isDragging && !clickHandledByTracker && !mouseOverTracker && !mouseOverUIIcon) {
+        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.isOpen && !this.questTracker.isDragging && !clickHandledByTracker && !mouseOverTracker && !mouseOverUIIcon && !this.mapSystem.isOpen) {
             const mousePos = this.input.getMousePosition();
             
             // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
@@ -725,6 +674,21 @@ class Game {
                 this.questPanel.close();
             } else {
                 this.questPanel.open();
+            }
+        }
+        
+        // Comando per aprire/chiudere sistema mappe (tasto M)
+        if (this.input.isKeyJustPressed('KeyM')) {
+            this.mapSystem.toggle();
+        }
+        
+        // Gestisci click sui nodi del sistema mappe (PRIORITÀ ALTA)
+        if (this.mapSystem.isOpen && this.input.isLeftClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            const handled = this.mapSystem.handleClick(mousePos.x, mousePos.y, this.mapManager.currentMap);
+            if (handled) {
+                this.input.resetLeftClickReleased();
+                return; // Esce dalla funzione per evitare altri gestori
             }
         }
         
@@ -903,8 +867,8 @@ class Game {
         // Aggiorna notifiche di zona
         this.zoneNotifications.update();
         
-        // Spawn nemici
-        this.spawnEnemies();
+        // Spawn nemici (disabilitato - ora gestito da MapInstance)
+        // this.spawnEnemies();
         
         // Spawn bonus box
         this.spawnBonusBoxes();
@@ -983,42 +947,7 @@ class Game {
     }
     
     // Sistema di collisioni rimosso - ora gestito da Ship.js per i crediti
-    
-    spawnEnemies() {
-        this.enemySpawnTimer++;
-        
-        // Controlla se abbiamo già raggiunto il limite di NPC
-        const activeEnemies = this.enemies.filter(e => e.active);
-        if (activeEnemies.length >= 50) {
-            return; // Non spawnare più nemici se abbiamo già 50
-        }
-        
-        if (this.enemySpawnTimer >= this.enemySpawnRate) {
-            this.enemySpawnTimer = 0;
-            
-            // Spawn nemico casuale in tutta la mappa rettangolare
-            // Evita solo un'area centrale intorno al player per non spawnare troppo vicino
-            const playerX = this.ship.x;
-            const playerY = this.ship.y;
-            const avoidRadius = 800; // Raggio di evitamento dal player
-            
-            let x, y;
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            do {
-                // Spawn in tutta la mappa rettangolare
-                x = Math.random() * 16000; // 0-16000 (larghezza completa)
-                y = Math.random() * 10000; // 0-10000 (altezza completa)
-                attempts++;
-            } while (attempts < maxAttempts && 
-                     Math.sqrt((x - playerX) ** 2 + (y - playerY) ** 2) < avoidRadius);
-            
-            // Solo nemici Barracuda
-            const newEnemy = new Enemy(x, y, 'barracuda');
-            this.enemies.push(newEnemy);
-        }
-    }
+    // Sistema di spawning nemici rimosso - ora gestito da MapInstance
     
     // Sistema di spawning bonus box
     spawnBonusBoxes() {
@@ -1083,15 +1012,6 @@ class Game {
         // Pulisci il canvas
         this.renderer.clear();
         
-        // Debug login screen
-        console.log('🔍 Login screen isVisible:', this.loginScreen.isVisible);
-        
-        // Se la schermata di login è visibile, disegna solo quella
-        if (this.loginScreen.isVisible) {
-            console.log('🎨 Disegnando login screen');
-            this.loginScreen.draw(this.ctx);
-            return;
-        }
         
         // Salva il contesto per applicare lo zoom
         this.ctx.save();
@@ -1134,6 +1054,9 @@ class Game {
         for (let asteroid of this.interactiveAsteroids) {
             asteroid.draw(this.ctx, this.camera);
         }
+        
+        // Disegna i portali (prima della nave per il layering corretto)
+        this.mapManager.draw(this.ctx, this.camera);
         
         // Disegna la nave
         this.renderer.drawShip(this.ship, this.camera);
@@ -1197,11 +1120,13 @@ class Game {
         // Disegna le notifiche di zona
         this.drawZoneNotifications();
         
-        // Aggiorna e disegna il pannello della stazione spaziale
-        if (this.spaceStationPanel.isOpen) {
-            this.spaceStationPanel.update();
+        // Aggiorna e disegna il pannello della stazione spaziale solo se presente nella mappa
+        if (this.mapManager.shouldShowSpaceStation()) {
+            if (this.spaceStationPanel.isOpen) {
+                this.spaceStationPanel.update();
+            }
+            this.spaceStationPanel.draw(this.ctx, this.canvas.width, this.canvas.height, this.ship.upgradeManager);
         }
-        this.spaceStationPanel.draw(this.ctx, this.canvas.width, this.canvas.height, this.ship.upgradeManager);
         
 
         
@@ -1220,8 +1145,8 @@ class Game {
         // Disegna pannello home se aperto
         this.homePanel.draw(this.ctx);
         
-        // Disegna i portali
-        this.mapManager.draw(this.ctx, this.camera);
+        // Disegna sistema mappe se aperto
+        this.mapSystem.draw(this.ctx, this.mapManager.currentMap);
         
         // Disegna sistema icone UI DOPO i pannelli (per evitare che l'overlay le oscuri)
         this.drawIconSystemUI();
@@ -1263,6 +1188,11 @@ class Game {
     
     // Controlla l'interazione con la stazione spaziale
     checkSpaceStationInteraction() {
+        // Controlla se la stazione è presente nella mappa corrente
+        if (!this.mapManager.shouldShowSpaceStation()) {
+            return;
+        }
+        
         // Controlla se il tasto E è stato premuto
         if (this.input.keysJustPressed.has('KeyE')) {
             // Se il pannello è già aperto, chiudilo

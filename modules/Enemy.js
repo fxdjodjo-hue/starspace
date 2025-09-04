@@ -1,25 +1,32 @@
 // Modulo Nemico
 import { AlienSprite } from './AlienSprite.js';
+import { NPCTypes } from './NPCTypes.js';
 
 export class Enemy {
-    constructor(x, y, type = 'barracuda') {
+    constructor(x, y, type = 'npc_x1') {
         this.x = x;
         this.y = y;
-        this.type = type; // Ora solo 'barracuda'
-        this.radius = 15; // Raggio visivo
-        this.hitboxRadius = 40; // Raggio di collisione per il click (più grande)
-        this.speed = 2;
-        this.maxHP = this.getMaxHP();
+        this.type = type; // Ora usa npc_x1, npc_x2, etc.
+        
+        // Carica configurazione NPC
+        this.npcTypes = new NPCTypes();
+        this.config = this.npcTypes.getNPCConfig(type);
+        
+        // Applica configurazione
+        this.radius = this.config.radius;
+        this.hitboxRadius = this.config.hitboxRadius;
+        this.speed = this.config.speed;
+        this.maxHP = this.config.maxHP;
         this.hp = this.maxHP;
         
-        // Sistema scudo (come il player)
-        this.maxShield = 30; // Valore base
+        // Sistema scudo basato su configurazione
+        this.maxShield = this.config.maxShield;
         this.shield = this.maxShield;
-        this.shieldRegenRate = 1; // Rigenerazione scudo per secondo
-        this.shieldRegenDelay = 3000; // Ritardo prima della rigenerazione (3 secondi)
+        this.shieldRegenRate = this.config.shieldRegenRate;
+        this.shieldRegenDelay = this.config.shieldRegenDelay;
         this.lastDamageTime = 0;
         this.active = true;
-        this.isSelected = false; // Nuovo: stato di selezione
+        this.isSelected = false;
 
         // Sistema di pattuglia (non aggressivo)
         this.patrolDirection = Math.random() * Math.PI * 2;
@@ -38,26 +45,28 @@ export class Enemy {
         this.spriteLoaded = false;
         this.loadSprite();
         
-        // Colori basati sul tipo
-        this.colors = this.getColors();
+        // Colori basati su configurazione
+        this.colors = this.config.colors;
+        
+        // Statistiche aggiuntive
+        this.damage = this.config.damage;
+        this.experience = this.config.experience;
+        this.credits = this.config.credits;
     }
     
     getMaxHP() {
-        switch (this.type) {
-            case 'barracuda': return 500;    // HP per il Barracuda
-            default: return 500;
-        }
+        return this.config.maxHP;
     }
     
 
     
     getColors() {
-        switch (this.type) {
-            case 'barracuda':
-                return { fill: '#ff4444', stroke: '#cc0000', hp: '#ff0000' };
-            default:
-                return { fill: '#ff4444', stroke: '#cc0000', hp: '#ff0000' };
-        }
+        return this.config.colors;
+    }
+    
+    // Ottiene il nome di visualizzazione
+    getDisplayName() {
+        return this.config.name || this.type.toUpperCase();
     }
     
     async loadSprite() {
@@ -187,11 +196,11 @@ export class Enemy {
         // Barre HP e Scudo (come il player)
         this.drawHealthBar(ctx, camera);
         
-        // Nome del nemico (identico al player)
+        // Nome del nemico (usa nome dalla configurazione NPC)
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(this.type.toUpperCase(), screenPos.x, screenPos.y + 40);
+        ctx.fillText(this.getDisplayName(), screenPos.x, screenPos.y + 40);
     }
     
     // Disegna barre HP e Scudo (esattamente come il player)
