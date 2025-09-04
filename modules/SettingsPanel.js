@@ -65,6 +65,32 @@ export class SettingsPanel {
         this.y = (this.game.height - this.height) / 2;
     }
     
+    // Disegna il tab grafica
+    drawGraphicsTab(ctx) {
+        const startY = this.y + 100;
+        const labelX = this.x + 20;
+        const buttonX = this.x + 200;
+        
+        // Toggle Schermo Intero
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Schermo Intero:', labelX, startY + 20);
+        
+        // Pulsante toggle
+        const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.msFullscreenElement;
+        
+        ctx.fillStyle = isFullscreen ? '#4CAF50' : '#666666';
+        ctx.fillRect(buttonX, startY + 5, 80, 30);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(isFullscreen ? 'ON' : 'OFF', buttonX + 40, startY + 25);
+    }
+    
     // Gestisce i click
     handleClick(x, y) {
         if (!this.isOpen) return false;
@@ -97,6 +123,21 @@ export class SettingsPanel {
         const startY = this.y + 100;
         const sliderWidth = 200;
         const sliderX = this.x + 150;
+        const tabY = this.y + 50;
+        
+        // Controlla click sui tab
+        if (y >= tabY && y <= tabY + 30) {
+            // Tab Audio
+            if (x >= this.x + 20 && x <= this.x + 120) {
+                this.currentTab = 'audio';
+                return;
+            }
+            // Tab Grafica
+            if (x >= this.x + 130 && x <= this.x + 230) {
+                this.currentTab = 'graphics';
+                return;
+            }
+        }
         
         // Tab Audio
         if (this.currentTab === 'audio') {
@@ -148,8 +189,20 @@ export class SettingsPanel {
 
                 return;
             }
-            
-
+        }
+        
+        // Tab Grafica
+        if (this.currentTab === 'graphics') {
+            // Toggle Schermo Intero
+            const buttonX = this.x + 200;
+            if (x >= buttonX && x <= buttonX + 80 && 
+                y >= startY + 5 && y <= startY + 35) {
+                // Chiama la funzione toggle fullscreen
+                if (window.toggleFullscreen) {
+                    window.toggleFullscreen();
+                }
+                return;
+            }
         }
     }
     
@@ -245,6 +298,8 @@ export class SettingsPanel {
         // Contenuto tab
         if (this.currentTab === 'audio') {
             this.drawAudioTab(ctx);
+        } else if (this.currentTab === 'graphics') {
+            this.drawGraphicsTab(ctx);
         }
         
         // Pulsante chiudi
@@ -269,6 +324,14 @@ export class SettingsPanel {
         ctx.font = '14px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Audio', this.x + 20 + tabWidth/2, tabY + 20);
+        
+        // Tab Grafica
+        ctx.fillStyle = this.currentTab === 'graphics' ? '#0f3460' : '#16213e';
+        ctx.fillRect(this.x + 130, tabY, tabWidth, tabHeight);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Grafica', this.x + 130 + tabWidth/2, tabY + 20);
     }
     
     // Disegna il tab audio

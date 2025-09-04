@@ -10,7 +10,10 @@ export class Input {
             leftClickJustReleased: false,
             rightClick: false,
             rightClickJustReleased: false,
-            wheelDelta: 0
+            wheelDelta: 0,
+            startX: 0,
+            startY: 0,
+            movementDistance: 0
         };
         this.keys = {};
         this.ctrlPressed = false;
@@ -34,6 +37,19 @@ export class Input {
             if (e.button === 0) { // Tasto sinistro
                 this.mouse.isDown = true;
                 this.mouse.leftClickJustPressed = true;
+                
+                // Salva la posizione iniziale del click PRIMA di aggiornare la posizione del mouse
+                const rect = this.canvas.getBoundingClientRect();
+                const canvasX = e.clientX - rect.left;
+                const canvasY = e.clientY - rect.top;
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                
+                this.mouse.startX = canvasX * scaleX;
+                this.mouse.startY = canvasY * scaleY;
+                this.mouse.movementDistance = 0;
+                
+                // Aggiorna la posizione attuale del mouse
                 this.updateMousePosition(e);
             }
         });
@@ -51,6 +67,7 @@ export class Input {
             if (e.button === 0) {
                 this.mouse.isDown = false;
                 this.mouse.leftClickJustReleased = true;
+                // Mantieni la distanza del movimento per il controllo isEffectiveClick
             }
         });
         
@@ -146,6 +163,13 @@ export class Input {
         this.mouse.x = canvasX * scaleX;
         this.mouse.y = canvasY * scaleY;
         
+        // Calcola la distanza del movimento se il mouse è premuto
+        if (this.mouse.isDown) {
+            const dx = this.mouse.x - this.mouse.startX;
+            const dy = this.mouse.y - this.mouse.startY;
+            this.mouse.movementDistance = Math.sqrt(dx * dx + dy * dy);
+        }
+        
         // Coordinate mouse scalate per il mondo di gioco
     }
     
@@ -207,6 +231,7 @@ export class Input {
     // Resetta il flag del click sinistro rilasciato
     resetLeftClickReleased() {
         this.mouse.leftClickJustReleased = false;
+        this.mouse.movementDistance = 0;
     }
     
     // Controlla se CTRL è premuto
@@ -284,5 +309,12 @@ export class Input {
     // Ottieni il delta della rotella
     getWheelDelta() {
         return this.mouse.wheelDelta;
+    }
+    
+    // Controlla se il click è effettivo (non un drag)
+    isEffectiveClick() {
+        // Se il mouse non si è mosso molto dal click iniziale, è un click effettivo
+        // Questo aiuta a distinguere tra click e drag
+        return !this.hasMouseMoved() || this.mouse.movementDistance < 5;
     }
 }

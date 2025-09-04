@@ -29,6 +29,8 @@ import { Inventory } from './modules/Inventory.js';
 import { InventoryItem } from './modules/InventoryItem.js';
 import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { CategorySkillbar } from './modules/CategorySkillbar.js';
+import { QuestPanel } from './modules/QuestPanel.js';
+import { QuestTracker } from './modules/QuestTracker.js';
 
 
 class Game {
@@ -109,6 +111,12 @@ class Game {
         
         // Inventario
         this.inventory = new Inventory();
+        
+        // Pannello Quest
+        this.questPanel = new QuestPanel(this);
+        
+        // Tracker Quest (mini pannello UI)
+        this.questTracker = new QuestTracker(this);
         
         // Pannello statistiche (apribile/chiudibile)
         this.statsPanelOpen = false;
@@ -216,6 +224,9 @@ class Game {
         // Aggiorna inventario
         this.inventory.update();
         
+        // Aggiorna tracker quest
+        this.questTracker.update();
+        
         // Aggiorna la camera
         this.camera.update(this.ship);
         
@@ -307,6 +318,41 @@ class Game {
             }
         }
         
+        // Gestisci click nel pannello quest (solo al primo click)
+        if (this.questPanel.isOpen && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            if (this.questPanel.handleClick(mousePos.x, mousePos.y)) {
+                this.input.resetMouseJustPressed();
+                return; // Click gestito dal pannello
+            }
+        }
+        
+
+        
+        // Gestisci movimento mouse per drag del tracker
+        if (this.input.isMouseDown() && this.questTracker.isDragging) {
+            const mousePos = this.input.getMousePosition();
+            this.questTracker.handleMouseMove(mousePos.x, mousePos.y);
+        }
+        
+        // Gestisci rilascio mouse per drag del tracker
+        if (this.input.isLeftClickJustReleased()) {
+            if (this.questTracker.isDragging) {
+                this.questTracker.handleMouseRelease();
+                this.input.resetLeftClickReleased(); // Reset del flag per evitare interferenze
+            } else {
+                this.questTracker.handleMouseRelease();
+            }
+        }
+        
+
+        
+
+        
+
+        
+
+        
         // Gestisci drag degli slider nel pannello impostazioni
         if (this.settingsPanel.isOpen && this.input.isMouseDown()) {
             const mousePos = this.input.getMousePosition();
@@ -355,8 +401,35 @@ class Game {
         // Reset del flag click appena premuto
         this.input.resetMouseJustPressed();
         
-        // Gestisci input per il movimento (solo se non si sta facendo drag)
-        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
+        // Controlla se il click è stato gestito dal tracker
+        let clickHandledByTracker = false;
+        if (this.input.isLeftClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            
+            // Non gestire il click se è navigazione (movimento > 5px)
+            const movementDistance = this.input.mouse.movementDistance || 0;
+            if (movementDistance <= 5) {
+                clickHandledByTracker = this.questTracker.handleClick(mousePos.x, mousePos.y);
+                if (clickHandledByTracker) {
+                    // Reset del flag dopo aver gestito il click
+                    this.input.resetLeftClickReleased();
+                }
+            }
+        }
+        
+        // Controlla se il mouse è sopra il tracker durante isMouseDown (esclusi i controlli di navigazione)
+        let mouseOverTracker = false;
+        if (this.input.isMouseDown()) {
+            const mousePos = this.input.getMousePosition();
+            mouseOverTracker = this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y) || 
+                              this.questTracker.isMouseOverIcon(mousePos.x, mousePos.y) ||
+                              this.questTracker.isMouseOverCloseButton(mousePos.x, mousePos.y) ||
+                              this.questTracker.isMouseOverDragArea(mousePos.x, mousePos.y);
+
+        }
+        
+        // Gestisci input per il movimento (solo se non si sta facendo drag e non si è sopra il tracker)
+        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.questTracker.isDragging && !clickHandledByTracker && !mouseOverTracker) {
             const mousePos = this.input.getMousePosition();
             
             // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
@@ -380,6 +453,8 @@ class Game {
             // Click nel mondo gestito - Pulisce il target della minimappa
             this.minimap.clearTarget();
         }
+        
+
         
         // Gestisci click destro per selezione target E minimappa (solo se il pannello non è aperto)
         if (this.input.isRightClickJustReleased() && !this.upgradePanelOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
@@ -481,6 +556,17 @@ class Game {
             this.inventory.toggle();
         }
         
+        // Comando per aprire/chiudere pannello quest (tasto Q)
+        if (this.input.isKeyJustPressed('KeyQ')) {
+            if (this.questPanel.isOpen) {
+                this.questPanel.close();
+            } else {
+                this.questPanel.open();
+            }
+        }
+        
+
+        
 
         
         // Gestisci click sui pulsanti di upgrade
@@ -495,10 +581,52 @@ class Game {
         if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             
-            const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
-            if (handled) {
+            // Controlla se il mouse è sopra la skillbar
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
+                const movementDistance = this.input.mouse.movementDistance || 0;
+                
+                // Se è navigazione (movimento > 5px), resetta il click e non gestire
+                if (movementDistance > 5) {
+                    this.input.resetLeftClickReleased();
+                    return;
+                }
+                
+                // Se è un click effettivo, gestisci il click sulla skillbar
+                const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
+                if (handled) {
+                    this.input.resetLeftClickReleased();
+                    return; // Esci subito per evitare che la nave si muova
+                }
+            }
+        }
+        
+        // Controllo aggiuntivo: se il mouse è sopra la skillbar e c'è un click rilasciato in sospeso, resettalo
+        if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
+            const mousePos = this.input.getMousePosition();
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
+                // Controlla se il click iniziale era fuori dalla skillbar
+                const startX = this.input.mouse.startX || 0;
+                const startY = this.input.mouse.startY || 0;
+                const wasClickOutsideSkillbar = !this.isClickOnCategorySkillbar(startX, startY);
+                
+                // Se il click è iniziato fuori dalla skillbar e ora il mouse è sopra la skillbar,
+                // resetta il click per evitare attivazioni accidentali
+                if (wasClickOutsideSkillbar) {
+                    this.input.resetLeftClickReleased();
+                }
+            }
+        }
+        
+        // Protezione aggiuntiva: reset automatico di click "fantasma" dopo un certo tempo
+        if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
+            const mousePos = this.input.getMousePosition();
+            const movementDistance = this.input.mouse.movementDistance || 0;
+            
+            // Se il mouse è sopra la skillbar ma non c'è stato movimento significativo,
+            // e il click è rimasto attivo per troppo tempo, resettalo
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y) && movementDistance <= 5) {
+                // Reset aggressivo per click fantasma
                 this.input.resetLeftClickReleased();
-                return; // Esci subito per evitare che la nave si muova
             }
         }
         
@@ -582,9 +710,17 @@ class Game {
         // Controlla interazione con la stazione spaziale (tasto E)
         this.checkSpaceStationInteraction();
         
-        // Gestisci tasto ESC per chiudere il pannello stazione spaziale
-        if (this.input.isKeyJustPressed('Escape') && this.spaceStationPanel.isOpen) {
-            this.spaceStationPanel.close();
+        // Gestisci tasto ESC per chiudere i pannelli
+        if (this.input.isKeyJustPressed('Escape')) {
+            if (this.spaceStationPanel.isOpen) {
+                this.spaceStationPanel.close();
+            } else if (this.questPanel.isOpen) {
+                this.questPanel.close();
+            } else if (this.settingsPanel.isOpen) {
+                this.settingsPanel.close();
+            } else if (this.inventory.isOpen) {
+                this.inventory.close();
+            }
         }
         
         // Tasto D per ricevere danno (test)
@@ -604,6 +740,8 @@ class Game {
         
         // Aggiorna notifiche
         this.notifications.update();
+        
+
     }
     
     updateEnemies() {
@@ -899,6 +1037,12 @@ class Game {
         
         // Disegna inventario
         this.inventory.draw(this.ctx, this.width, this.height);
+        
+        // Disegna pannello quest se aperto
+        this.questPanel.draw(this.ctx);
+        
+        // Disegna tracker quest (sempre visibile se ci sono quest attive)
+        this.questTracker.draw(this.ctx);
     }
     
     // Inizializza l'inventario con oggetti di esempio

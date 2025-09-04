@@ -975,4 +975,24 @@ export class Ship {
     getSelectedMissileInfo() {
         return this.missileConfigs[this.selectedMissile];
     }
+    
+    // Metodi per le quest
+    addExperience(amount) {
+        if (this.experience) {
+            return this.experience.addExperience(amount);
+        }
+        return false;
+    }
+    
+    addCredits(amount) {
+        if (this.upgradeManager) {
+            this.upgradeManager.addCredits(amount);
+            return true;
+        }
+        return false;
+    }
+    
+    get level() {
+        return this.experience ? this.experience.level : 1;
+    }
 }

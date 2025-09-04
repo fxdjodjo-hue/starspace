@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gioco Spaziale - Stile DarkOrbit</title>
+    <title>StarSpace</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
     <style>
         body {
             margin: 0;
@@ -32,7 +33,7 @@
             align-items: center;
             flex: 1;
             width: 100%;
-            max-height: calc(100vh - 200px); /* Spazio per UI sotto */
+            height: 100vh;
         }
         
         #gameCanvas {
@@ -45,25 +46,7 @@
             object-fit: contain;
         }
         
-        .fullscreen-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            border: 2px solid #4a90e2;
-            border-radius: 5px;
-            padding: 8px 16px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .fullscreen-btn:hover {
-            background: rgba(74, 144, 226, 0.8);
-            border-color: #ffffff;
-        }
+
         
         /* Modalità schermo intero */
         #gameCanvas.fullscreen {
@@ -83,83 +66,27 @@
                 height: auto;
             }
         }
-        #gameInfo {
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            background: rgba(0, 0, 0, 0.8);
-            border-top: 2px solid #444;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .info-item {
-            background: #333;
-            padding: 10px 20px;
-            border-radius: 5px;
-            min-width: 100px;
-        }
-        .info-label {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
-        .info-value {
-            font-size: 16px;
-            font-weight: bold;
-        }
+
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <div id="canvasContainer">
             <canvas id="gameCanvas" width="1920" height="1080"></canvas>
-            <button id="fullscreenBtn" class="fullscreen-btn">⛶ Schermo Intero</button>
         </div>
         
-        <div id="gameInfo">
-            <div class="info-item">
-                <div class="info-label">Posizione</div>
-                <div id="position">0, 0</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">FPS</div>
-                <div id="fps">0</div>
-            </div>
-                    <div class="info-item">
-            <div class="info-label">Velocità</div>
-            <div id="speed">4</div>
-        </div>
-        <div class="info-item">
-            <div class="info-label">Stato</div>
-            <div id="state">Ferma</div>
-        </div>
-        </div>
+
         
-        <div id="instructions" style="margin: 0; padding: 15px; color: #aaa; font-size: 12px; background: rgba(0, 0, 0, 0.6); border-top: 1px solid #333; width: 100%; box-sizing: border-box;">
-            <div><strong>Controlli:</strong></div>
-                    <div><strong>Click Sinistro:</strong> Muovi la nave spaziale</div>
-        <div><strong>Click Destro:</strong> Seleziona nemici per combattimento</div>
-        <div><strong>Combattimento:</strong> CTRL per avviare/fermare attacco automatico</div>
-        <div><strong>Riparazione:</strong> Automatica dopo 5 secondi di non combattimento</div>
-        <div><strong>Test Morte:</strong> D per testare morte e respawn del player</div>
-        <div><strong>Inventario:</strong> I per aprire/chiudere l'inventario</div>
-        <div><strong>Minimappa:</strong> Usa la minimappa per navigazione rapida</div>
-        <div><strong>Movimento Fluido:</strong> La nave segue il mouse in tempo reale</div>
-        <div><strong>Camera Seguente:</strong> La vista segue automaticamente la nave</div>
-            <div><strong>Mondo Infinito:</strong> Esplora lo spazio infinito!</div>
-        </div>
+
     </div>
 
     <script>
         // Gestione schermo intero
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('gameCanvas');
-            const fullscreenBtn = document.getElementById('fullscreenBtn');
             
-            // Funzione per attivare/disattivare schermo intero
-            function toggleFullscreen() {
+            // Funzione per attivare/disattivare schermo intero (chiamabile dalle impostazioni)
+            window.toggleFullscreen = function() {
                 if (!document.fullscreenElement) {
                     // Entra in schermo intero
                     if (canvas.requestFullscreen) {
@@ -179,10 +106,7 @@
                         document.msExitFullscreen();
                     }
                 }
-            }
-            
-            // Event listener per il pulsante
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            };
             
             // Event listener per cambiamenti schermo intero
             document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -195,14 +119,12 @@
                     document.msFullscreenElement) {
                     // Schermo intero attivo
                     canvas.classList.add('fullscreen');
-                    fullscreenBtn.textContent = '⛶ Esci Schermo Intero';
                     
                     // Ridimensiona canvas per adattarsi allo schermo
                     resizeCanvasToScreen();
                 } else {
                     // Schermo intero disattivato
                     canvas.classList.remove('fullscreen');
-                    fullscreenBtn.textContent = '⛶ Schermo Intero';
                     
                     // Ripristina dimensioni originali
                     canvas.width = 1920;

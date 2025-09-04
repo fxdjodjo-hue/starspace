@@ -12,30 +12,30 @@ export class CategorySkillbar {
         this.categories = {
             laser: {
                 name: 'LASER',
-                icon: '🔴',
+                icon: 'Laser',
                 items: [
-                    { id: 'laser_x1', name: 'Laser X1', icon: '🔴', cooldown: 0, canUse: () => true },
-                    { id: 'laser_x2', name: 'Laser X2', icon: '🔴', cooldown: 0, canUse: () => true },
-                    { id: 'laser_x3', name: 'Laser X3', icon: '🔴', cooldown: 0, canUse: () => true }
+                    { id: 'laser_x1', name: 'X1', icon: 'X1', cooldown: 0, canUse: () => true },
+                    { id: 'laser_x2', name: 'X2', icon: 'X2', cooldown: 0, canUse: () => true },
+                    { id: 'laser_x3', name: 'X3', icon: 'X3', cooldown: 0, canUse: () => true }
                 ]
             },
             missili: {
                 name: 'MISSILI',
-                icon: '🚀',
+                icon: 'Missili',
                 items: [
-                    { id: 'missile_r1', name: 'Missile R1', icon: '🚀', cooldown: 0, canUse: () => true },
-                    { id: 'missile_r2', name: 'Missile R2', icon: '🚀', cooldown: 0, canUse: () => true },
-                    { id: 'missile_r3', name: 'Missile R3', icon: '🚀', cooldown: 0, canUse: () => true }
+                    { id: 'missile_r1', name: 'R1', icon: 'R1', cooldown: 0, canUse: () => true },
+                    { id: 'missile_r2', name: 'R2', icon: 'R2', cooldown: 0, canUse: () => true },
+                    { id: 'missile_r3', name: 'R3', icon: 'R3', cooldown: 0, canUse: () => true }
                 ]
             },
             extra: {
                 name: 'EXTRA',
-                icon: '⚡',
+                icon: 'Extra',
                 items: [
-                    { id: 'smartbomb', name: 'Smartbomb', icon: '💣', cooldown: 0, canUse: () => this.game?.smartbomb?.canUse() || false },
-                    { id: 'fastrepair', name: 'Fast Repair', icon: '🔧', cooldown: 0, canUse: () => this.game?.fastRepair?.canUse() || false },
-                    { id: 'emp', name: 'EMP', icon: '⚡', cooldown: 0, canUse: () => this.game?.emp?.canUse() || false },
-                    { id: 'leech', name: 'Leech', icon: '🩸', cooldown: 0, canUse: () => this.game?.leech?.canUse() || false }
+                    { id: 'smartbomb', name: 'SMB', icon: 'SMB', cooldown: 0, canUse: () => this.game?.smartbomb?.canUse() || false },
+                    { id: 'fastrepair', name: 'FR', icon: 'FR', cooldown: 0, canUse: () => this.game?.fastRepair?.canUse() || false },
+                    { id: 'emp', name: 'EMP', icon: 'EMP', cooldown: 0, canUse: () => this.game?.emp?.canUse() || false },
+                    { id: 'leech', name: 'Leech', icon: 'Leech', cooldown: 0, canUse: () => this.game?.leech?.canUse() || false }
                 ]
             }
         };
@@ -127,17 +127,12 @@ export class CategorySkillbar {
                 ctx.fill();
             }
             
-            // Icona della categoria
+            // Nome della categoria (solo uno)
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 20px Arial';
+            ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(category.icon, categoryX + categoryWidth/2, categoryY + this.height/2 - 8);
-            
-            // Nome della categoria
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.font = 'bold 10px Arial';
-            ctx.fillText(category.name, categoryX + categoryWidth/2, categoryY + this.height/2 + 12);
+            ctx.fillText(category.icon, categoryX + categoryWidth/2, categoryY + this.height/2);
             
             categoryIndex++;
         }
@@ -201,17 +196,12 @@ export class CategorySkillbar {
             }
             ctx.stroke();
             
-            // Icona dell'oggetto
+            // Nome dell'oggetto (solo uno)
             ctx.fillStyle = canUse ? '#ffffff' : 'rgba(150, 150, 150, 0.8)';
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(item.icon, itemX + itemSize/2, itemY + itemSize/2 - 5);
-            
-            // Nome dell'oggetto
-            ctx.fillStyle = canUse ? 'rgba(255, 255, 255, 0.8)' : 'rgba(150, 150, 150, 0.6)';
-            ctx.font = 'bold 8px Arial';
-            ctx.fillText(item.name, itemX + itemSize/2, itemY + itemSize/2 + 12);
+            ctx.fillText(item.name, itemX + itemSize/2, itemY + itemSize/2);
             
             // Cooldown per le skills EXTRA
             if (item.cooldown > 0) {
@@ -326,56 +316,56 @@ export class CategorySkillbar {
             // Laser
             case 'laser_x1':
                 if (this.game.ship.selectLaser('x1')) {
-                    this.game.notifications.add('🔴 Laser X1 selezionato!', 200, 'info');
+                    this.game.notifications.add('X1 selezionato!', 200, 'info');
                 }
                 break;
             case 'laser_x2':
                 if (this.game.ship.selectLaser('x2')) {
-                    this.game.notifications.add('🔴 Laser X2 selezionato!', 200, 'info');
+                    this.game.notifications.add('X2 selezionato!', 200, 'info');
                 }
                 break;
             case 'laser_x3':
                 if (this.game.ship.selectLaser('x3')) {
-                    this.game.notifications.add('🔴 Laser X3 selezionato!', 200, 'info');
+                    this.game.notifications.add('X3 selezionato!', 200, 'info');
                 }
                 break;
             
             // Missili
             case 'missile_r1':
                 if (this.game.ship.selectMissile('r1')) {
-                    this.game.notifications.add('🚀 Missile R1 selezionato!', 200, 'info');
+                    this.game.notifications.add('R1 selezionato!', 200, 'info');
                 }
                 break;
             case 'missile_r2':
                 if (this.game.ship.selectMissile('r2')) {
-                    this.game.notifications.add('🚀 Missile R2 selezionato!', 200, 'info');
+                    this.game.notifications.add('R2 selezionato!', 200, 'info');
                 }
                 break;
             case 'missile_r3':
                 if (this.game.ship.selectMissile('r3')) {
-                    this.game.notifications.add('🚀 Missile R3 selezionato!', 200, 'info');
+                    this.game.notifications.add('R3 selezionato!', 200, 'info');
                 }
                 break;
             
             // Extra (Skills esistenti)
             case 'smartbomb':
                 if (this.game.smartbomb.activate(this.game.ship, this.game.enemies, this.game.explosionManager)) {
-                    this.game.notifications.add('💣 Smartbomb attivata!', 200, 'info');
+                    this.game.notifications.add('SMB attivata!', 200, 'info');
                 }
                 break;
             case 'fastrepair':
                 if (this.game.fastRepair.activate(this.game.ship)) {
-                    this.game.notifications.add('🔧 FastRepair attivato!', 200, 'info');
+                    this.game.notifications.add('FR attivato!', 200, 'info');
                 }
                 break;
             case 'emp':
                 if (this.game.emp.activate(this.game.ship, this.game.enemies)) {
-                    this.game.notifications.add('⚡ EMP attivato!', 200, 'info');
+                    this.game.notifications.add('EMP attivato!', 200, 'info');
                 }
                 break;
             case 'leech':
                 if (this.game.leech.activate(this.game.ship)) {
-                    this.game.notifications.add('🩸 Leech attivato!', 200, 'info');
+                    this.game.notifications.add('Leech attivato!', 200, 'info');
                 }
                 break;
         }

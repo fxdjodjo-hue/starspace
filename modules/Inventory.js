@@ -170,7 +170,7 @@ export class Inventory {
         this.handleEquipmentClick(x, y);
         
         // Gestisci click sull'inventario
-            this.handleInventoryClick(x, y);
+        this.handleInventoryClick(x, y);
         
         return true;
     }
@@ -192,28 +192,46 @@ export class Inventory {
                     if (item) {
                         this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
                     }
-                } else {
-                    this.equipFirstCompatibleItem('laser', i);
                 }
-                    return;
-                }
+                // Non auto-equipaggiare su slot vuoti
+                return;
             }
-            
-                // Controlla click su slot scudi/generatori (6 slot totali)
-        const shieldGenY = equipmentY + 80;
-        for (let i = 0; i < 6; i++) {
+        }
+        
+        // Controlla click su slot scudi/generatori (6 slot totali - 2 righe da 3)
+        const shieldGenY1 = equipmentY + 80;  // Prima riga
+        const shieldGenY2 = equipmentY + 120; // Seconda riga
+        
+        // Prima riga (slot 0, 1, 2)
+        for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY && y <= shieldGenY + this.slotSize) {
+                y >= shieldGenY1 && y <= shieldGenY1 + this.slotSize) {
                 
                 if (this.equipment.shieldGen[i]) {
                     const item = this.unequipItem('shieldGen', i);
                     if (item) {
                         this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
                     }
-                } else {
-                    this.equipFirstCompatibleItem('shieldGen', i);
                 }
+                // Non auto-equipaggiare su slot vuoti
+                return;
+            }
+        }
+        
+        // Seconda riga (slot 3, 4, 5)
+        for (let i = 3; i < 6; i++) {
+            const slotX = equipmentX + ((i - 3) * slotSpacing);
+            if (x >= slotX && x <= slotX + this.slotSize &&
+                y >= shieldGenY2 && y <= shieldGenY2 + this.slotSize) {
+                
+                if (this.equipment.shieldGen[i]) {
+                    const item = this.unequipItem('shieldGen', i);
+                    if (item) {
+                        this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
+                    }
+                }
+                // Non auto-equipaggiare su slot vuoti
                 return;
             }
         }
@@ -227,13 +245,12 @@ export class Inventory {
                 
                 if (this.equipment.extra[i]) {
                     const item = this.unequipItem('extra', i);
-        if (item) {
+                    if (item) {
                         this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
                     }
-                } else {
-                    this.equipFirstCompatibleItem('extra', i);
                 }
-            return;
+                // Non auto-equipaggiare su slot vuoti
+                return;
             }
         }
     }
@@ -259,22 +276,44 @@ export class Inventory {
                 } else {
                     this.tooltip = null;
                 }
-            return;
+                return;
             }
         }
         
-                // Controlla hover su slot scudi/generatori
-        const shieldGenY = equipmentY + 80;
-        for (let i = 0; i < 6; i++) {
+                // Controlla hover su slot scudi/generatori (2 righe)
+        const shieldGenY1 = equipmentY + 80;  // Prima riga
+        const shieldGenY2 = equipmentY + 120; // Seconda riga
+        
+        // Prima riga (slot 0, 1, 2)
+        for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY && y <= shieldGenY + this.slotSize) {
+                y >= shieldGenY1 && y <= shieldGenY1 + this.slotSize) {
                 
                 if (this.equipment.shieldGen[i]) {
                     this.tooltip = {
                         item: this.equipment.shieldGen[i],
                         x: slotX,
-                        y: shieldGenY
+                        y: shieldGenY1
+                    };
+                } else {
+                    this.tooltip = null;
+                }
+                return;
+            }
+        }
+        
+        // Seconda riga (slot 3, 4, 5)
+        for (let i = 3; i < 6; i++) {
+            const slotX = equipmentX + ((i - 3) * slotSpacing);
+            if (x >= slotX && x <= slotX + this.slotSize &&
+                y >= shieldGenY2 && y <= shieldGenY2 + this.slotSize) {
+                
+                if (this.equipment.shieldGen[i]) {
+                    this.tooltip = {
+                        item: this.equipment.shieldGen[i],
+                        x: slotX,
+                        y: shieldGenY2
                     };
                 } else {
                     this.tooltip = null;
