@@ -344,6 +344,16 @@ class Game {
             // NON uscire dalla funzione update - permette al gioco di continuare
         }
         
+        // Debug input mouse generale
+        if (this.input.isMouseJustPressed()) {
+            console.log('🖱️ Click rilevato in generale!');
+        }
+        
+        // Debug input mouse
+        if (this.loginScreen.isVisible) {
+            console.log('🔍 Login screen visibile, isMouseJustPressed:', this.input.isMouseJustPressed());
+        }
+        
         // Gestisci click su schermata di login (priorità massima quando visibile)
         if (this.loginScreen.isVisible && this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
