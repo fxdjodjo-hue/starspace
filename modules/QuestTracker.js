@@ -1,8 +1,10 @@
 // Modulo Tracker Quest per UI in tempo reale
+import { IconSystemUI } from './IconSystemUI.js';
+
 export class QuestTracker {
     constructor(game) {
         this.game = game;
-        this.isVisible = true;
+        this.isVisible = false;
         this.isDragging = false;
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
@@ -25,10 +27,10 @@ export class QuestTracker {
         this.maxQuests = 3; // Massimo 3 quest visibili
         
         // Icona "!" per aprire il tracker
-        this.iconX = 100;
-        this.iconY = 20;
-        this.iconSize = 40;
-        this.iconVisible = true;
+        this.icon = new IconSystemUI(20, 20, 'quest', {
+            size: 40,
+            visible: true
+        });
         
         // Stili
         this.backgroundColor = 'rgba(26, 26, 46, 0.9)';
@@ -64,26 +66,18 @@ export class QuestTracker {
     // Aggiorna il tracker
     update() {
         // Il tracker si aggiorna automaticamente quando le quest cambiano
+        
+        // Aggiorna il tooltip dell'icona
+        if (this.icon.isMouseOver(this.game.input.mouse.x, this.game.input.mouse.y)) {
+            this.icon.setTooltipVisible(true);
+        } else {
+            this.icon.setTooltipVisible(false);
+        }
     }
     
     // Disegna l'icona "!"
     drawIcon(ctx) {
-        if (!this.iconVisible) return;
-        
-        // Sfondo icona
-        ctx.fillStyle = this.iconBgColor;
-        ctx.strokeStyle = this.iconColor;
-        ctx.lineWidth = 2;
-        this.roundRect(ctx, this.iconX, this.iconY, this.iconSize, this.iconSize, 6);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Testo "!"
-        ctx.fillStyle = this.iconColor;
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('!', this.iconX + this.iconSize/2, this.iconY + this.iconSize/2);
+        this.icon.draw(ctx);
     }
     
     // Disegna il tracker
@@ -234,8 +228,7 @@ export class QuestTracker {
     
     // Controlla se il mouse è sopra l'icona
     isMouseOverIcon(x, y) {
-        return x >= this.iconX && x <= this.iconX + this.iconSize && 
-               y >= this.iconY && y <= this.iconY + this.iconSize;
+        return this.icon.isMouseOver(x, y);
     }
     
     // Controlla se il mouse è sopra il tracker

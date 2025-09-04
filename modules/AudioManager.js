@@ -95,26 +95,30 @@ export class AudioManager {
         
         // Se il motore non sta già suonando, avvialo
         if (!this.enginePlaying) {
-            this.engineAudio = this.sounds['engine'].cloneNode();
-            this.engineAudio.volume = this.masterVolume * this.sfxVolume * 0.3; // Volume più basso
-            this.engineAudio.loop = true; // Loop continuo
+            // Crea l'audio del motore solo una volta
+            if (!this.engineAudio) {
+                this.engineAudio = this.sounds['engine'].cloneNode();
+                this.engineAudio.loop = true; // Loop continuo
+            }
+            
+            this.engineAudio.volume = this.masterVolume * this.sfxVolume * 0.3; // Volume diretto
+            this.engineAudio.currentTime = 0; // Reset al inizio
             this.engineAudio.play().catch(e => {
                 console.log('🔇 Errore avvio motore:', e);
             });
             this.enginePlaying = true;
-
         }
     }
     
     // Ferma il suono del motore
     stopEngineSound() {
         if (this.engineAudio && this.enginePlaying) {
+            // Ferma immediatamente il motore
             this.engineAudio.pause();
-            this.engineAudio.currentTime = 0;
             this.enginePlaying = false;
-            console.log('🔇 Motore fermato!');
         }
     }
+    
     
     // Riproduci suono apertura pannello stazione
     playStationPanelOpenSound() {
@@ -360,6 +364,14 @@ export class AudioManager {
     cleanup() {
         this.stopBackgroundMusic();
         this.stopSpaceStationAmbientSound();
+        
+        // Ferma il motore
+        if (this.engineAudio) {
+            this.engineAudio.pause();
+            this.engineAudio.currentTime = 0;
+            this.engineAudio = null;
+        }
+        this.enginePlaying = false;
         
         // Ferma eventuali fade in corso
         if (this.fadeInterval) {

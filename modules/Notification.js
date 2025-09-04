@@ -52,17 +52,22 @@ export class Notification {
                     backgroundColor = 'rgba(0, 0, 0, 0.9)';
                     textColor = '#ff6666';
                     break;
+                case 'welcome':
+                    backgroundColor = 'rgba(0, 0, 0, 0.95)';
+                    textColor = '#00ffff';
+                    break;
                 default:
                     backgroundColor = 'rgba(0, 0, 0, 0.9)';
                     textColor = '#ffffff';
             }
             
             // Calcola dimensioni del testo
-            ctx.font = '14px Arial';
+            const fontSize = notification.type === 'welcome' ? '18px Arial' : '14px Arial';
+            ctx.font = fontSize;
             const textMetrics = ctx.measureText(notification.message);
-            const padding = 15;
+            const padding = notification.type === 'welcome' ? 20 : 15;
             const width = textMetrics.width + padding * 2;
-            const height = 28;
+            const height = notification.type === 'welcome' ? 35 : 28;
             
             // Posizione centrata
             const x = centerX - width / 2;

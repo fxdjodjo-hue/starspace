@@ -31,6 +31,11 @@ import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { QuestPanel } from './modules/QuestPanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
+import { IconSystemUI } from './modules/IconSystemUI.js';
+import { HomePanel } from './modules/HomePanel.js';
+import { MapManager } from './modules/MapManager.js';
+import { RadiationSystem } from './modules/RadiationSystem.js';
+
 
 
 class Game {
@@ -59,6 +64,7 @@ class Game {
         this.playerProfile = new PlayerProfile();
         this.audioManager = new AudioManager();
         this.settingsPanel = new SettingsPanel(this);
+        this.radiationSystem = new RadiationSystem();
             
             // Sistema di combattimento
         this.enemies = [];
@@ -118,8 +124,17 @@ class Game {
         // Tracker Quest (mini pannello UI)
         this.questTracker = new QuestTracker(this);
         
-        // Pannello statistiche (apribile/chiudibile)
-        this.statsPanelOpen = false;
+        // Pannello Home Dashboard
+        this.homePanel = new HomePanel(this);
+        
+        // Sistema di gestione mappe e portali
+        this.mapManager = new MapManager(this);
+        
+        // Sistema icone UI (in alto a sinistra)
+        this.iconSystemUI = [];
+        this.initIconSystemUI();
+        
+
         
         // Pannello potenziamenti
         this.upgradePanelOpen = false;
@@ -131,6 +146,54 @@ class Game {
             // Pulisce anche le coordinate del click quando la nave arriva
 
         };
+    }
+    
+    // Inizializza il sistema icone UI
+    initIconSystemUI() {
+        const iconSize = 40;
+        const spacing = 10;
+        const startX = 20;
+        const startY = 20;
+        
+        // Icona Quest (già gestita dal QuestTracker)
+        // Posizione 0: Quest Tracker (gestito separatamente)
+        
+        // Posizione 1: Profilo
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 1, startY, 'profile', {
+            size: iconSize,
+            visible: true
+        }));
+        
+        // Posizione 2: Inventario
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 2, startY, 'inventory', {
+            size: iconSize,
+            visible: true
+        }));
+        
+        // Posizione 3: Impostazioni
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 3, startY, 'settings', {
+            size: iconSize,
+            visible: true
+        }));
+        
+        // Posizione 4: Statistiche
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 4, startY, 'stats', {
+            size: iconSize,
+            visible: true
+        }));
+        
+        // Posizione 5: Livello
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 5, startY, 'level', {
+            size: iconSize,
+            visible: true,
+            subText: this.ship.experience.getLevelInfo().level.toString()
+        }));
+        
+        // Posizione 6: Home Dashboard
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 6, startY, 'home', {
+            size: iconSize,
+            visible: true
+        }));
         
         // Inizializza l'audio
         this.audioManager.loadAllSounds();
@@ -227,6 +290,16 @@ class Game {
         // Aggiorna tracker quest
         this.questTracker.update();
         
+        // Aggiorna il sistema icone UI
+        this.updateIconSystemUI();
+        
+        // Aggiorna il sistema di mappe e portali
+        this.mapManager.update();
+        
+        // Aggiorna il sistema di radiazione
+        const currentMap = this.mapManager.getCurrentMap();
+        this.radiationSystem.update(this.ship, currentMap.width, currentMap.height, Date.now());
+        
         // Aggiorna la camera
         this.camera.update(this.ship);
         
@@ -257,6 +330,28 @@ class Game {
         if (this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             this.inventory.handleMouseMove(mousePos.x, mousePos.y, this.width, this.height);
+        }
+        
+        // Gestisci click sulle icone UI PRIMA dell'inventario
+        if (this.input.isLeftClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            const movementDistance = this.input.mouse.movementDistance || 0;
+            
+            if (movementDistance <= 5) {
+                // Controlla se il click è su un'icona UI
+                let iconClicked = false;
+                this.iconSystemUI.forEach(icon => {
+                    if (icon.isMouseOver(mousePos.x, mousePos.y)) {
+                        iconClicked = true;
+                    }
+                });
+                
+                if (iconClicked) {
+                    this.handleIconSystemUIClick(mousePos.x, mousePos.y);
+                    this.input.resetLeftClickReleased();
+                    return; // Click gestito dalle icone UI
+                }
+            }
         }
         
         // Gestisci click sull'inventario
@@ -309,10 +404,20 @@ class Game {
             }
         }
         
-        // Gestisci click nel pannello impostazioni (solo al primo click)
+        // Gestisci click nel pannello impostazioni (solo se non è un click su icona UI)
         if (this.settingsPanel.isOpen && this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
-            if (this.settingsPanel.handleClick(mousePos.x, mousePos.y)) {
+            
+            // Controlla se il click è su un'icona UI
+            let iconClicked = false;
+            this.iconSystemUI.forEach(icon => {
+                if (icon.isMouseOver(mousePos.x, mousePos.y)) {
+                    iconClicked = true;
+                }
+            });
+            
+            // Se non è un click su icona UI, gestisci il pannello
+            if (!iconClicked && this.settingsPanel.handleClick(mousePos.x, mousePos.y)) {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal pannello
             }
@@ -322,6 +427,15 @@ class Game {
         if (this.questPanel.isOpen && this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
             if (this.questPanel.handleClick(mousePos.x, mousePos.y)) {
+                this.input.resetMouseJustPressed();
+                return; // Click gestito dal pannello
+            }
+        }
+        
+        // Gestisci click nel pannello home (solo al primo click)
+        if (this.homePanel.isOpen && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            if (this.homePanel.handleClick(mousePos.x, mousePos.y)) {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal pannello
             }
@@ -359,9 +473,16 @@ class Game {
             this.settingsPanel.handleMouseMove(mousePos.x, mousePos.y);
         }
         
+        // Gestisci drag del pannello home
+        if (this.homePanel.isOpen && this.input.isMouseDown()) {
+            const mousePos = this.input.getMousePosition();
+            this.homePanel.handleMouseMove(mousePos.x, mousePos.y);
+        }
+        
         // Ferma il drag quando si rilascia il mouse
         if (this.input.isLeftClickJustReleased()) {
             this.settingsPanel.stopDragging();
+            this.homePanel.stopDragging();
             // Ferma il movimento della nave quando l'utente smette di cliccare
             // MA solo se non c'è un target attivo dalla minimappa E l'inventario non è aperto
             if (!this.minimap.currentTarget && !this.inventory.isOpen) {
@@ -369,34 +490,7 @@ class Game {
             }
         }
         
-        // Gestisci click destro sul pannello statistiche
-        if (this.input.isRightClickJustReleased()) {
-            const mousePos = this.input.getMousePosition();
-            const panelX = 15;
-            const panelY = 15;
-            
-            // Se il pannello è chiuso, controlla click destro sull'icona
-            if (!this.statsPanelOpen) {
-                const iconSize = 40;
-                if (mousePos.x >= panelX && mousePos.x <= panelX + iconSize &&
-                    mousePos.y >= panelY && mousePos.y <= panelY + iconSize) {
-                    this.statsPanelOpen = true;
-                    return;
-                }
-            } else {
-                // Se il pannello è aperto, controlla click destro sul pulsante di chiusura
-                const panelWidth = 220;
-                const closeButtonSize = 20;
-                const closeButtonX = panelX + panelWidth - closeButtonSize - 10;
-                const closeButtonY = panelY + 10;
-                
-                if (mousePos.x >= closeButtonX && mousePos.x <= closeButtonX + closeButtonSize &&
-                    mousePos.y >= closeButtonY && mousePos.y <= closeButtonY + closeButtonSize) {
-                    this.statsPanelOpen = false;
-                    return;
-                }
-            }
-        }
+
         
         // Reset del flag click appena premuto
         this.input.resetMouseJustPressed();
@@ -417,19 +511,28 @@ class Game {
             }
         }
         
+
+        
         // Controlla se il mouse è sopra il tracker durante isMouseDown (esclusi i controlli di navigazione)
         let mouseOverTracker = false;
+        let mouseOverUIIcon = false;
         if (this.input.isMouseDown()) {
             const mousePos = this.input.getMousePosition();
             mouseOverTracker = this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y) || 
                               this.questTracker.isMouseOverIcon(mousePos.x, mousePos.y) ||
                               this.questTracker.isMouseOverCloseButton(mousePos.x, mousePos.y) ||
                               this.questTracker.isMouseOverDragArea(mousePos.x, mousePos.y);
-
+            
+            // Controlla se il mouse è sopra un'icona UI
+            this.iconSystemUI.forEach(icon => {
+                if (icon.isMouseOver(mousePos.x, mousePos.y)) {
+                    mouseOverUIIcon = true;
+                }
+            });
         }
         
-        // Gestisci input per il movimento (solo se non si sta facendo drag e non si è sopra il tracker)
-        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.questTracker.isDragging && !clickHandledByTracker && !mouseOverTracker) {
+        // Gestisci input per il movimento (solo se non si sta facendo drag e non si è sopra il tracker o icone UI)
+        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.isOpen && !this.questTracker.isDragging && !clickHandledByTracker && !mouseOverTracker && !mouseOverUIIcon) {
             const mousePos = this.input.getMousePosition();
             
             // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
@@ -707,8 +810,13 @@ class Game {
         
         // Il mining non si interrompe più per distanza - solo per danno o attacchi
         
-        // Controlla interazione con la stazione spaziale (tasto E)
-        this.checkSpaceStationInteraction();
+        // Controlla interazione con la stazione spaziale (tasto E) solo se presente
+        if (this.mapManager.shouldShowSpaceStation()) {
+            this.checkSpaceStationInteraction();
+        }
+        
+        // Controlla interazione con i portali (tasto E)
+        this.checkPortalInteraction();
         
         // Gestisci tasto ESC per chiudere i pannelli
         if (this.input.isKeyJustPressed('Escape')) {
@@ -944,8 +1052,10 @@ class Game {
             }
         });
         
-        // Disegna stazione spaziale
-        this.spaceStation.draw(this.ctx, this.camera);
+        // Disegna stazione spaziale solo se presente nella mappa corrente
+        if (this.mapManager.shouldShowSpaceStation()) {
+            this.spaceStation.draw(this.ctx, this.camera);
+        }
         
         // Disegna asteroidi interattivi
         for (let asteroid of this.interactiveAsteroids) {
@@ -954,6 +1064,12 @@ class Game {
         
         // Disegna la nave
         this.renderer.drawShip(this.ship, this.camera);
+        
+        // Disegna l'effetto di radiazione intorno alla nave (dentro la sezione zoom)
+        this.radiationSystem.drawRadiationEffect(this.ctx, this.camera, this.ship);
+        
+        // Disegna i confini della mappa
+        this.world.drawMapRectangle(this.ctx, this.camera);
         
         // Disegna il nickname sotto la nave
         this.drawPlayerNickname();
@@ -997,7 +1113,10 @@ class Game {
         this.ctx.restore();
         
         // Disegna la minimappa (separata dal renderer, non influenzata dallo zoom)
-        this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem, this.spaceStation, this.interactiveAsteroids);
+        this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem, this.spaceStation, this.interactiveAsteroids, this.mapManager);
+        
+        // Disegna i portali nella minimappa
+        this.mapManager.drawMinimap(this.ctx, this.minimap);
         
         // Disegna le notifiche (sempre sopra tutto, non influenzate dallo zoom)
         this.notifications.draw(this.ctx);
@@ -1011,8 +1130,7 @@ class Game {
         }
         this.spaceStationPanel.draw(this.ctx, this.canvas.width, this.canvas.height, this.ship.upgradeManager);
         
-        // Disegna informazioni esperienza e livello (non influenzate dallo zoom)
-        this.drawExperienceInfo();
+
         
         // Disegna CategorySkillbar (non influenzata dallo zoom)
         this.drawCategorySkillbar();
@@ -1025,6 +1143,15 @@ class Game {
         
         // Disegna pannello impostazioni se aperto
         this.settingsPanel.draw(this.ctx);
+        
+        // Disegna pannello home se aperto
+        this.homePanel.draw(this.ctx);
+        
+        // Disegna i portali
+        this.mapManager.draw(this.ctx, this.camera);
+        
+        // Disegna sistema icone UI DOPO i pannelli (per evitare che l'overlay le oscuri)
+        this.drawIconSystemUI();
         
         // Disegna pannello potenziamenti se aperto
         if (this.upgradePanelOpen) {
@@ -1074,6 +1201,67 @@ class Game {
                     this.openSpaceStationPanel();
                 }
             }
+        }
+    }
+    
+    checkPortalInteraction() {
+        // Controlla se il tasto E è stato premuto
+        if (this.input.keysJustPressed.has('KeyE')) {
+            this.mapManager.handlePortalInteraction();
+        }
+    }
+    
+    // Mostra schermata di benvenuto per le mappe
+    showMapWelcomeScreen(mapName, description) {
+        this.mapWelcomeScreen = {
+            show: true,
+            mapName: mapName,
+            description: description,
+            startTime: Date.now(),
+            duration: 3000 // 3 secondi
+        };
+    }
+    
+    // Aggiorna la schermata di benvenuto
+    updateMapWelcomeScreen() {
+        if (this.mapWelcomeScreen && this.mapWelcomeScreen.show) {
+            const elapsed = Date.now() - this.mapWelcomeScreen.startTime;
+            if (elapsed >= this.mapWelcomeScreen.duration) {
+                this.mapWelcomeScreen.show = false;
+            }
+        }
+    }
+    
+    // Disegna la schermata di benvenuto
+    drawMapWelcomeScreen(ctx) {
+        if (this.mapWelcomeScreen && this.mapWelcomeScreen.show) {
+            const elapsed = Date.now() - this.mapWelcomeScreen.startTime;
+            const progress = Math.min(elapsed / this.mapWelcomeScreen.duration, 1);
+            
+            // Fade in/out
+            const alpha = progress < 0.1 ? progress * 10 : (progress > 0.9 ? (1 - progress) * 10 : 1);
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            
+            // Sfondo semi-trasparente
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            // Testo centrato
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Nome mappa grande
+            ctx.font = 'bold 48px Arial';
+            ctx.fillText(this.mapWelcomeScreen.mapName, ctx.canvas.width / 2, ctx.canvas.height / 2 - 50);
+            
+            // Descrizione
+            ctx.font = '24px Arial';
+            ctx.fillText(this.mapWelcomeScreen.description, ctx.canvas.width / 2, ctx.canvas.height / 2 + 20);
+            
+            ctx.restore();
         }
     }
     
@@ -1146,100 +1334,9 @@ class Game {
         });
     }
     
-    // Disegna informazioni esperienza e livello (angolo sinistro alto)
-    drawExperienceInfo() {
-        const expInfo = this.ship.experience.getLevelInfo();
-        
-        // Dimensioni e posizione del pannello
-        const panelX = 15;
-        const panelY = 15;
-        
-        // Se il pannello è chiuso, mostra solo l'icona
-        if (!this.statsPanelOpen) {
-            this.drawStatsIcon(panelX, panelY);
-            return;
-        }
-        const panelWidth = 220;
-        const panelHeight = 140;
-        const cornerRadius = 8;
-        
-        // Sfondo principale con bordi arrotondati
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        this.roundRect(panelX, panelY, panelWidth, panelHeight, cornerRadius);
-        this.ctx.fill();
-        
-        // Bordo sottile bianco
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 1;
-        this.ctx.stroke();
-        
-        // Separatore orizzontale sottile
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        this.ctx.lineWidth = 1;
-        this.ctx.beginPath();
-        this.ctx.moveTo(panelX + 15, panelY + 47);
-        this.ctx.lineTo(panelX + panelWidth - 15, panelY + 47);
-                this.ctx.stroke();
-        
-        // Testo livello (dimensioni bilanciate)
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 16px Arial';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText(`Livello ${expInfo.level}`, panelX + 20, panelY + 30);
-        
-        // Testo XP (più piccolo e sottile)
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(`XP: ${expInfo.expFormatted}`, panelX + 20, panelY + 58);
-        
-        // Testo Crediti (verde) - valuta base
-        this.ctx.fillStyle = '#00ff00';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Crediti: ${this.ship.upgradeManager.getCredits()}`, panelX + 20, panelY + 78);
-        
-        // Testo Uridium (blu) - valuta premium
-        this.ctx.fillStyle = '#0088ff';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Uridium: ${this.ship.upgradeManager.getUridium()}`, panelX + 20, panelY + 98);
-        
-        // Onore (oro)
-        this.ctx.fillStyle = '#ffaa00';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Onore: ${this.ship.getHonor()}`, panelX + 20, panelY + 118);
-        
-        // Pulsante di chiusura (X)
-        const closeButtonSize = 20;
-        const closeButtonX = panelX + panelWidth - closeButtonSize - 10;
-        const closeButtonY = panelY + 10;
-        
-        // Sfondo pulsante chiusura
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        this.ctx.beginPath();
-        this.ctx.roundRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize, 3);
-        this.ctx.fill();
-        
-        // Bordo pulsante chiusura
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 1;
-        this.ctx.stroke();
-        
-        // X del pulsante chiusura
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.moveTo(closeButtonX + 5, closeButtonY + 5);
-        this.ctx.lineTo(closeButtonX + closeButtonSize - 5, closeButtonY + closeButtonSize - 5);
-        this.ctx.moveTo(closeButtonX + closeButtonSize - 5, closeButtonY + 5);
-        this.ctx.lineTo(closeButtonX + 5, closeButtonY + closeButtonSize - 5);
-        this.ctx.stroke();
-        
-        // Barra XP rimossa per uniformare il layout
-    }
+
     
-    // Disegna l'icona delle statistiche quando il pannello è chiuso
-    drawStatsIcon(x, y) {
-        this.drawStandardIcon(x, y, 'L', this.ship.experience.getLevelInfo().level.toString());
-    }
+
     
     // Metodo standardizzato per disegnare le icone UI
     drawStandardIcon(x, y, mainText, subText = null) {
@@ -1887,6 +1984,54 @@ class Game {
         const buttonY = 70; // Sotto il pulsante impostazioni
         
         this.drawStandardIcon(buttonX, buttonY, '🚀');
+    }
+    
+    // Disegna il sistema icone UI
+    drawIconSystemUI() {
+        this.iconSystemUI.forEach(icon => {
+            icon.draw(this.ctx);
+        });
+    }
+    
+    updateIconSystemUI() {
+        // Gestisce i tooltip per le icone UI
+        this.iconSystemUI.forEach(icon => {
+            if (icon.isMouseOver(this.input.mouse.x, this.input.mouse.y)) {
+                icon.setTooltipVisible(true);
+            } else {
+                icon.setTooltipVisible(false);
+            }
+        });
+    }
+    
+    // Gestisce i click sul sistema icone UI
+    handleIconSystemUIClick(x, y) {
+        this.iconSystemUI.forEach((icon, index) => {
+            if (icon.isMouseOver(x, y)) {
+                console.log(`Click su icona UI: ${icon.type} (posizione ${index})`);
+                
+                switch (icon.type) {
+                    case 'profile':
+                        this.notifications.add('Profilo - In sviluppo', 'info');
+                        break;
+                    case 'inventory':
+                        this.inventory.toggle();
+                        break;
+                    case 'settings':
+                        this.settingsPanel.toggle();
+                        break;
+                    case 'stats':
+                        this.notifications.add('Statistiche - In sviluppo', 'info');
+                        break;
+                    case 'level':
+                        this.notifications.add(`Livello ${this.ship.experience.getLevelInfo().level}`, 'info');
+                        break;
+                    case 'home':
+                        this.homePanel.toggle();
+                        break;
+                }
+            }
+        });
     }
     
     gameLoop() {

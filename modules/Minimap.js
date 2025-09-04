@@ -7,8 +7,15 @@ export class Minimap {
         this.gridHeight = 160; // Altezza (era 120)
         this.gridWidth = 256; // Larghezza (era 192, 8/5 * 160 = 256)
         this.margin = 10;
+        
+        // Posizione della minimappa centrale
         this.x = width - this.gridWidth - this.margin;
         this.y = height - this.gridHeight - this.margin;
+        
+        // Posizioni per le nuove sezioni (solo per il testo)
+        this.mapInfoX = this.x + 5; // Dentro la minimappa
+        this.coordsX = this.x + this.gridWidth - 80; // A destra della minimappa
+        
         this.mapWidth = 16000;  // Larghezza del mondo
         this.mapHeight = 10000; // Altezza del mondo
         this.scaleX = this.gridWidth / this.mapWidth;   // Scale per larghezza
@@ -62,8 +69,12 @@ export class Minimap {
     }
     
     // Disegna la minimappa
-    draw(ctx, ship, camera, enemies = [], sectorSystem = null, spaceStation = null, interactiveAsteroids = []) {
+    draw(ctx, ship, camera, enemies = [], sectorSystem = null, spaceStation = null, interactiveAsteroids = [], mapManager = null) {
         if (!this.isVisible) return;
+        
+        // Disegna le nuove sezioni
+        this.drawMapInfo(ctx, mapManager);
+        this.drawCoordinates(ctx, ship);
         
         // Sfondo della minimappa
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
@@ -156,7 +167,8 @@ export class Minimap {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('MINIMAPPA', this.x + this.gridWidth/2, this.y - 5);
+        ctx.textBaseline = 'middle';
+        ctx.fillText('MINIMAPPA', this.x + this.gridWidth/2, this.y - 8);
         
         // Mostra indicatori di stato minimappa
         if (this.currentTarget) {
@@ -200,8 +212,15 @@ export class Minimap {
     updateSize(width, height) {
         this.width = width;
         this.height = height;
+        
+        // Posizione della minimappa centrale
         this.x = width - this.gridWidth - this.margin;
         this.y = height - this.gridHeight - this.margin;
+        
+        // Posizioni per le nuove sezioni (solo per il testo)
+        this.mapInfoX = this.x + 5; // Dentro la minimappa
+        this.coordsX = this.x + this.gridWidth - 80; // A destra della minimappa
+        
         // Ricalcola gli scale
         this.scaleX = this.gridWidth / this.mapWidth;
         this.scaleY = this.gridHeight / this.mapHeight;
@@ -256,5 +275,31 @@ export class Minimap {
         });
     }
     
+    // Disegna le informazioni della mappa corrente (a sinistra)
+    drawMapInfo(ctx, mapManager) {
+        if (!mapManager) return;
+        
+        const currentMap = mapManager.getCurrentMap();
+        if (!currentMap) return;
+        
+        // Solo il nome della mappa, semplice
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        // Rimuovi "Sector" dal nome della mappa
+        const shortName = currentMap.name.replace(' Sector', '');
+        ctx.fillText(`MAP: ${shortName}`, this.mapInfoX, this.y - 8);
+    }
+    
+    // Disegna le coordinate (a destra)
+    drawCoordinates(ctx, ship) {
+        // Solo le coordinate, semplici
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`X:${Math.round(ship.x)} Y:${Math.round(ship.y)}`, this.coordsX, this.y - 8);
+    }
 
 }

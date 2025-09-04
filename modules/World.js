@@ -70,8 +70,9 @@ export class World {
     
     drawMapRectangle(ctx, camera) {
         // Rettangolo che mostra i confini della mappa
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#00ff00'; // Verde per visibilità
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]); // Linea tratteggiata per distinguerla
         
         // Calcola le coordinate del rettangolo sullo schermo
         const left = 0 - camera.x;
@@ -82,7 +83,39 @@ export class World {
         // Disegna solo le parti visibili del rettangolo
         if (left < this.width && right > 0 && top < this.height && bottom > 0) {
             ctx.strokeRect(left, top, this.mapWidth, this.mapHeight);
+            
+            // Aggiungi coordinate degli angoli se sono visibili
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'left';
+            ctx.setLineDash([]); // Reset per il testo
+            
+            // Angolo in alto a sinistra
+            if (left >= 0 && top >= 0) {
+                ctx.fillText('(0,0)', left + 5, top + 15);
+            }
+            
+            // Angolo in alto a destra
+            if (right <= this.width && top >= 0) {
+                ctx.textAlign = 'right';
+                ctx.fillText(`(${this.mapWidth},0)`, right - 5, top + 15);
+            }
+            
+            // Angolo in basso a sinistra
+            if (left >= 0 && bottom <= this.height) {
+                ctx.textAlign = 'left';
+                ctx.fillText(`(0,${this.mapHeight})`, left + 5, bottom - 5);
+            }
+            
+            // Angolo in basso a destra
+            if (right <= this.width && bottom <= this.height) {
+                ctx.textAlign = 'right';
+                ctx.fillText(`(${this.mapWidth},${this.mapHeight})`, right - 5, bottom - 5);
+            }
         }
+        
+        // Reset del tratteggio
+        ctx.setLineDash([]);
     }
     
     // Aggiunge nuovi elementi al mondo (futuro: nemici, oggetti, ecc.)

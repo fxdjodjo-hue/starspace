@@ -77,15 +77,20 @@ export class SettingsPanel {
         ctx.textAlign = 'left';
         ctx.fillText('Schermo Intero:', labelX, startY + 20);
         
-        // Pulsante toggle
+        // Pulsante toggle (tema bianco e nero)
         const isFullscreen = document.fullscreenElement || 
                            document.webkitFullscreenElement || 
                            document.msFullscreenElement;
         
-        ctx.fillStyle = isFullscreen ? '#4CAF50' : '#666666';
+        ctx.fillStyle = isFullscreen ? '#ffffff' : '#333333';
         ctx.fillRect(buttonX, startY + 5, 80, 30);
         
-        ctx.fillStyle = '#ffffff';
+        // Bordo pulsante
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(buttonX, startY + 5, 80, 30);
+        
+        ctx.fillStyle = isFullscreen ? '#000000' : '#ffffff';
         ctx.font = '14px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(isFullscreen ? 'ON' : 'OFF', buttonX + 40, startY + 25);
@@ -274,19 +279,19 @@ export class SettingsPanel {
     draw(ctx) {
         if (!this.isOpen) return;
         
-        // Sfondo scuro semi-trasparente
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        // Sfondo scuro semi-trasparente (ridotto per essere meno invasivo)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.fillRect(0, 0, this.game.width, this.game.height);
         
-        // Pannello principale
-        ctx.fillStyle = '#1a1a2e';
-        ctx.strokeStyle = '#16213e';
+        // Pannello principale (tema bianco e nero)
+        ctx.fillStyle = '#000000';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         this.roundRect(ctx, this.x, this.y, this.width, this.height, 10);
         ctx.fill();
         ctx.stroke();
         
-        // Titolo
+        // Titolo (bianco su nero)
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
@@ -302,10 +307,16 @@ export class SettingsPanel {
             this.drawGraphicsTab(ctx);
         }
         
-        // Pulsante chiudi
-        ctx.fillStyle = '#ff4444';
-        ctx.fillRect(this.x + this.width - 35, this.y + 10, 25, 25);
+        // Pulsante chiudi (tema bianco e nero)
         ctx.fillStyle = '#ffffff';
+        ctx.fillRect(this.x + this.width - 35, this.y + 10, 25, 25);
+        
+        // Bordo pulsante
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x + this.width - 35, this.y + 10, 25, 25);
+        
+        ctx.fillStyle = '#000000';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('×', this.x + this.width - 22, this.y + 27);
@@ -317,18 +328,18 @@ export class SettingsPanel {
         const tabHeight = 30;
         const tabY = this.y + 50;
         
-        // Tab Audio
-        ctx.fillStyle = this.currentTab === 'audio' ? '#0f3460' : '#16213e';
+        // Tab Audio (tema bianco e nero)
+        ctx.fillStyle = this.currentTab === 'audio' ? '#ffffff' : '#333333';
         ctx.fillRect(this.x + 20, tabY, tabWidth, tabHeight);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = this.currentTab === 'audio' ? '#000000' : '#ffffff';
         ctx.font = '14px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Audio', this.x + 20 + tabWidth/2, tabY + 20);
         
-        // Tab Grafica
-        ctx.fillStyle = this.currentTab === 'graphics' ? '#0f3460' : '#16213e';
+        // Tab Grafica (tema bianco e nero)
+        ctx.fillStyle = this.currentTab === 'graphics' ? '#ffffff' : '#333333';
         ctx.fillRect(this.x + 130, tabY, tabWidth, tabHeight);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = this.currentTab === 'graphics' ? '#000000' : '#ffffff';
         ctx.font = '14px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Grafica', this.x + 130 + tabWidth/2, tabY + 20);
@@ -354,13 +365,19 @@ export class SettingsPanel {
         const toggleWidth = 60;
         const toggleHeight = 25;
         
-        // Sfondo del toggle
-        ctx.fillStyle = this.audioEnabled ? '#44ff44' : '#ff4444';
+        // Sfondo del toggle (tema bianco e nero)
+        ctx.fillStyle = this.audioEnabled ? '#ffffff' : '#333333';
         this.roundRect(ctx, toggleX, toggleY, toggleWidth, toggleHeight, 12);
         ctx.fill();
         
+        // Bordo del toggle
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, toggleX, toggleY, toggleWidth, toggleHeight, 12);
+        ctx.stroke();
+        
         // Testo del toggle
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = this.audioEnabled ? '#000000' : '#ffffff';
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(this.audioEnabled ? 'ON' : 'OFF', toggleX + toggleWidth/2, toggleY + toggleHeight/2 + 4);
@@ -393,13 +410,19 @@ export class SettingsPanel {
         const height = 12;
         const handleSize = 16;
         
-        // Track (sfondo)
-        ctx.fillStyle = '#333333';
+        // Track (sfondo) - nero
+        ctx.fillStyle = '#000000';
         this.roundRect(ctx, x, y, width, height, 6);
         ctx.fill();
         
-        // Fill (parte colorata)
-        ctx.fillStyle = '#0f3460';
+        // Bordo track
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, x, y, width, height, 6);
+        ctx.stroke();
+        
+        // Fill (parte colorata) - bianco
+        ctx.fillStyle = '#ffffff';
         this.roundRect(ctx, x, y, width * value, height, 6);
         ctx.fill();
         
@@ -412,13 +435,13 @@ export class SettingsPanel {
         this.roundRect(ctx, handleX + 1, handleY + 1, handleSize, handleSize, 8);
         ctx.fill();
         
-        // Handle principale
+        // Handle principale - bianco
         ctx.fillStyle = '#ffffff';
         this.roundRect(ctx, handleX, handleY, handleSize, handleSize, 8);
         ctx.fill();
         
-        // Bordo del handle
-        ctx.strokeStyle = '#0f3460';
+        // Bordo del handle - nero
+        ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2;
         this.roundRect(ctx, handleX, handleY, handleSize, handleSize, 8);
         ctx.stroke();

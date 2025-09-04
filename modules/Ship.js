@@ -857,6 +857,11 @@ export class Ship {
         // Imposta la nave come morta
         this.isDead = true;
         
+        // Reset del sistema di radiazione quando la nave muore
+        if (window.gameInstance && window.gameInstance.radiationSystem) {
+            window.gameInstance.radiationSystem.reset();
+        }
+        
         // Crea animazione esplosione
         if (window.gameInstance && window.gameInstance.explosionManager) {
             window.gameInstance.explosionManager.createExplosion(this.x, this.y, 'player');
