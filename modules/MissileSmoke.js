@@ -11,7 +11,7 @@ export class MissileSmoke {
         this.smokeTrail = []; // Array di particelle di fumo
         this.maxTrailLength = 15; // Massimo numero di particelle nella scia
         this.smokeSpawnRate = 0; // Timer per spawnare nuove particelle
-        this.smokeSpawnInterval = 3; // Ogni 3 frame una nuova particella
+        this.smokeSpawnInterval = 2; // Ogni 2 frame una nuova particella
         
         this.loadSmokeImage();
     }
@@ -51,8 +51,7 @@ export class MissileSmoke {
                 alpha: 0.8
             });
             
-            // Debug: verifica che le particelle vengano create
-            console.log('💨 Particella fumo creata, totale:', this.smokeTrail.length);
+            // Particella fumo creata
         }
         
         // Aggiorna tutte le particelle esistenti
@@ -74,10 +73,7 @@ export class MissileSmoke {
     draw(ctx, camera, missile) {
         if (!this.smokeLoaded || !missile.active) return;
         
-        // Debug: verifica se ci sono particelle da disegnare
-        if (this.smokeTrail.length > 0) {
-            console.log('💨 Disegnando', this.smokeTrail.length, 'particelle di fumo');
-        }
+        // Disegna le particelle di fumo
         
         ctx.save();
         
@@ -90,11 +86,11 @@ export class MissileSmoke {
             // Calcola il frame da disegnare
             const frameX = particle.frame * this.frameWidth;
             
-            // Imposta trasparenza per effetto fumo
-            ctx.globalAlpha = particle.alpha * 0.6;
+            // Imposta trasparenza per effetto fumo (più visibile)
+            ctx.globalAlpha = particle.alpha * 0.8;
             
-            // Disegna la particella di fumo
-            const smokeSize = 50; // Dimensione del fumo
+            // Disegna la particella di fumo (più grande)
+            const smokeSize = 80; // Dimensione del fumo aumentata
             ctx.drawImage(
                 this.smokeImage,
                 frameX, 0, this.frameWidth, this.frameHeight, // Source rectangle
