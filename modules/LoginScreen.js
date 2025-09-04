@@ -71,12 +71,17 @@ export class LoginScreen {
     handleKeyPress(key) {
         if (!this.isVisible) return;
         
+        console.log('🔤 Tasto premuto:', key, 'Input attivo:', this.inputField.active);
+        
         if (key === 'Backspace') {
             this.playerName = this.playerName.slice(0, -1);
         } else if (key === 'Enter') {
             this.login();
         } else if (key.length === 1 && this.playerName.length < 20) {
-            this.playerName += key;
+            // Filtra solo caratteri alfanumerici e spazi
+            if (/[a-zA-Z0-9\s]/.test(key)) {
+                this.playerName += key;
+            }
         }
     }
     
@@ -84,12 +89,17 @@ export class LoginScreen {
     handleClick(x, y) {
         if (!this.isVisible) return;
         
+        console.log('🖱️ Click ricevuto:', x, y);
+        console.log('📦 Input field:', this.inputField.x, this.inputField.y, this.inputField.width, this.inputField.height);
+        
         // Click su input field
         if (x >= this.inputField.x && x <= this.inputField.x + this.inputField.width &&
             y >= this.inputField.y && y <= this.inputField.y + this.inputField.height) {
+            console.log('✅ Click su input field!');
             this.inputField.active = true;
             this.isTyping = true;
         } else {
+            console.log('❌ Click fuori input field');
             this.inputField.active = false;
             this.isTyping = false;
         }
@@ -189,8 +199,14 @@ export class LoginScreen {
         
         // Bordo del campo
         ctx.strokeStyle = this.inputField.active ? '#00ffff' : '#4488ff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = this.inputField.active ? 3 : 2;
         ctx.strokeRect(this.inputField.x, this.inputField.y, this.inputField.width, this.inputField.height);
+        
+        // Indicatore di attivazione
+        if (this.inputField.active) {
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+            ctx.fillRect(this.inputField.x, this.inputField.y, this.inputField.width, this.inputField.height);
+        }
         
         // Sfondo del campo
         ctx.fillStyle = 'rgba(0, 20, 40, 0.8)';

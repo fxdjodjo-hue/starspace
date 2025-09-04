@@ -259,13 +259,27 @@ class Game {
         this.ambientEffects.updateSize(newWidth, newHeight);
     }
     
+    // Gestisce l'input per la schermata di login
+    handleLoginInput() {
+        // Gestisci tasti premuti
+        this.input.keysJustPressed.forEach(key => {
+            this.loginScreen.handleKeyPress(key);
+        });
+        
+        // Gestisci tasti tenuti premuti per caratteri speciali
+        if (this.input.keys['Backspace']) {
+            this.loginScreen.handleKeyPress('Backspace');
+        }
+        if (this.input.keys['Enter']) {
+            this.loginScreen.handleKeyPress('Enter');
+        }
+    }
+    
     update() {
         // Se la schermata di login è visibile, gestisci input e aggiorna
         if (this.loginScreen.isVisible) {
             // Gestisci input da tastiera per la schermata di login
-            this.input.keysJustPressed.forEach(key => {
-                this.loginScreen.handleKeyPress(key);
-            });
+            this.handleLoginInput();
             
             this.loginScreen.update();
             return;
