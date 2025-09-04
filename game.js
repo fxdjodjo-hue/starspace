@@ -45,6 +45,7 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width;
         this.height = this.canvas.height;
+        this.frameCount = 0;
         
         // Inizializza tutti i moduli
         this.ship = new Ship(8000, 5000); // Centro del rettangolo 16000x10000
@@ -276,6 +277,8 @@ class Game {
     }
     
     update() {
+        this.frameCount++;
+        
         // Se la schermata di login è visibile, gestisci input e aggiorna
         if (this.loginScreen.isVisible) {
             // Gestisci input da tastiera per la schermata di login
@@ -347,6 +350,11 @@ class Game {
         // Debug input mouse generale
         if (this.input.isMouseJustPressed()) {
             console.log('🖱️ Click rilevato in generale!');
+        } else {
+            // Debug ogni 60 frame per non spammare
+            if (this.frameCount % 60 === 0) {
+                console.log('🔍 Nessun click rilevato, frame:', this.frameCount);
+            }
         }
         
         // Debug input mouse
