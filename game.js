@@ -35,6 +35,7 @@ import { IconSystemUI } from './modules/IconSystemUI.js';
 import { HomePanel } from './modules/HomePanel.js';
 import { MapManager } from './modules/MapManager.js';
 import { RadiationSystem } from './modules/RadiationSystem.js';
+import { LoginScreen } from './modules/LoginScreen.js';
 
 
 
@@ -65,6 +66,7 @@ class Game {
         this.audioManager = new AudioManager();
         this.settingsPanel = new SettingsPanel(this);
         this.radiationSystem = new RadiationSystem();
+        this.loginScreen = new LoginScreen(this);
             
             // Sistema di combattimento
         this.enemies = [];
@@ -258,6 +260,17 @@ class Game {
     }
     
     update() {
+        // Se la schermata di login è visibile, gestisci input e aggiorna
+        if (this.loginScreen.isVisible) {
+            // Gestisci input da tastiera per la schermata di login
+            this.input.keysJustPressed.forEach(key => {
+                this.loginScreen.handleKeyPress(key);
+            });
+            
+            this.loginScreen.update();
+            return;
+        }
+        
         // Aggiorna la nave
         this.ship.update();
         
@@ -317,6 +330,14 @@ class Game {
             // NON uscire dalla funzione update - permette al gioco di continuare
         }
         
+        // Gestisci click su schermata di login (priorità massima)
+        if (this.loginScreen.isVisible && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            this.loginScreen.handleClick(mousePos.x, mousePos.y);
+            this.input.resetMouseJustPressed();
+            return;
+        }
+        
         // Gestisci click su popup di morte (priorità massima)
         if (this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
@@ -324,6 +345,12 @@ class Game {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal popup
             }
+        }
+        
+        // Gestisci movimento del mouse per la schermata di login
+        if (this.loginScreen.isVisible) {
+            const mousePos = this.input.getMousePosition();
+            this.loginScreen.handleMouseMove(mousePos.x, mousePos.y);
         }
         
         // Gestisci movimento del mouse per l'inventario
@@ -1019,6 +1046,12 @@ class Game {
     render() {
         // Pulisci il canvas
         this.renderer.clear();
+        
+        // Se la schermata di login è visibile, disegna solo quella
+        if (this.loginScreen.isVisible) {
+            this.loginScreen.draw(this.ctx);
+            return;
+        }
         
         // Salva il contesto per applicare lo zoom
         this.ctx.save();

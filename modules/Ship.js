@@ -20,6 +20,7 @@ export class Ship {
         this.isMoving = false;
         this.direction = 0; // Angolo in radianti
         this.rotation = 0;  // Rotazione visiva
+        this.playerName = 'TestPlayer'; // Nome del giocatore
         
         // Sistema di fluttuazione
         this.floatingOffset = 0;
