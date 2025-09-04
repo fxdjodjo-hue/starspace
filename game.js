@@ -544,8 +544,8 @@ class Game {
         
 
         
-        // Reset del flag click appena premuto
-        this.input.resetMouseJustPressed();
+        // Reset del flag click appena premuto (spostato alla fine)
+        // this.input.resetMouseJustPressed();
         
         // Controlla se il click è stato gestito dal tracker
         let clickHandledByTracker = false;
@@ -806,6 +806,9 @@ class Game {
             }
             this.input.resetWheelDelta();
         }
+        
+        // Reset del flag click appena premuto (alla fine di tutti i gestori)
+        this.input.resetMouseJustPressed();
     }
     
     updateCombat() {
@@ -1072,8 +1075,12 @@ class Game {
         // Pulisci il canvas
         this.renderer.clear();
         
+        // Debug login screen
+        console.log('🔍 Login screen isVisible:', this.loginScreen.isVisible);
+        
         // Se la schermata di login è visibile, disegna solo quella
         if (this.loginScreen.isVisible) {
+            console.log('🎨 Disegnando login screen');
             this.loginScreen.draw(this.ctx);
             return;
         }
