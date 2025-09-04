@@ -138,6 +138,8 @@ export class LoginScreen {
     draw(ctx) {
         if (!this.isVisible) return;
         
+        console.log('🎨 LoginScreen draw - Canvas size:', this.game.width, 'x', this.game.height);
+        
         // Sfondo scuro con stelle
         this.drawBackground(ctx);
         
@@ -160,6 +162,7 @@ export class LoginScreen {
     
     // Disegna lo sfondo con stelle
     drawBackground(ctx) {
+        console.log('🌌 Disegnando background:', this.game.width, 'x', this.game.height);
         ctx.fillStyle = '#000011';
         ctx.fillRect(0, 0, this.game.width, this.game.height);
         
