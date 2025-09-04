@@ -344,15 +344,16 @@ class Game {
             // NON uscire dalla funzione update - permette al gioco di continuare
         }
         
-        // Gestisci click su schermata di login (priorità massima)
+        // Gestisci click su schermata di login (priorità massima quando visibile)
         if (this.loginScreen.isVisible && this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
+            console.log('🖱️ Click rilevato nel game.js:', mousePos.x, mousePos.y);
             this.loginScreen.handleClick(mousePos.x, mousePos.y);
             this.input.resetMouseJustPressed();
             return;
         }
         
-        // Gestisci click su popup di morte (priorità massima)
+        // Gestisci click su popup di morte
         if (this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
             if (this.deathPopup.handleClick(mousePos.x, mousePos.y, this.ship, this.width, this.height)) {
