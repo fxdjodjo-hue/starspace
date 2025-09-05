@@ -27,7 +27,7 @@ import { EMP } from './modules/EMP.js';
 import { Leech } from './modules/Leech.js';
 import { Inventory } from './modules/Inventory.js';
 import { InventoryItem } from './modules/InventoryItem.js';
-import { DreadspireBackground } from './modules/DreadspireBackground.js';
+// import { DreadspireBackground } from './modules/DreadspireBackground.js'; // Rimosso - solo parallax
 import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { QuestPanel } from './modules/QuestPanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
@@ -47,7 +47,7 @@ class Game {
         this.height = this.canvas.height;
         
         // Inizializza tutti i moduli
-        this.ship = new Ship(8000, 5000); // Centro del rettangolo 16000x10000
+        this.ship = new Ship(8000, 5000, 40, this); // Centro del rettangolo 16000x10000
         this.camera = new Camera(this.width, this.height);
         this.input = new Input(this.canvas);
         this.world = new World(this.width, this.height);
@@ -55,9 +55,12 @@ class Game {
         this.minimap = new Minimap(this.width, this.height);
         this.sectorSystem = new SectorSystem();
         this.notifications = new Notification();
+        
+        // Inizializza RewardManager della nave DOPO aver creato le notifiche
+        this.ship.initRewardManager(this.notifications);
         this.explosionManager = new ExplosionEffect();
         this.parallaxBackground = new ParallaxBackground(this.width, this.height);
-        this.dreadspireBackground = new DreadspireBackground();
+        // this.dreadspireBackground = new DreadspireBackground(); // Rimosso - solo parallax
         this.categorySkillbar = new CategorySkillbar();
         this.categorySkillbar.setGame(this);
         this.ambientEffects = new AmbientEffects(this.width, this.height);
@@ -205,7 +208,7 @@ class Game {
         this.explosionManager.load();
         
         // Carica il background Dreadspire
-        this.dreadspireBackground.loadImages();
+        // this.dreadspireBackground.loadImages(); // Rimosso - solo parallax
         
         // Test del suono del motore dopo il caricamento
 
@@ -591,8 +594,9 @@ class Game {
                 // Click destro su nemico - seleziona target
                 this.ship.selectTarget(clickedEnemy);
                 
-                // Mostra notifica di target selezionato
-                this.notifications.targetSelected(clickedEnemy.type);
+                // Mostra notifica di target selezionato con nome specifico
+                const enemyName = clickedEnemy.config ? clickedEnemy.config.name : clickedEnemy.type;
+                this.notifications.targetSelected(enemyName);
             } else {
                 // Click destro nel mondo - prova minimappa
                 const minimapHandled = this.minimap.handleClick(mousePos.x, mousePos.y, this.ship, true);
@@ -794,30 +798,13 @@ class Game {
         
         // Controlla se un nemico è stato distrutto
         if (combatResult && combatResult.enemyDestroyed) {
-            this.notifications.enemyDestroyed(combatResult.enemyType);
+            // Mostra prima la notifica di nemico distrutto
+            const enemyName = combatResult.enemyName || combatResult.enemyType;
+            this.notifications.enemyDestroyed(enemyName);
             
-            // Aggiungi valute per il nemico ucciso
-            const creditsGained = this.ship.getCreditsForEnemyType(combatResult.enemyType);
-            const uridiumGained = this.ship.getUridiumForEnemyType(combatResult.enemyType);
-            const honorGained = this.ship.getHonorForEnemyType(combatResult.enemyType);
-            
-
-            
-            // Aggiungi le valute
-            this.ship.upgradeManager.addCredits(creditsGained);
-            this.ship.upgradeManager.addUridium(uridiumGained);
-            this.ship.addHonor(honorGained);
-            
-
-            
-            // Gestisci esperienza e salita di livello
-            if (combatResult.expGained) {
-                this.notifications.expGained(combatResult.expGained);
-            }
-            
-            if (combatResult.levelUp) {
-                this.notifications.levelUp(combatResult.levelUp.level, combatResult.levelUp.bonus);
-            }
+            // Poi processa i reward (RewardManager gestisce le notifiche delle ricompense)
+            const enemyConfig = combatResult.enemyConfig || this.ship.getEnemyConfig(combatResult.enemyType);
+            this.ship.processEnemyKill(combatResult.enemyType, enemyConfig);
         }
         
         // Aggiorna nemici
@@ -1024,9 +1011,6 @@ class Game {
         
         // Disegna sfondo parallax
         this.parallaxBackground.draw(this.ctx, this.camera);
-        
-        // Disegna background Dreadspire (sopra il parallax)
-        this.dreadspireBackground.draw(this.ctx, this.camera);
         
         // Disegna effetti ambientali
         this.ambientEffects.draw(this.ctx, this.camera);

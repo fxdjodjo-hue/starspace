@@ -38,14 +38,22 @@ export class MapManager {
     loadCurrentMapInstance() {
         this.currentInstance = this.persistence.getOrCreateInstance(this.currentMap);
         
-        // Forza rigenerazione se l'istanza ha configurazione vecchia
-        if (this.currentInstance && !this.currentInstance.config.npcType) {
+        // Forza rigenerazione se l'istanza ha configurazione vecchia o se è X2 senza Lordakia
+        if (this.currentInstance && (!this.currentInstance.config.npcType || 
+            (this.currentMap === 'x2' && !this.hasLordakiaInInstance()))) {
             console.log(`🔄 Rigenerando istanza ${this.currentMap} con nuova configurazione NPC`);
             this.currentInstance.config = this.currentInstance.getMapConfig(this.currentMap);
             this.currentInstance.generateInitialObjects();
         }
         
         this.syncInstanceToGame();
+    }
+    
+    // Controlla se l'istanza ha Lordakia
+    hasLordakiaInInstance() {
+        if (!this.currentInstance) return false;
+        const enemyObjects = this.currentInstance.getObjectsByType('enemy');
+        return enemyObjects.some(obj => obj.npcType === 'npc_x2_lordakia');
     }
     
     // Sincronizza istanza con il gioco
@@ -68,10 +76,15 @@ export class MapManager {
         const enemyObjects = this.currentInstance.getObjectsByType('enemy');
         
         for (const obj of enemyObjects) {
-            // Usa npcType dall'oggetto o fallback alla configurazione
+            // Usa npcType dall'oggetto (ora sempre definito)
             const npcType = obj.npcType || this.currentInstance.config.npcType;
+            
             const enemy = new Enemy(obj.x, obj.y, npcType);
             enemy.id = obj.id; // Assegna ID per tracking
+            
+            // Inizializza AI per il nemico
+            enemy.initAI(this.game);
+            
             this.objectManager.registerObject(obj.id, enemy, 'enemy');
             this.game.enemies.push(enemy);
         }

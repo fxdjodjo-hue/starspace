@@ -1,6 +1,7 @@
 // Modulo Nemico
 import { AlienSprite } from './AlienSprite.js';
 import { NPCTypes } from './NPCTypes.js';
+import { AISystem } from './AISystem.js';
 
 export class Enemy {
     constructor(x, y, type = 'npc_x1') {
@@ -32,6 +33,7 @@ export class Enemy {
         this.patrolDirection = Math.random() * Math.PI * 2;
         this.vx = 0; // Velocità X
         this.vy = 0; // Velocità Y
+        this.rotation = 0; // Rotazione per puntare verso il target
         
         // Sistema di tratte lunghe
         this.patrolTimer = Math.random() * 300; // Offset casuale 0-5 secondi
@@ -52,6 +54,11 @@ export class Enemy {
         this.damage = this.config.damage;
         this.experience = this.config.experience;
         this.credits = this.config.credits;
+        this.uridium = this.config.uridium || 0;
+        this.honor = this.config.honor || 0;
+        
+        // Sistema AI (inizializzato dopo che il gioco è pronto)
+        this.ai = null;
     }
     
     getMaxHP() {
@@ -67,6 +74,13 @@ export class Enemy {
     // Ottiene il nome di visualizzazione
     getDisplayName() {
         return this.config.name || this.type.toUpperCase();
+    }
+    
+    // Inizializza il sistema AI
+    initAI(game) {
+        if (!this.ai) {
+            this.ai = new AISystem(this, game);
+        }
     }
     
     async loadSprite() {
@@ -92,6 +106,26 @@ export class Enemy {
             this.shield = Math.min(this.maxShield, this.shield + this.shieldRegenRate / 60);
         }
         
+        // Usa AI se disponibile, altrimenti comportamento di pattuglia
+        if (this.ai) {
+            this.ai.update();
+            
+            // Controlla collisioni proiettili-giocatore
+            this.ai.checkProjectileCollisions();
+        } else {
+            // Comportamento di pattuglia di base (fallback)
+            this.updatePatrol();
+        }
+        
+        // Mantieni i nemici dentro i confini della mappa rettangolare
+        if (this.x < 500) this.x = 500;
+        if (this.x > 15500) this.x = 15500; // 16000 - 500
+        if (this.y < 500) this.y = 500;
+        if (this.y > 9500) this.y = 9500; // 10000 - 500
+    }
+    
+    // Comportamento di pattuglia di base (fallback)
+    updatePatrol() {
         // Sistema di tratte lunghe - cambia direzione solo dopo un certo tempo
         this.patrolTimer++;
         if (this.patrolTimer >= this.patrolDuration) {
@@ -109,12 +143,6 @@ export class Enemy {
         // Muovi in direzione casuale
         this.x += this.vx;
         this.y += this.vy;
-        
-        // Mantieni i nemici dentro i confini della mappa rettangolare
-        if (this.x < 500) this.x = 500;
-        if (this.x > 15500) this.x = 15500; // 16000 - 500
-        if (this.y < 500) this.y = 500;
-        if (this.y > 9500) this.y = 9500; // 10000 - 500
     }
     
     takeDamage(damage) {
@@ -133,6 +161,11 @@ export class Enemy {
             if (this.hp <= 0) {
                 this.die();
             }
+        }
+        
+        // Notifica all'AI che ha ricevuto danni
+        if (this.ai) {
+            this.ai.onDamageReceived();
         }
     }
     
@@ -158,9 +191,13 @@ export class Enemy {
         
         // Disegna lo sprite animato del Barracuda solo se caricato
         if (this.spriteLoaded) {
-            // Calcola la direzione del movimento
-            let direction = 0;
-            if (this.vx !== undefined && this.vy !== undefined && (this.vx !== 0 || this.vy !== 0)) {
+            // Usa la rotazione dell'AI se disponibile, altrimenti usa la direzione del movimento
+            let direction = this.rotation;
+            if (this.ai && this.ai.getState() === 'attack') {
+                // Se è in attacco, usa sempre la rotazione dell'AI
+                direction = this.rotation;
+            } else if (this.vx !== undefined && this.vy !== undefined && (this.vx !== 0 || this.vy !== 0)) {
+                // Altrimenti usa la direzione del movimento
                 direction = Math.atan2(this.vy, this.vx);
             }
             
@@ -201,6 +238,41 @@ export class Enemy {
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(this.getDisplayName(), screenPos.x, screenPos.y + 40);
+        
+        // Indicatore stato AI
+        if (this.ai) {
+            const aiState = this.ai.getState();
+            let stateColor = '#888888'; // Default grigio
+            let stateText = '';
+            
+            switch (aiState) {
+                case 'patrol':
+                    stateColor = '#00ff00'; // Verde
+                    stateText = 'PATROL';
+                    break;
+                case 'alert':
+                    stateColor = '#ffff00'; // Giallo
+                    stateText = 'ALERT';
+                    break;
+                case 'attack':
+                    stateColor = '#ff0000'; // Rosso
+                    stateText = 'ATTACK';
+                    break;
+                case 'flee':
+                    stateColor = '#ff8800'; // Arancione
+                    stateText = 'FLEE';
+                    break;
+            }
+            
+            ctx.fillStyle = stateColor;
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText(stateText, screenPos.x, screenPos.y + 55);
+        }
+        
+        // Disegna proiettili dell'AI
+        if (this.ai) {
+            this.ai.drawProjectiles(ctx, camera);
+        }
     }
     
     // Disegna barre HP e Scudo (esattamente come il player)

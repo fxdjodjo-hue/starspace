@@ -1,19 +1,50 @@
-// Modulo Notification per feedback visivo
+// Modulo Notification per feedback visivo migliorato
 export class Notification {
     constructor() {
         this.notifications = [];
         this.defaultDuration = 600; // 10 secondi a 60 FPS
+        this.maxNotifications = 8; // Massimo numero di notifiche visibili
+        this.animationSpeed = 0.3; // Velocità animazioni più veloce
     }
     
     // Aggiungi una notifica
     add(message, duration = this.defaultDuration, type = 'info') {
+        // Evita duplicati - controlla se esiste già una notifica identica
+        const existingNotification = this.notifications.find(n => n.message === message && n.type === type);
+        if (existingNotification) {
+            // Se esiste già, aggiorna la durata invece di creare un duplicato
+            existingNotification.remainingTime = duration;
+            existingNotification.duration = duration;
+            return;
+        }
+        
+        // Per notifiche di reward, crea notifiche separate ma sincronizzate
+        if (type === 'reward') {
+            this.createNotification(message, duration, type);
+            return;
+        }
+        
+        // Rimuovi notifiche vecchie se superiamo il limite
+        if (this.notifications.length >= this.maxNotifications) {
+            this.notifications.shift(); // Rimuovi la più vecchia
+        }
+        
         const notification = {
-            id: Date.now(),
+            id: Date.now() + Math.random(), // ID unico
             message: message,
             duration: duration,
             remainingTime: duration,
-            type: type, // 'info', 'success', 'warning', 'error'
-            y: 50 + this.notifications.length * 30 // Posizione verticale
+            type: type, // 'info', 'success', 'warning', 'error', 'reward'
+            // Animazioni
+            alpha: 0,
+            scale: 0.8,
+            slideX: -50,
+            // Posizione
+            targetY: 0,
+            currentY: 0,
+            // Effetti
+            glowIntensity: 0,
+            pulsePhase: 0
         };
         
         this.notifications.push(notification);
@@ -22,78 +53,357 @@ export class Notification {
     
     // Aggiorna le notifiche
     update() {
+        // Calcola posizioni target per tutte le notifiche con separazione fluida
+        this.notifications.forEach((notification, index) => {
+            // Calcola separazione basata sul tempo di creazione
+            const timeDiff = this.getTimeDifferenceFromPrevious(notification, index);
+            const baseY = 60;
+            const baseSpacing = 30; // Spazio maggiore per evitare sovrapposizioni
+            const extraSpacing = timeDiff > 60 ? 20 : 0; // Spazio extra se > 1 secondo di differenza
+            
+            // Calcola posizione target con separazione fluida
+            let targetY = baseY;
+            for (let i = 0; i < index; i++) {
+                const prevTimeDiff = this.getTimeDifferenceFromPrevious(this.notifications[i], i);
+                const prevExtraSpacing = prevTimeDiff > 60 ? 20 : 0;
+                targetY += baseSpacing + prevExtraSpacing;
+            }
+            
+            notification.targetY = targetY + extraSpacing;
+        });
+        
         this.notifications = this.notifications.filter(notification => {
+            // Aggiorna animazioni
+            this.updateNotificationAnimation(notification);
+            
+            // Decrementa tempo rimanente
             notification.remainingTime--;
             return notification.remainingTime > 0;
         });
     }
     
+    // Aggiorna animazioni di una singola notifica - solo fade out graduale
+    updateNotificationAnimation(notification) {
+        const progress = 1 - (notification.remainingTime / notification.duration);
+        
+        // Solo effetto di scomparsa graduale negli ultimi 20 frame
+        if (progress > 0.8) {
+            const fadeProgress = (progress - 0.8) / 0.2;
+            notification.alpha = 1 - fadeProgress;
+        } else {
+            notification.alpha = 1;
+        }
+        
+        // Nessun'altra animazione - solo posizionamento e fade out
+        notification.scale = 1;
+        notification.slideX = 0;
+        
+        // Solo animazione di posizione verticale smooth
+        notification.currentY += (notification.targetY - notification.currentY) * this.animationSpeed;
+    }
+    
+    
+    // Crea una notifica (metodo helper)
+    createNotification(message, duration, type, isGrouped = false) {
+        // Rimuovi notifiche vecchie se superiamo il limite
+        if (this.notifications.length >= this.maxNotifications) {
+            this.notifications.shift(); // Rimuovi la più vecchia
+        }
+        
+        const notification = {
+            id: Date.now() + Math.random(), // ID unico
+            message: message,
+            duration: duration,
+            remainingTime: duration,
+            type: type,
+            isGrouped: isGrouped,
+            groupedMessages: isGrouped ? [message] : null,
+            // Animazioni
+            alpha: 0,
+            scale: 0.8,
+            slideX: -50,
+            // Posizione
+            targetY: 0,
+            currentY: 0,
+            // Effetti
+            glowIntensity: 0,
+            pulsePhase: 0
+        };
+        
+        this.notifications.push(notification);
+        console.log(`Notifica: ${message}`);
+    }
+    
+    // Calcola la differenza di tempo dalla notifica precedente
+    getTimeDifferenceFromPrevious(notification, index) {
+        if (index === 0) return 0;
+        
+        const currentTime = notification.id;
+        const previousNotification = this.notifications[index - 1];
+        const previousTime = previousNotification.id;
+        
+        return currentTime - previousTime;
+    }
+    
+    // Funzioni di easing per animazioni fluide
+    easeOut(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+    
+    easeIn(t) {
+        return t * t * t;
+    }
+    
     // Disegna tutte le notifiche
     draw(ctx) {
         this.notifications.forEach((notification, index) => {
-            // Posizione centrale orizzontale
+            // Disegna separatore se necessario
+            this.drawSeparatorIfNeeded(ctx, notification, index);
+            
+            // Disegna la notifica
+            this.drawSingleNotification(ctx, notification, index);
+        });
+    }
+    
+    // Disegna separatore tra gruppi di notifiche
+    drawSeparatorIfNeeded(ctx, notification, index) {
+        if (index === 0) return;
+        
+        const timeDiff = this.getTimeDifferenceFromPrevious(notification, index);
+        
+        // Se c'è una differenza significativa di tempo, disegna un separatore
+        if (timeDiff > 60) { // > 1 secondo
             const centerX = ctx.canvas.width / 2;
+            const y = notification.currentY - 12; // Posizione del separatore
             
-            // Posizione verticale dall'alto (più vicino al centro)
-            notification.y = 120 + index * 35;
-            
-            // Stile minimalista basato sul tipo
-            let backgroundColor, textColor;
-            switch (notification.type) {
-                case 'success':
-                    backgroundColor = 'rgba(0, 0, 0, 0.9)';
-                    textColor = '#00ff00';
-                    break;
-                case 'warning':
-                    backgroundColor = 'rgba(0, 0, 0, 0.9)';
-                    textColor = '#ffff00';
-                    break;
-                case 'error':
-                    backgroundColor = 'rgba(0, 0, 0, 0.9)';
-                    textColor = '#ff6666';
-                    break;
-                case 'welcome':
-                    backgroundColor = 'rgba(0, 0, 0, 0.95)';
-                    textColor = '#00ffff';
-                    break;
-                default:
-                    backgroundColor = 'rgba(0, 0, 0, 0.9)';
-                    textColor = '#ffffff';
-            }
-            
-            // Calcola dimensioni del testo
-            const fontSize = notification.type === 'welcome' ? '18px Arial' : '14px Arial';
-            ctx.font = fontSize;
-            const textMetrics = ctx.measureText(notification.message);
-            const padding = notification.type === 'welcome' ? 20 : 15;
-            const width = textMetrics.width + padding * 2;
-            const height = notification.type === 'welcome' ? 35 : 28;
-            
-            // Posizione centrata
-            const x = centerX - width / 2;
-            const y = notification.y;
-            
-            // Sfondo con bordi arrotondati
-            ctx.fillStyle = backgroundColor;
-            this.roundRect(ctx, x, y, width, height, 6);
-            ctx.fill();
-            
-            // Bordo sottile colorato
-            ctx.strokeStyle = textColor;
+            // Linea separatrice sottile
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 30, y);
+            ctx.lineTo(centerX + 30, y);
             ctx.stroke();
+        }
+    }
+    
+    // Disegna una singola notifica con stile minimalista
+    drawSingleNotification(ctx, notification, index) {
+        // Salva stato del canvas
+        ctx.save();
+        
+        // Posizione centrale orizzontale
+        const centerX = ctx.canvas.width / 2;
+        
+        // Applica trasformazioni per animazioni
+        ctx.translate(centerX + notification.slideX, notification.currentY);
+        ctx.scale(notification.scale, notification.scale);
+        ctx.globalAlpha = notification.alpha;
+        
+        // Stile minimalista come nell'immagine
+        const style = this.getSimpleNotificationStyle(notification.type);
+        
+        // Testo semplice centrato
+        ctx.font = '16px Arial';
+        ctx.fillStyle = style.textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Formatta il messaggio in stile semplice
+        const formattedMessage = this.formatSimpleMessage(notification.message, notification.type);
+        ctx.fillText(formattedMessage, 0, 0);
+        
+        // Ripristina stato del canvas
+        ctx.restore();
+    }
+    
+    // Ottiene lo stile semplice per un tipo di notifica - tutto bianco
+    getSimpleNotificationStyle(type) {
+        return { textColor: '#ffffff' }; // Tutto bianco come richiesto
+    }
+    
+    // Formatta il messaggio mostrando chiaramente cosa si ottiene
+    formatSimpleMessage(message, type) {
+        // Rimuovi tutte le emoji e mantieni solo il testo
+        let cleanMessage = message.replace(/[💰💎🏆✨🎯⚔️💥🎉⏹️]/g, '').trim();
+        
+        // Per i reward, mostra chiaramente cosa si ottiene
+        if (type === 'reward') {
+            if (cleanMessage.includes('Credits')) {
+                const match = cleanMessage.match(/\+(\d+)\s+Credits/);
+                if (match) return `Credits: ${match[1]}`;
+            }
+            if (cleanMessage.includes('Uridium')) {
+                const match = cleanMessage.match(/\+(\d+)\s+Uridium/);
+                if (match) return `Uridium: ${match[1]}`;
+            }
+            if (cleanMessage.includes('Honor')) {
+                const match = cleanMessage.match(/\+(\d+)\s+Honor/);
+                if (match) return `Honor: ${match[1]}`;
+            }
+            if (cleanMessage.includes('XP')) {
+                const match = cleanMessage.match(/\+(\d+)\s+XP/);
+                if (match) return `XP: ${match[1]}`;
+            }
+        }
+        
+        // Per altri messaggi, mantieni il formato originale ma pulito
+        return cleanMessage;
+    }
+    
+    // Ottiene lo stile per un tipo di notifica (vecchio metodo mantenuto per compatibilità)
+    getNotificationStyle(type) {
+        const styles = {
+            'success': {
+                backgroundColor: 'rgba(0, 50, 0, 0.95)',
+                borderColor: '#00ff00',
+                textColor: '#00ff88',
+                shadowColor: 'rgba(0, 255, 0, 0.3)',
+                glowColor: 'rgba(0, 255, 0, 0.2)',
+                progressColor: '#00ff00',
+                iconColor: '#00ff00'
+            },
+            'reward': {
+                backgroundColor: 'rgba(20, 0, 40, 0.95)',
+                borderColor: '#ff6b35',
+                textColor: '#ffaa66',
+                shadowColor: 'rgba(255, 107, 53, 0.3)',
+                glowColor: 'rgba(255, 107, 53, 0.2)',
+                progressColor: '#ff6b35',
+                iconColor: '#ff6b35'
+            },
+            'warning': {
+                backgroundColor: 'rgba(50, 30, 0, 0.95)',
+                borderColor: '#ffaa00',
+                textColor: '#ffcc44',
+                shadowColor: 'rgba(255, 170, 0, 0.3)',
+                glowColor: 'rgba(255, 170, 0, 0.2)',
+                progressColor: '#ffaa00',
+                iconColor: '#ffaa00'
+            },
+            'error': {
+                backgroundColor: 'rgba(50, 0, 0, 0.95)',
+                borderColor: '#ff4444',
+                textColor: '#ff6666',
+                shadowColor: 'rgba(255, 68, 68, 0.3)',
+                glowColor: 'rgba(255, 68, 68, 0.2)',
+                progressColor: '#ff4444',
+                iconColor: '#ff4444'
+            },
+            'welcome': {
+                backgroundColor: 'rgba(0, 20, 40, 0.95)',
+                borderColor: '#00aaff',
+                textColor: '#66ccff',
+                shadowColor: 'rgba(0, 170, 255, 0.3)',
+                glowColor: 'rgba(0, 170, 255, 0.2)',
+                progressColor: '#00aaff',
+                iconColor: '#00aaff'
+            },
+            'info': {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                borderColor: '#ffffff',
+                textColor: '#ffffff',
+                shadowColor: 'rgba(255, 255, 255, 0.3)',
+                glowColor: 'rgba(255, 255, 255, 0.1)',
+                progressColor: '#ffffff',
+                iconColor: '#ffffff'
+            }
+        };
+        
+        return styles[type] || styles['info'];
+    }
+    
+    // Disegna effetto glow
+    drawGlowEffect(ctx, x, y, width, height, color, intensity) {
+        const gradient = ctx.createRadialGradient(
+            x + width/2, y + height/2, 0,
+            x + width/2, y + height/2, width/2 + 20
+        );
+        gradient.addColorStop(0, color.replace('0.2', (0.2 * intensity).toFixed(2)));
+        gradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x - 20, y - 20, width + 40, height + 40);
+    }
+    
+    // Disegna sfondo con gradiente
+    drawGradientBackground(ctx, x, y, width, height, bgColor, borderColor) {
+        // Sfondo principale
+        ctx.fillStyle = bgColor;
+        this.roundRect(ctx, x, y, width, height, 8);
+        ctx.fill();
+        
+        // Gradiente interno
+        const gradient = ctx.createLinearGradient(x, y, x, y + height);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+        
+        ctx.fillStyle = gradient;
+        this.roundRect(ctx, x, y, width, height, 8);
+        ctx.fill();
+    }
+    
+    // Disegna bordo con effetto
+    drawBorder(ctx, x, y, width, height, color, intensity) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 5 * intensity;
+        this.roundRect(ctx, x, y, width, height, 8);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+    
+    // Disegna testo con ombra
+    drawTextWithShadow(ctx, text, x, y, textColor, shadowColor) {
+        // Ombra
+        ctx.fillStyle = shadowColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, x + 2, y + 2);
+        
+        // Testo principale
+        ctx.fillStyle = textColor;
+        ctx.fillText(text, x, y);
+    }
+    
+    // Disegna barra di progresso elegante
+    drawProgressBar(ctx, x, y, width, height, remaining, total, color) {
+        const progress = remaining / total;
+        const progressWidth = width * progress;
+        
+        // Sfondo barra
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(x, y, width, height);
+        
+        // Barra di progresso
+        if (progressWidth > 0) {
+            const gradient = ctx.createLinearGradient(x, y, x + progressWidth, y);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, color + '80');
             
-            // Testo centrato
-            ctx.fillStyle = textColor;
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, y, progressWidth, height);
+        }
+    }
+    
+    // Disegna icona per tipo di notifica
+    drawNotificationIcon(ctx, x, y, type, color) {
+        ctx.fillStyle = color;
+        ctx.font = '16px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(notification.message, centerX, y + height / 2);
-            
-            // Barra di progresso sottile (tempo rimanente)
-            const progressWidth = (notification.remainingTime / notification.duration) * width;
-            ctx.fillStyle = textColor;
-            ctx.fillRect(x, y + height - 2, progressWidth, 2);
-        });
+        
+        const icons = {
+            'success': '✓',
+            'reward': '💰',
+            'warning': '⚠',
+            'error': '✗',
+            'welcome': '👋',
+            'info': 'ℹ'
+        };
+        
+        const icon = icons[type] || 'ℹ';
+        ctx.fillText(icon, x, y);
     }
     
     // Metodo helper per bordi arrotondati
@@ -113,31 +423,31 @@ export class Notification {
     
     // Notifica rapida per targeting
     targetSelected(enemyType) {
-        this.add(`🎯 Target selezionato: ${enemyType}`, 90, 'success');
+        this.add(`Target selezionato: ${enemyType}`, 90, 'success');
     }
     
     // Notifica per combattimento
     combatStarted(enemyType) {
-        this.add(`⚔️ Combattimento iniziato contro ${enemyType}`, 90, 'warning');
+        this.add(`Combattimento iniziato contro ${enemyType}`, 90, 'warning');
     }
     
     // Notifica per fine combattimento
     combatStopped() {
-        this.add(`⏹️ Combattimento fermato`, 90, 'info');
+        this.add(`Combattimento fermato`, 90, 'info');
     }
     
     // Notifica per nemico distrutto
     enemyDestroyed(enemyType) {
-        this.add(`💥 ${enemyType} distrutto!`, 120, 'success');
+        this.add(`${enemyType} distrutto!`, 600, 'success'); // Stessa durata delle ricompense
     }
     
     // Notifica per esperienza guadagnata
     expGained(expAmount) {
-        this.add(`✨ +${expAmount} XP guadagnati!`, 120, 'info');
+        this.add(`+${expAmount} XP guadagnati!`, 120, 'info');
     }
     
     // Notifica per salita di livello
     levelUp(level, bonus) {
-        this.add(`🎉 LIVELLO ${level} RAGGIUNTO! ${bonus}`, 180, 'success');
+        this.add(`LIVELLO ${level} RAGGIUNTO! ${bonus}`, 180, 'success');
     }
 }

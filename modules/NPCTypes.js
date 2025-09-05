@@ -2,48 +2,112 @@
 export class NPCTypes {
     constructor() {
         this.types = {
-            // NPC per X1 - Settore Principale (più facili)
+            // NPC per X1 - Settore Principale (Streuner)
             'npc_x1': {
-                name: 'X1 Patrol',
-                description: 'Pattuglia del settore principale',
-                sprite: 'alien', // Stesso sprite
-                maxHP: 300,
-                maxShield: 20,
-                shieldRegenRate: 0.5,
-                shieldRegenDelay: 4000,
-                speed: 1.8,
-                damage: 15,
-                radius: 15,
-                hitboxRadius: 40,
+                name: 'Streuner',
+                description: 'Currently the weakest of aliens. Located in X-1, X-2.',
+                sprite: 'alien',
+                maxHP: 8000, // Aumentato per test AI
+                maxShield: 4000, // Aumentato per test AI
+                shieldRegenRate: 1.0,
+                shieldRegenDelay: 3000,
+                speed: 2.8, // 280 base speed
+                damage: 17.5, // 15-20 average damage
+                radius: 16,
+                hitboxRadius: 42,
                 colors: {
-                    primary: '#4a90e2',
-                    secondary: '#2c5aa0',
-                    shield: '#00bfff'
+                    primary: '#ff6b6b',
+                    secondary: '#e74c3c',
+                    shield: '#ff9f9f'
                 },
-                experience: 50,
-                credits: 25
+                experience: 400,
+                credits: 400,
+                uridium: 1,
+                honor: 2,
+                // Configurazione AI
+                ai: {
+                    detectionRange: 400, // Aumentato da 250 a 400
+                    attackRange: 150, // Aumentato da 100 a 150
+                    fleeThreshold: 0.2,
+                    isAggressive: false, // Non aggressivo
+                    retaliateOnDamage: true, // Attacca solo se attaccato
+                    fleeWhenLow: true,
+                    attackCooldown: 90, // 1.5 secondi
+                    alertDuration: 600, // Aumentato da 180 a 600 (10 secondi)
+                    fleeDuration: 240 // 4 secondi
+                }
             },
             
-            // NPC per X2 - Settore Secondario (più difficili)
+            // NPC per X2 - Settore Secondario (Streuner uguali a X1)
             'npc_x2': {
-                name: 'X2 Elite',
-                description: 'Elite del settore secondario',
-                sprite: 'alien', // Stesso sprite
-                maxHP: 800,
-                maxShield: 50,
-                shieldRegenRate: 1.2,
-                shieldRegenDelay: 2500,
-                speed: 2.5,
-                damage: 25,
-                radius: 18,
-                hitboxRadius: 45,
+                name: 'Streuner',
+                description: 'Currently the weakest of aliens. Located in X-1, X-2.',
+                sprite: 'alien',
+                maxHP: 8000,  // Aumentato per test AI
+                maxShield: 4000,  // Aumentato per test AI
+                shieldRegenRate: 1.0,  // Stesso di X1
+                shieldRegenDelay: 3000,  // Stesso di X1
+                speed: 2.8,  // Stesso di X1
+                damage: 17.5,  // Stesso di X1
+                radius: 16,  // Stesso di X1
+                hitboxRadius: 42,  // Stesso di X1
                 colors: {
-                    primary: '#e74c3c',
-                    secondary: '#c0392b',
-                    shield: '#ff6b6b'
+                    primary: '#ff6b6b',  // Stesso di X1
+                    secondary: '#e74c3c',  // Stesso di X1
+                    shield: '#ff9f9f'  // Stesso di X1
                 },
-                experience: 120,
-                credits: 60
+                experience: 400,  // Stesso di X1
+                credits: 400,  // Stesso di X1
+                uridium: 1,  // Stesso di X1
+                honor: 2,  // Stesso di X1
+                // Configurazione AI (stessa di X1)
+                ai: {
+                    detectionRange: 400, // Aumentato da 250 a 400
+                    attackRange: 150, // Aumentato da 100 a 150
+                    fleeThreshold: 0.2,
+                    isAggressive: false, // Non aggressivo
+                    retaliateOnDamage: true, // Attacca solo se attaccato
+                    fleeWhenLow: true,
+                    attackCooldown: 90,
+                    alertDuration: 600, // Aumentato da 180 a 600 (10 secondi)
+                    fleeDuration: 240
+                }
+            },
+            
+            // NPC per X2 - Lordakia (più forte)
+            'npc_x2_lordakia': {
+                name: 'Lordakia',
+                description: 'Stronger alien with high damage output. Located in X-2.',
+                sprite: 'alien',
+                maxHP: 2000,
+                maxShield: 2000,
+                shieldRegenRate: 1.5,
+                shieldRegenDelay: 2000,
+                speed: 3.2, // 320 base speed
+                damage: 70, // 60-80 average damage
+                radius: 20,
+                hitboxRadius: 50,
+                colors: {
+                    primary: '#ff8c00',
+                    secondary: '#ff6600',
+                    shield: '#ffaa44'
+                },
+                experience: 800,
+                credits: 800,
+                uridium: 2,
+                honor: 4,
+                // Configurazione AI aggressiva
+                ai: {
+                    detectionRange: 300, // Rileva da più lontano
+                    attackRange: 120, // Attacca da più lontano
+                    fleeThreshold: 0.1, // Scappa solo quando quasi morto
+                    isAggressive: true, // Aggressivo - attacca quando vede il giocatore
+                    retaliateOnDamage: true, // Attacca anche se attaccato
+                    fleeWhenLow: false, // Non scappa, combatte fino alla fine
+                    attackCooldown: 45, // Attacca più frequentemente
+                    alertDuration: 120, // Reagisce più velocemente
+                    fleeDuration: 0 // Non scappa mai
+                }
             },
             
             // NPC per future mappe
@@ -84,7 +148,7 @@ export class NPCTypes {
     getTypesForMap(mapId) {
         const mapTypes = {
             'x1': ['npc_x1'],
-            'x2': ['npc_x2'],
+            'x2': ['npc_x2', 'npc_x2_lordakia'], // X2 ha sia Streuner che Lordakia
             'x3': ['npc_x3']
         };
         
@@ -122,7 +186,34 @@ export class NPCTypes {
             hitboxRadius: config.hitboxRadius,
             colors: config.colors,
             experience: config.experience,
-            credits: config.credits
+            credits: config.credits,
+            uridium: config.uridium || 0,
+            honor: config.honor || 0
+        };
+    }
+    
+    // Crea configurazione per tipo specifico (per Lordakia)
+    createNPCConfigForType(type) {
+        const config = this.getNPCConfig(type);
+        
+        return {
+            type: type,
+            name: config.name,
+            description: config.description,
+            sprite: config.sprite,
+            maxHP: config.maxHP,
+            maxShield: config.maxShield,
+            shieldRegenRate: config.shieldRegenRate,
+            shieldRegenDelay: config.shieldRegenDelay,
+            speed: config.speed,
+            damage: config.damage,
+            radius: config.radius,
+            hitboxRadius: config.hitboxRadius,
+            colors: config.colors,
+            experience: config.experience,
+            credits: config.credits,
+            uridium: config.uridium || 0,
+            honor: config.honor || 0
         };
     }
     

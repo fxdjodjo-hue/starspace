@@ -71,12 +71,19 @@ export class MapInstance {
             const y = Math.random() * (this.config.height - 200) + 100;
             const id = `enemy_${this.mapId}_${Date.now()}_${i}`;
             
+            // Per X2, genera metà Streuner e metà Lordakia
+            let npcType = this.config.npcType;
+            if (this.mapId === 'x2') {
+                // Prima metà = Streuner, seconda metà = Lordakia
+                npcType = i < this.config.enemyCount / 2 ? 'npc_x2' : 'npc_x2_lordakia';
+            }
+            
             this.objects.set(id, {
                 id: id,
                 type: 'enemy',
                 x: x,
                 y: y,
-                npcType: this.config.npcType, // Usa nuovo sistema NPC
+                npcType: npcType,
                 created: Date.now(),
                 lastModified: Date.now()
             });

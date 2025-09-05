@@ -7,10 +7,10 @@ export class MapSystem {
             'x1': {
                 name: 'X1',
                 fullName: 'Settore Principale',
-                description: 'Zona di partenza per nuovi piloti',
+                description: 'Zona di partenza con Streuner - Currently the weakest of aliens',
                 connections: ['x2'],
                 npcType: 'npc_x1',
-                color: '#4a90e2',
+                color: '#ff6b6b',
                 status: 'accessible', // accessible, locked, current
                 position: { x: 200, y: 250 },
                 level: 1,
@@ -19,10 +19,10 @@ export class MapSystem {
             'x2': {
                 name: 'X2',
                 fullName: 'Settore Secondario', 
-                description: 'Zona avanzata con nemici più forti',
+                description: 'Zona avanzata con Streuner Elite - Enhanced aliens',
                 connections: ['x1'],
                 npcType: 'npc_x2',
-                color: '#e74c3c',
+                color: '#ff4444',
                 status: 'accessible',
                 position: { x: 500, y: 250 },
                 level: 2,

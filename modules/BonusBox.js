@@ -194,28 +194,32 @@ export class BonusBox {
         this.collected = true;
         this.fadeOut = true; // Inizia il fade out invece di sparire subito
         
-        // Aggiungi le ricompense
-        if (this.creditsReward > 0) {
-            ship.upgradeManager.addCredits(this.creditsReward);
-        }
-        
-        if (this.uridiumReward > 0) {
-            ship.upgradeManager.addUridium(this.uridiumReward);
-        }
-        
-        // Mostra notifica
+        // Mostra prima la notifica "Bonus box raccolta!"
         if (window.gameInstance && window.gameInstance.notifications) {
-            let message = '';
-            if (this.creditsReward > 0 && this.uridiumReward > 0) {
-                message = `💰 +${this.creditsReward} Crediti, 💎 +${this.uridiumReward} Uridium`;
-            } else if (this.creditsReward > 0) {
-                message = `💰 +${this.creditsReward} Crediti`;
-            } else if (this.uridiumReward > 0) {
-                message = `💎 +${this.uridiumReward} Uridium`;
+            window.gameInstance.notifications.add("Bonus box raccolta!", 600, 'success');
+        }
+        
+        // Poi processa i reward
+        if (ship.rewardManager) {
+            ship.rewardManager.processBonusBoxRewards(this.creditsReward, this.uridiumReward);
+        } else {
+            // Fallback per compatibilità
+            if (this.creditsReward > 0) {
+                ship.upgradeManager.addCredits(this.creditsReward);
             }
             
-            if (message) {
-                window.gameInstance.notifications.add(message, 120, 'success');
+            if (this.uridiumReward > 0) {
+                ship.upgradeManager.addUridium(this.uridiumReward);
+            }
+            
+            // Mostra notifiche delle ricompense
+            if (window.gameInstance && window.gameInstance.notifications) {
+                if (this.creditsReward > 0) {
+                    window.gameInstance.notifications.add(`Credits: ${this.creditsReward}`, 600, 'reward');
+                }
+                if (this.uridiumReward > 0) {
+                    window.gameInstance.notifications.add(`Uridium: ${this.uridiumReward}`, 600, 'reward');
+                }
             }
         }
         

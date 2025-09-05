@@ -130,15 +130,37 @@ export class InteractiveAsteroid {
     
     completeMining() {
         if (this.miningPlayer) {
-            // Dai le ricompense al giocatore tramite upgradeManager
-            this.miningPlayer.upgradeManager.addCredits(this.rewards.credits);
-            this.miningPlayer.upgradeManager.addUridium(this.rewards.uridium);
-            this.miningPlayer.addHonor(this.rewards.honor);
+            // Mostra prima la notifica "Asteroid minato!"
+            if (window.gameInstance && window.gameInstance.notifications) {
+                window.gameInstance.notifications.add("Asteroid minato!", 600, 'success');
+            }
             
-            // Mostra notifica
-            this.showNotification(
-                `⛏️ Mining completato! +${this.rewards.credits} Crediti, +${this.rewards.uridium} Uridium, +${this.rewards.honor} Onore`
-            );
+            // Poi processa i reward
+            if (this.miningPlayer.rewardManager) {
+                this.miningPlayer.rewardManager.processMiningRewards(
+                    this.rewards.credits,
+                    this.rewards.uridium,
+                    this.rewards.honor
+                );
+            } else {
+                // Fallback per compatibilità
+                this.miningPlayer.upgradeManager.addCredits(this.rewards.credits);
+                this.miningPlayer.upgradeManager.addUridium(this.rewards.uridium);
+                this.miningPlayer.addHonor(this.rewards.honor);
+                
+                // Mostra notifiche delle ricompense
+                if (window.gameInstance && window.gameInstance.notifications) {
+                    if (this.rewards.credits > 0) {
+                        window.gameInstance.notifications.add(`Credits: ${this.rewards.credits}`, 600, 'reward');
+                    }
+                    if (this.rewards.uridium > 0) {
+                        window.gameInstance.notifications.add(`Uridium: ${this.rewards.uridium}`, 600, 'reward');
+                    }
+                    if (this.rewards.honor > 0) {
+                        window.gameInstance.notifications.add(`Honor: ${this.rewards.honor}`, 600, 'reward');
+                    }
+                }
+            }
             
             console.log(`💰 Ricompense: ${this.rewards.credits} Crediti, ${this.rewards.uridium} Uridium, ${this.rewards.honor} Onore`);
         }

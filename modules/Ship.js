@@ -3,6 +3,7 @@ import { Projectile } from './Projectile.js';
 import { Missile } from './Missile.js';
 import { Experience } from './Experience.js';
 import { UpgradeManager } from './UpgradeManager.js';
+import { RewardManager } from './RewardManager.js';
 import { ShipSprite } from './ShipSprite.js';
 import { MissileSprite } from './MissileSprite.js';
 import { TrailSystem } from './TrailSystem.js';
@@ -10,10 +11,11 @@ import { RepairEffect } from './RepairEffect.js';
 import { ShieldEffect } from './ShieldEffect.js';
 
 export class Ship {
-    constructor(x, y, size = 40) {
+    constructor(x, y, size = 40, game = null) {
         this.x = x;
         this.y = y;
         this.size = size;
+        this.game = game;
         this.speed = 2; // Valore base più basso
         this.targetX = x;
         this.targetY = y;
@@ -32,6 +34,7 @@ export class Ship {
         this.maxHP = 50; // Valore base più basso
         this.hp = this.maxHP;
         this.isDead = false; // Traccia se la nave è morta
+        this.active = true; // Per compatibilità con AI system
         
         // Sistema scudo
         this.maxShield = 30; // Valore base
@@ -80,6 +83,9 @@ export class Ship {
         // Sistema di potenziamenti
         this.upgradeManager = new UpgradeManager();
         
+        // Sistema reward centralizzato
+        this.rewardManager = new RewardManager();
+        
         // Sistema di riparazione automatica
         this.autoRepairDelay = 600; // 10 secondi (600 frame a 60 FPS)
         this.lastCombatTime = 0; // Tempo dell'ultimo combattimento
@@ -109,6 +115,11 @@ export class Ship {
         
         // Carica l'effetto di riparazione scudo
         this.shieldEffect.load();
+    }
+    
+    // Inizializza il RewardManager con le dipendenze
+    initRewardManager(notifications) {
+        this.rewardManager.init(notifications, this.experience, this.upgradeManager);
     }
     
     update() {
@@ -283,9 +294,12 @@ export class Ship {
         this.selectedTarget = null;
         this.isInCombat = false;
         
-        // Deattiva tutti i proiettili quando si deseleziona il target
+        // Deattiva tutti i proiettili e missili quando si deseleziona il target
         this.projectiles.forEach(projectile => {
             projectile.deactivate();
+        });
+        this.missiles.forEach(missile => {
+            missile.destroy();
         });
     }
     
@@ -303,9 +317,12 @@ export class Ship {
                 this.combatTimer = 0;
                 this.lastCombatTime = Date.now(); // Aggiorna il tempo dell'ultimo combattimento
             } else {
-                // Se il combattimento si ferma, deattiva tutti i proiettili attivi
+                // Se il combattimento si ferma, deattiva tutti i proiettili e missili attivi
                 this.projectiles.forEach(projectile => {
                     projectile.deactivate();
+                });
+                this.missiles.forEach(missile => {
+                    missile.destroy();
                 });
             }
             
@@ -547,10 +564,10 @@ export class Ship {
 
                     // Salva il tipo dell'enemy PRIMA di cancellarlo
                     const enemyType = this.selectedTarget.type;
+                    const enemyConfig = this.selectedTarget.config;
+                    console.log(`🔍 Enemy distrutto - Tipo: ${enemyType}, Config:`, enemyConfig);
                     
-                    // Aggiungi esperienza per aver distrutto il nemico
-                    const expGained = this.getExpForEnemyType(enemyType);
-                    const expResult = this.experience.addExperience(expGained);
+                    // I reward verranno processati in game.js per controllare l'ordine delle notifiche
                     
                     // Deseleziona il target morto
                     if (this.selectedTarget.deselect) {
@@ -564,8 +581,8 @@ export class Ship {
                     combatResult = {
                         enemyDestroyed: true,
                         enemyType: enemyType,
-                        expGained: expGained,
-                        levelUp: expResult.levelUp
+                        enemyName: enemyConfig ? enemyConfig.name : enemyType, // Nome specifico del nemico
+                        enemyConfig: enemyConfig // Passa la configurazione per i reward
                     };
 
                 }
@@ -605,10 +622,10 @@ export class Ship {
 
                     // Salva il tipo dell'enemy PRIMA di cancellarlo
                     const enemyType = this.selectedTarget.type;
+                    const enemyConfig = this.selectedTarget.config;
+                    console.log(`🔍 Enemy distrutto - Tipo: ${enemyType}, Config:`, enemyConfig);
                     
-                    // Aggiungi esperienza per aver distrutto il nemico
-                    const expGained = this.getExpForEnemyType(enemyType);
-                    const expResult = this.experience.addExperience(expGained);
+                    // I reward verranno processati in game.js per controllare l'ordine delle notifiche
                     
                     // Deseleziona il target morto
                     if (this.selectedTarget.deselect) {
@@ -622,8 +639,8 @@ export class Ship {
                     combatResult = {
                         enemyDestroyed: true,
                         enemyType: enemyType,
-                        expGained: expGained,
-                        levelUp: expResult.levelUp
+                        enemyName: enemyConfig ? enemyConfig.name : enemyType, // Nome specifico del nemico
+                        enemyConfig: enemyConfig // Passa la configurazione per i reward
                     };
 
                 }
@@ -725,50 +742,44 @@ export class Ship {
             ctx.stroke();
             
             ctx.setLineDash([]);
-            
-            // Linea di connessione al target
-            const shipX = this.x - camera.x;
-            const shipY = this.y - camera.y;
-            
-            ctx.strokeStyle = this.isInCombat ? '#ff0000' : '#00ff00';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(shipX, shipY);
-            ctx.lineTo(targetX, targetY);
-            ctx.stroke();
         }
     }
     
-    // Calcola l'esperienza guadagnata per tipo di nemico
+    // Processa reward per nemico distrutto usando RewardManager
+    processEnemyKill(enemyType, enemyConfig = null) {
+        return this.rewardManager.processEnemyKill(enemyType, enemyConfig);
+    }
+    
+    // Metodi di compatibilità per il sistema esistente
     getExpForEnemyType(enemyType) {
-        switch (enemyType) {
-            case 'barracuda': return 100;    // 100 XP per nemico Barracuda
-            default: return 100;
-        }
+        const rewards = this.rewardManager.calculateEnemyRewards(enemyType, this.getEnemyConfig(enemyType));
+        return rewards.experience;
     }
     
-    // Ottieni crediti per tipo di nemico
     getCreditsForEnemyType(enemyType) {
-        switch (enemyType) {
-            case 'barracuda': return 10;
-            default: return 10;
-        }
+        const rewards = this.rewardManager.calculateEnemyRewards(enemyType, this.getEnemyConfig(enemyType));
+        return rewards.credits;
     }
     
-    // Ottieni uridium per tipo di nemico (valuta premium, quantità ridotta)
     getUridiumForEnemyType(enemyType) {
-        switch (enemyType) {
-            case 'barracuda': return 2;
-            default: return 2;
-        }
+        const rewards = this.rewardManager.calculateEnemyRewards(enemyType, this.getEnemyConfig(enemyType));
+        return rewards.uridium;
     }
     
-    // Ottieni onore per tipo di nemico (per il rango)
     getHonorForEnemyType(enemyType) {
-        switch (enemyType) {
-            case 'barracuda': return 5;
-            default: return 5;
+        const rewards = this.rewardManager.calculateEnemyRewards(enemyType, this.getEnemyConfig(enemyType));
+        return rewards.honor;
+    }
+    
+    // Ottiene configurazione nemico se disponibile
+    getEnemyConfig(enemyType) {
+        if (this.game && this.game.enemies) {
+            const enemy = this.game.enemies.find(e => e.type === enemyType);
+            if (enemy && enemy.config) {
+                return enemy.config;
+            }
         }
+        return null;
     }
     
     // Aggiungi onore
@@ -857,6 +868,7 @@ export class Ship {
     handlePlayerDeath() {
         // Imposta la nave come morta
         this.isDead = true;
+        this.active = false; // Per compatibilità con AI system
         
         // Reset del sistema di radiazione quando la nave muore
         if (window.gameInstance && window.gameInstance.radiationSystem) {
@@ -1002,3 +1014,4 @@ export class Ship {
         return this.experience ? this.experience.level : 1;
     }
 }
+
