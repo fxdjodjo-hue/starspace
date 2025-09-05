@@ -131,10 +131,10 @@ export class QuestPanel {
     // Applica ricompense
     applyRewards(rewards) {
         if (rewards.experience) {
-            this.game.ship.addExperience(rewards.experience);
+            this.game.ship.addResource('experience', rewards.experience);
         }
         if (rewards.credits) {
-            this.game.ship.addCredits(rewards.credits);
+            this.game.ship.addResource('credits', rewards.credits);
         }
     }
     

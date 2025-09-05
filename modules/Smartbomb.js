@@ -142,10 +142,10 @@ export class Smartbomb {
                 const uridiumGained = window.gameInstance.ship.getUridiumForEnemyType(enemy.type);
                 const honorGained = window.gameInstance.ship.getHonorForEnemyType(enemy.type);
                 
-                window.gameInstance.ship.experience.addExperience(expGained);
-                window.gameInstance.ship.upgradeManager.addCredits(creditsGained);
-                window.gameInstance.ship.upgradeManager.addUridium(uridiumGained);
-                window.gameInstance.ship.addHonor(honorGained);
+                window.gameInstance.ship.addResource('experience', expGained);
+                window.gameInstance.ship.addResource('credits', creditsGained);
+                window.gameInstance.ship.addResource('uridium', uridiumGained);
+                window.gameInstance.ship.addResource('honor', honorGained);
             }
         });
     }

@@ -1,248 +1,156 @@
-// Sistema Reward Centralizzato e Modulare
+// Sistema Reward - Calcolatore Puro (Niente Stato)
 export class RewardManager {
     constructor() {
-        // Valute del giocatore
-        this.credits = 1000; // Valore iniziale per test
-        this.uridium = 0;
-        this.honor = 0;
-        this.experience = 0;
-        
         // Sistema di notifiche (riferimento esterno)
         this.notifications = null;
-        
-        // Callbacks per eventi
-        this.onRewardGained = null;
-        this.onLevelUp = null;
-        this.onHonorGained = null;
     }
     
     // Inizializza il RewardManager con dipendenze esterne
-    init(notifications, experienceSystem, upgradeManager) {
+    init(notifications) {
         this.notifications = notifications;
-        this.experienceSystem = experienceSystem;
-        this.upgradeManager = upgradeManager;
     }
     
-    // Aggiunge reward multipli in una volta
-    addRewards(rewards) {
-        const results = {
-            credits: 0,
-            uridium: 0,
-            honor: 0,
-            experience: 0,
-            levelUp: null
+    // Calcola reward multipli (NON li aggiunge - solo calcolo)
+    calculateRewards(rewards) {
+        return {
+            credits: rewards.credits || 0,
+            uridium: rewards.uridium || 0,
+            honor: rewards.honor || 0,
+            experience: rewards.experience || 0
         };
+    }
+    
+    // Calcola reward per nemico specifico
+    calculateEnemyRewards(enemyType, enemyConfig = null) {
+        const config = enemyConfig || this.getEnemyConfig(enemyType);
+        const baseRewards = this.getEnemyBaseRewards(enemyType);
         
-        // Aggiungi ogni tipo di reward
-        if (rewards.credits) {
-            results.credits = this.addCredits(rewards.credits);
-        }
-        
-        if (rewards.uridium) {
-            results.uridium = this.addUridium(rewards.uridium);
-        }
-        
-        if (rewards.honor) {
-            results.honor = this.addHonor(rewards.honor);
-        }
-        
-        if (rewards.experience) {
-            const expResult = this.addExperience(rewards.experience);
-            results.experience = expResult.amount;
-            results.levelUp = expResult.levelUp;
-        }
+        return {
+            credits: baseRewards.credits,
+            uridium: baseRewards.uridium,
+            honor: baseRewards.honor,
+            experience: baseRewards.experience
+        };
+    }
+    
+    // Processa reward per nemico (calcola e mostra notifiche)
+    processEnemyKill(enemyType, enemyConfig = null) {
+        const rewards = this.calculateEnemyRewards(enemyType, enemyConfig);
         
         // Mostra notifiche per ogni reward guadagnato
-        this.showRewardNotifications(results);
+        this.showRewardNotifications(rewards);
         
-        // Trigger callback se definito
-        if (this.onRewardGained) {
-            this.onRewardGained(results);
-        }
-        
-        return results;
+        return rewards;
     }
     
-    // Aggiunge credits
-    addCredits(amount) {
-        if (amount <= 0) return 0;
-        
-        this.credits += amount;
-        
-        // Aggiorna anche l'UpgradeManager se disponibile
-        if (this.upgradeManager) {
-            this.upgradeManager.addCredits(amount);
-        }
-        
-        return amount;
-    }
-    
-    // Aggiunge uridium
-    addUridium(amount) {
-        if (amount <= 0) return 0;
-        
-        this.uridium += amount;
-        
-        // Aggiorna anche l'UpgradeManager se disponibile
-        if (this.upgradeManager) {
-            this.upgradeManager.addUridium(amount);
-        }
-        
-        return amount;
-    }
-    
-    // Aggiunge honor
-    addHonor(amount) {
-        if (amount <= 0) return 0;
-        
-        this.honor += amount;
-        
-        // Trigger callback se definito
-        if (this.onHonorGained) {
-            this.onHonorGained(amount);
-        }
-        
-        return amount;
-    }
-    
-    // Aggiunge esperienza
-    addExperience(amount) {
-        if (amount <= 0) return { amount: 0, levelUp: null };
-        
-        // Usa il sistema di esperienza se disponibile
-        if (this.experienceSystem) {
-            const result = this.experienceSystem.addExperience(amount);
-            
-            // Trigger callback per level up se definito
-            if (result.levelUp && this.onLevelUp) {
-                this.onLevelUp(result.levelUp);
-            }
-            
-            return {
-                amount: amount,
-                levelUp: result.levelUp
-            };
-        }
-        
-        // Fallback se non c'è sistema di esperienza
-        this.experience += amount;
-        return { amount: amount, levelUp: null };
-    }
-    
-    // Mostra notifiche per i reward guadagnati
-    showRewardNotifications(results) {
+    // Mostra notifiche per i reward
+    showRewardNotifications(rewards) {
         if (!this.notifications) return;
         
-        // Mostra notifica per ogni tipo di reward guadagnato con durata sincronizzata
-        if (results.credits > 0) {
-            this.notifications.add(`+${results.credits} Credits`, 600, 'reward');
+        if (rewards.credits > 0) {
+            this.notifications.add(`+${rewards.credits} Credits`, 600, 'reward');
         }
         
-        if (results.uridium > 0) {
-            this.notifications.add(`+${results.uridium} Uridium`, 600, 'reward');
+        if (rewards.uridium > 0) {
+            this.notifications.add(`+${rewards.uridium} Uridium`, 600, 'reward');
         }
         
-        if (results.honor > 0) {
-            this.notifications.add(`+${results.honor} Honor`, 600, 'reward');
+        if (rewards.honor > 0) {
+            this.notifications.add(`+${rewards.honor} Honor`, 600, 'reward');
         }
         
-        if (results.experience > 0) {
-            this.notifications.add(`+${results.experience} XP`, 600, 'reward');
-        }
-        
-        if (results.levelUp) {
-            this.notifications.levelUp(results.levelUp.level, results.levelUp.bonus);
+        if (rewards.experience > 0) {
+            this.notifications.add(`+${rewards.experience} XP`, 600, 'reward');
         }
     }
     
-    // Calcola reward per tipo di nemico
-    calculateEnemyRewards(enemyType, enemyConfig = null) {
-        // Se abbiamo la configurazione del nemico, usala
-        if (enemyConfig) {
-            return {
-                credits: enemyConfig.credits || 0,
-                uridium: enemyConfig.uridium || 0,
-                honor: enemyConfig.honor || 0,
-                experience: enemyConfig.experience || 0
-            };
-        }
+    // Configurazione nemici
+    getEnemyConfig(enemyType) {
+        const configs = {
+            'streuner': {
+                name: 'Streuner',
+                description: 'Currently the weakest of aliens. Located in X-1, X-2.',
+                sprite: 'alien',
+                maxHP: 8000,
+                maxShield: 4000,
+                credits: 400,
+                uridium: 1,
+                honor: 2,
+                experience: 400
+            },
+            'lordakia': {
+                name: 'Lordakia',
+                description: 'Stronger alien with better rewards.',
+                sprite: 'alien',
+                maxHP: 12000,
+                maxShield: 6000,
+                credits: 600,
+                uridium: 2,
+                honor: 3,
+                experience: 600
+            }
+        };
         
-        // Fallback per compatibilità
-        const fallbackRewards = {
+        return configs[enemyType] || configs['streuner'];
+    }
+    
+    // Reward base per tipo di nemico
+    getEnemyBaseRewards(enemyType) {
+        const rewards = {
             'barracuda': { credits: 10, uridium: 2, honor: 5, experience: 100 },
             'npc_x1': { credits: 400, uridium: 1, honor: 2, experience: 400 },
             'npc_x2': { credits: 500, uridium: 2, honor: 3, experience: 500 },
-            'enemy': { credits: 100, uridium: 1, honor: 2, experience: 100 }
+            'enemy': { credits: 400, uridium: 1, honor: 2, experience: 400 }, // Default per Streuner
+            'streuner': { credits: 400, uridium: 1, honor: 2, experience: 400 },
+            'lordakia': { credits: 600, uridium: 2, honor: 3, experience: 600 }
         };
         
-        return fallbackRewards[enemyType] || fallbackRewards['enemy'];
+        return rewards[enemyType] || rewards['enemy'];
     }
     
-    // Processa reward per nemico distrutto
-    processEnemyKill(enemyType, enemyConfig = null) {
-        const rewards = this.calculateEnemyRewards(enemyType, enemyConfig);
-        const result = this.addRewards(rewards);
-        return result;
+    // Calcola reward per mining
+    calculateMiningRewards(credits, uridium, honor) {
+        return {
+            credits: credits || 0,
+            uridium: uridium || 0,
+            honor: honor || 0,
+            experience: 0
+        };
     }
     
-    // Processa reward per mining asteroide
-    processMiningRewards(credits, uridium, honor) {
-        return this.addRewards({
-            credits: credits,
-            uridium: uridium,
-            honor: honor
-        });
-    }
-    
-    // Processa reward per bonus box
+    // Processa reward per bonus box (calcola e mostra notifiche)
     processBonusBoxRewards(credits, uridium) {
-        return this.addRewards({
-            credits: credits,
-            uridium: uridium
-        });
-    }
-    
-    // Processa reward per quest
-    processQuestRewards(rewards) {
-        return this.addRewards(rewards);
-    }
-    
-    // Ottiene stato attuale di tutti i reward
-    getRewardStatus() {
-        return {
-            credits: this.credits,
-            uridium: this.uridium,
-            honor: this.honor,
-            experience: this.experience
+        const rewards = {
+            credits: credits || 0,
+            uridium: uridium || 0,
+            honor: 0,
+            experience: 0
         };
+        
+        // Mostra notifiche per i reward
+        this.showRewardNotifications(rewards);
+        
+        return rewards;
     }
     
-    // Ottiene reward per tipo specifico
-    getCredits() { return this.credits; }
-    getUridium() { return this.uridium; }
-    getHonor() { return this.honor; }
-    getExperience() { return this.experience; }
-    
-    // Imposta callback per eventi
-    setOnRewardGained(callback) { this.onRewardGained = callback; }
-    setOnLevelUp(callback) { this.onLevelUp = callback; }
-    setOnHonorGained(callback) { this.onHonorGained = callback; }
-    
-    // Salva stato (per persistenza)
-    save() {
-        return {
-            credits: this.credits,
-            uridium: this.uridium,
-            honor: this.honor,
-            experience: this.experience
-        };
+    // Metodi di compatibilità per il sistema esistente
+    getCreditsForEnemyType(enemyType) {
+        const rewards = this.calculateEnemyRewards(enemyType);
+        return rewards.credits;
     }
     
-    // Carica stato (per persistenza)
-    load(data) {
-        if (data.credits !== undefined) this.credits = data.credits;
-        if (data.uridium !== undefined) this.uridium = data.uridium;
-        if (data.honor !== undefined) this.honor = data.honor;
-        if (data.experience !== undefined) this.experience = data.experience;
+    getUridiumForEnemyType(enemyType) {
+        const rewards = this.calculateEnemyRewards(enemyType);
+        return rewards.uridium;
+    }
+    
+    getHonorForEnemyType(enemyType) {
+        const rewards = this.calculateEnemyRewards(enemyType);
+        return rewards.honor;
+    }
+    
+    getExpForEnemyType(enemyType) {
+        const rewards = this.calculateEnemyRewards(enemyType);
+        return rewards.experience;
     }
 }

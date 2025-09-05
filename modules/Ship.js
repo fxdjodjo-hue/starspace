@@ -1,7 +1,7 @@
 // Modulo Nave Spaziale
 import { Projectile } from './Projectile.js';
 import { Missile } from './Missile.js';
-import { Experience } from './Experience.js';
+// import { Experience } from './Experience.js'; // Integrato nella Nave
 import { UpgradeManager } from './UpgradeManager.js';
 import { RewardManager } from './RewardManager.js';
 import { ShipSprite } from './ShipSprite.js';
@@ -76,9 +76,41 @@ export class Ship {
             r3: { damage: 120, fireRate: 120, speed: 6, color: '#ff00ff' }
         };
         
-        // Sistema di esperienza e onore
-        this.experience = new Experience();
+        // Sistema risorse unificato (Single Source of Truth)
+        this.resources = {
+            credits: 0,
+            uridium: 0,
+            honor: 0,
+            experience: 0
+        };
+        
+        // Sistema di livelli integrato
+        this.currentLevel = 1;
+        this.levelRequirements = {
+            1: 0, 2: 10000, 3: 20000, 4: 40000, 5: 80000,
+            6: 160000, 7: 320000, 8: 640000, 9: 1280000, 10: 2560000,
+            11: 5120000, 12: 10240000, 13: 20480000, 14: 40960000, 15: 81920000,
+            16: 163840000, 17: 327680000, 18: 655360000, 19: 1310720000, 20: 2621440000,
+            21: 5242880000, 22: 10485760000, 23: 20971520000, 24: 41943040000, 25: 83886080000,
+            26: 167772160000, 27: 335544320000, 28: 671088640000, 29: 1342177280000, 30: 2684354560000,
+            31: 5368709120000, 32: 10737418240000, 33: 21474836480000, 34: 42949672960000, 35: 85899345920000,
+            36: 171798691840000, 37: 343597383680000, 38: 687194767360000, 39: 1374389534720000, 40: 2748779069440000,
+            41: 5497558138880000, 42: 10995116277760000, 43: 21990232555520000, 44: 43980465111040000, 45: 87960930222080000,
+            46: 175921860444160000, 47: 351843720888320000, 48: 703687441776640000, 49: 1407374883553280000, 50: 2814749767106560000
+        };
+        
+        // Compatibilità con sistema esistente
+        this.experience = {
+            currentExp: 0,
+            getLevelInfo: () => this.getLevelInfo(),
+            addExperience: (amount) => this.addExperience(amount),
+            getCurrentExperience: () => this.resources.experience
+        };
+        
+        // Compatibilità con codice esistente
         this.honor = 0;
+        this.credits = 0;
+        this.uridium = 0;
         
         // Sistema di potenziamenti
         this.upgradeManager = new UpgradeManager();
@@ -747,7 +779,24 @@ export class Ship {
     
     // Processa reward per nemico distrutto usando RewardManager
     processEnemyKill(enemyType, enemyConfig = null) {
-        return this.rewardManager.processEnemyKill(enemyType, enemyConfig);
+        // Calcola i reward (RewardManager è solo un calcolatore)
+        const results = this.rewardManager.processEnemyKill(enemyType, enemyConfig);
+        
+        // Applica i reward alla nave usando il sistema unificato
+        if (results.credits) {
+            this.addResource('credits', results.credits);
+        }
+        if (results.uridium) {
+            this.addResource('uridium', results.uridium);
+        }
+        if (results.honor) {
+            this.addResource('honor', results.honor);
+        }
+        if (results.experience) {
+            this.addResource('experience', results.experience);
+        }
+        
+        return results;
     }
     
     // Metodi di compatibilità per il sistema esistente
@@ -782,14 +831,127 @@ export class Ship {
         return null;
     }
     
-    // Aggiungi onore
+    // Aggiungi onore (compatibilità)
     addHonor(amount) {
-        this.honor += amount;
+        this.addResource('honor', amount);
     }
     
-    // Ottieni onore attuale
+    // Ottieni onore attuale (compatibilità)
     getHonor() {
-        return this.honor;
+        return this.getResource('honor');
+    }
+    
+    // Metodi unificati per le risorse (Single Source of Truth)
+    addResource(type, amount) {
+        if (this.resources.hasOwnProperty(type)) {
+            this.resources[type] += amount;
+            
+            // Sincronizza con le proprietà di compatibilità
+            if (type === 'credits') this.credits = this.resources.credits;
+            if (type === 'uridium') this.uridium = this.resources.uridium;
+            if (type === 'honor') this.honor = this.resources.honor;
+            if (type === 'experience') {
+                this.experience.currentExp = this.resources.experience;
+                this.checkLevelUp();
+            }
+            
+            // Evento per future sincronizzazioni online
+            this.onResourceChanged?.(type, this.resources[type]);
+        }
+    }
+    
+    getResource(type) {
+        return this.resources[type] || 0;
+    }
+    
+    setResource(type, amount) {
+        if (this.resources.hasOwnProperty(type)) {
+            this.resources[type] = amount;
+            
+            // Sincronizza con le proprietà di compatibilità
+            if (type === 'credits') this.credits = this.resources.credits;
+            if (type === 'uridium') this.uridium = this.resources.uridium;
+            if (type === 'honor') this.honor = this.resources.honor;
+        }
+    }
+    
+    // Metodi di compatibilità (deprecati - usare addResource/getResource)
+    addCredits(amount) {
+        this.addResource('credits', amount);
+    }
+    
+    getCredits() {
+        return this.getResource('credits');
+    }
+    
+    addUridium(amount) {
+        this.addResource('uridium', amount);
+    }
+    
+    getUridium() {
+        return this.getResource('uridium');
+    }
+    
+    // Metodi per gestire esperienza e livelli
+    addExperience(amount) {
+        if (amount <= 0) return { amount: 0, levelUp: null };
+        
+        this.addResource('experience', amount);
+        
+        // Controlla se c'è stato un level up
+        const levelUp = this.checkLevelUp();
+        
+        return { amount, levelUp };
+    }
+    
+    checkLevelUp() {
+        const nextLevel = this.currentLevel + 1;
+        const nextLevelExp = this.levelRequirements[nextLevel];
+        
+        if (nextLevelExp && this.resources.experience >= nextLevelExp) {
+            this.currentLevel = nextLevel;
+            
+            // Notifica level up se disponibile
+            if (this.game && this.game.notifications) {
+                this.game.notifications.add(`Livello ${this.currentLevel}`, 'info');
+            }
+            
+            return {
+                newLevel: this.currentLevel,
+                oldLevel: this.currentLevel - 1
+            };
+        }
+        
+        return null;
+    }
+    
+    getLevelInfo() {
+        const nextLevel = this.currentLevel + 1;
+        const nextLevelExp = this.levelRequirements[nextLevel];
+        const currentLevelExp = this.levelRequirements[this.currentLevel];
+        
+        const expInCurrentLevel = this.resources.experience - currentLevelExp;
+        const expNeededForLevel = nextLevelExp ? nextLevelExp - currentLevelExp : 0;
+        
+        return {
+            level: this.currentLevel,
+            exp: this.resources.experience,
+            expFormatted: this.formatExp(this.resources.experience),
+            expInCurrentLevel: expInCurrentLevel,
+            expNeededForLevel: expNeededForLevel,
+            progress: expNeededForLevel > 0 ? (expInCurrentLevel / expNeededForLevel) * 100 : 100
+        };
+    }
+    
+    formatExp(exp) {
+        if (exp >= 1000000000) {
+            return (exp / 1000000000).toFixed(1) + 'B';
+        } else if (exp >= 1000000) {
+            return (exp / 1000000).toFixed(1) + 'M';
+        } else if (exp >= 1000) {
+            return (exp / 1000).toFixed(1) + 'K';
+        }
+        return exp.toString();
     }
     
     // Ottieni valori aggiornati dalle statistiche

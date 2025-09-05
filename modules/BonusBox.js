@@ -205,11 +205,11 @@ export class BonusBox {
         } else {
             // Fallback per compatibilità
             if (this.creditsReward > 0) {
-                ship.upgradeManager.addCredits(this.creditsReward);
+                ship.addResource('credits', this.creditsReward);
             }
             
             if (this.uridiumReward > 0) {
-                ship.upgradeManager.addUridium(this.uridiumReward);
+                ship.addResource('uridium', this.uridiumReward);
             }
             
             // Mostra notifiche delle ricompense

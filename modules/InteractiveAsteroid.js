@@ -144,9 +144,9 @@ export class InteractiveAsteroid {
                 );
             } else {
                 // Fallback per compatibilità
-                this.miningPlayer.upgradeManager.addCredits(this.rewards.credits);
-                this.miningPlayer.upgradeManager.addUridium(this.rewards.uridium);
-                this.miningPlayer.addHonor(this.rewards.honor);
+                this.miningPlayer.addResource('credits', this.rewards.credits);
+                this.miningPlayer.addResource('uridium', this.rewards.uridium);
+                this.miningPlayer.addResource('honor', this.rewards.honor);
                 
                 // Mostra notifiche delle ricompense
                 if (window.gameInstance && window.gameInstance.notifications) {

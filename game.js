@@ -27,12 +27,12 @@ import { EMP } from './modules/EMP.js';
 import { Leech } from './modules/Leech.js';
 import { Inventory } from './modules/Inventory.js';
 import { InventoryItem } from './modules/InventoryItem.js';
-// import { DreadspireBackground } from './modules/DreadspireBackground.js'; // Rimosso - solo parallax
+// import { DreadspireBackground } from './modules/DreadspireBackground.js';
+import { HomePanel } from './modules/HomePanel.js';
 import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { QuestPanel } from './modules/QuestPanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
-import { HomePanel } from './modules/HomePanel.js';
 import { MapManager } from './modules/MapManager.js';
 import { MapSystem } from './modules/MapSystem.js';
 import { RadiationSystem } from './modules/RadiationSystem.js';
@@ -267,13 +267,15 @@ class Game {
     update() {
         
         
-        // Aggiorna la nave
-        this.ship.update();
+        // Aggiorna la nave solo se il pannello Home non è aperto
+        if (!this.homePanel.visible) {
+            this.ship.update();
+            this.ship.updateSprite();
+            this.ship.updateTrail();
+        }
         
         // Aggiorna la CategorySkillbar
         this.categorySkillbar.update();
-        this.ship.updateSprite();
-        this.ship.updateTrail();
         
         // Controlla collisioni bonus box IMMEDIATAMENTE dopo il movimento della nave
         this.checkBonusBoxCollisions();
@@ -640,20 +642,22 @@ class Game {
         
         // Comando per aggiungere crediti (tasto C)
         if (this.input.isKeyJustPressed('KeyC')) {
-            this.ship.upgradeManager.addCredits(10000);
-
+            this.ship.addResource('credits', 10000);
         }
         
         // Comando per aggiungere uridium (tasto U)
         if (this.input.isKeyJustPressed('KeyU')) {
-            this.ship.upgradeManager.addUridium(100);
-
+            this.ship.addResource('uridium', 100);
         }
         
         // Comando per aggiungere onore (tasto O)
         if (this.input.isKeyJustPressed('KeyO')) {
-            this.ship.addHonor(500);
-
+            this.ship.addResource('honor', 500);
+        }
+        
+        // Comando per aggiungere esperienza (tasto X)
+        if (this.input.isKeyJustPressed('KeyX')) {
+            this.ship.addResource('experience', 1000);
         }
         
         // Le skills ora sono gestite dalla CategorySkillbar
@@ -684,6 +688,21 @@ class Game {
         // Comando per aprire/chiudere sistema mappe (tasto M)
         if (this.input.isKeyJustPressed('KeyM')) {
             this.mapSystem.toggle();
+        }
+        
+        // Comando per aprire/chiudere pannello Home (tasto Home)
+        if (this.input.isKeyJustPressed('Home')) {
+            this.homePanel.toggle();
+        }
+        
+        // Gestisci click sul pannello Home (PRIORITÀ ALTA)
+        if (this.homePanel.visible && this.input.isLeftClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
+            if (handled) {
+                this.input.resetLeftClickReleased();
+                return; // Esce dalla funzione per evitare altri gestori
+            }
         }
         
         // Gestisci click sui nodi del sistema mappe (PRIORITÀ ALTA)
