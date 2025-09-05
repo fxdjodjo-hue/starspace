@@ -2,53 +2,48 @@
 export class Notification {
     constructor() {
         this.notifications = [];
-        this.defaultDuration = 600; // 10 secondi a 60 FPS
-        this.maxNotifications = 8; // Massimo numero di notifiche visibili
-        this.animationSpeed = 0.3; // Velocità animazioni più veloce
+        this.defaultDuration = 300; // 5 secondi a 60 FPS
+        this.maxNotifications = 2; // Massimo 2 notifiche visibili
+        this.animationSpeed = 0.5; // Velocità animazioni più veloce
     }
     
     // Aggiungi una notifica
     add(message, duration = this.defaultDuration, type = 'info') {
-        // Evita duplicati - controlla se esiste già una notifica identica
-        const existingNotification = this.notifications.find(n => n.message === message && n.type === type);
-        if (existingNotification) {
-            // Se esiste già, aggiorna la durata invece di creare un duplicato
-            existingNotification.remainingTime = duration;
-            existingNotification.duration = duration;
+        // Gestisce tutte le notifiche in modo intelligente
+        this.handleNotification(message, duration, type);
+    }
+    
+    // Gestisce le notifiche in modo intelligente
+    handleNotification(message, duration, type) {
+        // Se è una notifica di azione, crea un nuovo gruppo
+        if (message.includes('raccolta') || message.includes('distrutto')) {
+            this.clearAll();
+            this.createNotification(message, duration, 'success');
             return;
         }
         
-        // Per notifiche di reward, crea notifiche separate ma sincronizzate
-        if (type === 'reward') {
-            this.createNotification(message, duration, type);
+        // Se è una ricompensa, aggiungi all'ultima azione
+        if (type === 'reward' && message.includes('+')) {
+            const lastNotification = this.notifications[this.notifications.length - 1];
+            if (lastNotification && lastNotification.type === 'success') {
+                // Aggiungi la ricompensa alla notifica esistente
+                lastNotification.message += `\n${message}`;
+                lastNotification.remainingTime = Math.max(lastNotification.remainingTime, duration);
+            } else {
+                // Crea una nuova notifica per la ricompensa
+                this.createNotification(message, duration, 'reward');
+            }
             return;
         }
         
-        // Rimuovi notifiche vecchie se superiamo il limite
-        if (this.notifications.length >= this.maxNotifications) {
-            this.notifications.shift(); // Rimuovi la più vecchia
-        }
-        
-        const notification = {
-            id: Date.now() + Math.random(), // ID unico
-            message: message,
-            duration: duration,
-            remainingTime: duration,
-            type: type, // 'info', 'success', 'warning', 'error', 'reward'
-            // Animazioni
-            alpha: 0,
-            scale: 0.8,
-            slideX: -50,
-            // Posizione
-            targetY: 0,
-            currentY: 0,
-            // Effetti
-            glowIntensity: 0,
-            pulsePhase: 0
-        };
-        
-        this.notifications.push(notification);
-        console.log(`Notifica: ${message}`);
+        // Per altre notifiche, crea una nuova
+        this.clearAll();
+        this.createNotification(message, duration, type);
+    }
+    
+    // Pulisce tutte le notifiche
+    clearAll() {
+        this.notifications = [];
     }
     
     // Aggiorna le notifiche

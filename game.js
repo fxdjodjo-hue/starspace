@@ -130,6 +130,9 @@ class Game {
         // Pannello Home Dashboard
         this.homePanel = new HomePanel(this);
         
+        // Esponi il pannello Home globalmente per il sistema di log
+        window.gameInstance = this;
+        
         // Sistema di gestione mappe e portali
         this.mapManager = new MapManager(this);
         

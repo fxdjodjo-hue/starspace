@@ -36,18 +36,22 @@ export class BonusBox {
     setRewards() {
         switch (this.type) {
             case 'credits':
-                this.creditsReward = Math.floor(Math.random() * 500) + 100; // 100-600 crediti
+                this.creditsReward = Math.floor(Math.random() * 500) + 200; // 200-700 crediti
                 this.uridiumReward = 0;
                 break;
             case 'uridium':
                 this.creditsReward = 0;
-                this.uridiumReward = Math.floor(Math.random() * 20) + 5; // 5-25 uridium
+                this.uridiumReward = Math.floor(Math.random() * 15) + 5; // 5-20 uridium
                 break;
             case 'mixed':
-                this.creditsReward = Math.floor(Math.random() * 300) + 50; // 50-350 crediti
-                this.uridiumReward = Math.floor(Math.random() * 10) + 2; // 2-12 uridium
+                this.creditsReward = Math.floor(Math.random() * 400) + 100; // 100-500 crediti
+                this.uridiumReward = Math.floor(Math.random() * 8) + 3; // 3-11 uridium
                 break;
         }
+        
+        // Garantisce ricompense minime
+        if (this.creditsReward < 50) this.creditsReward = 50;
+        if (this.uridiumReward < 1) this.uridiumReward = 1;
     }
     
     update() {
@@ -194,12 +198,7 @@ export class BonusBox {
         this.collected = true;
         this.fadeOut = true; // Inizia il fade out invece di sparire subito
         
-        // Mostra prima la notifica "Bonus box raccolta!"
-        if (window.gameInstance && window.gameInstance.notifications) {
-            window.gameInstance.notifications.add("Bonus box raccolta!", 600, 'success');
-        }
-        
-        // Poi processa i reward
+        // Processa prima i reward (per l'ordine corretto nei log)
         if (ship.rewardManager) {
             ship.rewardManager.processBonusBoxRewards(this.creditsReward, this.uridiumReward);
         } else {
@@ -212,15 +211,7 @@ export class BonusBox {
                 ship.addResource('uridium', this.uridiumReward);
             }
             
-            // Mostra notifiche delle ricompense
-            if (window.gameInstance && window.gameInstance.notifications) {
-                if (this.creditsReward > 0) {
-                    window.gameInstance.notifications.add(`Credits: ${this.creditsReward}`, 600, 'reward');
-                }
-                if (this.uridiumReward > 0) {
-                    window.gameInstance.notifications.add(`Uridium: ${this.uridiumReward}`, 600, 'reward');
-                }
-            }
+            // Fallback non mostra notifiche (solo RewardManager le gestisce)
         }
         
         return {

@@ -151,13 +151,13 @@ export class InteractiveAsteroid {
                 // Mostra notifiche delle ricompense
                 if (window.gameInstance && window.gameInstance.notifications) {
                     if (this.rewards.credits > 0) {
-                        window.gameInstance.notifications.add(`Credits: ${this.rewards.credits}`, 600, 'reward');
+                        window.gameInstance.notifications.add(`+${this.rewards.credits} Credits`, 600, 'reward');
                     }
                     if (this.rewards.uridium > 0) {
-                        window.gameInstance.notifications.add(`Uridium: ${this.rewards.uridium}`, 600, 'reward');
+                        window.gameInstance.notifications.add(`+${this.rewards.uridium} Uridium`, 600, 'reward');
                     }
                     if (this.rewards.honor > 0) {
-                        window.gameInstance.notifications.add(`Honor: ${this.rewards.honor}`, 600, 'reward');
+                        window.gameInstance.notifications.add(`+${this.rewards.honor} Honor`, 600, 'reward');
                     }
                 }
             }

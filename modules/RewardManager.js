@@ -37,7 +37,13 @@ export class RewardManager {
     processEnemyKill(enemyType, enemyConfig = null) {
         const rewards = this.calculateEnemyRewards(enemyType, enemyConfig);
         
-        // Mostra notifiche per ogni reward guadagnato
+        // Mostra prima la notifica dell'azione
+        if (this.notifications) {
+            const enemyName = this.getEnemyConfig(enemyType).name;
+            this.notifications.add(`${enemyName} distrutto!`, 600, 'success');
+        }
+        
+        // Poi mostra le notifiche per i reward
         this.showRewardNotifications(rewards);
         
         return rewards;
@@ -127,7 +133,12 @@ export class RewardManager {
             experience: 0
         };
         
-        // Mostra notifiche per i reward
+        // Mostra prima la notifica "Bonus box raccolta!"
+        if (this.notifications) {
+            this.notifications.add("Bonus box raccolta!", 600, 'success');
+        }
+        
+        // Poi mostra le notifiche per i reward
         this.showRewardNotifications(rewards);
         
         return rewards;

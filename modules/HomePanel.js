@@ -10,7 +10,7 @@ export class HomePanel {
         this.playerData = {
             id: '883098',
             level: 1,
-            rank: 'Privato Solar',
+            rank: '',
             credits: 0,
             uridium: 0,
             experience: 0,
@@ -30,24 +30,12 @@ export class HomePanel {
             { id: 'exit', name: 'Esci', icon: '🚪', available: true }
         ];
         
-        // Giocatori online (dati di esempio)
-        this.onlinePlayers = [
-            { name: 'Players online', count: 262, status: 'online' },
-            { name: 'Player_5609402', status: 'squad' },
-            { name: 'MiguelDuhalt', status: 'online' },
-            { name: 'xxXxXxXBaNdIDoXxXxXXX', status: 'squad' },
-            { name: 'WOAHHH', status: 'squad' },
-            { name: 'xXxSantyxXx', status: 'offline' },
-            { name: 'CORIxSPAKKAXEROE', status: 'online' },
-            { name: 'IIOBSIDI4NII', status: 'squad' }
-        ];
+        // Sistema di log per notifiche (rimosso per semplificare)
+        this.logs = [];
+        this.maxLogs = 50; // Massimo 50 log
         
-        // Cronologia e eventi
-        this.history = [
-            'Sei sul server "Europe 1"',
-            'Il bonus è attivo - +8% x Esperienza',
-            'Il bonus è attivo - +32% x Platini'
-        ];
+        // Cronologia e eventi (ora solo log reali)
+        this.history = [];
         
         this.activeEvents = [
             // Per ora vuoto come nell'immagine
@@ -83,6 +71,7 @@ export class HomePanel {
         // Il pannello Home non supporta il drag, quindi è vuoto
     }
     
+    
     updatePlayerData() {
         // Aggiorna i dati del giocatore con quelli reali
         if (this.game.ship) {
@@ -100,23 +89,9 @@ export class HomePanel {
             this.game.ship.upgradeManager.uridium = this.playerData.uridium;
             this.game.ship.upgradeManager.honor = this.playerData.honor;
             
-            // Aggiorna il rango basato sul livello
-            this.playerData.rank = this.getRankFromLevel(this.playerData.level);
         }
     }
     
-    getRankFromLevel(level) {
-        // Sistema di ranghi basato sul livello
-        if (level >= 50) return 'Generale Spaziale';
-        if (level >= 40) return 'Colonnello Spaziale';
-        if (level >= 30) return 'Maggiore Spaziale';
-        if (level >= 20) return 'Capitano Spaziale';
-        if (level >= 15) return 'Tenente Spaziale';
-        if (level >= 10) return 'Sergente Spaziale';
-        if (level >= 5) return 'Caporale Spaziale';
-        if (level >= 3) return 'Soldato Spaziale';
-        return 'Privato Solar';
-    }
     
     handleClick(x, y) {
         if (!this.visible) return false;
@@ -251,12 +226,12 @@ export class HomePanel {
             
             // Nome
             ctx.fillStyle = isSelected ? '#ffffff' : '#ffffff';
-            ctx.font = '14px Arial';
+        ctx.font = '14px Arial';
             ctx.fillText(category.name, navX + 40, itemY + 15);
             
             // Freccia selezionata
             if (isSelected) {
-                ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#ffffff';
                 ctx.font = '16px Arial';
                 ctx.fillText('→', navX + this.navWidth - 25, itemY + 15);
             }
@@ -323,11 +298,10 @@ export class HomePanel {
         ctx.fillText(`ID ${this.playerData.id}`, centerX, shipY + 40);
         ctx.textAlign = 'left';
         
-        // Livello e rango
+        // Livello
         ctx.fillStyle = '#e94560';
         ctx.font = '16px Arial';
-        ctx.fillText(`${this.playerData.level} LIVELLO`, x + 20, shipY - 20);
-        ctx.fillText(this.playerData.rank, x + 20, shipY);
+        ctx.fillText(`LIVELLO ${this.playerData.level}`, x + 20, shipY - 20);
         
         // Risorse
         ctx.fillStyle = '#ffffff';
@@ -345,58 +319,12 @@ export class HomePanel {
         ctx.lineTo(x + this.contentWidth - 20, shipY + 80);
         ctx.stroke();
         
-        // Tre colonne
-        const colWidth = (this.contentWidth - 60) / 3;
-        
-        // Colonna 1: Giocatori online
-        this.drawOnlinePlayers(ctx, x + 20, shipY + 100, colWidth);
-        
-        // Colonna 2: Cronologia
-        this.drawHistory(ctx, x + 20 + colWidth + 20, shipY + 100, colWidth);
-        
-        // Colonna 3: Eventi attivi
-        this.drawActiveEvents(ctx, x + 20 + (colWidth + 20) * 2, shipY + 100, colWidth);
+        // Solo eventi attivi (centrato)
+        const colWidth = this.contentWidth - 40;
+        this.drawActiveEvents(ctx, x + 20, shipY + 100, colWidth);
     }
     
-    drawOnlinePlayers(ctx, x, y, width) {
-        ctx.fillStyle = '#e94560';
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText('Giocatori online', x, y);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
-        ctx.fillText(`server: ${this.playerData.server}`, x, y + 20);
-        
-        this.onlinePlayers.forEach((player, index) => {
-            const playerY = y + 40 + index * 20;
-            
-            // Icona stato
-            ctx.fillStyle = this.getStatusColor(player.status);
-            ctx.font = '12px Arial';
-            ctx.fillText(this.getStatusIcon(player.status), x, playerY);
-            
-            // Nome giocatore
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(player.name, x + 20, playerY);
-            
-            // Contatore per "Players online"
-            if (player.count) {
-                ctx.fillText(`- ${player.count} -`, x + width - 50, playerY);
-            }
-        });
-    }
     
-    drawHistory(ctx, x, y, width) {
-        ctx.fillStyle = '#e94560';
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText('Cronologia', x, y);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
-        this.history.forEach((item, index) => {
-            ctx.fillText(item, x, y + 20 + index * 20);
-        });
-    }
     
     drawActiveEvents(ctx, x, y, width) {
         ctx.fillStyle = '#e94560';
@@ -437,21 +365,4 @@ export class HomePanel {
         ctx.stroke();
     }
     
-    getStatusColor(status) {
-        switch (status) {
-            case 'online': return '#e94560';
-            case 'squad': return '#ffa500';
-            case 'offline': return '#888888';
-            default: return '#ffffff';
-        }
-    }
-    
-    getStatusIcon(status) {
-        switch (status) {
-            case 'online': return '✓';
-            case 'squad': return 'S';
-            case 'offline': return '○';
-            default: return '?';
-        }
-    }
 }
