@@ -30,7 +30,7 @@ import { InventoryItem } from './modules/InventoryItem.js';
 // import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { HomePanel } from './modules/HomePanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
-import { CategorySkillbar } from './modules/CategorySkillbar.js';
+import { ModernSkillbar } from './modules/ModernSkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
 import { UIManager } from './modules/UIManager.js';
 import { ProfilePanel } from './modules/ProfilePanel.js';
@@ -62,8 +62,8 @@ class Game {
         this.explosionManager = new ExplosionEffect();
         this.parallaxBackground = new ParallaxBackground(this.width, this.height);
         // this.dreadspireBackground = new DreadspireBackground(); // Rimosso - solo parallax
-        this.categorySkillbar = new CategorySkillbar();
-        this.categorySkillbar.setGame(this);
+        this.modernSkillbar = new ModernSkillbar();
+        this.modernSkillbar.setGame(this);
         this.ambientEffects = new AmbientEffects(this.width, this.height);
         this.rankSystem = new RankSystem();
         this.playerProfile = new PlayerProfile();
@@ -810,12 +810,12 @@ class Game {
             this.input.resetLeftClickReleased();
         }
         
-        // Gestisci click sulla CategorySkillbar
+        // Gestisci click sulla ModernSkillbar
         if (this.input.isMouseJustPressed() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             
             // Controlla se il mouse è sopra la skillbar
-            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
+            if (this.isClickOnModernSkillbar(mousePos.x, mousePos.y)) {
                 const movementDistance = this.input.mouse.movementDistance || 0;
                 
                 // Se è navigazione (movimento > 5px), resetta il click e non gestire
@@ -825,7 +825,7 @@ class Game {
                 }
                 
                 // Se è un click effettivo, gestisci il click sulla skillbar
-                const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
+                const handled = this.handleModernSkillbarClick(mousePos.x, mousePos.y);
                 if (handled) {
                     this.input.resetMouseJustPressed();
                     return; // Esci subito per evitare che la nave si muova
@@ -1223,7 +1223,7 @@ class Game {
 
         
         // Disegna CategorySkillbar (non influenzata dallo zoom)
-        this.drawCategorySkillbar();
+        this.drawModernSkillbar();
         
         // Disegna pulsante impostazioni
         this.drawSettingsButton();
@@ -1496,14 +1496,14 @@ class Game {
         this.ctx.textAlign = 'left';
     }
     
-    // Disegna CategorySkillbar
-    drawCategorySkillbar() {
+    // Disegna ModernSkillbar
+    drawModernSkillbar() {
         // Posiziona la skillbar in basso al centro
         const x = (this.width - 600) / 2; // 600 è la larghezza della skillbar
         const y = this.height - 80; // 80px dal basso
         
-        this.categorySkillbar.setPosition(x, y);
-        this.categorySkillbar.draw(this.ctx);
+        this.modernSkillbar.setPosition(x, y);
+        this.modernSkillbar.draw(this.ctx);
     }
     
     // Disegna skillbar MMORPG
@@ -1938,38 +1938,29 @@ class Game {
         return false;
     }
     
-    // Gestisce i click sulla CategorySkillbar
-    handleCategorySkillbarClick(mouseX, mouseY) {
-        return this.categorySkillbar.handleClick(mouseX, mouseY);
+    // Gestisce i click sulla ModernSkillbar
+    handleModernSkillbarClick(mouseX, mouseY) {
+        return this.modernSkillbar.handleClick(mouseX, mouseY);
     }
     
-    // Controlla se il click è sulla CategorySkillbar
-    isClickOnCategorySkillbar(mouseX, mouseY) {
+    // Controlla se il click è sulla ModernSkillbar
+    isClickOnModernSkillbar(mouseX, mouseY) {
         // Posizione della skillbar
         const x = (this.width - 600) / 2; // 600 è la larghezza della skillbar
         const y = this.height - 80; // 80px dal basso
         const barWidth = 600;
         const barHeight = 60;
         
-        // Zona di sicurezza (stessa logica della CategorySkillbar)
+        // Zona di sicurezza
         const skillbarMargin = 5;
         let skillbarLeft = x - skillbarMargin;
         let skillbarRight = x + barWidth + skillbarMargin;
         let skillbarTop = y - skillbarMargin;
         let skillbarBottom = y + barHeight + skillbarMargin;
         
-        // Se una categoria è aperta, estendi i bounds per includere il menu a tendina
-        if (this.categorySkillbar.activeCategory) {
-            const category = this.categorySkillbar.categories[this.categorySkillbar.getCategoryKeyByName(this.categorySkillbar.activeCategory)];
-            if (category) {
-                const itemsPerRow = 4;
-                const rows = Math.ceil(category.items.length / itemsPerRow);
-                const itemSize = 50;
-                const itemSpacing = 10;
-                const totalHeight = rows * (itemSize + itemSpacing) + itemSpacing;
-                const menuTop = y - totalHeight - 10;
-                skillbarTop = Math.min(skillbarTop, menuTop - skillbarMargin);
-            }
+        // Se la skillbar è espansa, estendi i bounds per includere le categorie e armi
+        if (this.modernSkillbar.isExpanded) {
+            skillbarBottom = y + barHeight + 200; // Altezza aggiuntiva per categorie e armi
         }
         
         // Controlla se il click è nella zona di sicurezza
