@@ -67,6 +67,11 @@ export class ModernSkillbar {
         this.y = y;
     }
     
+    // Metodo update richiesto dal game.js
+    update() {
+        // Per ora vuoto, ma necessario per compatibilità
+    }
+    
     // Gestisce i click
     handleClick(mouseX, mouseY) {
         if (!this.game || !this.game.input) {
