@@ -1,171 +1,148 @@
-export class IconSystemUI {
-    constructor(x, y, type, options = {}) {
-        this.x = x;
-        this.y = y;
-        this.type = type; // 'quest', 'stats', 'inventory', 'settings', etc.
-        this.size = options.size || 40;
-        this.cornerRadius = options.cornerRadius || 8;
-        this.visible = options.visible !== false;
-        this.text = options.text || '';
-        this.subText = options.subText || '';
-        this.color = options.color || '#ffff00';
-        this.backgroundColor = options.backgroundColor || 'rgba(26, 26, 46, 0.9)';
-        this.borderColor = options.borderColor || '#ffff00';
-        this.borderWidth = options.borderWidth || 2;
-        this.fontSize = options.fontSize || 20;
-        this.subFontSize = options.subFontSize || 12;
-        this.showTooltip = false;
-        this.tooltipText = '';
+// UIIcon - Sistema unificato per icone UI basato sul QuestTracker
+export class UIIcon {
+    constructor(game, config) {
+        this.game = game;
+        this.config = config;
         
-        // Configurazioni predefinite per tipo
-        this.setupByType();
+        // Configurazione base
+        this.type = config.type;
+        this.panel = config.panel;
+        this.icon = config.icon || '?';
+        this.showCount = config.showCount || false;
+        this.count = config.count || 0;
+        this.position = config.position || { x: 20, y: 20 };
+        this.size = config.size || 50;
+        
+        // Stato
+        this.visible = true;
+        this.isActive = false; // Se il pannello associato è aperto
+        
+        // Stile (basato sul QuestTracker)
+        this.backgroundColor = '#1a1a2e';
+        this.borderColor = '#4a90e2';
+        this.activeBorderColor = '#00ff00';
+        this.textColor = '#ffffff';
+        this.countColor = '#00ff00';
+        this.inactiveCountColor = '#888888';
+        
+        // Posizione
+        this.x = this.position.x;
+        this.y = this.position.y;
+        this.width = this.size;
+        this.height = this.size;
     }
     
-    setupByType() {
-        switch (this.type) {
-            case 'quest':
-                this.text = '!';
-                this.color = '#ffff00';
-                this.tooltipText = 'Quest Tracker';
-                break;
-            case 'stats':
-                this.text = 'S';
-                this.color = '#ffff00';
-                this.tooltipText = 'Statistics';
-                break;
-            case 'inventory':
-                this.text = 'I';
-                this.color = '#ffff00';
-                this.tooltipText = 'Inventory';
-                break;
-            case 'settings':
-                this.text = '⚙';
-                this.color = '#ffff00';
-                this.tooltipText = 'Settings';
-                break;
-            case 'profile':
-                this.text = 'P';
-                this.color = '#ffff00';
-                this.tooltipText = 'Profile';
-                break;
-            case 'level':
-                this.text = 'L';
-                this.subText = '1';
-                this.color = '#ffff00';
-                this.tooltipText = 'Level';
-                break;
+    // Aggiorna lo stato dell'icona
+    update() {
+        // Controlla se il pannello associato è aperto
+        this.isActive = this.isPanelOpen();
+        
+        // Aggiorna il conteggio se necessario
+        if (this.showCount && this.config.updateCount) {
+            // Chiama la funzione con il contesto corretto
+            this.count = this.config.updateCount.call(this);
         }
     }
     
+    // Controlla se il pannello associato è aperto
+    isPanelOpen() {
+        if (!this.panel) return false;
+        
+        // Controlla diverse proprietà comuni per i pannelli
+        if (this.panel.isOpen !== undefined) return this.panel.isOpen;
+        if (this.panel.visible !== undefined) return this.panel.visible;
+        if (this.panel.minimized !== undefined) return !this.panel.minimized;
+        
+        return false;
+    }
+    
+    // Gestisce il click sull'icona
+    handleClick(x, y) {
+        if (!this.visible || !this.isMouseOver(x, y)) {
+            return false;
+        }
+        
+        console.log(`🖱️ Click su icona ${this.type}`);
+        
+        // Toggle del pannello associato
+        if (this.panel) {
+            if (this.panel.toggle) {
+                this.panel.toggle();
+            } else if (this.panel.open) {
+                if (this.isPanelOpen()) {
+                    this.panel.close();
+                } else {
+                    this.panel.open();
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    // Controlla se il mouse è sopra l'icona
+    isMouseOver(x, y) {
+        return x >= this.x && x <= this.x + this.width && 
+               y >= this.y && y <= this.y + this.height;
+    }
+    
+    // Disegna l'icona
     draw(ctx) {
         if (!this.visible) return;
         
-        // Sfondo dell'icona
+        // Sfondo
         ctx.fillStyle = this.backgroundColor;
-        ctx.beginPath();
-        ctx.roundRect(this.x, this.y, this.size, this.size, this.cornerRadius);
-        ctx.fill();
+        ctx.fillRect(this.x, this.y, this.width, this.height);
         
-        // Bordo dell'icona
-        ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = this.borderWidth;
-        ctx.stroke();
+        // Bordo (colore diverso se attivo)
+        ctx.strokeStyle = this.isActive ? this.activeBorderColor : this.borderColor;
+        ctx.lineWidth = this.isActive ? 3 : 2;
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
         
-        // Testo principale
-        if (this.text) {
-            ctx.fillStyle = this.color;
-            ctx.font = `bold ${this.fontSize}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(this.text, this.x + this.size/2, this.y + this.size/2);
-        }
+        // Icona principale
+        this.drawIcon(ctx);
         
-        // Sottotesto (se presente)
-        if (this.subText) {
-            ctx.fillStyle = this.color;
-            ctx.font = `bold ${this.subFontSize}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText(this.subText, this.x + this.size/2, this.y + this.size/2 + 12);
-        }
-        
-        // Tooltip (se mostrato)
-        if (this.showTooltip && this.tooltipText) {
-            this.drawTooltip(ctx);
+        // Contatore se necessario
+        if (this.showCount) {
+            this.drawCount(ctx);
         }
     }
     
-    drawTooltip(ctx) {
-        const padding = 8;
-        const fontSize = 12;
-        const lineHeight = 16;
-        
-        // Calcola le dimensioni del tooltip
-        ctx.font = `${fontSize}px Arial`;
-        const textWidth = ctx.measureText(this.tooltipText).width;
-        const tooltipWidth = textWidth + padding * 2;
-        const tooltipHeight = lineHeight + padding * 2;
-        
-        // Posizione del tooltip (sotto l'icona)
-        const tooltipX = this.x + this.size / 2 - tooltipWidth / 2;
-        const tooltipY = this.y + this.size + 5;
-        
-        // Sfondo del tooltip
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.beginPath();
-        ctx.roundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4);
-        ctx.fill();
-        
-        // Bordo del tooltip
-        ctx.strokeStyle = '#ffff00';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        // Testo del tooltip
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${fontSize}px Arial`;
+    // Disegna l'icona principale
+    drawIcon(ctx) {
+        ctx.fillStyle = this.textColor;
+        ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.tooltipText, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2);
+        ctx.fillText(this.icon, this.x + this.width/2, this.y + this.height/2);
     }
     
-    isMouseOver(mouseX, mouseY) {
-        return mouseX >= this.x && mouseX <= this.x + this.size &&
-               mouseY >= this.y && mouseY <= this.y + this.size;
+    // Disegna il contatore
+    drawCount(ctx) {
+        const countText = this.count.toString();
+        const countColor = this.count > 0 ? this.countColor : this.inactiveCountColor;
+        
+        ctx.fillStyle = countColor;
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(countText, this.x + this.width - 8, this.y + 12);
     }
     
+    // Imposta la posizione
     setPosition(x, y) {
         this.x = x;
         this.y = y;
+        this.position.x = x;
+        this.position.y = y;
     }
     
+    // Imposta il conteggio
+    setCount(count) {
+        this.count = count;
+    }
+    
+    // Imposta la visibilità
     setVisible(visible) {
         this.visible = visible;
-    }
-    
-    setText(text, subText = null) {
-        this.text = text;
-        if (subText !== null) {
-            this.subText = subText;
-        }
-    }
-    
-    setColor(color) {
-        this.color = color;
-    }
-    
-    setBackgroundColor(backgroundColor) {
-        this.backgroundColor = backgroundColor;
-    }
-    
-    setBorderColor(borderColor) {
-        this.borderColor = borderColor;
-    }
-    
-    setTooltipVisible(visible) {
-        this.showTooltip = visible;
-    }
-    
-    setTooltipText(text) {
-        this.tooltipText = text;
     }
 }

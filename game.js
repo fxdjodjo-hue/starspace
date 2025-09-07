@@ -32,6 +32,7 @@ import { HomePanel } from './modules/HomePanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
 import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
+import { UIManager } from './modules/UIManager.js';
 import { MapManager } from './modules/MapManager.js';
 import { MapSystem } from './modules/MapSystem.js';
 import { RadiationSystem } from './modules/RadiationSystem.js';
@@ -141,6 +142,13 @@ class Game {
         this.iconSystemUI = [];
         this.initIconSystemUI();
         
+        // Nuovo sistema unificato icone UI
+        this.uiManager = new UIManager(this);
+        this.initUIManager();
+        
+        // Inizializza audio e altri sistemi
+        this.initAudio();
+        
 
         
         // Pannello potenziamenti
@@ -201,8 +209,51 @@ class Game {
             size: iconSize,
             visible: true
         }));
+    }
+    
+    // Inizializza il nuovo sistema unificato icone UI
+    initUIManager() {
+        const configs = UIManager.getDefaultConfigs();
         
-        // Inizializza l'audio
+        // Registra le icone con i pannelli associati
+        this.uiManager.registerIcon({
+            ...configs.quest,
+            panel: this.questTracker
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.profile,
+            panel: null // Da implementare
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.inventory,
+            panel: this.inventory
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.settings,
+            panel: this.settingsPanel
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.stats,
+            panel: null // Da implementare
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.level,
+            panel: null // Da implementare
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.home,
+            panel: this.homePanel
+        });
+    }
+    
+    // Inizializza l'audio
+    initAudio() {
         this.audioManager.loadAllSounds();
         
         // Carica l'effetto esplosione
@@ -274,7 +325,12 @@ class Game {
         let mouseOverUIIcon = false;
         let mouseOverQuestTracker = false;
         
-        // Controlla se il mouse è sopra un'icona UI
+        // Controlla se il mouse è sopra un'icona UI del nuovo sistema
+        if (this.uiManager.isMouseOverAnyIcon(mousePos.x, mousePos.y)) {
+            mouseOverUIIcon = true;
+        }
+        
+        // Controlla se il mouse è sopra un'icona UI del vecchio sistema
         this.iconSystemUI.forEach(icon => {
             if (icon.isMouseOver(mousePos.x, mousePos.y)) {
                 mouseOverUIIcon = true;
@@ -376,6 +432,9 @@ class Game {
         
         // Aggiorna il sistema icone UI
         this.updateIconSystemUI();
+        
+        // Aggiorna il nuovo sistema unificato icone UI
+        this.uiManager.update();
         
         // Aggiorna il sistema di mappe e portali
         this.mapManager.update();
@@ -1126,7 +1185,10 @@ class Game {
         this.mapSystem.draw(this.ctx, this.mapManager.currentMap);
         
         // Disegna sistema icone UI DOPO i pannelli (per evitare che l'overlay le oscuri)
-        this.drawIconSystemUI();
+        // this.drawIconSystemUI(); // Temporaneamente disabilitato per testare il nuovo sistema
+        
+        // Disegna il nuovo sistema unificato icone UI
+        this.uiManager.draw(this.ctx);
         
         // Disegna pannello potenziamenti se aperto
         if (this.upgradePanelOpen) {
@@ -1985,7 +2047,20 @@ class Game {
     
     // Gestisce tutti gli eventi UI con priorità alta
     handleUIEvents(mousePos, mouseOverUIIcon, mouseOverQuestTracker) {
-        // Gestisci click sulle icone UI PRIMA dell'inventario
+        // Gestisci click sul nuovo sistema unificato icone UI (PRIORITÀ MASSIMA)
+        if (this.input.isLeftClickJustReleased()) {
+            const movementDistance = this.input.mouse.movementDistance || 0;
+            
+            if (movementDistance <= 5) {
+                // Controlla se il click è su una icona del nuovo sistema
+                if (this.uiManager.handleClick(mousePos.x, mousePos.y)) {
+                    this.input.resetLeftClickReleased();
+                    return true; // Evento UI gestito
+                }
+            }
+        }
+        
+        // Gestisci click sulle icone UI vecchie (per compatibilità)
         if (this.input.isLeftClickJustReleased()) {
             const movementDistance = this.input.mouse.movementDistance || 0;
             
@@ -2053,6 +2128,12 @@ class Game {
             // NON muovere se il click è sull'icona del QuestTracker O se il QuestTracker è in drag
             if (this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y) || this.questTracker.isDragging) {
                 console.log('🚫 CLICK/DRAG SU QUEST TRACKER - BLOCCANDO MOVIMENTO');
+                return; // Blocca il movimento
+            }
+            
+            // NON muovere se il click è su una icona del nuovo sistema UI
+            if (this.uiManager.isMouseOverAnyIcon(mousePos.x, mousePos.y)) {
+                console.log('🚫 CLICK SU ICONA UI - BLOCCANDO MOVIMENTO');
                 return; // Blocca il movimento
             }
             
