@@ -45,6 +45,11 @@ export class UIManager {
         this.icons.forEach(icon => icon.update());
     }
     
+    // Gestisce il mouse move per i tooltip
+    handleMouseMove(x, y) {
+        this.icons.forEach(icon => icon.handleMouseMove(x, y));
+    }
+    
     // Gestisce i click su tutte le icone
     handleClick(x, y) {
         // Controlla le icone in ordine inverso (ultima in cima)
@@ -72,6 +77,7 @@ export class UIManager {
             quest: {
                 type: 'quest',
                 icon: '📋',
+                tooltipText: 'Quest Tracker',
                 showCount: true,
                 updateCount: function() {
                     // Quest attive dal QuestTracker
@@ -84,11 +90,13 @@ export class UIManager {
             profile: {
                 type: 'profile',
                 icon: 'P',
+                tooltipText: 'Player Profile',
                 showCount: false
             },
             inventory: {
                 type: 'inventory',
                 icon: 'I',
+                tooltipText: 'Inventory',
                 showCount: true,
                 updateCount: function() {
                     // Items nell'inventario
@@ -101,16 +109,19 @@ export class UIManager {
             settings: {
                 type: 'settings',
                 icon: '⚙',
+                tooltipText: 'Settings',
                 showCount: false
             },
             stats: {
                 type: 'stats',
                 icon: 'S',
+                tooltipText: 'Statistics',
                 showCount: false
             },
             level: {
                 type: 'level',
                 icon: 'L',
+                tooltipText: 'Level & Experience',
                 showCount: true,
                 updateCount: function() {
                     // Livello del giocatore
@@ -123,6 +134,7 @@ export class UIManager {
             home: {
                 type: 'home',
                 icon: 'H',
+                tooltipText: 'Home Dashboard',
                 showCount: false
             }
         };

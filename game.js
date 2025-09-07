@@ -33,6 +33,7 @@ import { QuestTracker } from './modules/QuestTracker.js';
 import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
 import { UIManager } from './modules/UIManager.js';
+import { ProfilePanel } from './modules/ProfilePanel.js';
 import { MapManager } from './modules/MapManager.js';
 import { MapSystem } from './modules/MapSystem.js';
 import { RadiationSystem } from './modules/RadiationSystem.js';
@@ -129,6 +130,9 @@ class Game {
         // Quest Tracker (mini pannello per quest attive)
         this.questTracker = new QuestTracker(this);
         
+        // Profile panel
+        this.profilePanel = new ProfilePanel(this);
+        
         // Esponi il pannello Home globalmente per il sistema di log
         window.gameInstance = this;
         
@@ -223,7 +227,7 @@ class Game {
         
         this.uiManager.registerIcon({
             ...configs.profile,
-            panel: null // Da implementare
+            panel: this.profilePanel
         });
         
         this.uiManager.registerIcon({
@@ -374,6 +378,37 @@ class Game {
             }
         }
         
+        // Gestisci click sul profile panel (priorità alta)
+        if (this.input.isLeftClickJustReleased() && this.profilePanel.isMouseOver(mousePos.x, mousePos.y)) {
+            console.log('🖱️ CLICK RILEVATO - ProfilePanel visible:', this.profilePanel.visible, 'mousePos:', mousePos);
+            
+            // Se il profile panel è chiuso, gestisci il click per aprire
+            if (!this.profilePanel.visible) {
+                console.log('✅ PROFILE PANEL CHIUSO - APERTURA');
+                this.profilePanel.visible = true;
+                this.input.resetLeftClickReleased();
+                uiEventHandled = true;
+                return; // Salta tutto il resto
+            } else {
+                console.log('❌ PROFILE PANEL APERTO - CONTINUANDO');
+                // Se è aperto, controlla se è un click valido (non un drag)
+                if (this.profilePanel.handleMouseRelease()) {
+                    // È un click valido, gestiscilo
+                    const handled = this.profilePanel.handleClick(mousePos.x, mousePos.y);
+                    if (handled) {
+                        this.input.resetLeftClickReleased();
+                        uiEventHandled = true;
+                        return; // Salta tutto il resto
+                    }
+                } else {
+                    // È stato un drag, resetta solo il flag
+                    this.input.resetLeftClickReleased();
+                    uiEventHandled = true;
+                    return; // Salta tutto il resto
+                }
+            }
+        }
+        
         // Gestisci eventi UI PRIMA di tutto
         uiEventHandled = this.handleUIEvents(mousePos, mouseOverUIIcon, mouseOverQuestTracker);
         
@@ -430,11 +465,17 @@ class Game {
         // Aggiorna quest tracker
         this.questTracker.update();
         
+        // Aggiorna profile panel
+        this.profilePanel.update();
+        
         // Aggiorna il sistema icone UI
         this.updateIconSystemUI();
         
         // Aggiorna il nuovo sistema unificato icone UI
         this.uiManager.update();
+        
+        // Gestisce mouse move per tooltip
+        this.uiManager.handleMouseMove(mousePos.x, mousePos.y);
         
         // Aggiorna il sistema di mappe e portali
         this.mapManager.update();
@@ -583,6 +624,21 @@ class Game {
         if (this.questTracker.isDragging && this.input.isMouseDown()) {
             const mousePos = this.input.getMousePosition();
             this.questTracker.handleMouseMove(mousePos.x, mousePos.y);
+        }
+        
+        // Gestisci drag del profile panel
+        if (this.profilePanel.isDragging && this.input.isMouseDown()) {
+            const mousePos = this.input.getMousePosition();
+            this.profilePanel.handleMouseMove(mousePos.x, mousePos.y);
+        }
+        
+        // Gestisci inizio drag del profile panel (quando si clicca sulla barra del titolo)
+        if (this.input.isMouseJustPressed() && this.profilePanel.visible && this.profilePanel.isMouseOver(mousePos.x, mousePos.y)) {
+            if (this.profilePanel.startDrag(mousePos.x, mousePos.y)) {
+                console.log('✅ DRAG PROFILE PANEL INIZIATO');
+                this.input.resetMouseJustPressed();
+                return; // Drag iniziato
+            }
         }
         
         // Gestisci drag del pannello home (rimosso - HomePanel non supporta drag)
@@ -1204,6 +1260,9 @@ class Game {
         
         // Disegna quest tracker
         this.questTracker.draw(this.ctx);
+        
+        // Disegna profile panel
+        this.profilePanel.draw(this.ctx);
         
         // Disegna pannello quest se aperto
     }
@@ -2106,6 +2165,29 @@ class Game {
             }
         }
         
+        // Gestisci click nel profile panel - PRIORITÀ ALTA
+        if (this.input.isLeftClickJustReleased() && this.profilePanel.isMouseOver(mousePos.x, mousePos.y)) {
+            // Controlla se è un click valido (non un drag)
+            if (this.profilePanel.handleMouseRelease()) {
+                // È un click valido, gestiscilo
+                const handled = this.profilePanel.handleClick(mousePos.x, mousePos.y);
+                if (handled) {
+                    this.input.resetLeftClickReleased();
+                    return true; // Evento UI gestito
+                }
+            } else {
+                // È stato un drag, resetta solo il flag
+                this.input.resetLeftClickReleased();
+                return true; // Evento UI gestito
+            }
+        }
+        
+        // Gestisci drag del profile panel (rimosso - gestito nel metodo principale)
+        // if (this.profilePanel.isDragging && this.input.isMouseDown()) {
+        //     this.profilePanel.handleMouseMove(mousePos.x, mousePos.y);
+        //     return true; // Evento UI gestito
+        // }
+        
         // Gestisci altri eventi UI...
         // (altri pannelli, pulsanti, ecc.)
         
@@ -2134,6 +2216,12 @@ class Game {
             // NON muovere se il click è su una icona del nuovo sistema UI
             if (this.uiManager.isMouseOverAnyIcon(mousePos.x, mousePos.y)) {
                 console.log('🚫 CLICK SU ICONA UI - BLOCCANDO MOVIMENTO');
+                return; // Blocca il movimento
+            }
+            
+            // NON muovere se il click è sul profile panel
+            if (this.profilePanel.isMouseOver(mousePos.x, mousePos.y) || this.profilePanel.isDragging) {
+                console.log('🚫 CLICK/DRAG SU PROFILE PANEL - BLOCCANDO MOVIMENTO');
                 return; // Blocca il movimento
             }
             

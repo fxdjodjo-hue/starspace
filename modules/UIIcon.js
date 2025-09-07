@@ -16,6 +16,8 @@ export class UIIcon {
         // Stato
         this.visible = true;
         this.isActive = false; // Se il pannello associato è aperto
+        this.showTooltip = false;
+        this.tooltipText = config.tooltipText || this.type;
         
         // Stile (basato sul QuestTracker)
         this.backgroundColor = '#1a1a2e';
@@ -86,6 +88,11 @@ export class UIIcon {
                y >= this.y && y <= this.y + this.height;
     }
     
+    // Gestisce il mouse move per i tooltip
+    handleMouseMove(x, y) {
+        this.showTooltip = this.isMouseOver(x, y);
+    }
+    
     // Disegna l'icona
     draw(ctx) {
         if (!this.visible) return;
@@ -105,6 +112,11 @@ export class UIIcon {
         // Contatore se necessario
         if (this.showCount) {
             this.drawCount(ctx);
+        }
+        
+        // Tooltip se necessario
+        if (this.showTooltip) {
+            this.drawTooltip(ctx);
         }
     }
     
@@ -126,6 +138,37 @@ export class UIIcon {
         ctx.font = 'bold 10px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(countText, this.x + this.width - 8, this.y + 12);
+    }
+    
+    // Disegna il tooltip
+    drawTooltip(ctx) {
+        const padding = 8;
+        const fontSize = 12;
+        const lineHeight = 16;
+        
+        ctx.font = `${fontSize}px Arial`;
+        const textWidth = ctx.measureText(this.tooltipText).width;
+        const tooltipWidth = textWidth + padding * 2;
+        const tooltipHeight = lineHeight + padding * 2;
+        
+        // Posizione tooltip (sopra l'icona)
+        const tooltipX = this.x + (this.width - tooltipWidth) / 2;
+        const tooltipY = this.y - tooltipHeight - 5;
+        
+        // Sfondo tooltip
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
+        
+        // Bordo tooltip
+        ctx.strokeStyle = this.borderColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
+        
+        // Testo tooltip
+        ctx.fillStyle = this.textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.tooltipText, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2);
     }
     
     // Imposta la posizione
