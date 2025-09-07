@@ -581,15 +581,15 @@ class Game {
         }
         
         
-        // Gestisci click nel pannello home (solo al primo click)
-        if (this.homePanel.visible && this.input.isMouseJustPressed()) {
-            const mousePos = this.input.getMousePosition();
-            const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
-            if (handled) {
-                this.input.resetMouseJustPressed();
-                return; // Click gestito dal pannello
-            }
-        }
+        // Gestisci click nel pannello home (rimosso - gestito da UIManager)
+        // if (this.homePanel.visible && this.input.isMouseJustPressed()) {
+        //     const mousePos = this.input.getMousePosition();
+        //     const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
+        //     if (handled) {
+        //         this.input.resetMouseJustPressed();
+        //         return; // Click gestito dal pannello
+        //     }
+        // }
         
         // Gestisci click nel quest tracker (inizio drag)
         if (this.input.isMouseJustPressed() && mouseOverQuestTracker) {
@@ -811,7 +811,7 @@ class Game {
         }
         
         // Gestisci click sulla CategorySkillbar
-        if (this.input.isLeftClickJustReleased() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
+        if (this.input.isMouseJustPressed() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen) {
             const mousePos = this.input.getMousePosition();
             
             // Controlla se il mouse è sopra la skillbar
@@ -820,14 +820,14 @@ class Game {
                 
                 // Se è navigazione (movimento > 5px), resetta il click e non gestire
                 if (movementDistance > 5) {
-                    this.input.resetLeftClickReleased();
+                    this.input.resetMouseJustPressed();
                     return;
                 }
                 
                 // Se è un click effettivo, gestisci il click sulla skillbar
                 const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
                 if (handled) {
-                    this.input.resetLeftClickReleased();
+                    this.input.resetMouseJustPressed();
                     return; // Esci subito per evitare che la nave si muova
                 }
             }
@@ -1206,11 +1206,11 @@ class Game {
         // Disegna i portali nella minimappa
         this.mapManager.drawMinimap(this.ctx, this.minimap);
         
+        // Disegna le notifiche di zona (sotto)
+        this.drawZoneNotifications();
+        
         // Disegna le notifiche (sempre sopra tutto, non influenzate dallo zoom)
         this.notifications.draw(this.ctx);
-        
-        // Disegna le notifiche di zona
-        this.drawZoneNotifications();
         
         // Aggiorna e disegna il pannello della stazione spaziale solo se presente nella mappa
         if (this.mapManager.shouldShowSpaceStation()) {

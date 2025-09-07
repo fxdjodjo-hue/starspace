@@ -52,7 +52,7 @@ export class Notification {
         this.notifications.forEach((notification, index) => {
             // Calcola separazione basata sul tempo di creazione
             const timeDiff = this.getTimeDifferenceFromPrevious(notification, index);
-            const baseY = 60;
+            const baseY = 180; // Posizionato sotto le zone (zone startY = 100 + altezza zona)
             const baseSpacing = 30; // Spazio maggiore per evitare sovrapposizioni
             const extraSpacing = timeDiff > 60 ? 20 : 0; // Spazio extra se > 1 secondo di differenza
             

@@ -69,6 +69,7 @@ export class UIIcon {
         // Toggle del pannello associato
         if (this.panel) {
             if (this.panel.toggle) {
+                // Usa sempre toggle se disponibile
                 this.panel.toggle();
             } else if (this.panel.open) {
                 if (this.isPanelOpen()) {
@@ -151,9 +152,9 @@ export class UIIcon {
         const tooltipWidth = textWidth + padding * 2;
         const tooltipHeight = lineHeight + padding * 2;
         
-        // Posizione tooltip (sopra l'icona)
+        // Posizione tooltip (sotto l'icona)
         const tooltipX = this.x + (this.width - tooltipWidth) / 2;
-        const tooltipY = this.y - tooltipHeight - 5;
+        const tooltipY = this.y + this.height + 5;
         
         // Sfondo tooltip
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';

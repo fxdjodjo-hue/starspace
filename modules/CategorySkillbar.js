@@ -257,14 +257,18 @@ export class CategorySkillbar {
     }
     
     handleClick(mouseX, mouseY) {
+        console.log(`🎯 CategorySkillbar click: (${mouseX}, ${mouseY}), pos: (${this.x}, ${this.y}), size: (${this.width}, ${this.height})`);
+        
         // Controlla se è un click effettivo (non un rilascio dopo navigazione)
         if (!this.game || !this.game.input) {
+            console.log('❌ No game or input');
             return false;
         }
         
         // Controlla la distanza del movimento del mouse
         const movementDistance = this.game.input.mouse.movementDistance || 0;
         if (movementDistance > 5) {
+            console.log(`❌ Movement too large: ${movementDistance}`);
             return false; // Non è un click effettivo, è navigazione
         }
         
@@ -272,21 +276,29 @@ export class CategorySkillbar {
         if (mouseX >= this.x && mouseX <= this.x + this.width &&
             mouseY >= this.y && mouseY <= this.y + this.height) {
             
+            console.log('✅ Click dentro la skillbar');
             const categoryWidth = this.width / Object.keys(this.categories).length;
             const clickedCategoryIndex = Math.floor((mouseX - this.x) / categoryWidth);
             const categoryNames = Object.keys(this.categories);
             
+            console.log(`📊 CategoryWidth: ${categoryWidth}, clickedIndex: ${clickedCategoryIndex}, categories: ${categoryNames.join(', ')}`);
+            
             if (clickedCategoryIndex >= 0 && clickedCategoryIndex < categoryNames.length) {
                 const categoryName = this.categories[categoryNames[clickedCategoryIndex]].name;
+                console.log(`🎯 Clicked category: ${categoryName}, current active: ${this.activeCategory}`);
                 
                 // Toggle della categoria
                 if (this.activeCategory === categoryName) {
                     this.activeCategory = null;
+                    console.log('🔄 Category closed');
                 } else {
                     this.activeCategory = categoryName;
+                    console.log('🔄 Category opened');
                 }
                 return true;
             }
+        } else {
+            console.log('❌ Click fuori dalla skillbar');
         }
         
         // Controlla click nel menu a tendina
