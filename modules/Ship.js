@@ -62,6 +62,48 @@ export class Ship {
         this.selectedLaser = 'x1'; // x1, x2, x3
         this.selectedMissile = 'r1'; // r1, r2, r3
         
+        // Sistema cannoni equipaggiati
+        this.equippedCannons = {
+            lf1: 0, // Numero di cannoni LF1 equipaggiati
+            lf2: 0, // Numero di cannoni LF2 equipaggiati
+            lf3: 0  // Numero di cannoni LF3 equipaggiati
+        };
+        
+        // Danno bonus per cannone
+        this.cannonDamage = {
+            lf1: 60,
+            lf2: 120,
+            lf3: 200
+        };
+        
+        // Sistema munizioni
+        this.ammunition = {
+            laser: {
+                x1: 1000, // Munizioni laser X1
+                x2: 500,  // Munizioni laser X2
+                x3: 200   // Munizioni laser X3
+            },
+            missile: {
+                r1: 50,   // Missili R1
+                r2: 25,   // Missili R2
+                r3: 10    // Missili R3
+            }
+        };
+        
+        // Limiti massimi munizioni - RIMOSSI per permettere acquisti illimitati
+        this.maxAmmunition = {
+            laser: {
+                x1: Infinity, // Illimitato
+                x2: Infinity, // Illimitato
+                x3: Infinity  // Illimitato
+            },
+            missile: {
+                r1: Infinity, // Illimitato
+                r2: Infinity, // Illimitato
+                r3: Infinity  // Illimitato
+            }
+        };
+        
         // Configurazioni laser
         this.laserConfigs = {
             x1: { damage: 20, fireRate: 60, speed: 8, color: '#ff0000' },
@@ -78,8 +120,8 @@ export class Ship {
         
         // Sistema risorse unificato (Single Source of Truth)
         this.resources = {
-            credits: 0,
-            uridium: 0,
+            credits: 100000, // Crediti di test per acquisti
+            uridium: 5000,   // Uridium di test
             honor: 0,
             experience: 0
         };
@@ -109,8 +151,8 @@ export class Ship {
         
         // Compatibilità con codice esistente
         this.honor = 0;
-        this.credits = 0;
-        this.uridium = 0;
+        this.credits = 100000; // Crediti di test per acquisti
+        this.uridium = 5000;   // Uridium di test
         
         // Sistema di potenziamenti
         this.upgradeManager = new UpgradeManager();
@@ -445,6 +487,11 @@ export class Ship {
         // Controlli di sicurezza extra
         if (!this.selectedTarget || !this.selectedTarget.active || !this.selectedTarget.x || !this.selectedTarget.y) return;
         
+        // Controlla se ha munizioni per il laser selezionato
+        if (!this.hasAmmunition('laser', this.selectedLaser)) {
+            return; // Non può sparare senza munizioni
+        }
+        
         // Calcola la direzione della nave per il lancio
         const shipDirection = Math.atan2(this.targetY - this.y, this.targetX - this.x);
         
@@ -480,6 +527,9 @@ export class Ship {
         this.projectiles.push(projectile1);
         this.projectiles.push(projectile2);
         
+        // Consuma munizioni per il laser selezionato
+        this.consumeAmmunition('laser', this.selectedLaser, 2); // 2 proiettili = 2 munizioni
+        
         // Riproduci suono laser se l'audio manager è disponibile
         if (window.gameInstance && window.gameInstance.audioManager) {
             window.gameInstance.audioManager.playLaserSound();
@@ -503,6 +553,11 @@ export class Ship {
     fireMissile() {
         // Controlli di sicurezza extra
         if (!this.selectedTarget || !this.selectedTarget.active || !this.selectedTarget.x || !this.selectedTarget.y) return;
+        
+        // Controlla se ha munizioni per il missile selezionato
+        if (!this.hasAmmunition('missile', this.selectedMissile)) {
+            return; // Non può sparare senza munizioni
+        }
         
         // Controlla se abbiamo raggiunto il limite massimo di missili
         if (this.missiles.length >= this.maxMissiles) return;
@@ -541,6 +596,9 @@ export class Ship {
         missile.setSprite(this.missileSprite);
         
         this.missiles.push(missile);
+        
+        // Consuma munizioni per il missile selezionato
+        this.consumeAmmunition('missile', this.selectedMissile, 1);
         
         // Riproduci suono missile se l'audio manager è disponibile
         if (window.gameInstance && window.gameInstance.audioManager) {
@@ -864,6 +922,51 @@ export class Ship {
         return this.resources[type] || 0;
     }
     
+    // Metodi per gestire le munizioni
+    getAmmunition(type, weapon) {
+        return this.ammunition[type][weapon] || 0;
+    }
+    
+    addAmmunition(type, weapon, amount) {
+        const current = this.ammunition[type][weapon] || 0;
+        const max = this.maxAmmunition[type][weapon] || Infinity;
+        // Con Infinity, Math.min restituisce sempre current + amount
+        this.ammunition[type][weapon] = Math.min(current + amount, max);
+    }
+    
+    consumeAmmunition(type, weapon, amount = 1) {
+        if (this.ammunition[type][weapon] >= amount) {
+            this.ammunition[type][weapon] -= amount;
+            return true;
+        }
+        return false;
+    }
+    
+    hasAmmunition(type, weapon) {
+        return this.ammunition[type][weapon] > 0;
+    }
+    
+    // Metodi per gestire i cannoni equipaggiati
+    equipCannon(cannonType, amount = 1) {
+        if (this.equippedCannons.hasOwnProperty(cannonType)) {
+            this.equippedCannons[cannonType] += amount;
+            return true;
+        }
+        return false;
+    }
+    
+    getEquippedCannons(cannonType) {
+        return this.equippedCannons[cannonType] || 0;
+    }
+    
+    getTotalCannonDamage() {
+        let totalDamage = 0;
+        for (const [cannonType, count] of Object.entries(this.equippedCannons)) {
+            totalDamage += count * this.cannonDamage[cannonType];
+        }
+        return totalDamage;
+    }
+    
     setResource(type, amount) {
         if (this.resources.hasOwnProperty(type)) {
             this.resources[type] = amount;
@@ -956,7 +1059,9 @@ export class Ship {
     
     // Ottieni valori aggiornati dalle statistiche
     getCurrentDamage() {
-        return this.upgradeManager.getValue('damage');
+        const baseDamage = this.upgradeManager.getValue('damage');
+        const cannonBonus = this.getTotalCannonDamage();
+        return baseDamage + cannonBonus;
     }
     
     getCurrentFireRate() {
@@ -1073,8 +1178,6 @@ export class Ship {
         return window.gameInstance.spaceStation;
     }
     
-
-    
     // Ottieni valore attuale dello scudo
     getCurrentShield() {
         return this.upgradeManager.getValue('shield');
@@ -1134,7 +1237,7 @@ export class Ship {
         // Applica configurazione laser selezionata
         const laserConfig = this.laserConfigs[this.selectedLaser];
         if (laserConfig) {
-            this.projectileDamage = laserConfig.damage;
+            this.projectileDamage = laserConfig.damage + this.getTotalCannonDamage();
             this.fireRate = laserConfig.fireRate;
             this.projectileSpeed = laserConfig.speed;
         }
@@ -1142,7 +1245,7 @@ export class Ship {
         // Applica configurazione missile selezionata
         const missileConfig = this.missileConfigs[this.selectedMissile];
         if (missileConfig) {
-            this.missileDamage = missileConfig.damage;
+            this.missileDamage = missileConfig.damage + this.getTotalCannonDamage();
             this.missileFireRate = missileConfig.fireRate;
             this.missileSpeed = missileConfig.speed;
         }
@@ -1176,4 +1279,3 @@ export class Ship {
         return this.experience ? this.experience.level : 1;
     }
 }
-

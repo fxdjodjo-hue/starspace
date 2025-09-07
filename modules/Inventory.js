@@ -166,6 +166,11 @@ export class Inventory {
             return false;
         }
         
+        // Riproduci suono click solo per interfaccia
+        if (window.gameInstance && window.gameInstance.audioManager) {
+            window.gameInstance.audioManager.playClickSound();
+        }
+        
         // Gestisci click sugli slot di equipaggiamento
         this.handleEquipmentClick(x, y);
         

@@ -203,6 +203,22 @@ export class CategorySkillbar {
             ctx.textBaseline = 'middle';
             ctx.fillText(item.name, itemX + itemSize/2, itemY + itemSize/2);
             
+            // Mostra munizioni per laser e missili
+            if (item.id.startsWith('laser_') || item.id.startsWith('missile_')) {
+                const ammoCount = this.getAmmunitionCount(item);
+                if (ammoCount !== null) {
+                    // Sfondo per il contatore munizioni
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(itemX + 2, itemY + itemSize - 18, itemSize - 4, 16);
+                    
+                    // Testo munizioni
+                    ctx.fillStyle = ammoCount > 0 ? '#00ff00' : '#ff0000';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(ammoCount.toString(), itemX + itemSize/2, itemY + itemSize - 8);
+                }
+            }
+            
             // Cooldown per le skills EXTRA
             if (item.cooldown > 0) {
                 const cooldownProgress = Math.min(item.cooldown / 10000, 1); // Assumendo 10s max cooldown
@@ -445,4 +461,23 @@ export class CategorySkillbar {
         
         return 1000;
     }
+    
+    getAmmunitionCount(item) {
+        if (!this.game || !this.game.ship) return null;
+        
+        // Munizioni per laser
+        if (item.id.startsWith('laser_')) {
+            const laserType = item.id.replace('laser_', '');
+            return this.game.ship.getAmmunition('laser', laserType);
+        }
+        
+        // Munizioni per missili
+        if (item.id.startsWith('missile_')) {
+            const missileType = item.id.replace('missile_', '');
+            return this.game.ship.getAmmunition('missile', missileType);
+        }
+        
+        return null;
+    }
+    
 }

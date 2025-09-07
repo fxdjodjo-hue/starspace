@@ -29,9 +29,8 @@ import { Inventory } from './modules/Inventory.js';
 import { InventoryItem } from './modules/InventoryItem.js';
 // import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { HomePanel } from './modules/HomePanel.js';
-import { CategorySkillbar } from './modules/CategorySkillbar.js';
-import { QuestPanel } from './modules/QuestPanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
+import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
 import { MapManager } from './modules/MapManager.js';
 import { MapSystem } from './modules/MapSystem.js';
@@ -122,13 +121,12 @@ class Game {
         this.inventory = new Inventory();
         
         // Pannello Quest
-        this.questPanel = new QuestPanel(this);
-        
-        // Tracker Quest (mini pannello UI)
-        this.questTracker = new QuestTracker(this);
         
         // Pannello Home Dashboard
         this.homePanel = new HomePanel(this);
+        
+        // Quest Tracker (mini pannello per quest attive)
+        this.questTracker = new QuestTracker(this);
         
         // Esponi il pannello Home globalmente per il sistema di log
         window.gameInstance = this;
@@ -268,17 +266,89 @@ class Game {
     
     
     update() {
+        // === GESTIONE EVENTI UI (PRIORITÀ MASSIMA) ===
+        const mousePos = this.input.getMousePosition();
+        let uiEventHandled = false;
         
+        // Controlla se il mouse è sopra le icone UI e il quest tracker
+        let mouseOverUIIcon = false;
+        let mouseOverQuestTracker = false;
         
-        // Aggiorna la nave solo se il pannello Home non è aperto
-        if (!this.homePanel.visible) {
+        // Controlla se il mouse è sopra un'icona UI
+        this.iconSystemUI.forEach(icon => {
+            if (icon.isMouseOver(mousePos.x, mousePos.y)) {
+                mouseOverUIIcon = true;
+            }
+        });
+        
+        // Controlla se il mouse è sopra il quest tracker
+        if (this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y)) {
+            mouseOverQuestTracker = true;
+        }
+        
+        // Gestisci click sul quest tracker PRIMA di tutto (priorità massima)
+        if (this.input.isLeftClickJustReleased() && mouseOverQuestTracker) {
+            console.log('🖱️ CLICK RILEVATO - QuestTracker minimized:', this.questTracker.minimized, 'mousePos:', mousePos);
+            
+            // Se il quest tracker è minimizzato, gestisci il click per aprire/chiudere
+            if (this.questTracker.minimized) {
+                console.log('✅ QUEST TRACKER MINIMIZZATO - APERTURA');
+                this.questTracker.toggleMinimized();
+                this.input.resetLeftClickReleased();
+                // Imposta il flag per bloccare il movimento in questo frame
+                uiEventHandled = true;
+                return; // Salta tutto il resto
+            } else {
+                console.log('❌ QUEST TRACKER NON MINIMIZZATO - CONTINUANDO');
+                // Se è espanso, controlla se è un click valido (non un drag)
+                if (this.questTracker.handleMouseRelease()) {
+                    // È un click valido, gestiscilo
+                    const handled = this.questTracker.handleClick(mousePos.x, mousePos.y);
+                    if (handled) {
+                        this.input.resetLeftClickReleased();
+                        uiEventHandled = true;
+                        return; // Salta tutto il resto
+                    }
+                } else {
+                    // È stato un drag, resetta solo il flag
+                    this.input.resetLeftClickReleased();
+                    uiEventHandled = true;
+                    return; // Salta tutto il resto
+                }
+            }
+        }
+        
+        // Gestisci eventi UI PRIMA di tutto
+        uiEventHandled = this.handleUIEvents(mousePos, mouseOverUIIcon, mouseOverQuestTracker);
+        
+        // Se un evento UI è stato gestito, salta la logica di gioco
+        if (uiEventHandled) {
+            return;
+        }
+        
+        // === GESTIONE EVENTI DI GIOCO (PRIORITÀ BASSA) ===
+        this.handleGameEvents(mousePos, uiEventHandled);
+        
+        // Aggiorna la nave solo se nessun evento UI è stato gestito
+        if (!uiEventHandled) {
+            console.log('🚀 NAVE AGGIORNATA - uiEventHandled:', uiEventHandled);
             this.ship.update();
             this.ship.updateSprite();
             this.ship.updateTrail();
+        } else {
+            console.log('🚫 NAVE NON AGGIORNATA - uiEventHandled:', uiEventHandled);
         }
+        
+        // Aggiorna la camera (sempre, ma solo se la nave si è mossa)
+        this.camera.update(this.ship);
         
         // Aggiorna la CategorySkillbar
         this.categorySkillbar.update();
+        
+        // Aggiorna popup del pannello Home
+        if (this.homePanel.visible) {
+            this.homePanel.updatePopup(16); // 16ms = ~60fps
+        }
         
         // Controlla collisioni bonus box IMMEDIATAMENTE dopo il movimento della nave
         this.checkBonusBoxCollisions();
@@ -301,7 +371,7 @@ class Game {
         // Aggiorna inventario
         this.inventory.update();
         
-        // Aggiorna tracker quest
+        // Aggiorna quest tracker
         this.questTracker.update();
         
         // Aggiorna il sistema icone UI
@@ -313,9 +383,6 @@ class Game {
         // Aggiorna il sistema di radiazione
         const currentMap = this.mapManager.getCurrentMap();
         this.radiationSystem.update(this.ship, currentMap.width, currentMap.height, Date.now());
-        
-        // Aggiorna la camera
-        this.camera.update(this.ship);
         
         // Aggiorna sfondo parallax
         this.parallaxBackground.update(this.camera);
@@ -349,36 +416,9 @@ class Game {
             this.inventory.handleMouseMove(mousePos.x, mousePos.y, this.width, this.height);
         }
         
-        // Gestisci click sulle icone UI PRIMA dell'inventario
-        if (this.input.isLeftClickJustReleased()) {
-            const mousePos = this.input.getMousePosition();
-            const movementDistance = this.input.mouse.movementDistance || 0;
-            
-            if (movementDistance <= 5) {
-                // Controlla se il click è su un'icona UI
-                let iconClicked = false;
-                this.iconSystemUI.forEach(icon => {
-                    if (icon.isMouseOver(mousePos.x, mousePos.y)) {
-                        iconClicked = true;
-                    }
-                });
-                
-                if (iconClicked) {
-                    this.handleIconSystemUIClick(mousePos.x, mousePos.y);
-                    this.input.resetLeftClickReleased();
-                    return; // Click gestito dalle icone UI
-                }
-            }
-        }
+        // Gestione eventi UI spostata in handleUIEvents()
         
-        // Gestisci click sull'inventario
-        if (this.input.isLeftClickJustReleased() && this.inventory.isOpen) {
-            const mousePos = this.input.getMousePosition();
-            if (this.inventory.handleClick(mousePos.x, mousePos.y, this.width, this.height)) {
-                this.input.resetLeftClickReleased();
-                return; // Click gestito dall'inventario
-            }
-        }
+        // Gestione eventi UI spostata in handleUIEvents()
         
         // Gestisci click su pulsante impostazioni (solo al primo click)
         if (this.input.isMouseJustPressed()) {
@@ -440,41 +480,31 @@ class Game {
             }
         }
         
-        // Gestisci click nel pannello quest (solo al primo click)
-        if (this.questPanel.isOpen && this.input.isMouseJustPressed()) {
+        
+        // Gestisci click nel pannello home (solo al primo click)
+        if (this.homePanel.visible && this.input.isMouseJustPressed()) {
             const mousePos = this.input.getMousePosition();
-            if (this.questPanel.handleClick(mousePos.x, mousePos.y)) {
+            const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
+            if (handled) {
                 this.input.resetMouseJustPressed();
                 return; // Click gestito dal pannello
             }
         }
         
-        // Gestisci click nel pannello home (solo al primo click)
-        if (this.homePanel.isOpen && this.input.isMouseJustPressed()) {
+        // Gestisci click nel quest tracker (inizio drag)
+        if (this.input.isMouseJustPressed() && mouseOverQuestTracker) {
             const mousePos = this.input.getMousePosition();
-            if (this.homePanel.handleClick(mousePos.x, mousePos.y)) {
+            if (this.questTracker.startDrag(mousePos.x, mousePos.y)) {
                 this.input.resetMouseJustPressed();
-                return; // Click gestito dal pannello
+                return; // Drag iniziato
             }
+            
         }
+        
+        // Gestione eventi UI spostata in handleUIEvents()
         
 
         
-        // Gestisci movimento mouse per drag del tracker
-        if (this.input.isMouseDown() && this.questTracker.isDragging) {
-            const mousePos = this.input.getMousePosition();
-            this.questTracker.handleMouseMove(mousePos.x, mousePos.y);
-        }
-        
-        // Gestisci rilascio mouse per drag del tracker
-        if (this.input.isLeftClickJustReleased()) {
-            if (this.questTracker.isDragging) {
-                this.questTracker.handleMouseRelease();
-                this.input.resetLeftClickReleased(); // Reset del flag per evitare interferenze
-            } else {
-                this.questTracker.handleMouseRelease();
-            }
-        }
         
 
         
@@ -490,11 +520,19 @@ class Game {
             this.settingsPanel.handleMouseMove(mousePos.x, mousePos.y);
         }
         
-        // Gestisci drag del pannello home
-        if (this.homePanel.isOpen && this.input.isMouseDown()) {
+        // Gestisci drag del quest tracker
+        if (this.questTracker.isDragging && this.input.isMouseDown()) {
             const mousePos = this.input.getMousePosition();
-            this.homePanel.handleMouseMove(mousePos.x, mousePos.y);
+            this.questTracker.handleMouseMove(mousePos.x, mousePos.y);
         }
+        
+        // Gestisci drag del pannello home (rimosso - HomePanel non supporta drag)
+        // if (this.homePanel.isOpen && this.input.isMouseDown()) {
+        //     const mousePos = this.input.getMousePosition();
+        //     this.homePanel.handleMouseMove(mousePos.x, mousePos.y);
+        // }
+        
+        // Rimuovo gestione rotella per thumbnail - solo frecce cliccabili
         
         // Ferma il drag quando si rilascia il mouse
         if (this.input.isLeftClickJustReleased()) {
@@ -512,67 +550,10 @@ class Game {
         // Reset del flag click appena premuto (spostato alla fine)
         // this.input.resetMouseJustPressed();
         
-        // Controlla se il click è stato gestito dal tracker
-        let clickHandledByTracker = false;
-        if (this.input.isLeftClickJustReleased()) {
-            const mousePos = this.input.getMousePosition();
-            
-            // Non gestire il click se è navigazione (movimento > 5px)
-            const movementDistance = this.input.mouse.movementDistance || 0;
-            if (movementDistance <= 5) {
-                clickHandledByTracker = this.questTracker.handleClick(mousePos.x, mousePos.y);
-                if (clickHandledByTracker) {
-                    // Reset del flag dopo aver gestito il click
-                    this.input.resetLeftClickReleased();
-                }
-            }
-        }
         
 
         
-        // Controlla se il mouse è sopra il tracker durante isMouseDown (esclusi i controlli di navigazione)
-        let mouseOverTracker = false;
-        let mouseOverUIIcon = false;
-        if (this.input.isMouseDown()) {
-            const mousePos = this.input.getMousePosition();
-            mouseOverTracker = this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y) || 
-                              this.questTracker.isMouseOverIcon(mousePos.x, mousePos.y) ||
-                              this.questTracker.isMouseOverCloseButton(mousePos.x, mousePos.y) ||
-                              this.questTracker.isMouseOverDragArea(mousePos.x, mousePos.y);
-            
-            // Controlla se il mouse è sopra un'icona UI
-            this.iconSystemUI.forEach(icon => {
-                if (icon.isMouseOver(mousePos.x, mousePos.y)) {
-                    mouseOverUIIcon = true;
-                }
-            });
-        }
-        
-        // Gestisci input per il movimento (solo se non si sta facendo drag e non si è sopra il tracker o icone UI)
-        if (this.input.isMouseDown() && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.isOpen && !this.questTracker.isDragging && !clickHandledByTracker && !mouseOverTracker && !mouseOverUIIcon && !this.mapSystem.isOpen) {
-            const mousePos = this.input.getMousePosition();
-            
-            // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
-            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
-                const movementDistance = this.input.mouse.movementDistance || 0;
-                if (movementDistance <= 5) {
-                    return; // Solo se è un click effettivo, non navigazione
-                }
-                // Se è navigazione (movimento > 5px), continua il movimento anche sopra la skillbar
-            }
-            
-            // Pulisci il target della minimappa quando si inizia il movimento normale
-            this.minimap.currentTarget = null;
-            
-            // Click sinistro - movimento nave (solo se la nave non è morta)
-            if (!this.ship.isDead) {
-                const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
-                this.ship.setTarget(worldPos.x, worldPos.y);
-            }
-            
-            // Click nel mondo gestito - Pulisce il target della minimappa
-            this.minimap.clearTarget();
-        }
+        // Gestione eventi di gioco spostata in handleGameEvents()
         
 
         
@@ -679,14 +660,6 @@ class Game {
             this.inventory.toggle();
         }
         
-        // Comando per aprire/chiudere pannello quest (tasto Q)
-        if (this.input.isKeyJustPressed('KeyQ')) {
-            if (this.questPanel.isOpen) {
-                this.questPanel.close();
-            } else {
-                this.questPanel.open();
-            }
-        }
         
         // Comando per aprire/chiudere sistema mappe (tasto M)
         if (this.input.isKeyJustPressed('KeyM')) {
@@ -698,15 +671,7 @@ class Game {
             this.homePanel.toggle();
         }
         
-        // Gestisci click sul pannello Home (PRIORITÀ ALTA)
-        if (this.homePanel.visible && this.input.isLeftClickJustReleased()) {
-            const mousePos = this.input.getMousePosition();
-            const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
-            if (handled) {
-                this.input.resetLeftClickReleased();
-                return; // Esce dalla funzione per evitare altri gestori
-            }
-        }
+        // Gestore duplicato rimosso - gestito sopra
         
         // Gestisci click sui nodi del sistema mappe (PRIORITÀ ALTA)
         if (this.mapSystem.isOpen && this.input.isLeftClickJustReleased()) {
@@ -795,14 +760,22 @@ class Game {
         // Reset dei flag dei tasti
         this.input.resetKeysJustPressed();
         
-        // Gestisci zoom con rotella del mouse (solo se l'inventario non è aperto)
-        if (this.input.hasWheelMovement() && !this.inventory.isOpen) {
+        // Gestisci zoom con rotella del mouse (solo se l'inventario e il pannello home non sono aperti)
+        if (this.input.hasWheelMovement() && !this.inventory.isOpen && !this.homePanel.visible) {
             if (this.input.mouse.wheelDelta > 0) {
                 this.camera.zoomIn();
             } else if (this.input.mouse.wheelDelta < 0) {
                 this.camera.zoomOut();
             }
             this.input.resetWheelDelta();
+        }
+        
+        // Gestisci scroll delle quest se il pannello home è aperto
+        if (this.input.hasWheelMovement() && this.homePanel.visible && this.homePanel.selectedCategory === 'quest') {
+            const handled = this.homePanel.handleQuestScroll(this.input.mouse.wheelDelta);
+            if (handled) {
+                this.input.resetWheelDelta();
+            }
         }
         
         // Reset del flag click appena premuto (alla fine di tutti i gestori)
@@ -858,8 +831,6 @@ class Game {
         if (this.input.isKeyJustPressed('Escape')) {
             if (this.spaceStationPanel.isOpen) {
                 this.spaceStationPanel.close();
-            } else if (this.questPanel.isOpen) {
-                this.questPanel.close();
             } else if (this.settingsPanel.isOpen) {
                 this.settingsPanel.close();
             } else if (this.inventory.isOpen) {
@@ -1169,11 +1140,10 @@ class Game {
         // Disegna inventario
         this.inventory.draw(this.ctx, this.width, this.height);
         
-        // Disegna pannello quest se aperto
-        this.questPanel.draw(this.ctx);
-        
-        // Disegna tracker quest (sempre visibile se ci sono quest attive)
+        // Disegna quest tracker
         this.questTracker.draw(this.ctx);
+        
+        // Disegna pannello quest se aperto
     }
     
     // Inizializza l'inventario con oggetti di esempio
@@ -2011,6 +1981,128 @@ class Game {
                 icon.setTooltipVisible(false);
             }
         });
+    }
+    
+    // Gestisce tutti gli eventi UI con priorità alta
+    handleUIEvents(mousePos, mouseOverUIIcon, mouseOverQuestTracker) {
+        // Gestisci click sulle icone UI PRIMA dell'inventario
+        if (this.input.isLeftClickJustReleased()) {
+            const movementDistance = this.input.mouse.movementDistance || 0;
+            
+            if (movementDistance <= 5) {
+                // Controlla se il click è su un'icona UI
+                let iconClicked = false;
+                this.iconSystemUI.forEach(icon => {
+                    if (icon.isMouseOver(mousePos.x, mousePos.y)) {
+                        iconClicked = true;
+                    }
+                });
+                
+                if (iconClicked) {
+                    this.handleIconSystemUIClick(mousePos.x, mousePos.y);
+                    this.input.resetLeftClickReleased();
+                    return true; // Evento UI gestito
+                }
+            }
+        }
+        
+        // Gestisci click sull'inventario
+        if (this.input.isLeftClickJustReleased() && this.inventory.isOpen) {
+            if (this.inventory.handleClick(mousePos.x, mousePos.y, this.width, this.height)) {
+                this.input.resetLeftClickReleased();
+                return true; // Evento UI gestito
+            }
+        }
+        
+        // Gestisci click nel quest tracker (click normale) - PRIORITÀ ALTA
+        if (this.input.isLeftClickJustReleased() && this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y)) {
+            // Controlla se è un click valido (non un drag)
+            if (this.questTracker.handleMouseRelease()) {
+                // È un click valido, gestiscilo
+                const handled = this.questTracker.handleClick(mousePos.x, mousePos.y);
+                if (handled) {
+                    this.input.resetLeftClickReleased();
+                    return true; // Evento UI gestito
+                }
+            } else {
+                // È stato un drag, resetta solo il flag
+                this.input.resetLeftClickReleased();
+                return true; // Evento UI gestito
+            }
+        }
+        
+        // Gestisci altri eventi UI...
+        // (altri pannelli, pulsanti, ecc.)
+        
+        return false; // Nessun evento UI gestito
+    }
+    
+    // Gestisce tutti gli eventi di gioco con priorità bassa
+    handleGameEvents(mousePos, uiEventHandled = false) {
+        // Gestisci input per il movimento continuo (solo se non si è sopra le icone UI o il quest tracker)
+        if (this.input.isMouseDown() && !uiEventHandled && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.visible && !this.mapSystem.isOpen) {
+            // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
+                const movementDistance = this.input.mouse.movementDistance || 0;
+                if (movementDistance <= 5) {
+                    return; // Solo se è un click effettivo, non navigazione
+                }
+                // Se è navigazione (movimento > 5px), continua il movimento anche sopra la skillbar
+            }
+            
+            // NON muovere se il click è sull'icona del QuestTracker O se il QuestTracker è in drag
+            if (this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y) || this.questTracker.isDragging) {
+                console.log('🚫 CLICK/DRAG SU QUEST TRACKER - BLOCCANDO MOVIMENTO');
+                return; // Blocca il movimento
+            }
+            
+            // Pulisci il target della minimappa quando si inizia il movimento normale
+            this.minimap.currentTarget = null;
+            
+            // Click sinistro - movimento nave (solo se la nave non è morta)
+            if (!this.ship.isDead) {
+                const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
+                this.ship.setTarget(worldPos.x, worldPos.y);
+            }
+            
+            // Click nel mondo gestito - Pulisce il target della minimappa
+            this.minimap.clearTarget();
+        }
+        
+        // Gestisci click per movimento del player (solo se non ci sono click sui pannelli UI)
+        if (this.input.isLeftClickJustReleased() && !uiEventHandled && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.visible && !this.mapSystem.isOpen) {
+            // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
+                const movementDistance = this.input.mouse.movementDistance || 0;
+                if (movementDistance <= 5) {
+                    this.input.resetLeftClickReleased();
+                    return; // Solo se è un click effettivo, non navigazione
+                }
+                // Se è navigazione (movimento > 5px), continua il movimento anche sopra la skillbar
+            }
+            
+            // NON muovere se il click è sull'icona del QuestTracker O se il QuestTracker è in drag
+            if (this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y) || this.questTracker.isDragging) {
+                console.log('🚫 CLICK/DRAG SU QUEST TRACKER - BLOCCANDO MOVIMENTO');
+                this.input.resetLeftClickReleased();
+                return; // Blocca il movimento
+            }
+            
+            // Pulisci il target della minimappa quando si inizia il movimento normale
+            this.minimap.currentTarget = null;
+            
+            // Click sinistro - movimento nave (solo se la nave non è morta)
+            if (!this.ship.isDead) {
+                const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
+                this.ship.setTarget(worldPos.x, worldPos.y);
+            }
+            
+            // Click nel mondo gestito - Pulisce il target della minimappa
+            this.minimap.clearTarget();
+            
+            // Reset del click per evitare gestione duplicata
+            this.input.resetLeftClickReleased();
+        }
     }
     
     // Gestisce i click sul sistema icone UI

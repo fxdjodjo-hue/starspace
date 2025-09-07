@@ -64,6 +64,11 @@ export class AudioManager {
         this.playSound('laser', 0.8 * this.sfxVolume);
     }
     
+    // Riproduci suono click UI
+    playClickSound() {
+        this.playSound('click', 0.6 * this.sfxVolume);
+    }
+    
     // Riproduci suono missile
     playMissileSound() {
         this.playSound('missile', 1.0 * this.sfxVolume);
@@ -318,6 +323,7 @@ export class AudioManager {
         this.loadSound('spacestation_ambient', 'sounds/spacestationsounds.mp3'); // Suono ambientale stazione spaziale
         this.loadSound('system_ready', 'sounds/system_ready.mp3'); // Suono di avvio sistema
         this.loadSound('collecting', 'sounds/collecting.mp3'); // Suono raccolta bonus box
+        this.loadSound('click', 'click.mp3'); // Suono click UI
         this.loadSound('smartbomb', 'skills/smartbomb/weird-space-sound-03-344943.mp3');
         this.loadSound('fastrepair', 'skills/fastrepair/fastrepair.mp3'); // Suono FastRepair
         this.loadSound('emp', 'skills/emp/emp.mp3'); // Suono EMP

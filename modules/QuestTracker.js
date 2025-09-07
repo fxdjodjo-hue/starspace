@@ -1,369 +1,553 @@
-// Modulo Tracker Quest per UI in tempo reale
-import { IconSystemUI } from './IconSystemUI.js';
-
+// Quest Tracker - Mini pannello per mostrare le quest attive
 export class QuestTracker {
     constructor(game) {
         this.game = game;
-        this.isVisible = false;
+        this.visible = true;
+        this.minimized = true; // Stato iniziale minimizzato
+        console.log('🏗️ QuestTracker constructor - inizializzato come minimizzato:', this.minimized);
         this.isDragging = false;
-        this.dragOffsetX = 0;
-        this.dragOffsetY = 0;
-        this.dragStartTime = 0;
-        this.lastClickTime = 0;
-        this.mouseWasDown = false;
+        this.dragOffset = { x: 0, y: 0 };
+        this.hasMoved = false; // Traccia se c'è stato movimento durante il drag
         
-        // Navigazione quest
-        this.currentQuestIndex = 0;
-        this.questsPerPage = 1;
-        
-
+        // Sistema di animazione
+        this.animating = false;
+        this.animationProgress = 0; // 0 = minimizzato, 1 = espanso
+        this.animationSpeed = 0.1; // Velocità animazione (più alto = più veloce)
+        this.currentWidth = this.minimizedWidth;
+        this.currentHeight = this.minimizedHeight;
         
         // Posizione e dimensioni
-        this.x = 20;
-        this.y = 20;
-        this.width = 320;
-        this.maxHeight = 400;
-        this.questHeight = 100;
-        this.maxQuests = 3; // Massimo 3 quest visibili
+        this.width = 300;
+        this.height = 200;
+        this.minimizedWidth = 50; // Larghezza quando minimizzato
+        this.minimizedHeight = 50; // Altezza quando minimizzato
         
-        // Icona "!" per aprire il tracker
-        this.icon = new IconSystemUI(20, 20, 'quest', {
-            size: 40,
-            visible: true
-        });
+        // Posizioni
+        this.minimizedX = 20; // Posizione X quando minimizzato (alto a sinistra)
+        this.minimizedY = 20; // Posizione Y quando minimizzato (alto a sinistra)
+        this.expandedX = 0; // Sarà calcolata dinamicamente
+        this.expandedY = 0; // Sarà calcolata dinamicamente
         
-        // Stili
-        this.backgroundColor = 'rgba(26, 26, 46, 0.9)';
-        this.borderColor = '#16213e';
+        // Posizione salvata per il ripristino
+        this.savedExpandedX = null; // Posizione X salvata quando chiuso
+        this.savedExpandedY = null; // Posizione Y salvata quando chiuso
+        
+        // Posizione iniziale (minimizzato)
+        this.x = this.minimizedX;
+        this.y = this.minimizedY;
+        
+        // Inizializza dimensioni animate
+        this.currentWidth = this.minimizedWidth;
+        this.currentHeight = this.minimizedHeight;
+        
+        // Assicurati che le dimensioni siano sempre valide
+        if (!this.currentWidth) this.currentWidth = this.minimizedWidth;
+        if (!this.currentHeight) this.currentHeight = this.minimizedHeight;
+        
+        
+        // Quest attive (riferimento al sistema del HomePanel)
+        this.activeQuests = [];
+        
+        // Stile
+        this.backgroundColor = '#1a1a2e';
+        this.borderColor = '#4a90e2';
         this.textColor = '#ffffff';
-        this.progressColor = '#4CAF50';
-        this.progressBgColor = '#444444';
-        this.iconColor = '#FFD700';
-        this.iconBgColor = 'rgba(26, 26, 46, 0.9)';
-        
-        // Carica posizione salvata
-        this.loadPosition();
+        this.titleColor = '#FFD700';
+        this.progressColor = '#00ff00';
     }
     
-    // Carica posizione salvata
-    loadPosition() {
-        const saved = localStorage.getItem('questTrackerPosition');
-        if (saved) {
-            const pos = JSON.parse(saved);
-            this.x = pos.x || 20;
-            this.y = pos.y || 20;
-        }
-    }
     
-    // Salva posizione
-    savePosition() {
-        localStorage.setItem('questTrackerPosition', JSON.stringify({
-            x: this.x,
-            y: this.y
-        }));
-    }
-    
-    // Aggiorna il tracker
+    // Aggiorna le quest attive dal sistema del HomePanel
     update() {
-        // Il tracker si aggiorna automaticamente quando le quest cambiano
         
-        // Aggiorna il tooltip dell'icona
-        if (this.icon.isMouseOver(this.game.input.mouse.x, this.game.input.mouse.y)) {
-            this.icon.setTooltipVisible(true);
+        if (this.game.homePanel && this.game.homePanel.questData) {
+            this.updateActiveQuests();
+        }
+        
+        // Calcola posizioni espanso se non ancora calcolate
+        if (this.expandedX === 0 && this.expandedY === 0) {
+            this.expandedX = (this.game.canvas.width - this.width) / 2;
+            this.expandedY = (this.game.canvas.height - this.height) / 2;
+        }
+        
+        
+        // Aggiorna animazione
+        this.updateAnimation();
+        
+    }
+    
+    // Aggiorna l'animazione di apertura/chiusura
+    updateAnimation() {
+        // Assicurati che le dimensioni siano sempre valide
+        if (!this.currentWidth) this.currentWidth = this.minimized ? this.minimizedWidth : this.width;
+        if (!this.currentHeight) this.currentHeight = this.minimized ? this.minimizedHeight : this.height;
+        
+        
+        if (!this.animating) return;
+        
+        const targetProgress = this.minimized ? 0 : 1;
+        const diff = targetProgress - this.animationProgress;
+        
+        if (Math.abs(diff) < 0.01) {
+            // Animazione completata
+            this.animationProgress = targetProgress;
+            this.animating = false;
         } else {
-            this.icon.setTooltipVisible(false);
+            // Continua l'animazione
+            this.animationProgress += diff * this.animationSpeed;
+        }
+        
+        // Calcola dimensioni interpolate
+        this.currentWidth = this.lerp(this.minimizedWidth, this.width, this.animationProgress);
+        this.currentHeight = this.lerp(this.minimizedHeight, this.height, this.animationProgress);
+        
+        // Calcola posizioni interpolate
+        this.x = this.lerp(this.minimizedX, this.expandedX, this.animationProgress);
+        this.y = this.lerp(this.minimizedY, this.expandedY, this.animationProgress);
+    }
+    
+    // Interpolazione lineare
+    lerp(start, end, t) {
+        return start + (end - start) * t;
+    }
+    
+    // Aggiorna la lista delle quest attive
+    updateActiveQuests() {
+        this.activeQuests = [];
+        
+        // Prendi le quest accettate dal sistema del HomePanel
+        const acceptedQuests = this.game.homePanel.questData.accettate;
+        if (acceptedQuests) {
+            Object.keys(acceptedQuests).forEach(levelKey => {
+                const levelQuests = acceptedQuests[levelKey];
+                if (levelQuests && levelQuests.length > 0) {
+                    levelQuests.forEach(quest => {
+                        this.activeQuests.push(quest);
+                    });
+                }
+            });
         }
     }
     
-    // Disegna l'icona "!"
-    drawIcon(ctx) {
-        this.icon.draw(ctx);
-    }
-    
-    // Disegna il tracker
-    draw(ctx) {
-        // Disegna sempre l'icona
-        this.drawIcon(ctx);
-        
-        if (!this.isVisible || !this.game.questPanel) return;
-        
-        const activeQuests = this.game.questPanel.quests.active;
-        if (activeQuests.length === 0) return;
-        
-        // Assicurati che l'indice sia valido
-        if (this.currentQuestIndex >= activeQuests.length) {
-            this.currentQuestIndex = 0;
-        }
-        
-        // Altezza fissa per una quest
-        const totalHeight = this.questHeight + 80;
-        
-        // Sfondo del tracker
-        ctx.fillStyle = this.backgroundColor;
-        ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = 2;
-        this.roundRect(ctx, this.x, this.y, this.width, totalHeight, 8);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Titolo con pulsante chiudi
-        ctx.fillStyle = this.textColor;
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Quest Attive', this.x + 15, this.y + 20);
-        
-        // Pulsante chiudi (X)
-        ctx.fillStyle = '#ff4444';
-        ctx.fillRect(this.x + this.width - 25, this.y + 5, 20, 20);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('×', this.x + this.width - 15, this.y + 18);
-        
-        // Disegna la quest corrente
-        const currentQuest = activeQuests[this.currentQuestIndex];
-        const questY = this.y + 35;
-        this.drawQuest(ctx, currentQuest, questY);
-        
-        // Disegna i controlli di navigazione se ci sono più di una quest
-        if (activeQuests.length > 1) {
-            this.drawNavigationControls(ctx, activeQuests.length);
-        }
-    }
-    
-    // Disegna i controlli di navigazione
-    drawNavigationControls(ctx, totalQuests) {
-        const controlY = this.y + this.questHeight + 60;
-        const controlSpacing = 8;
-        const controlSize = 6;
-        const totalWidth = (totalQuests * controlSize) + ((totalQuests - 1) * controlSpacing);
-        const startX = this.x + (this.width - totalWidth) / 2;
-        
-        for (let i = 0; i < totalQuests; i++) {
-            const controlX = startX + (i * (controlSize + controlSpacing));
-            
-            // Colore del controllo (attivo o inattivo)
-            if (i === this.currentQuestIndex) {
-                ctx.fillStyle = '#ffffff';
-            } else {
-                ctx.fillStyle = '#666666';
-            }
-            
-            // Disegna il cerchio
-            ctx.beginPath();
-            ctx.arc(controlX + controlSize/2, controlY, controlSize/2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    // Disegna una singola quest
-    drawQuest(ctx, quest, y) {
-        // Sfondo quest
-        ctx.fillStyle = 'rgba(42, 42, 62, 0.8)';
-        ctx.strokeStyle = 'rgba(74, 74, 94, 0.6)';
-        ctx.lineWidth = 1;
-        this.roundRect(ctx, this.x + 10, y, this.width - 20, this.questHeight - 5, 4);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Titolo quest (troncato se troppo lungo)
-        ctx.fillStyle = this.textColor;
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'left';
-        const title = this.truncateText(quest.title, this.width - 40);
-        ctx.fillText(title, this.x + 15, y + 20);
-        
-        // Descrizione (troncata)
-        ctx.fillStyle = '#cccccc';
-        ctx.font = '11px Arial';
-        const description = this.truncateText(quest.description, this.width - 40);
-        ctx.fillText(description, this.x + 15, y + 40);
-        
-        // Seconda riga di descrizione se c'è spazio
-        if (quest.description.length > 47) {
-            const secondLine = quest.description.substring(47);
-            const secondLineTruncated = this.truncateText(secondLine, this.width - 40);
-            ctx.fillText(secondLineTruncated, this.x + 15, y + 55);
-        }
-        
-        // Barra di progresso
-        const progressPercent = quest.progress / quest.maxProgress;
-        const progressWidth = (this.width - 50) * progressPercent;
-        
-        // Sfondo barra progresso
-        ctx.fillStyle = this.progressBgColor;
-        ctx.fillRect(this.x + 15, y + 70, this.width - 50, 8);
-        
-        // Barra progresso
-        ctx.fillStyle = this.progressColor;
-        ctx.fillRect(this.x + 15, y + 70, progressWidth, 8);
-        
-        // Testo progresso
-        ctx.fillStyle = this.textColor;
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText(`${quest.progress}/${quest.maxProgress}`, this.x + this.width - 20, y + 78);
-    }
-    
-    // Tronca il testo se troppo lungo
-    truncateText(text, maxWidth) {
-        if (text.length <= 50) return text;
-        return text.substring(0, 47) + '...';
-    }
-    
-    // Mostra/nascondi il tracker
-    toggle() {
-        this.isVisible = !this.isVisible;
-    }
-    
-    // Mostra il tracker
-    show() {
-        this.isVisible = true;
-    }
-    
-    // Nascondi il tracker
-    hide() {
-        this.isVisible = false;
-    }
-    
-    // Controlla se il mouse è sopra l'icona
-    isMouseOverIcon(x, y) {
-        return this.icon.isMouseOver(x, y);
-    }
-    
-    // Controlla se il mouse è sopra il tracker
-    isMouseOverTracker(x, y) {
-        if (!this.isVisible) return false;
-        
-        // Altezza fissa per una quest (stessa logica del draw)
-        const totalHeight = this.questHeight + 80;
-        
-        return x >= this.x && x <= this.x + this.width && 
-               y >= this.y && y <= this.y + totalHeight;
-    }
-    
-    // Controlla se il mouse è sopra l'area di drag (titolo)
-    isMouseOverDragArea(x, y) {
-        if (!this.isVisible) return false;
-        return x >= this.x && x <= this.x + this.width - 25 && 
-               y >= this.y && y <= this.y + 40;
-    }
-    
-    // Controlla se il mouse è sopra il pulsante chiudi
-    isMouseOverCloseButton(x, y) {
-        if (!this.isVisible) return false;
-        return x >= this.x + this.width - 25 && x <= this.x + this.width - 5 &&
-               y >= this.y + 5 && y <= this.y + 25;
-    }
-    
-    // Controlla se il mouse è sopra i controlli di navigazione
-    isMouseOverNavigationControls(x, y) {
-        if (!this.isVisible || !this.game.questPanel) return -1;
-        
-        const activeQuests = this.game.questPanel.quests.active;
-        if (activeQuests.length <= 1) return -1;
-        
-        const controlY = this.y + this.questHeight + 60;
-        const controlSpacing = 8;
-        const controlSize = 6;
-        const totalWidth = (activeQuests.length * controlSize) + ((activeQuests.length - 1) * controlSpacing);
-        const startX = this.x + (this.width - totalWidth) / 2;
-        
-        // Controlla se il mouse è nell'area dei controlli
-        if (y < controlY - controlSize/2 || y > controlY + controlSize/2) return -1;
-        
-        for (let i = 0; i < activeQuests.length; i++) {
-            const controlX = startX + (i * (controlSize + controlSpacing));
-            if (x >= controlX && x <= controlX + controlSize) {
-                return i;
-            }
-        }
-        
-        return -1;
-    }
-    
-    // Gestisce click sul tracker
+    // Gestisce il click sul tracker (solo click veri, non drag)
     handleClick(x, y) {
-        // Click sull'icona "!"
-        if (this.isMouseOverIcon(x, y)) {
-            this.toggle();
+        if (!this.visible || this.isDragging) {
+            return false;
+        }
+        
+        
+        // Controlla click sul pulsante chiudi
+        if (this.isCloseButtonClicked(x, y)) {
+            this.visible = false;
             return true;
         }
         
-        // Click sul pulsante chiudi
-        if (this.isMouseOverCloseButton(x, y)) {
-            this.hide();
+        // Se è minimizzato, cliccare ovunque lo espande
+        if (this.minimized) {
+            this.minimized = false;
+            this.animating = true;
+            // Aggiorna le posizioni target per l'espansione
+            this.expandedX = (this.game.canvas.width - this.width) / 2;
+            this.expandedY = (this.game.canvas.height - this.height) / 2;
             return true;
         }
         
-        // Click sui controlli di navigazione
-        const navigationIndex = this.isMouseOverNavigationControls(x, y);
-        if (navigationIndex !== -1) {
-            this.currentQuestIndex = navigationIndex;
+        // Se non è minimizzato, cliccare sulla barra del titolo lo minimizza
+        if (this.isTitleBarClicked(x, y)) {
+            this.minimized = true;
+            this.animating = true;
+            // Le posizioni minimizzate sono già impostate nel costruttore
             return true;
         }
         
-        // Click sull'area di drag (inizia drag)
-        if (this.isMouseOverDragArea(x, y)) {
-            this.isDragging = true;
-            this.dragOffsetX = x - this.x;
-            this.dragOffsetY = y - this.y;
-            this.dragStartTime = Date.now();
-            this.mouseWasDown = true;
+        // Controlla click su una quest (rimosso - non apre più il pannello home)
+        if (this.isQuestClicked(x, y)) {
+            // Non fa nulla quando si clicca su una quest
             return true;
         }
-        
-
         
         return false;
     }
     
+    
+    // Gestisce l'inizio del drag (chiamato quando si clicca sull'icona)
+    startDrag(x, y) {
+        // Se è minimizzato o in animazione, non permettere drag
+        if (this.minimized || this.animating) {
+            console.log('🚫 DRAG BLOCCATO - minimized:', this.minimized, 'animating:', this.animating);
+            return false; // Non è un drag, ma il click verrà gestito da handleClick
+        }
+        
+        // Se non è minimizzato, controlla se è nell'area draggabile
+        if (!this.isDragAreaClicked(x, y)) {
+            console.log('🚫 DRAG BLOCCATO - non nell\'area draggabile');
+            return false;
+        }
+        
+        console.log('✅ DRAG INIZIATO - posizione:', x, y);
+        this.isDragging = true;
+        this.hasMoved = false; // Reset del flag di movimento
+        this.dragOffset.x = x - this.x;
+        this.dragOffset.y = y - this.y;
+        return true;
+    }
+    
     // Gestisce il movimento del mouse durante il drag
     handleMouseMove(x, y) {
-        if (this.isDragging) {
-            this.x = x - this.dragOffsetX;
-            this.y = y - this.dragOffsetY;
+        if (this.isDragging && !this.animating) {
+            // Calcola la nuova posizione
+            const newX = x - this.dragOffset.x;
+            const newY = y - this.dragOffset.y;
             
-            // Mantieni il tracker dentro lo schermo
-            this.x = Math.max(0, Math.min(this.x, this.game.width - this.width));
-            this.y = Math.max(0, Math.min(this.y, this.game.height - this.maxHeight));
+            // Controlla se c'è stato movimento significativo (più di 5 pixel)
+            const deltaX = Math.abs(newX - this.x);
+            const deltaY = Math.abs(newY - this.y);
+            if (deltaX > 5 || deltaY > 5) {
+                this.hasMoved = true;
+            }
             
-            this.savePosition();
+            // Mantieni il tracker dentro i bordi dello schermo con margine
+            const margin = 10;
+            this.x = Math.max(margin, Math.min(newX, this.game.canvas.width - this.currentWidth - margin));
+            this.y = Math.max(margin, Math.min(newY, this.game.canvas.height - this.currentHeight - margin));
+            
+            // Aggiorna le posizioni target per l'animazione
+            if (this.minimized) {
+                this.minimizedX = this.x;
+                this.minimizedY = this.y;
+            } else {
+                this.expandedX = this.x;
+                this.expandedY = this.y;
+                // Salva anche la posizione per il ripristino futuro
+                this.savedExpandedX = this.x;
+                this.savedExpandedY = this.y;
+            }
         }
     }
     
     // Gestisce il rilascio del mouse
     handleMouseRelease() {
         if (this.isDragging) {
+            // Se c'è stato movimento, non gestire come click
+            if (this.hasMoved) {
+                this.isDragging = false;
+                this.hasMoved = false;
+                return false; // Non è un click
+            }
+            
+            // Se non c'è stato movimento, gestisci come click
             this.isDragging = false;
-            this.mouseWasDown = false;
+            this.hasMoved = false;
+            return true; // È un click
+        }
+        return false;
+    }
+    
+    // Controlla se il click è sul pulsante chiudi
+    isCloseButtonClicked(x, y) {
+        const closeButtonSize = 20;
+        const closeX = this.x + this.currentWidth - closeButtonSize - 5;
+        const closeY = this.y + 5;
+        
+        return x >= closeX && x <= closeX + closeButtonSize && 
+               y >= closeY && y <= closeY + closeButtonSize;
+    }
+    
+    // Controlla se il click è nell'area draggabile (intero pannello quando espanso)
+    isDragAreaClicked(x, y) {
+        if (this.minimized) return false; // Non draggabile quando minimizzato
+        
+        // Intero pannello è draggabile quando espanso
+        return x >= this.x && x <= this.x + this.currentWidth && 
+               y >= this.y && y <= this.y + this.currentHeight;
+    }
+    
+    // Controlla se il click è sulla barra del titolo (per minimizzare)
+    isTitleBarClicked(x, y) {
+        if (this.minimized) return false; // Non minimizzabile quando già minimizzato
+        
+        const titleBarHeight = 40;
+        
+        return x >= this.x && x <= this.x + this.currentWidth && 
+               y >= this.y && y <= this.y + titleBarHeight;
+    }
+    
+    // Controlla se il click è su una quest
+    isQuestClicked(x, y) {
+        // Non gestire click su quest se non ci sono quest attive
+        if (!this.activeQuests || this.activeQuests.length === 0) return false;
+        
+        const questStartY = this.y + 40;
+        const questHeight = 25;
+        
+        for (let i = 0; i < this.activeQuests.length; i++) {
+            const questY = questStartY + i * questHeight;
+            if (x >= this.x + 10 && x <= this.x + this.currentWidth - 10 && 
+                y >= questY && y <= questY + questHeight) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // Controlla se il mouse è sopra il tracker
+    isMouseOverTracker(x, y) {
+        // Se è minimizzato, controlla solo l'area dell'icona in alto a sinistra
+        if (this.minimized) {
+            const isOver = x >= this.minimizedX && x <= this.minimizedX + this.minimizedWidth && 
+                           y >= this.minimizedY && y <= this.minimizedY + this.minimizedHeight;
+            return isOver;
+        }
+        
+        // Se è espanso, controlla l'area del pannello espanso
+        const isOver = x >= this.x && x <= this.x + this.currentWidth && 
+                       y >= this.y && y <= this.y + this.currentHeight;
+        
+        return isOver;
+    }
+    
+    // Disegna il tracker
+    draw(ctx) {
+        // Debug solo per i primi frame
+        if (this.game.frameCount && this.game.frameCount < 5) {
+            console.log('🐛 Debug draw chiamato:', {
+                frame: this.game.frameCount,
+                visible: this.visible,
+                minimized: this.minimized,
+                x: this.x,
+                y: this.y,
+                currentWidth: this.currentWidth,
+                currentHeight: this.currentHeight
+            });
+        }
+        
+        if (!this.visible) return;
+        
+        if (this.minimized) {
+            this.drawMinimized(ctx);
+        } else {
+            this.drawExpanded(ctx);
         }
     }
     
-    // Forza il reset del flag dragging (per sicurezza)
-    forceResetDragging() {
-        this.isDragging = false;
-        this.dragStartTime = 0;
-        this.mouseWasDown = false;
+    // Disegna il tracker minimizzato (solo icona)
+    drawMinimized(ctx) {
+        const currentWidth = this.currentWidth || this.minimizedWidth;
+        const currentHeight = this.currentHeight || this.minimizedHeight;
+        
+        // Assicurati che le dimensioni siano valide
+        if (currentWidth <= 0 || currentHeight <= 0) {
+            console.warn('QuestTracker: dimensioni non valide', { currentWidth, currentHeight });
+            return;
+        }
+        
+        // Debug solo per i primi frame
+        if (this.game.frameCount && this.game.frameCount < 5) {
+            console.log('🐛 Debug drawMinimized:', {
+                frame: this.game.frameCount,
+                currentWidth,
+                currentHeight,
+                minimizedWidth: this.minimizedWidth,
+                minimizedHeight: this.minimizedHeight,
+                x: this.x,
+                y: this.y,
+                visible: this.visible,
+                minimized: this.minimized
+            });
+        }
+        
+        // Sfondo
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
+        
+        // Bordo
+        ctx.strokeStyle = this.borderColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
+        
+        // Icona di drag (clipboard con checkmark) - centrata
+        this.drawDragIcon(ctx, this.x + (currentWidth - 24) / 2, this.y + (currentHeight - 24) / 2);
+        
+        // Indicatore del numero di quest attive (sempre visibile)
+        const questCount = this.activeQuests ? this.activeQuests.length : 0;
+        ctx.fillStyle = questCount > 0 ? '#00ff00' : '#888888';
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(questCount.toString(), this.x + currentWidth - 8, this.y + 12);
     }
     
-    // Controlla se il mouse è ancora premuto
-    isMouseStillDown() {
-        return this.mouseWasDown;
+    // Disegna il tracker espanso (completo)
+    drawExpanded(ctx) {
+        const currentWidth = this.currentWidth || this.width;
+        const currentHeight = this.currentHeight || this.height;
+        
+        // Sfondo
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
+        
+        // Bordo (più spesso se in drag)
+        ctx.strokeStyle = this.isDragging ? '#00ff00' : this.borderColor;
+        ctx.lineWidth = this.isDragging ? 3 : 2;
+        ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
+        
+        // Effetto trasparenza se in drag
+        if (this.isDragging) {
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+            ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
+        }
+        
+        // Icona di drag (clipboard con checkmark)
+        this.drawDragIcon(ctx, this.x + 8, this.y + 8);
+        
+        // Titolo (solo se abbastanza grande)
+        if (currentWidth > 100) {
+            ctx.fillStyle = this.titleColor;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Quest Attive', this.x + 40, this.y + 20);
+        }
+        
+        // Pulsante chiudi (solo se abbastanza grande)
+        if (currentWidth > 80) {
+            ctx.fillStyle = '#ff4444';
+            ctx.fillRect(this.x + currentWidth - 25, this.y + 5, 20, 20);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('×', this.x + currentWidth - 15, this.y + 18);
+            ctx.textAlign = 'left';
+        }
+        
+        // Lista quest (solo se abbastanza grande)
+        if (currentWidth > 150 && currentHeight > 80) {
+            const questStartY = this.y + 40;
+            const questHeight = 25;
+            
+            this.activeQuests.forEach((quest, index) => {
+                const questY = questStartY + index * questHeight;
+                
+                // Sfondo quest (alternato)
+                if (index % 2 === 0) {
+                    ctx.fillStyle = 'rgba(74, 144, 226, 0.1)';
+                    ctx.fillRect(this.x + 5, questY, currentWidth - 10, questHeight);
+                }
+            
+                // Nome quest
+                ctx.fillStyle = this.textColor;
+                ctx.font = '12px Arial';
+                ctx.fillText(quest.name, this.x + 10, questY + 15);
+                
+                // Progresso quest (se disponibile)
+                if (quest.conditions && quest.conditions.length > 0) {
+                    const completedConditions = quest.conditions.filter(c => c.completed >= c.quantity).length;
+                    const totalConditions = quest.conditions.length;
+                    const progress = `${completedConditions}/${totalConditions}`;
+                    
+                    ctx.fillStyle = this.progressColor;
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(progress, this.x + currentWidth - 10, questY + 15);
+                    ctx.textAlign = 'left';
+                }
+            });
+            
+            // Messaggio se nessuna quest
+            if (!this.activeQuests || this.activeQuests.length === 0) {
+                ctx.fillStyle = '#888888';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Nessuna quest attiva', this.x + currentWidth / 2, this.y + currentHeight / 2);
+                ctx.textAlign = 'left';
+            }
+        }
     }
     
-    // Utility per disegnare rettangoli arrotondati
-    roundRect(ctx, x, y, width, height, radius) {
+    // Mostra il tracker
+    show() {
+        this.visible = true;
+    }
+    
+    // Nasconde il tracker
+    hide() {
+        this.visible = false;
+    }
+    
+    // Toggle del tracker
+    toggle() {
+        this.visible = !this.visible;
+    }
+    
+    // Toggle dello stato minimizzato
+    toggleMinimized() {
+        this.minimized = !this.minimized;
+        this.animating = true;
+        
+        // Aggiorna le posizioni target
+        if (this.minimized) {
+            // Sta diventando minimizzato, salva la posizione corrente come posizione espansa
+            this.savedExpandedX = this.x;
+            this.savedExpandedY = this.y;
+            
+            // Usa le posizioni minimizzate
+            this.minimizedX = 20;
+            this.minimizedY = 20;
+        } else {
+            // Sta diventando espanso, ripristina la posizione salvata o usa il centro
+            if (this.savedExpandedX !== null && this.savedExpandedY !== null) {
+                // Ripristina la posizione salvata
+                this.expandedX = this.savedExpandedX;
+                this.expandedY = this.savedExpandedY;
+                console.log('📍 RIPRISTINATA POSIZIONE SALVATA:', this.expandedX, this.expandedY);
+            } else {
+                // Prima volta che si apre, usa il centro
+                this.expandedX = (this.game.canvas.width - this.width) / 2;
+                this.expandedY = (this.game.canvas.height - this.height) / 2;
+                console.log('📍 PRIMA APERTURA - POSIZIONE CENTRALE:', this.expandedX, this.expandedY);
+            }
+        }
+    }
+    
+    // Disegna l'icona di drag (clipboard con checkmark)
+    drawDragIcon(ctx, x, y) {
+        const iconSize = 24;
+        
+        // Sfondo dell'icona (cerchio con bordo)
+        const bgColor = this.isDragging ? 'rgba(0, 255, 0, 0.3)' : 'rgba(74, 144, 226, 0.2)';
+        ctx.fillStyle = bgColor;
         ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
+        ctx.arc(x + iconSize/2, y + iconSize/2, iconSize/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bordo dell'icona
+        ctx.strokeStyle = this.isDragging ? '#00ff00' : this.borderColor;
+        ctx.lineWidth = this.isDragging ? 3 : 2;
+        ctx.beginPath();
+        ctx.arc(x + iconSize/2, y + iconSize/2, iconSize/2, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Clipboard (rettangolo con clip)
+        ctx.fillStyle = this.textColor;
+        ctx.fillRect(x + 6, y + 4, 12, 16);
+        
+        // Clip del clipboard
+        ctx.fillRect(x + 4, y + 2, 16, 3);
+        
+        // Checkmark
+        ctx.strokeStyle = this.progressColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + 8, y + 10);
+        ctx.lineTo(x + 10, y + 12);
+        ctx.lineTo(x + 16, y + 6);
+        ctx.stroke();
+        
+        // Punti di grip per indicare che è trascinabile
+        ctx.fillStyle = this.borderColor;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 2; j++) {
+                ctx.fillRect(x + 18 + i * 2, y + 18 + j * 2, 1, 1);
+            }
+        }
     }
 }

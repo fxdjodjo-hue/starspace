@@ -100,6 +100,11 @@ export class SettingsPanel {
     handleClick(x, y) {
         if (!this.isOpen) return false;
         
+        // Riproduci suono click solo per interfaccia
+        if (this.game.audioManager) {
+            this.game.audioManager.playClickSound();
+        }
+        
         // Controlla click su pulsante chiudi (X)
         const closeButtonX = this.x + this.width - 35;
         const closeButtonY = this.y + 10;
