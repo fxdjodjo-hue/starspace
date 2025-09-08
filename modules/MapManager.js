@@ -25,31 +25,35 @@ export class MapManager {
         this.loadCurrentMapInstance();
     }
     
-    // Inizializza i portali
+    // Inizializza i portali (ora crea solo i portali per la mappa corrente)
     initPortals() {
-        // Portale da X1 a X2 (lato destro di X1)
-        this.portals.push(new Portal(15000, 5000, 'x2', 1000, 5000, this.game));
+        this.portals = []; // Pulisci i portali esistenti
+        this.createPortalsForCurrentMap();
+    }
+    
+    // Crea i portali per la mappa corrente
+    createPortalsForCurrentMap() {
+        this.portals = []; // Pulisci i portali esistenti
         
-        // Portale da X2 a X1 (lato sinistro di X2)
-        this.portals.push(new Portal(500, 5000, 'x1', 14000, 5000, this.game));
-        
-        // Portale da X2 a X3 (lato destro di X2)
-        this.portals.push(new Portal(15000, 5000, 'x3', 1000, 5000, this.game));
-        
-        // Portale da X3 a X2 (lato sinistro di X3)
-        this.portals.push(new Portal(500, 5000, 'x2', 14000, 5000, this.game));
-        
-        // Portale da X3 a X4 (lato basso di X3)
-        this.portals.push(new Portal(8000, 15000, 'x4', 8000, 1000, this.game));
-        
-        // Portale da X4 a X3 (lato alto di X4)
-        this.portals.push(new Portal(8000, 500, 'x3', 8000, 14000, this.game));
-        
-        // Portale da X4 a X5 (lato destro di X4)
-        this.portals.push(new Portal(15000, 5000, 'x5', 1000, 5000, this.game));
-        
-        // Portale da X5 a X4 (lato sinistro di X5)
-        this.portals.push(new Portal(500, 5000, 'x4', 14000, 5000, this.game));
+        if (this.currentMap === 'x1') {
+            // Solo portale per X2
+            this.portals.push(new Portal(15000, 5000, 'x2', 1000, 5000, this.game));
+        } else if (this.currentMap === 'x2') {
+            // Portali per X1 e X3
+            this.portals.push(new Portal(500, 5000, 'x1', 14000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'x3', 1000, 5000, this.game));
+        } else if (this.currentMap === 'x3') {
+            // Portali per X2 e X4
+            this.portals.push(new Portal(500, 5000, 'x2', 14000, 5000, this.game));
+            this.portals.push(new Portal(8000, 15000, 'x4', 8000, 1000, this.game));
+        } else if (this.currentMap === 'x4') {
+            // Portali per X3 e X5
+            this.portals.push(new Portal(8000, 500, 'x3', 8000, 14000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'x5', 1000, 5000, this.game));
+        } else if (this.currentMap === 'x5') {
+            // Solo portale per X4
+            this.portals.push(new Portal(500, 5000, 'x4', 14000, 5000, this.game));
+        }
     }
     
     // Carica istanza della mappa corrente
@@ -141,6 +145,9 @@ export class MapManager {
         
         // Cambia mappa
         this.currentMap = newMap;
+        
+        // Ricrea i portali per la nuova mappa
+        this.createPortalsForCurrentMap();
         
         // Trova il portale di destinazione corretto
         const targetPortal = this.portals.find(p => p.targetMap === newMap);
@@ -323,28 +330,9 @@ export class MapManager {
         console.log('✅ Rigenerazione completata');
     }
     
-    // Ottiene tutti i portali della mappa corrente
+    // Ottiene tutti i portali della mappa corrente (ora tutti i portali sono per la mappa corrente)
     getCurrentMapPortals() {
-        return this.portals.filter(portal => {
-            // Filtra i portali in base alla mappa corrente
-            if (this.currentMap === 'x1') {
-                // Nella mappa X1, mostra solo il portale che porta alla X2
-                return portal.targetMap === 'x2';
-            } else if (this.currentMap === 'x2') {
-                // Nella mappa X2, mostra i portali per X1 e X3
-                return portal.targetMap === 'x1' || portal.targetMap === 'x3';
-            } else if (this.currentMap === 'x3') {
-                // Nella mappa X3, mostra i portali per X2 e X4
-                return portal.targetMap === 'x2' || portal.targetMap === 'x4';
-            } else if (this.currentMap === 'x4') {
-                // Nella mappa X4, mostra i portali per X3 e X5
-                return portal.targetMap === 'x3' || portal.targetMap === 'x5';
-            } else if (this.currentMap === 'x5') {
-                // Nella mappa X5, mostra solo il portale che porta alla X4
-                return portal.targetMap === 'x4';
-            }
-            return false;
-        });
+        return this.portals;
     }
     
     // Controlla se il giocatore è vicino a un portale
