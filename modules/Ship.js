@@ -49,6 +49,8 @@ export class Ship {
         this.hp = this.maxHP;
         this.isDead = false; // Traccia se la nave è morta
         this.active = true; // Per compatibilità con AI system
+        this.attackRange = 400; // Range di attacco in pixel
+        this.showAttackRange = false; // Toggle per mostrare/nascondere il range (disattivato di default)
         
         // Sistema scudo
         this.maxShield = 30; // Valore base
@@ -76,18 +78,20 @@ export class Ship {
         this.selectedLaser = 'x1'; // x1, x2, x3
         this.selectedMissile = 'r1'; // r1, r2, r3
         
-        // Sistema cannoni equipaggiati
-        this.equippedCannons = {
-            lf1: 0, // Numero di cannoni LF1 equipaggiati
-            lf2: 0, // Numero di cannoni LF2 equipaggiati
-            lf3: 0  // Numero di cannoni LF3 equipaggiati
+        // Sistema laser equipaggiati
+        this.equippedLasers = {
+            lf1: 0, // Numero di laser LF1 equipaggiati
+            lf2: 0, // Numero di laser LF2 equipaggiati
+            lf3: 0, // Numero di laser LF3 equipaggiati
+            lf4: 0  // Numero di laser LF4 equipaggiati
         };
-        
-        // Danno bonus per cannone
-        this.cannonDamage = {
-            lf1: 60,
-            lf2: 120,
-            lf3: 200
+
+        // Danno base per laser
+        this.laserDamage = {
+            lf1: 100,
+            lf2: 200,
+            lf3: 300,
+            lf4: 400
         };
         
         // Sistema munizioni
@@ -118,11 +122,11 @@ export class Ship {
             }
         };
         
-        // Configurazioni laser
-        this.laserConfigs = {
-            x1: { damage: 20, fireRate: 60, speed: 8, color: '#ff0000' },
-            x2: { damage: 35, fireRate: 45, speed: 10, color: '#ff6600' },
-            x3: { damage: 50, fireRate: 30, speed: 12, color: '#ffaa00' }
+        // Configurazione base laser
+        this.laserConfig = {
+            fireRate: 120,  // Fire rate fisso per tutti i laser (0.5 colpi al secondo)
+            speed: 8,     // Velocità proiettile fissa
+            color: '#ff0000'
         };
         
         // Configurazioni missili
@@ -310,6 +314,27 @@ export class Ship {
     }
     
     draw(ctx, camera) {
+        // Disegna il range di attacco se attivo
+        if (this.showAttackRange) {
+            ctx.save();
+            ctx.strokeStyle = this.isInCombat ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 255, 0, 0.2)';
+            ctx.fillStyle = this.isInCombat ? 'rgba(255, 0, 0, 0.05)' : 'rgba(0, 255, 0, 0.05)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.x - camera.x, this.y - camera.y, this.attackRange, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Debug info
+            console.log('Drawing attack range:', {
+                x: this.x - camera.x,
+                y: this.y - camera.y,
+                range: this.attackRange,
+                isInCombat: this.isInCombat
+            });
+            ctx.restore();
+        }
+
         ctx.save();
         // Applica la camera per centrare la nave sullo schermo
         const floatingY = Math.sin(this.floatingOffset) * this.floatingAmplitude;
@@ -393,13 +418,38 @@ export class Ship {
     
     startCombat() {
         if (this.selectedTarget && this.selectedTarget.active) {
+            // Controlla se ha laser equipaggiati prima di iniziare il combattimento
+            const totalLasers = this.getTotalEquippedLasers();
+            if (totalLasers === 0) {
+                // Notifica il player che non può combattere senza laser
+                if (this.game && this.game.notifications) {
+                    this.game.notifications.add("❌ Impossibile combattere: nessun laser equipaggiato!", 600, "warning");
+                }
+                return false;
+            }
+            
             this.isInCombat = true;
             this.combatTimer = 0;
+            return true;
         }
+        return false;
     }
     
     toggleCombat() {
         if (this.selectedTarget && this.selectedTarget.active) {
+            // Se sta cercando di attivare il combattimento
+            if (!this.isInCombat) {
+                // Controlla se ha laser equipaggiati
+                const totalLasers = this.getTotalEquippedLasers();
+                if (totalLasers === 0) {
+                    // Notifica il player che non può combattere senza laser
+                    if (this.game && this.game.notifications) {
+                        this.game.notifications.add("❌ Impossibile combattere: nessun laser equipaggiato!", 600, "warning");
+                    }
+                    return null;
+                }
+            }
+            
             this.isInCombat = !this.isInCombat;
             if (this.isInCombat) {
                 this.combatTimer = 0;
@@ -501,20 +551,60 @@ export class Ship {
         // Controlli di sicurezza extra
         if (!this.selectedTarget || !this.selectedTarget.active || !this.selectedTarget.x || !this.selectedTarget.y) return;
         
+        // Controlla se il target è nel range di attacco
+        const dx = this.selectedTarget.x - this.x;
+        const dy = this.selectedTarget.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > this.attackRange) return;
+        
+        // Controlla se ha laser equipaggiati
+        const totalLasers = this.getTotalEquippedLasers();
+        console.log('🔍 Controllo laser:', { 
+            totalLasers, 
+            equippedLasers: this.equippedLasers,
+            selectedLaser: this.selectedLaser,
+            ammunition: this.ammunition,
+            projectileDamage: this.projectileDamage
+        });
+        
+        if (totalLasers === 0) {
+            console.log('❌ Nessun laser equipaggiato!');
+            // Notifica il player che non ha laser equipaggiati
+            if (!this.game) {
+                console.log('❌ this.game non inizializzato!');
+            } else if (!this.game.notifications) {
+                console.log('❌ this.game.notifications non inizializzato!');
+            } else {
+                this.game.notifications.add("❌ Nessun laser equipaggiato!", 600, "warning");
+            }
+            return;
+        }
+        
         // Controlla se ha munizioni per il laser selezionato
         if (!this.hasAmmunition('laser', this.selectedLaser)) {
-            return; // Non può sparare senza munizioni
+            // Notifica il player che non ha munizioni
+            if (this.game && this.game.notifications) {
+                this.game.notifications.add(`❌ Munizioni ${this.selectedLaser.toUpperCase()} esaurite!`, "warning");
+            }
+            return;
         }
         
         // Calcola la direzione della nave per il lancio
         const shipDirection = Math.atan2(this.targetY - this.y, this.targetX - this.x);
         
-        // Offset laterali per i due proiettili - DISTANZA MAGGIORE
-        const lateralOffset = 35; // Distanza laterale dal centro della nave (più spettacolare)
+        // Offset laterali per i due proiettili
+        const lateralOffset = 35; // Distanza laterale dal centro della nave
         
         // Primo proiettile (sinistra)
         const leftOffsetX = this.x + Math.cos(shipDirection - Math.PI/2) * lateralOffset;
         const leftOffsetY = this.y + Math.sin(shipDirection - Math.PI/2) * lateralOffset;
+        
+        console.log('🚀 Creazione Proiettile 1:', {
+            damage: this.projectileDamage / 2,
+            totalShipDamage: this.projectileDamage,
+            position: { x: leftOffsetX, y: leftOffsetY },
+            target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
+        });
         
         const projectile1 = new Projectile(
             leftOffsetX, 
@@ -522,12 +612,19 @@ export class Ship {
             this.selectedTarget.x, 
             this.selectedTarget.y,
             this.projectileSpeed,
-            this.projectileDamage / 2 // Danno diviso per due proiettili
+            this.projectileDamage // Danno totale sul primo proiettile
         );
         
         // Secondo proiettile (destra)
         const rightOffsetX = this.x + Math.cos(shipDirection + Math.PI/2) * lateralOffset;
         const rightOffsetY = this.y + Math.sin(shipDirection + Math.PI/2) * lateralOffset;
+        
+        console.log('🚀 Creazione Proiettile 2:', {
+            damage: this.projectileDamage / 2,
+            totalShipDamage: this.projectileDamage,
+            position: { x: rightOffsetX, y: rightOffsetY },
+            target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
+        });
         
         const projectile2 = new Projectile(
             rightOffsetX, 
@@ -535,14 +632,14 @@ export class Ship {
             this.selectedTarget.x, 
             this.selectedTarget.y,
             this.projectileSpeed,
-            this.projectileDamage / 2 // Danno diviso per due proiettili
+            0 // Proiettile visivo senza danno
         );
         
         this.projectiles.push(projectile1);
         this.projectiles.push(projectile2);
         
         // Consuma munizioni per il laser selezionato
-        this.consumeAmmunition('laser', this.selectedLaser, 2); // 2 proiettili = 2 munizioni
+        this.consumeAmmunition('laser', this.selectedLaser, 2); // 2 munizioni per i due proiettili
         
         // Riproduci suono laser se l'audio manager è disponibile
         if (window.gameInstance && window.gameInstance.audioManager) {
@@ -567,6 +664,12 @@ export class Ship {
     fireMissile() {
         // Controlli di sicurezza extra
         if (!this.selectedTarget || !this.selectedTarget.active || !this.selectedTarget.x || !this.selectedTarget.y) return;
+        
+        // Controlla se il target è nel range di attacco
+        const dx = this.selectedTarget.x - this.x;
+        const dy = this.selectedTarget.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > this.attackRange) return;
         
         // Controlla se ha munizioni per il missile selezionato
         if (!this.hasAmmunition('missile', this.selectedMissile)) {
@@ -637,61 +740,82 @@ export class Ship {
         let combatResult = null;
         
         // Controlla collisioni proiettili
+        let totalDamageThisFrame = 0;
+        let hitProjectiles = [];
+
+        // Prima raccogliamo tutti i proiettili che colpiscono
         this.projectiles.forEach(projectile => {
             if (projectile.checkCollision(this.selectedTarget)) {
-
-                // Proiettile colpisce il target
-                this.selectedTarget.takeDamage(this.projectileDamage);
+                console.log('💥 Collisione Proiettile:', {
+                    proiettileDamage: projectile.damage,
+                    damageFrameCorrente: totalDamageThisFrame,
+                    position: { x: projectile.x, y: projectile.y },
+                    target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
+                });
                 
-                // Aggiorna il tempo dell'ultimo combattimento (stiamo infliggendo danno)
-                this.lastCombatTime = Date.now();
-                
-                // Processa il danno per il Leech
-                if (window.gameInstance && window.gameInstance.leech) {
-                    window.gameInstance.leech.processDamageDealt(this.projectileDamage, this, this.selectedTarget.x, this.selectedTarget.y);
-                }
-
-                projectile.deactivate();
-                
-                // Se il target è morto, crea esplosione e termina il combattimento
-                if (!this.selectedTarget.active) {
-                    // Crea effetto esplosione
-                    if (explosionManager) {
-                        explosionManager.createExplosion(this.selectedTarget.x, this.selectedTarget.y, 'normal');
-                    }
-                    
-                    // Riproduci suono esplosione
-                    if (window.gameInstance && window.gameInstance.audioManager) {
-                        window.gameInstance.audioManager.playExplosionSound();
-                    }
-                    
-
-                    // Salva il tipo dell'enemy PRIMA di cancellarlo
-                    const enemyType = this.selectedTarget.type;
-                    const enemyConfig = this.selectedTarget.config;
-                    console.log(`🔍 Enemy distrutto - Tipo: ${enemyType}, Config:`, enemyConfig);
-                    
-                    // I reward verranno processati in game.js per controllare l'ordine delle notifiche
-                    
-                    // Deseleziona il target morto
-                    if (this.selectedTarget.deselect) {
-                        this.selectedTarget.deselect();
-                    }
-                    
-                    this.isInCombat = false;
-                    this.selectedTarget = null;
-                    
-                    // Salva il risultato per restituirlo alla fine
-                    combatResult = {
-                        enemyDestroyed: true,
-                        enemyType: enemyType,
-                        enemyName: enemyConfig ? enemyConfig.name : enemyType, // Nome specifico del nemico
-                        enemyConfig: enemyConfig // Passa la configurazione per i reward
-                    };
-
-                }
+                totalDamageThisFrame += projectile.damage;
+                hitProjectiles.push(projectile);
             }
         });
+
+        // Se abbiamo colpito con almeno un proiettile
+        if (totalDamageThisFrame > 0) {
+            console.log('🎯 Applicazione Danno Totale:', {
+                dannoTotale: totalDamageThisFrame,
+                proiettiliColpiti: hitProjectiles.length,
+                targetHP: this.selectedTarget.hp
+            });
+            
+            // Applica il danno una volta sola
+            this.selectedTarget.takeDamage(totalDamageThisFrame);
+            
+            // Aggiorna il tempo dell'ultimo combattimento
+            this.lastCombatTime = Date.now();
+            
+            // Processa il danno per il Leech
+            if (window.gameInstance && window.gameInstance.leech) {
+                window.gameInstance.leech.processDamageDealt(totalDamageThisFrame, this, this.selectedTarget.x, this.selectedTarget.y);
+            }
+
+            // Disattiva tutti i proiettili che hanno colpito
+            hitProjectiles.forEach(projectile => projectile.deactivate());
+                
+            // Se il target è morto, crea esplosione e termina il combattimento
+            if (!this.selectedTarget.active) {
+                // Crea effetto esplosione
+                if (explosionManager) {
+                    explosionManager.createExplosion(this.selectedTarget.x, this.selectedTarget.y, 'normal');
+                }
+                
+                // Riproduci suono esplosione
+                if (window.gameInstance && window.gameInstance.audioManager) {
+                    window.gameInstance.audioManager.playExplosionSound();
+                }
+                
+                // Salva il tipo dell'enemy PRIMA di cancellarlo
+                const enemyType = this.selectedTarget.type;
+                const enemyConfig = this.selectedTarget.config;
+                console.log(`🔍 Enemy distrutto - Tipo: ${enemyType}, Config:`, enemyConfig);
+                
+                // I reward verranno processati in game.js per controllare l'ordine delle notifiche
+                
+                // Deseleziona il target morto
+                if (this.selectedTarget.deselect) {
+                    this.selectedTarget.deselect();
+                }
+                
+                this.isInCombat = false;
+                this.selectedTarget = null;
+                
+                // Salva il risultato per restituirlo alla fine
+                combatResult = {
+                    enemyDestroyed: true,
+                    enemyType: enemyType,
+                    enemyName: enemyConfig ? enemyConfig.name : enemyType, // Nome specifico del nemico
+                    enemyConfig: enemyConfig // Passa la configurazione per i reward
+                };
+            }
+        }
         
         // Controlla collisioni missili - SEMPLICE
         for (let i = this.missiles.length - 1; i >= 0; i--) {
@@ -967,24 +1091,46 @@ export class Ship {
     }
     
     // Metodi per gestire i cannoni equipaggiati
-    equipCannon(cannonType, amount = 1) {
-        if (this.equippedCannons.hasOwnProperty(cannonType)) {
-            this.equippedCannons[cannonType] += amount;
+    equipLaser(laserType, amount = 1) {
+        if (this.equippedLasers.hasOwnProperty(laserType)) {
+            this.equippedLasers[laserType] += amount;
+            this.applyWeaponConfigs(); // Aggiorna il danno quando equipaggi un laser
             return true;
         }
         return false;
     }
-    
-    getEquippedCannons(cannonType) {
-        return this.equippedCannons[cannonType] || 0;
+
+    unequipLaser(laserType, amount = 1) {
+        if (this.equippedLasers.hasOwnProperty(laserType) && this.equippedLasers[laserType] >= amount) {
+            this.equippedLasers[laserType] -= amount;
+            this.applyWeaponConfigs(); // Aggiorna il danno quando rimuovi un laser
+            return true;
+        }
+        return false;
+    }
+
+    getEquippedLasers(laserType) {
+        return this.equippedLasers[laserType] || 0;
+    }
+
+    getTotalEquippedLasers() {
+        const total = Object.values(this.equippedLasers).reduce((total, count) => total + count, 0);
+        console.log('📊 getTotalEquippedLasers:', {
+            equippedLasers: this.equippedLasers,
+            total: total
+        });
+        return total;
     }
     
-    getTotalCannonDamage() {
+    getTotalLaserDamage() {
         let totalDamage = 0;
-        for (const [cannonType, count] of Object.entries(this.equippedCannons)) {
-            totalDamage += count * this.cannonDamage[cannonType];
+        for (const [laserType, count] of Object.entries(this.equippedLasers)) {
+            totalDamage += count * this.laserDamage[laserType];
         }
-        return totalDamage;
+        
+        // Moltiplica per il tipo di munizioni selezionato
+        const multiplier = parseInt(this.selectedLaser.slice(1)); // x1 -> 1, x2 -> 2, x3 -> 3
+        return totalDamage * multiplier;
     }
     
     setResource(type, amount) {
@@ -1080,8 +1226,8 @@ export class Ship {
     // Ottieni valori aggiornati dalle statistiche
     getCurrentDamage() {
         const baseDamage = this.upgradeManager.getValue('damage');
-        const cannonBonus = this.getTotalCannonDamage();
-        return baseDamage + cannonBonus;
+        const laserDamage = this.getTotalLaserDamage();
+        return baseDamage + laserDamage;
     }
     
     getCurrentFireRate() {
@@ -1130,6 +1276,11 @@ export class Ship {
                     asteroid.interruptMining('danno');
                 }
             }
+        }
+        
+        // Mostra il numero di danno
+        if (window.gameInstance && window.gameInstance.damageNumbers) {
+            window.gameInstance.damageNumbers.addNumber(this.x, this.y - 20, damage, 'incoming');
         }
         
         if (this.shield > 0) {
@@ -1236,7 +1387,8 @@ export class Ship {
     
     // Sistema di selezione armi
     selectLaser(laserType) {
-        if (this.laserConfigs[laserType]) {
+        // Verifica se il tipo di munizioni esiste
+        if (this.ammunition.laser.hasOwnProperty(laserType)) {
             this.selectedLaser = laserType;
             this.applyWeaponConfigs();
             return true;
@@ -1254,25 +1406,28 @@ export class Ship {
     }
     
     applyWeaponConfigs() {
-        // Applica configurazione laser selezionata
-        const laserConfig = this.laserConfigs[this.selectedLaser];
-        if (laserConfig) {
-            this.projectileDamage = laserConfig.damage + this.getTotalCannonDamage();
-            this.fireRate = laserConfig.fireRate;
-            this.projectileSpeed = laserConfig.speed;
-        }
+        // Applica configurazione laser base + danno dei laser equipaggiati
+        this.projectileDamage = this.getTotalLaserDamage();  // Danno totale dei laser * moltiplicatore munizioni
+        this.fireRate = this.laserConfig.fireRate;           // Fire rate fisso
+        this.projectileSpeed = this.laserConfig.speed;       // Velocità fissa
         
         // Applica configurazione missile selezionata
         const missileConfig = this.missileConfigs[this.selectedMissile];
         if (missileConfig) {
-            this.missileDamage = missileConfig.damage + this.getTotalCannonDamage();
+            this.missileDamage = missileConfig.damage;       // I missili hanno il loro danno fisso
             this.missileFireRate = missileConfig.fireRate;
             this.missileSpeed = missileConfig.speed;
         }
     }
     
     getSelectedLaserInfo() {
-        return this.laserConfigs[this.selectedLaser];
+        return {
+            type: this.selectedLaser,
+            ammunition: this.ammunition.laser[this.selectedLaser],
+            damage: this.getTotalLaserDamage(),
+            fireRate: this.laserConfig.fireRate,
+            speed: this.laserConfig.speed
+        };
     }
     
     getSelectedMissileInfo() {

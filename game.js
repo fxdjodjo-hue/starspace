@@ -731,6 +731,12 @@ class Game {
             this.ship.addResource('honor', 500);
         }
         
+        // Comando per mostrare/nascondere il range di attacco (tasto R)
+        if (this.input.isKeyJustPressed('KeyR')) {
+            this.ship.showAttackRange = !this.ship.showAttackRange;
+            this.notifications.add(this.ship.showAttackRange ? 'Range di attacco: VISIBILE' : 'Range di attacco: NASCOSTO', 'info');
+        }
+        
         // Comando per aggiungere esperienza (tasto X)
         if (this.input.isKeyJustPressed('KeyX')) {
             this.ship.addResource('experience', 1000);
