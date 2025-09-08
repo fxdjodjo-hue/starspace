@@ -28,6 +28,16 @@ export class Ship {
         this.bonusBoxesCollected = 0;
         this.playerName = 'TestPlayer'; // Nome del giocatore
         
+        // Sistema clan
+        this.clan = {
+            id: null,
+            name: '',
+            tag: '',
+            role: 'none', // 'none', 'member', 'officer', 'leader'
+            joinedAt: null,
+            isInClan: false
+        };
+        
         // Sistema di fluttuazione
         this.floatingOffset = 0;
         this.floatingSpeed = 0.02;
@@ -1283,6 +1293,87 @@ export class Ship {
             return true;
         }
         return false;
+    }
+    
+    // Metodi per il sistema clan
+    createClan(clanName, clanTag) {
+        if (this.clan.isInClan) {
+            return { success: false, message: 'Sei già in un clan' };
+        }
+        
+        if (!clanName || !clanTag) {
+            return { success: false, message: 'Nome e tag del clan sono obbligatori' };
+        }
+        
+        if (clanName.length < 3 || clanName.length > 20) {
+            return { success: false, message: 'Nome clan deve essere tra 3 e 20 caratteri' };
+        }
+        
+        if (clanTag.length < 2 || clanTag.length > 5) {
+            return { success: false, message: 'Tag clan deve essere tra 2 e 5 caratteri' };
+        }
+        
+        // Crea il clan
+        this.clan = {
+            id: `clan_${Date.now()}`,
+            name: clanName,
+            tag: clanTag.toUpperCase(),
+            role: 'leader',
+            joinedAt: Date.now(),
+            isInClan: true
+        };
+        
+        return { success: true, message: `Clan "${clanName}" creato con successo!` };
+    }
+    
+    joinClan(clanId, clanName, clanTag) {
+        if (this.clan.isInClan) {
+            return { success: false, message: 'Sei già in un clan' };
+        }
+        
+        this.clan = {
+            id: clanId,
+            name: clanName,
+            tag: clanTag,
+            role: 'member',
+            joinedAt: Date.now(),
+            isInClan: true
+        };
+        
+        return { success: true, message: `Entrato nel clan "${clanName}"!` };
+    }
+    
+    leaveClan() {
+        if (!this.clan.isInClan) {
+            return { success: false, message: 'Non sei in nessun clan' };
+        }
+        
+        const clanName = this.clan.name;
+        this.clan = {
+            id: null,
+            name: '',
+            tag: '',
+            role: 'none',
+            joinedAt: null,
+            isInClan: false
+        };
+        
+        return { success: true, message: `Hai lasciato il clan "${clanName}"` };
+    }
+    
+    getClanInfo() {
+        if (!this.clan.isInClan) {
+            return null;
+        }
+        
+        return {
+            id: this.clan.id,
+            name: this.clan.name,
+            tag: this.clan.tag,
+            role: this.clan.role,
+            joinedAt: this.clan.joinedAt,
+            memberSince: new Date(this.clan.joinedAt).toLocaleDateString()
+        };
     }
     
     get level() {

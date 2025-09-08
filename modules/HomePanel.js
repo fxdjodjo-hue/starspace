@@ -29,6 +29,7 @@ export class HomePanel extends UIComponent {
             { id: 'info', name: 'Info', icon: '📊', available: true },
             { id: 'shop', name: 'Negozio', icon: '🛒', available: true },
             { id: 'quest', name: 'Quest', icon: '📋', available: true },
+            { id: 'clan', name: 'Clan', icon: '🏰', available: true },
             { id: 'stats', name: 'Statistiche', icon: '📈', available: true },
             { id: 'map', name: 'Mappa spaziale', icon: '🗺️', available: true },
             { id: 'settings', name: 'Impostazioni', icon: '⚙️', available: true },
@@ -534,6 +535,14 @@ export class HomePanel extends UIComponent {
             }
         }
         
+        // Se siamo nel clan, gestisci i click del clan
+        if (this.selectedCategory === 'clan') {
+            const handled = this.handleClanClick(x, y, panelX, panelY);
+            if (handled) {
+                return true;
+            }
+        }
+        
         // Se siamo nel pannello home e non è stato gestito, restituisci true
         // per evitare che il click venga gestito da altri elementi
         return true;
@@ -753,6 +762,9 @@ export class HomePanel extends UIComponent {
                 break;
             case 'quest':
                 this.drawQuestContent(ctx, contentX, contentY);
+                break;
+            case 'clan':
+                this.drawClanContent(ctx, contentX, contentY);
                 break;
             case 'stats':
                 this.drawComingSoon(ctx, contentX, contentY, 'Statistiche');
@@ -2388,6 +2400,272 @@ export class HomePanel extends UIComponent {
             ctx.textAlign = 'center';
             ctx.fillText(canBuy ? 'ACQUISTA' : 'NON DISP.', buyButtonX + 40, buyButtonY + 16);
             ctx.textAlign = 'left';
+    }
+    
+    // Metodo per disegnare il contenuto della categoria Clan
+    drawClanContent(ctx, x, y) {
+        const centerX = x + this.contentWidth / 2;
+        const startY = y + 30;
+        
+        // Titolo
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏰 GESTIONE CLAN', centerX, startY);
+        
+        // Informazioni clan attuale
+        const clanInfo = this.game.ship.getClanInfo();
+        
+        if (clanInfo) {
+            // Il giocatore è in un clan
+            this.drawClanInfo(ctx, x, y, clanInfo);
+        } else {
+            // Il giocatore non è in un clan
+            this.drawNoClanInfo(ctx, x, y);
+        }
+    }
+    
+    // Disegna le informazioni del clan quando il giocatore è in un clan
+    drawClanInfo(ctx, x, y, clanInfo) {
+        const centerX = x + this.contentWidth / 2;
+        const startY = y + 80;
+        
+        // Box informazioni clan
+        const infoBoxX = x + 50;
+        const infoBoxY = startY;
+        const infoBoxWidth = this.contentWidth - 100;
+        const infoBoxHeight = 200;
+        
+        // Sfondo box
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(infoBoxX, infoBoxY, infoBoxWidth, infoBoxHeight);
+        ctx.strokeStyle = '#4a90e2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(infoBoxX, infoBoxY, infoBoxWidth, infoBoxHeight);
+        
+        // Titolo clan
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`🏰 ${clanInfo.name} [${clanInfo.tag}]`, infoBoxX + 20, infoBoxY + 30);
+        
+        // Ruolo
+        ctx.fillStyle = '#4a90e2';
+        ctx.font = '16px Arial';
+        const roleText = this.getRoleDisplayName(clanInfo.role);
+        ctx.fillText(`Ruolo: ${roleText}`, infoBoxX + 20, infoBoxY + 60);
+        
+        // Membro dal
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '14px Arial';
+        ctx.fillText(`Membro dal: ${clanInfo.memberSince}`, infoBoxX + 20, infoBoxY + 85);
+        
+        // Pulsanti azione
+        const buttonY = infoBoxY + 120;
+        const buttonWidth = 120;
+        const buttonHeight = 35;
+        const buttonSpacing = 20;
+        
+        // Pulsante "Lascia Clan"
+        const leaveButtonX = infoBoxX + 20;
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(leaveButtonX, buttonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('LASCIA CLAN', leaveButtonX + buttonWidth/2, buttonY + 22);
+        
+        // Pulsante "Gestisci Clan" (solo per leader)
+        if (clanInfo.role === 'leader') {
+            const manageButtonX = leaveButtonX + buttonWidth + buttonSpacing;
+            ctx.fillStyle = '#4a90e2';
+            ctx.fillRect(manageButtonX, buttonY, buttonWidth, buttonHeight);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('GESTISCI', manageButtonX + buttonWidth/2, buttonY + 22);
+        }
+        
+        ctx.textAlign = 'left';
+    }
+    
+    // Disegna le informazioni quando il giocatore non è in un clan
+    drawNoClanInfo(ctx, x, y) {
+        const centerX = x + this.contentWidth / 2;
+        const startY = y + 80;
+        
+        // Messaggio principale
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Non sei in nessun clan', centerX, startY);
+        
+        // Box opzioni
+        const optionsBoxX = x + 50;
+        const optionsBoxY = startY + 50;
+        const optionsBoxWidth = this.contentWidth - 100;
+        const optionsBoxHeight = 200;
+        
+        // Sfondo box
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(optionsBoxX, optionsBoxY, optionsBoxWidth, optionsBoxHeight);
+        ctx.strokeStyle = '#4a90e2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(optionsBoxX, optionsBoxY, optionsBoxWidth, optionsBoxHeight);
+        
+        // Pulsanti
+        const buttonY = optionsBoxY + 50;
+        const buttonWidth = 150;
+        const buttonHeight = 40;
+        const buttonSpacing = 30;
+        
+        // Pulsante "Crea Clan"
+        const createButtonX = optionsBoxX + 50;
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(createButtonX, buttonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏰 CREA CLAN', createButtonX + buttonWidth/2, buttonY + 25);
+        
+        // Pulsante "Cerca Clan"
+        const searchButtonX = createButtonX + buttonWidth + buttonSpacing;
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(searchButtonX, buttonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('🔍 CERCA CLAN', searchButtonX + buttonWidth/2, buttonY + 25);
+        
+        // Pulsante "Entra per Invito"
+        const inviteButtonX = createButtonX;
+        const inviteButtonY = buttonY + buttonHeight + 20;
+        ctx.fillStyle = '#9b59b6';
+        ctx.fillRect(inviteButtonX, inviteButtonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('📨 INVITO', inviteButtonX + buttonWidth/2, inviteButtonY + 25);
+        
+        ctx.textAlign = 'left';
+    }
+    
+    // Converte il ruolo in nome visualizzato
+    getRoleDisplayName(role) {
+        const roleNames = {
+            'leader': 'Leader',
+            'officer': 'Ufficiale',
+            'member': 'Membro',
+            'none': 'Nessuno'
+        };
+        return roleNames[role] || 'Sconosciuto';
+    }
+    
+    // Gestisce i click nella categoria clan
+    handleClanClick(x, y, panelX, panelY) {
+        const contentX = panelX + this.navWidth;
+        const contentY = panelY + 60;
+        
+        const clanInfo = this.game.ship.getClanInfo();
+        
+        if (clanInfo) {
+            // Il giocatore è in un clan - gestisci pulsanti
+            return this.handleClanMemberClick(x, y, contentX, contentY, clanInfo);
+        } else {
+            // Il giocatore non è in un clan - gestisci opzioni
+            return this.handleNoClanClick(x, y, contentX, contentY);
+        }
+    }
+    
+    // Gestisce i click quando il giocatore è in un clan
+    handleClanMemberClick(x, y, contentX, contentY, clanInfo) {
+        const startY = contentY + 80;
+        const infoBoxX = contentX + 50;
+        const infoBoxY = startY;
+        const buttonY = infoBoxY + 120;
+        const buttonWidth = 120;
+        const buttonHeight = 35;
+        const buttonSpacing = 20;
+        
+        // Pulsante "Lascia Clan"
+        const leaveButtonX = infoBoxX + 20;
+        if (x >= leaveButtonX && x <= leaveButtonX + buttonWidth && 
+            y >= buttonY && y <= buttonY + buttonHeight) {
+            
+            const result = this.game.ship.leaveClan();
+            if (this.game.notifications) {
+                this.game.notifications.add(result.message, 3000, result.success ? 'success' : 'error');
+            }
+            return true;
+        }
+        
+        // Pulsante "Gestisci Clan" (solo per leader)
+        if (clanInfo.role === 'leader') {
+            const manageButtonX = leaveButtonX + buttonWidth + buttonSpacing;
+            if (x >= manageButtonX && x <= manageButtonX + buttonWidth && 
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                
+                if (this.game.notifications) {
+                    this.game.notifications.add('Funzione di gestione clan in arrivo!', 3000, 'info');
+                }
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // Gestisce i click quando il giocatore non è in un clan
+    handleNoClanClick(x, y, contentX, contentY) {
+        const startY = contentY + 80;
+        const optionsBoxX = contentX + 50;
+        const optionsBoxY = startY + 50;
+        const buttonY = optionsBoxY + 50;
+        const buttonWidth = 150;
+        const buttonHeight = 40;
+        const buttonSpacing = 30;
+        
+        // Pulsante "Crea Clan"
+        const createButtonX = optionsBoxX + 50;
+        if (x >= createButtonX && x <= createButtonX + buttonWidth && 
+            y >= buttonY && y <= buttonY + buttonHeight) {
+            
+            this.showCreateClanDialog();
+            return true;
+        }
+        
+        // Pulsante "Cerca Clan"
+        const searchButtonX = createButtonX + buttonWidth + buttonSpacing;
+        if (x >= searchButtonX && x <= searchButtonX + buttonWidth && 
+            y >= buttonY && y <= buttonY + buttonHeight) {
+            
+            if (this.game.notifications) {
+                this.game.notifications.add('Funzione di ricerca clan in arrivo!', 3000, 'info');
+            }
+            return true;
+        }
+        
+        // Pulsante "Entra per Invito"
+        const inviteButtonX = createButtonX;
+        const inviteButtonY = buttonY + buttonHeight + 20;
+        if (x >= inviteButtonX && x <= inviteButtonX + buttonWidth && 
+            y >= inviteButtonY && y <= inviteButtonY + buttonHeight) {
+            
+            if (this.game.notifications) {
+                this.game.notifications.add('Funzione di invito clan in arrivo!', 3000, 'info');
+            }
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Mostra dialog per creare un clan
+    showCreateClanDialog() {
+        const clanName = prompt('Inserisci il nome del clan (3-20 caratteri):');
+        if (!clanName) return;
+        
+        const clanTag = prompt('Inserisci il tag del clan (2-5 caratteri):');
+        if (!clanTag) return;
+        
+        const result = this.game.ship.createClan(clanName, clanTag);
+        if (this.game.notifications) {
+            this.game.notifications.add(result.message, 3000, result.success ? 'success' : 'error');
+        }
     }
     
 }

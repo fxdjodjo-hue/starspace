@@ -1469,8 +1469,16 @@ class Game {
         // Offset per posizionare il nickname sotto la nave
         const offsetY = 40;
         
-        // Testo del nickname senza sfondo
-        const nickname = `${currentRank.symbol} ${this.playerProfile.getNickname()}`;
+        // Costruisci il testo del nickname con clan tag
+        let nickname = `${currentRank.symbol} `;
+        
+        // Aggiungi clan tag se il giocatore è in un clan
+        if (this.ship.clan.isInClan && this.ship.clan.tag) {
+            nickname += `[${this.ship.clan.tag}] `;
+        }
+        
+        nickname += this.playerProfile.getNickname();
+        
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 14px Arial';
         this.ctx.textAlign = 'center';
