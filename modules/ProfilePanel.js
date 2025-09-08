@@ -282,7 +282,7 @@ export class ProfilePanel {
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Player Profile', this.x + 10, this.y + 15);
+            ctx.fillText('Ship', this.x + 10, this.y + 15);
         }
         
         // Contenuto del pannello (solo se l'animazione è abbastanza avanzata)

@@ -17,10 +17,18 @@ export class QuestTracker {
         this.currentHeight = this.minimizedHeight;
         
         // Posizione e dimensioni
-        this.width = 300;
-        this.height = 200;
+        this.width = 350;
+        this.height = 250;
         this.minimizedWidth = 50; // Larghezza quando minimizzato
         this.minimizedHeight = 50; // Altezza quando minimizzato
+        
+        // Sistema di paginazione
+        this.currentPage = 0; // Pagina corrente (0-based)
+        this.questsPerPage = 1; // 1 quest per pagina
+        this.maxPages = 5; // Massimo 5 pagine
+        this.totalPages = 0; // Numero totale di pagine
+        this.selectedQuestIndex = 0; // Indice della quest selezionata (sempre 0 con 1 quest per pagina)
+        this.mouseOverTracker = false; // Se il mouse è sopra il tracker
         
         // Posizioni
         this.minimizedX = 20; // Posizione X quando minimizzato (alto a sinistra)
@@ -48,6 +56,7 @@ export class QuestTracker {
         // Quest attive (riferimento al sistema del HomePanel)
         this.activeQuests = [];
         
+        
         // Stile
         this.backgroundColor = '#1a1a2e';
         this.borderColor = '#4a90e2';
@@ -61,6 +70,8 @@ export class QuestTracker {
     update() {
         
         if (this.game.homePanel && this.game.homePanel.questData) {
+            // Aggiorna il progresso delle quest
+            this.game.homePanel.updateQuestProgress();
             this.updateActiveQuests();
         }
         
@@ -70,6 +81,14 @@ export class QuestTracker {
             this.expandedY = (this.game.canvas.height - this.height) / 2;
         }
         
+        // Aggiorna proprietà di paginazione
+        this.updatePaginationProperties();
+        
+        // Aggiorna stato del mouse sopra il tracker
+        if (this.game.input) {
+            const mousePos = this.game.input.getMousePosition();
+            this.mouseOverTracker = this.isMouseOverTracker(mousePos.x, mousePos.y);
+        }
         
         // Aggiorna animazione
         this.updateAnimation();
@@ -127,6 +146,22 @@ export class QuestTracker {
                 }
             });
         }
+        
+        // Debug per verificare il tracking (solo quando cambia)
+        if (this.activeQuests.length > 0) {
+            this.activeQuests.forEach(quest => {
+                if (quest.conditions) {
+                    quest.conditions.forEach(condition => {
+                        if (condition.type === 'kill_streuner' && condition.completed > 0) {
+                            console.log(`🔍 Quest Tracker - Streuner: ${condition.completed}/${condition.quantity}`);
+                        }
+                        if (condition.type === 'collect_bonus_box' && condition.completed > 0) {
+                            console.log(`🔍 Quest Tracker - Bonus Box: ${condition.completed}/${condition.quantity}`);
+                        }
+                    });
+                }
+            });
+        }
     }
     
     // Gestisce il click sul tracker (solo click veri, non drag)
@@ -135,12 +170,7 @@ export class QuestTracker {
             return false;
         }
         
-        
-        // Controlla click sul pulsante chiudi
-        if (this.isCloseButtonClicked(x, y)) {
-            this.visible = false;
-            return true;
-        }
+        // Pulsante chiudi rimosso - il tracker non può essere chiuso
         
         // Se è minimizzato, cliccare ovunque lo espande
         if (this.minimized) {
@@ -149,6 +179,22 @@ export class QuestTracker {
             // Aggiorna le posizioni target per l'espansione
             this.expandedX = (this.game.canvas.width - this.width) / 2;
             this.expandedY = (this.game.canvas.height - this.height) / 2;
+            return true;
+        }
+        
+        // Controlla click sul pulsante di chiusura
+        if (this.isCloseButtonClicked(x, y)) {
+            this.visible = false;
+            return true;
+        }
+        
+        // Controlla click sui cerchietti di paginazione
+        if (this.handlePageDotClick(x, y)) {
+            return true;
+        }
+        
+        // Controlla click per selezione quest
+        if (this.handleQuestSelection(x, y)) {
             return true;
         }
         
@@ -194,6 +240,9 @@ export class QuestTracker {
     
     // Gestisce il movimento del mouse durante il drag
     handleMouseMove(x, y) {
+        // Aggiorna lo stato del mouse sopra il tracker
+        this.mouseOverTracker = this.isMouseOverTracker(x, y);
+        
         if (this.isDragging && !this.animating) {
             // Calcola la nuova posizione
             const newX = x - this.dragOffset.x;
@@ -243,14 +292,153 @@ export class QuestTracker {
         return false;
     }
     
-    // Controlla se il click è sul pulsante chiudi
-    isCloseButtonClicked(x, y) {
-        const closeButtonSize = 20;
-        const closeX = this.x + this.currentWidth - closeButtonSize - 5;
-        const closeY = this.y + 5;
+    // Pulsante chiudi rimosso
+    
+    // Calcola l'altezza dinamica per una quest
+    calculateQuestHeight(quest, width) {
+        let height = 25; // Altezza base per il nome
         
-        return x >= closeX && x <= closeX + closeButtonSize && 
-               y >= closeY && y <= closeY + closeButtonSize;
+        if (quest.conditions && quest.conditions.length > 0) {
+            height += quest.conditions.length * 15; // 15px per ogni obiettivo
+        }
+        
+        return height;
+    }
+    
+    // Aggiorna le proprietà di paginazione
+    updatePaginationProperties() {
+        if (this.minimized) return;
+        
+        if (!this.activeQuests || this.activeQuests.length === 0) {
+            this.totalPages = 0;
+            this.currentPage = 0;
+            return;
+        }
+        
+        // Limita a massimo 5 pagine (5 quest)
+        this.totalPages = Math.min(Math.ceil(this.activeQuests.length / this.questsPerPage), this.maxPages);
+        
+        // Assicurati che la pagina corrente sia valida
+        if (this.currentPage >= this.totalPages) {
+            this.currentPage = Math.max(0, this.totalPages - 1);
+        }
+        
+        // Con 1 quest per pagina, selectedQuestIndex è sempre 0
+        this.selectedQuestIndex = 0;
+    }
+    
+    // Ottiene le quest della pagina corrente
+    getQuestsOnCurrentPage() {
+        if (!this.activeQuests || this.activeQuests.length === 0) {
+            return [];
+        }
+        
+        const startIndex = this.currentPage * this.questsPerPage;
+        const endIndex = Math.min(startIndex + this.questsPerPage, this.activeQuests.length);
+        
+        // Limita a massimo 5 quest (5 pagine)
+        const limitedQuests = this.activeQuests.slice(0, this.maxPages);
+        return limitedQuests.slice(startIndex, endIndex);
+    }
+    
+    // Gestisce la rotella del mouse per la paginazione
+    handleWheelScroll(deltaY) {
+        if (this.minimized || this.totalPages <= 1) return false;
+        
+        if (deltaY > 0) {
+            // Scroll giù - pagina successiva
+            this.nextPage();
+        } else {
+            // Scroll su - pagina precedente
+            this.previousPage();
+        }
+        
+        return true;
+    }
+    
+    // Vai alla pagina successiva
+    nextPage() {
+        if (this.currentPage < this.totalPages - 1) {
+            this.currentPage++;
+            this.selectedQuestIndex = 0; // Con 1 quest per pagina, sempre 0
+        }
+    }
+    
+    // Vai alla pagina precedente
+    previousPage() {
+        if (this.currentPage > 0) {
+            this.currentPage--;
+            this.selectedQuestIndex = 0; // Con 1 quest per pagina, sempre 0
+        }
+    }
+    
+    // Vai a una pagina specifica
+    goToPage(pageIndex) {
+        if (pageIndex >= 0 && pageIndex < this.totalPages) {
+            this.currentPage = pageIndex;
+            this.selectedQuestIndex = 0; // Con 1 quest per pagina, sempre 0
+        }
+    }
+    
+    // Controlla se il click è su un cerchietto di paginazione
+    isPageDotClicked(x, y) {
+        if (this.minimized || this.totalPages <= 1) return false;
+        
+        const dotsY = this.y + this.currentHeight - 25; // 25px dal basso
+        const dotSize = 8;
+        const dotSpacing = 15;
+        const totalWidth = this.totalPages * dotSpacing;
+        const startX = this.x + (this.currentWidth - totalWidth) / 2;
+        
+        for (let i = 0; i < this.totalPages; i++) {
+            const dotX = startX + i * dotSpacing;
+            if (x >= dotX - dotSize/2 && x <= dotX + dotSize/2 &&
+                y >= dotsY - dotSize/2 && y <= dotsY + dotSize/2) {
+                return i; // Restituisce l'indice della pagina cliccata
+            }
+        }
+        
+        return -1; // Nessun cerchietto cliccato
+    }
+    
+    // Gestisce il click sui cerchietti di paginazione
+    handlePageDotClick(x, y) {
+        const clickedPage = this.isPageDotClicked(x, y);
+        if (clickedPage >= 0 && clickedPage !== this.currentPage) {
+            this.goToPage(clickedPage);
+            return true;
+        }
+        return false;
+    }
+    
+    // Controlla se il click è su una quest per la selezione
+    isQuestSelectionClicked(x, y) {
+        if (this.minimized || !this.activeQuests || this.activeQuests.length === 0) return -1;
+        
+        const questsOnPage = this.getQuestsOnCurrentPage();
+        if (questsOnPage.length === 0) return -1;
+        
+        const questStartY = this.y + 50;
+        const questHeight = 30; // Altezza fissa per ogni quest
+        
+        // Con 1 quest per pagina, controlla solo la quest corrente
+        const questY = questStartY;
+        if (x >= this.x + 10 && x <= this.x + this.currentWidth - 10 &&
+            y >= questY && y <= questY + questHeight) {
+            return 0; // Con 1 quest per pagina, sempre indice 0
+        }
+        
+        return -1; // Nessuna quest cliccata
+    }
+    
+    // Gestisce la selezione di una quest
+    handleQuestSelection(x, y) {
+        const clickedQuestIndex = this.isQuestSelectionClicked(x, y);
+        if (clickedQuestIndex >= 0) {
+            this.selectedQuestIndex = clickedQuestIndex;
+            return true;
+        }
+        return false;
     }
     
     // Controlla se il click è nell'area draggabile (intero pannello quando espanso)
@@ -272,20 +460,34 @@ export class QuestTracker {
                y >= this.y && y <= this.y + titleBarHeight;
     }
     
+    // Controlla se il click è sul pulsante di chiusura
+    isCloseButtonClicked(x, y) {
+        if (this.minimized) return false;
+        
+        const closeButtonSize = 20;
+        const closeButtonX = this.x + this.currentWidth - closeButtonSize - 10;
+        const closeButtonY = this.y + 10;
+        
+        return x >= closeButtonX && x <= closeButtonX + closeButtonSize &&
+               y >= closeButtonY && y <= closeButtonY + closeButtonSize;
+    }
+    
     // Controlla se il click è su una quest
     isQuestClicked(x, y) {
         // Non gestire click su quest se non ci sono quest attive
         if (!this.activeQuests || this.activeQuests.length === 0) return false;
         
-        const questStartY = this.y + 40;
-        const questHeight = 25;
+        const questsOnPage = this.getQuestsOnCurrentPage();
+        if (questsOnPage.length === 0) return false;
         
-        for (let i = 0; i < this.activeQuests.length; i++) {
-            const questY = questStartY + i * questHeight;
-            if (x >= this.x + 10 && x <= this.x + this.currentWidth - 10 && 
-                y >= questY && y <= questY + questHeight) {
-                return true;
-            }
+        const questStartY = this.y + 50;
+        const questHeight = 30; // Altezza fissa per ogni quest
+        
+        // Con 1 quest per pagina, controlla solo la quest corrente
+        const questY = questStartY;
+        if (x >= this.x + 10 && x <= this.x + this.currentWidth - 10 &&
+            y >= questY && y <= questY + questHeight) {
+            return true;
         }
         
         return false;
@@ -371,10 +573,26 @@ export class QuestTracker {
         
         // Indicatore del numero di quest attive (sempre visibile)
         const questCount = this.activeQuests ? this.activeQuests.length : 0;
-        ctx.fillStyle = questCount > 0 ? '#00ff00' : '#888888';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(questCount.toString(), this.x + currentWidth - 8, this.y + 12);
+        if (questCount > 0) {
+            // Sfondo per il contatore
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+            ctx.beginPath();
+            ctx.arc(this.x + currentWidth - 12, this.y + 12, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Bordo per il contatore
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(this.x + currentWidth - 12, this.y + 12, 8, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Numero
+            ctx.fillStyle = '#00ff00';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(questCount.toString(), this.x + currentWidth - 12, this.y + 16);
+        }
     }
     
     // Disegna il tracker espanso (completo)
@@ -397,6 +615,7 @@ export class QuestTracker {
             ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
         }
         
+        
         // Icona di drag (clipboard con checkmark)
         this.drawDragIcon(ctx, this.x + 8, this.y + 8);
         
@@ -406,51 +625,101 @@ export class QuestTracker {
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'left';
             ctx.fillText('Quest Attive', this.x + 40, this.y + 20);
-        }
-        
-        // Pulsante chiudi (solo se abbastanza grande)
-        if (currentWidth > 80) {
-            ctx.fillStyle = '#ff4444';
-            ctx.fillRect(this.x + currentWidth - 25, this.y + 5, 20, 20);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 12px Arial';
+            
+            // Pulsante chiudi
+            const closeButtonSize = 20;
+            const closeButtonX = this.x + currentWidth - closeButtonSize - 10;
+            const closeButtonY = this.y + 10;
+            
+            // Sfondo pulsante chiudi
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+            ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+            
+            // Bordo pulsante chiudi
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+            
+            // X del pulsante chiudi
+            ctx.fillStyle = '#ff0000';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('×', this.x + currentWidth - 15, this.y + 18);
+            ctx.textBaseline = 'middle';
+            ctx.fillText('×', closeButtonX + closeButtonSize/2, closeButtonY + closeButtonSize/2);
             ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
         }
         
-        // Lista quest (solo se abbastanza grande)
-        if (currentWidth > 150 && currentHeight > 80) {
-            const questStartY = this.y + 40;
-            const questHeight = 25;
+        // Lista quest con paginazione (solo se abbastanza grande)
+        if (currentWidth > 200 && currentHeight > 100) {
+            const questsOnPage = this.getQuestsOnCurrentPage();
             
-            this.activeQuests.forEach((quest, index) => {
-                const questY = questStartY + index * questHeight;
+            if (questsOnPage.length > 0) {
+                const quest = questsOnPage[0]; // Con 1 quest per pagina, sempre la prima
+                const questStartY = this.y + 50;
+                const questHeight = this.currentHeight - 100; // Usa tutto lo spazio disponibile
                 
-                // Sfondo quest (alternato)
-                if (index % 2 === 0) {
-                    ctx.fillStyle = 'rgba(74, 144, 226, 0.1)';
-                    ctx.fillRect(this.x + 5, questY, currentWidth - 10, questHeight);
-                }
-            
+                // Sfondo quest
+                ctx.fillStyle = 'rgba(74, 144, 226, 0.1)';
+                ctx.fillRect(this.x + 5, questStartY, currentWidth - 10, questHeight);
+                
+                // Bordo per quest
+                ctx.strokeStyle = this.borderColor;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(this.x + 5, questStartY, currentWidth - 10, questHeight);
+                
                 // Nome quest
-                ctx.fillStyle = this.textColor;
-                ctx.font = '12px Arial';
-                ctx.fillText(quest.name, this.x + 10, questY + 15);
+                ctx.fillStyle = this.titleColor;
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(quest.name, this.x + 10, questStartY + 20);
                 
-                // Progresso quest (se disponibile)
+                // Calcola progresso generale della quest
                 if (quest.conditions && quest.conditions.length > 0) {
                     const completedConditions = quest.conditions.filter(c => c.completed >= c.quantity).length;
                     const totalConditions = quest.conditions.length;
-                    const progress = `${completedConditions}/${totalConditions}`;
+                    const questProgress = `${completedConditions}/${totalConditions}`;
                     
+                    // Mostra progresso generale a destra
                     ctx.fillStyle = this.progressColor;
-                    ctx.font = '10px Arial';
+                    ctx.font = 'bold 12px Arial';
                     ctx.textAlign = 'right';
-                    ctx.fillText(progress, this.x + currentWidth - 10, questY + 15);
+                    ctx.fillText(questProgress, this.x + currentWidth - 10, questStartY + 20);
                     ctx.textAlign = 'left';
+                    
+                    // Disegna gli obiettivi della quest
+                    let objectiveY = questStartY + 40;
+                    quest.conditions.forEach((condition, condIndex) => {
+                        // Icona obiettivo
+                        const isCompleted = condition.completed >= condition.quantity;
+                        ctx.fillStyle = isCompleted ? this.progressColor : '#888888';
+                        ctx.font = '14px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(isCompleted ? '✓' : '○', this.x + 15, objectiveY + 10);
+                        
+                        // Testo obiettivo
+                        ctx.fillStyle = isCompleted ? this.progressColor : this.textColor;
+                        ctx.font = '12px Arial';
+                        const objectiveText = condition.description;
+                        ctx.fillText(objectiveText, this.x + 30, objectiveY + 10);
+                        
+                        // Numeri di progresso a destra
+                        ctx.fillStyle = this.borderColor;
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'right';
+                        const progressText = `${condition.completed} / ${condition.quantity}`;
+                        ctx.fillText(progressText, this.x + currentWidth - 15, objectiveY + 10);
+                        ctx.textAlign = 'left';
+                        
+                        objectiveY += 25; // Spazio tra obiettivi
+                    });
                 }
-            });
+            }
+            
+            // Disegna i cerchietti di paginazione
+            if (this.totalPages > 1) {
+                this.drawPageDots(ctx);
+            }
             
             // Messaggio se nessuna quest
             if (!this.activeQuests || this.activeQuests.length === 0) {
@@ -459,6 +728,42 @@ export class QuestTracker {
                 ctx.textAlign = 'center';
                 ctx.fillText('Nessuna quest attiva', this.x + currentWidth / 2, this.y + currentHeight / 2);
                 ctx.textAlign = 'left';
+            }
+        }
+    }
+    
+    // Disegna i cerchietti di paginazione
+    drawPageDots(ctx) {
+        const dotsY = this.y + this.currentHeight - 25; // 25px dal basso
+        const dotSize = 8;
+        const dotSpacing = 15;
+        const totalWidth = this.totalPages * dotSpacing;
+        const startX = this.x + (this.currentWidth - totalWidth) / 2;
+        
+        for (let i = 0; i < this.totalPages; i++) {
+            const dotX = startX + i * dotSpacing;
+            const isCurrentPage = i === this.currentPage;
+            
+            // Sfondo del cerchietto
+            if (isCurrentPage) {
+                ctx.fillStyle = this.borderColor;
+                ctx.beginPath();
+                ctx.arc(dotX, dotsY, dotSize/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bordo per la pagina corrente
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(dotX, dotsY, dotSize/2, 0, Math.PI * 2);
+                ctx.stroke();
+            } else {
+                // Cerchietto vuoto per le altre pagine
+                ctx.strokeStyle = this.borderColor;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(dotX, dotsY, dotSize/2, 0, Math.PI * 2);
+                ctx.stroke();
             }
         }
     }

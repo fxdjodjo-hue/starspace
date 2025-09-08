@@ -22,6 +22,10 @@ export class Ship {
         this.isMoving = false;
         this.direction = 0; // Angolo in radianti
         this.rotation = 0;  // Rotazione visiva
+        
+        // Tracking per quest
+        this.streunerKilled = 0;
+        this.bonusBoxesCollected = 0;
         this.playerName = 'TestPlayer'; // Nome del giocatore
         
         // Sistema di fluttuazione
@@ -839,6 +843,12 @@ export class Ship {
     processEnemyKill(enemyType, enemyConfig = null) {
         // Calcola i reward (RewardManager è solo un calcolatore)
         const results = this.rewardManager.processEnemyKill(enemyType, enemyConfig);
+        
+        // Tracking per quest
+        if (enemyType === 'npc_x1' || enemyType === 'npc_x2') {
+            this.streunerKilled++;
+            console.log(`🎯 Streuner ucciso! Totale: ${this.streunerKilled}`);
+        }
         
         // Applica i reward alla nave usando il sistema unificato
         if (results.credits) {

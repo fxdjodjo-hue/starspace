@@ -51,8 +51,8 @@ export class ModernSkillbar {
         };
         
         // Dimensioni
-        this.slotSize = 40;
-        this.slotSpacing = 5;
+        this.slotSize = 35;
+        this.slotSpacing = 3;
         this.gridWidth = 10; // 10 slot per riga
         this.gridHeight = 2; // 2 righe
         this.toggleButtonSize = 30;
@@ -60,6 +60,16 @@ export class ModernSkillbar {
     
     setGame(game) {
         this.game = game;
+    }
+    
+    // Ottiene la chiave della categoria dal nome
+    getCategoryKeyByName(categoryName) {
+        for (const [key, category] of Object.entries(this.categories)) {
+            if (category.name === categoryName) {
+                return key;
+            }
+        }
+        return null;
     }
     
     setPosition(x, y) {
@@ -120,7 +130,7 @@ export class ModernSkillbar {
     
     // Controlla se il click è sul pulsante toggle
     isClickOnToggleButton(mouseX, mouseY) {
-        const buttonX = this.x + this.gridWidth * (this.slotSize + this.slotSpacing) + 10;
+        const buttonX = this.x + this.gridWidth * (this.slotSize + this.slotSpacing) - this.slotSpacing + 5;
         const buttonY = this.y;
         
         return mouseX >= buttonX && mouseX <= buttonX + this.toggleButtonSize &&
@@ -129,16 +139,19 @@ export class ModernSkillbar {
     
     // Controlla se il click è sulla riga delle categorie
     isClickOnCategoryRow(mouseX, mouseY) {
-        const categoryY = this.y + this.gridHeight * (this.slotSize + this.slotSpacing) + 20;
-        const categoryHeight = 50;
+        const categoryY = this.y - 60; // Posiziona sopra la skillbar invece che sotto
+        const categorySize = 50;
+        const categorySpacing = 10;
+        const totalWidth = 3 * categorySize + 2 * categorySpacing;
+        const startX = this.x + (this.width - totalWidth) / 2;
         
-        return mouseX >= this.x && mouseX <= this.x + this.width &&
-               mouseY >= categoryY && mouseY <= categoryY + categoryHeight;
+        return mouseX >= startX && mouseX <= startX + totalWidth &&
+               mouseY >= categoryY && mouseY <= categoryY + categorySize;
     }
     
     // Controlla se il click è sulla riga delle armi
     isClickOnWeaponRow(mouseX, mouseY) {
-        const weaponY = this.y + this.gridHeight * (this.slotSize + this.slotSpacing) + 80;
+        const weaponY = this.y - 110; // Posiziona sopra la riga delle categorie
         const weaponHeight = 50;
         
         return mouseX >= this.x && mouseX <= this.x + this.width &&
@@ -267,7 +280,7 @@ export class ModernSkillbar {
     
     // Disegna il pulsante toggle
     drawToggleButton(ctx) {
-        const buttonX = this.x + this.gridWidth * (this.slotSize + this.slotSpacing) + 10;
+        const buttonX = this.x + this.gridWidth * (this.slotSize + this.slotSpacing) - this.slotSpacing + 5;
         const buttonY = this.y;
         
         // Sfondo pulsante
@@ -288,29 +301,31 @@ export class ModernSkillbar {
     
     // Disegna la riga delle categorie
     drawCategoryRow(ctx) {
-        const categoryY = this.y + this.gridHeight * (this.slotSize + this.slotSpacing) + 20;
-        const categoryWidth = this.width / 3;
-        const categoryHeight = 50;
+        const categoryY = this.y - 60; // Posiziona sopra la skillbar invece che sotto
+        const categorySize = 50; // Quadrati 50x50
+        const categorySpacing = 10;
+        const totalWidth = 3 * categorySize + 2 * categorySpacing;
+        const startX = this.x + (this.width - totalWidth) / 2; // Centra le categorie
         
         const categories = Object.values(this.categories);
         
         categories.forEach((category, index) => {
-            const categoryX = this.x + index * categoryWidth;
+            const categoryX = startX + index * (categorySize + categorySpacing);
             
             // Sfondo categoria
             ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(categoryX, categoryY, categoryWidth, categoryHeight);
+            ctx.fillRect(categoryX, categoryY, categorySize, categorySize);
             
             // Bordo
             ctx.strokeStyle = this.activeCategory === Object.keys(this.categories)[index] ? '#ffd700' : '#16213e';
             ctx.lineWidth = 2;
-            ctx.strokeRect(categoryX, categoryY, categoryWidth, categoryHeight);
+            ctx.strokeRect(categoryX, categoryY, categorySize, categorySize);
             
             // Icona categoria
             ctx.fillStyle = '#ffffff';
-            ctx.font = '20px Arial';
+            ctx.font = '14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(category.icon, categoryX + categoryWidth / 2, categoryY + categoryHeight / 2 + 7);
+            ctx.fillText(category.icon, categoryX + categorySize / 2, categoryY + categorySize / 2 + 5);
         });
     }
     
@@ -318,7 +333,7 @@ export class ModernSkillbar {
     drawWeaponRow(ctx) {
         if (!this.activeCategory) return;
         
-        const weaponY = this.y + this.gridHeight * (this.slotSize + this.slotSpacing) + 80;
+        const weaponY = this.y - 110; // Posiziona sopra la riga delle categorie
         const weaponHeight = 50;
         const category = this.categories[this.activeCategory];
         const weaponWidth = this.width / category.items.length;

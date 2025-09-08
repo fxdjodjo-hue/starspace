@@ -1,6 +1,11 @@
-// Pannello Home - Interfaccia principale del giocatore
-export class HomePanel {
+import { UIComponent } from './UIComponent.js';
+import { ShopTab } from './ShopTab.js';
+import { ShopButton } from './ShopButton.js';
+
+// Pannello Home - Interfaccia principale del giocatore (Online-Ready)
+export class HomePanel extends UIComponent {
     constructor(game) {
+        super('home-panel', { x: 0, y: 0, width: 1200, height: 800 });
         this.game = game;
         this.visible = false;
         this.isOpen = false; // Aggiunta proprietà isOpen per compatibilità
@@ -114,18 +119,18 @@ export class HomePanel {
         this.questDetailsScrollY = 0;
         this.maxQuestDetailsScrollY = 0;
         
-        // Dati quest (basati sull'immagine)
+        // Dati quest reali
         this.questData = {
             disponibili: {
                 'livello1': [
                     { 
-                        id: 'map_orientation', 
-                        name: 'Map orientation', 
+                        id: 'kill_streuner', 
+                        name: 'Uccidi 5 Streuner', 
                         level: 1, 
                         status: 'available',
-                        description: 'Impara le basi della navigazione spaziale e orientati nella mappa.',
+                        description: 'Elimina 5 Streuner per dimostrare le tue abilità di combattimento.',
                         conditions: [
-                            { type: 'navigate', description: 'Esplora 3 settori diversi', quantity: 3, completed: 0 }
+                            { type: 'kill_streuner', description: 'Uccidi Streuner', quantity: 5, completed: 0 }
                         ],
                         rewards: [
                             { type: 'experience', description: 'Esperienza', quantity: 500 },
@@ -134,177 +139,17 @@ export class HomePanel {
                         ]
                     },
                     { 
-                        id: 'gaining_mercury', 
-                        name: 'Gaining Mercury', 
+                        id: 'collect_bonus_box', 
+                        name: 'Raccogli 5 Bonus Box', 
                         level: 1, 
                         status: 'available',
-                        description: 'Raccogli mercurio dagli asteroidi per guadagnare esperienza.',
+                        description: 'Raccogli 5 Bonus Box per ottenere risorse preziose.',
                         conditions: [
-                            { type: 'collect', description: 'Raccogli Mercurio', quantity: 10, completed: 0 }
+                            { type: 'collect_bonus_box', description: 'Raccogli Bonus Box', quantity: 5, completed: 0 }
                         ],
                         rewards: [
                             { type: 'experience', description: 'Esperienza', quantity: 300 },
                             { type: 'credits', description: 'Crediti', quantity: 500 }
-                        ]
-                    },
-                    { 
-                        id: 'cargo_boxes', 
-                        name: 'Cargo Boxes', 
-                        level: 1, 
-                        status: 'available',
-                        description: 'Trova e raccogli scatole di carico abbandonate nello spazio.',
-                        conditions: [
-                            { type: 'collect', description: 'Raccogli Scatole di Carico', quantity: 5, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 400 },
-                            { type: 'honor', description: 'Onore', quantity: 3 },
-                            { type: 'credits', description: 'Crediti', quantity: 800 }
-                        ]
-                    },
-                    { 
-                        id: 'empty_storage', 
-                        name: 'Empty storage', 
-                        level: 1, 
-                        status: 'available',
-                        description: 'Svuota il tuo magazzino vendendo risorse in eccesso.',
-                        conditions: [
-                            { type: 'sell', description: 'Vendi risorse', quantity: 20, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 200 },
-                            { type: 'credits', description: 'Crediti', quantity: 300 }
-                        ]
-                    },
-                    { 
-                        id: 'warming_up', 
-                        name: 'Warming-up', 
-                        level: 1, 
-                        status: 'available',
-                        description: 'Riscaldati per il combattimento distruggendo alcuni nemici.',
-                        conditions: [
-                            { type: 'kill', description: 'Distruggi nemici', quantity: 5, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 600 },
-                            { type: 'honor', description: 'Onore', quantity: 8 },
-                            { type: 'credits', description: 'Crediti', quantity: 1200 }
-                        ]
-                    }
-                ],
-                'livello2': [
-                    { 
-                        id: 'get_better_equipment', 
-                        name: 'Get better equipment', 
-                        level: 2, 
-                        status: 'available',
-                        description: 'Congratulations! You took next level. That means you got an access to X-2 map of your faction. Before you visit new map you should know that in those sector is one more alien type bothering us - Mali. It is stronger than Hydro and you need to get good equipment to deal with it. Look at the shop and purchase required items. After you purchase - mount it on your ship. One tip about map access. You may have noticed that to jump into some maps you need higher level than you have. Yeah, there is some restriction. Each map has it\'s own required level to fly there. It made to protect you from dangerous areas of The Space. Gain experience and raise your level up to reach access for more maps.',
-                        conditions: [
-                            { type: 'buy', description: 'Compra LaserGun-1', quantity: 1, completed: 0 },
-                            { type: 'buy', description: 'Compra ShieldGen-1', quantity: 1, completed: 0 },
-                            { type: 'equip', description: 'Equipaggia LaserGun-1', quantity: 1, completed: 0 },
-                            { type: 'equip', description: 'Equipaggia ShieldGen-1', quantity: 1, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 3200 },
-                            { type: 'honor', description: 'Onore', quantity: 16 },
-                            { type: 'credits', description: 'Crediti', quantity: 6400 },
-                            { type: 'uridium', description: 'Uridium', quantity: 48 }
-                        ]
-                    },
-                    { 
-                        id: 'ammunition_resupply', 
-                        name: 'Ammunition resupply', 
-                        level: 2, 
-                        status: 'available',
-                        description: 'Rifornisci la tua nave con munizioni per il combattimento.',
-                        conditions: [
-                            { type: 'buy', description: 'Compra munizioni laser', quantity: 100, completed: 0 },
-                            { type: 'buy', description: 'Compra munizioni missili', quantity: 50, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 800 },
-                            { type: 'credits', description: 'Crediti', quantity: 1500 }
-                        ]
-                    },
-                    { 
-                        id: 'bonus_boxes', 
-                        name: 'Bonus boxes', 
-                        level: 2, 
-                        status: 'available',
-                        description: 'Trova e raccogli scatole bonus per ottenere ricompense speciali.',
-                        conditions: [
-                            { type: 'collect', description: 'Raccogli scatole bonus', quantity: 3, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 1000 },
-                            { type: 'honor', description: 'Onore', quantity: 10 },
-                            { type: 'credits', description: 'Crediti', quantity: 2000 }
-                        ]
-                    },
-                    { 
-                        id: 'new_aliens', 
-                        name: 'New aliens', 
-                        level: 2, 
-                        status: 'available',
-                        description: 'Affronta i nuovi tipi di alieni che minacciano lo spazio.',
-                        conditions: [
-                            { type: 'kill', description: 'Distruggi alieni Mali', quantity: 10, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 1500 },
-                            { type: 'honor', description: 'Onore', quantity: 20 },
-                            { type: 'credits', description: 'Crediti', quantity: 3000 }
-                        ]
-                    },
-                    { 
-                        id: 'bewitched_pumpkins', 
-                        name: '* Bewitched pumpkins', 
-                        level: 2, 
-                        status: 'available',
-                        description: 'Evento speciale: distruggi le zucche stregate per ottenere ricompense uniche.',
-                        conditions: [
-                            { type: 'kill', description: 'Distruggi zucche stregate', quantity: 15, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 2000 },
-                            { type: 'honor', description: 'Onore', quantity: 25 },
-                            { type: 'credits', description: 'Crediti', quantity: 4000 },
-                            { type: 'uridium', description: 'Uridium', quantity: 20 }
-                        ]
-                    }
-                ],
-                'livello3': [
-                    { 
-                        id: 'hunting_hunters', 
-                        name: 'Hunting the hunters', 
-                        level: 3, 
-                        status: 'available',
-                        description: 'Diventa il cacciatore e elimina i cacciatori di taglie che minacciano i piloti.',
-                        conditions: [
-                            { type: 'kill', description: 'Elimina cacciatori', quantity: 8, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 2500 },
-                            { type: 'honor', description: 'Onore', quantity: 30 },
-                            { type: 'credits', description: 'Crediti', quantity: 5000 }
-                        ]
-                    },
-                    { 
-                        id: 'refine', 
-                        name: 'Refine', 
-                        level: 3, 
-                        status: 'available',
-                        description: 'Raffina le tue abilità di combattimento e migliora la tua nave.',
-                        conditions: [
-                            { type: 'upgrade', description: 'Migliora equipaggiamento', quantity: 3, completed: 0 },
-                            { type: 'kill', description: 'Distruggi nemici forti', quantity: 20, completed: 0 }
-                        ],
-                        rewards: [
-                            { type: 'experience', description: 'Esperienza', quantity: 4000 },
-                            { type: 'honor', description: 'Onore', quantity: 40 },
-                            { type: 'credits', description: 'Crediti', quantity: 8000 },
-                            { type: 'uridium', description: 'Uridium', quantity: 60 }
                         ]
                     }
                 ]
@@ -317,6 +162,107 @@ export class HomePanel {
         
         this.x = (this.game.canvas.width - this.panelWidth) / 2;
         this.y = (this.game.canvas.height - this.panelHeight) / 2;
+        
+        // Inizializza componenti UI
+        this.shopTabs = [];
+        this.shopButtons = [];
+        this.setupUIComponents();
+        this.setupEventListeners();
+    }
+    
+    // Setup componenti UI
+    setupUIComponents() {
+        this.createShopTabs();
+        this.createShopButtons();
+    }
+    
+    // Crea le tab del negozio
+    createShopTabs() {
+        const tabConfig = { width: 140, height: 40, yOffset: 70 };
+        const tabColors = {
+            'ammunition': '#e94560',
+            'laser': '#4a90e2',
+            'generators': '#50c878'
+        };
+        
+        ['ammunition', 'laser', 'generators'].forEach((id, index) => {
+            const tab = new ShopTab(
+                id,
+                id.toUpperCase(),
+                { 
+                    x: 20 + index * tabConfig.width, 
+                    y: tabConfig.yOffset, 
+                    width: tabConfig.width, 
+                    height: tabConfig.height 
+                },
+                tabColors[id],
+                this.selectedShopCategory === id
+            );
+            
+            // Collega eventi e state
+            if (this.eventSystem) {
+                tab.setEventSystem(this.eventSystem);
+            }
+            if (this.gameState) {
+                tab.setGameState(this.gameState);
+            }
+            
+            this.shopTabs.push(tab);
+        });
+    }
+    
+    // Crea i pulsanti del negozio
+    createShopButtons() {
+        // Pulsanti per le opzioni di acquisto
+        // Questi verranno creati dinamicamente in base all'item selezionato
+    }
+    
+    // Setup event listeners
+    setupEventListeners() {
+        if (!this.eventSystem) return;
+        
+        // Ascolta eventi di rete
+        this.eventSystem.on('network:shop:tab:change', (data) => {
+            this.handleRemoteTabChange(data);
+        });
+        
+        this.eventSystem.on('network:shop:button:action', (data) => {
+            this.handleRemoteButtonAction(data);
+        });
+        
+        // Ascolta aggiornamenti di stato
+        this.eventSystem.on('sync:state:sync', (data) => {
+            this.handleStateSync(data);
+        });
+    }
+    
+    // Gestisce cambio tab remoto
+    handleRemoteTabChange(data) {
+        if (data.tabId && data.tabId !== this.selectedShopCategory) {
+            this.selectedShopCategory = data.tabId;
+            this.updateShopTabsSelection();
+        }
+    }
+    
+    // Gestisce azione pulsante remoto
+    handleRemoteButtonAction(data) {
+        // Implementa logica per azioni remote
+        console.log('Remote button action:', data);
+    }
+    
+    // Gestisce sincronizzazione stato
+    handleStateSync(data) {
+        if (data.shop) {
+            this.selectedShopCategory = data.shop.selectedCategory || 'ammunition';
+            this.updateShopTabsSelection();
+        }
+    }
+    
+    // Aggiorna selezione tab
+    updateShopTabsSelection() {
+        this.shopTabs.forEach(tab => {
+            tab.setSelected(tab.id === this.selectedShopCategory);
+        });
     }
     
     toggle() {
@@ -324,6 +270,7 @@ export class HomePanel {
         this.isOpen = this.visible; // Sincronizza isOpen con visible
         if (this.visible) {
             this.game.audioManager.playSound('stationpanel_open');
+            this.centerPanel();
         }
     }
     
@@ -340,8 +287,8 @@ export class HomePanel {
     
     // Centra il pannello
     centerPanel() {
-        this.x = (this.game.width - this.panelWidth) / 2;
-        this.y = (this.game.height - this.panelHeight) / 2;
+        this.x = (this.game.canvas.width - this.panelWidth) / 2;
+        this.y = (this.game.canvas.height - this.panelHeight) / 2;
     }
     
     // Mostra popup di notifica
@@ -388,13 +335,13 @@ export class HomePanel {
         // Aggiorna i dati del giocatore con quelli reali
         if (this.game.ship) {
             // Leggi le risorse direttamente dalla nave (Single Source of Truth)
-            this.playerData.credits = this.game.ship.getResource('credits');
-            this.playerData.uridium = this.game.ship.getResource('uridium');
-            this.playerData.honor = this.game.ship.getResource('honor');
-            this.playerData.experience = this.game.ship.getResource('experience');
+            this.playerData.credits = this.game.ship.getResource('credits') || 0;
+            this.playerData.uridium = this.game.ship.getResource('uridium') || 0;
+            this.playerData.honor = this.game.ship.getResource('honor') || 0;
+            this.playerData.experience = this.game.ship.getResource('experience') || 0;
             
             // Leggi il livello dal sistema integrato
-            this.playerData.level = this.game.ship.currentLevel;
+            this.playerData.level = this.game.ship.currentLevel || 1;
             
             // Sincronizza con upgradeManager per compatibilità
             this.game.ship.upgradeManager.credits = this.playerData.credits;
@@ -404,15 +351,147 @@ export class HomePanel {
         }
     }
     
+    // Aggiorna il progresso delle quest
+    updateQuestProgress() {
+        // Aggiorna solo le quest accettate
+        Object.keys(this.questData.accettate).forEach(levelKey => {
+            const levelQuests = this.questData.accettate[levelKey];
+            if (levelQuests) {
+                levelQuests.forEach(quest => {
+                    this.updateQuestCondition(quest);
+                });
+            }
+        });
+        
+        // Debug per verificare il tracking
+        if (this.game.ship) {
+            console.log(`🔍 Ship tracking - Streuner: ${this.game.ship.streunerKilled}, Bonus Box: ${this.game.ship.bonusBoxesCollected}`);
+        }
+    }
+    
+    // Aggiorna una condizione specifica di una quest
+    updateQuestCondition(quest) {
+        if (!quest.conditions) return;
+        
+        let allConditionsCompleted = true;
+        
+        quest.conditions.forEach(condition => {
+            switch (condition.type) {
+                case 'kill_streuner':
+                    // Conta gli Streuner uccisi
+                    if (this.game.ship && this.game.ship.streunerKilled !== undefined) {
+                        const newCompleted = Math.min(this.game.ship.streunerKilled, condition.quantity);
+                        if (newCompleted !== condition.completed) {
+                            condition.completed = newCompleted;
+                            console.log(`📊 Quest progresso: ${condition.completed}/${condition.quantity} Streuner`);
+                        }
+                        if (condition.completed < condition.quantity) {
+                            allConditionsCompleted = false;
+                        }
+                    }
+                    break;
+                    
+                case 'collect_bonus_box':
+                    // Conta le Bonus Box raccolte
+                    if (this.game.ship && this.game.ship.bonusBoxesCollected !== undefined) {
+                        const newCompleted = Math.min(this.game.ship.bonusBoxesCollected, condition.quantity);
+                        if (newCompleted !== condition.completed) {
+                            condition.completed = newCompleted;
+                            console.log(`📊 Quest progresso: ${condition.completed}/${condition.quantity} Bonus Box`);
+                        }
+                        if (condition.completed < condition.quantity) {
+                            allConditionsCompleted = false;
+                        }
+                    }
+                    break;
+            }
+        });
+        
+        // Se tutte le condizioni sono completate, completa la quest
+        if (allConditionsCompleted && !quest.completed) {
+            this.completeQuest(quest);
+        }
+    }
+    
+    // Completa una quest e accredita le ricompense
+    completeQuest(quest) {
+        console.log(`🎉 Quest completata: ${quest.name}`);
+        
+        // Marca la quest come completata
+        quest.completed = true;
+        quest.status = 'completed';
+        
+        // Sposta la quest dalla sezione accettate a quella completate
+        this.moveQuestToCompleted(quest);
+        
+        // Accredita le ricompense
+        this.giveQuestRewards(quest);
+        
+        // Mostra notifica di completamento
+        if (this.game.notifications) {
+            this.game.notifications.questCompleted(quest.name, quest.rewards);
+        }
+    }
+    
+    // Sposta una quest dalla sezione accettate a quella completate
+    moveQuestToCompleted(quest) {
+        // Rimuovi dalle quest accettate
+        Object.keys(this.questData.accettate).forEach(levelKey => {
+            const levelQuests = this.questData.accettate[levelKey];
+            if (levelQuests) {
+                const index = levelQuests.findIndex(q => q.id === quest.id);
+                if (index !== -1) {
+                    levelQuests.splice(index, 1);
+                }
+            }
+        });
+        
+        // Aggiungi alle quest completate
+        if (!this.questData.completate[quest.level]) {
+            this.questData.completate[quest.level] = [];
+        }
+        this.questData.completate[quest.level].push(quest);
+    }
+    
+    // Accredita le ricompense di una quest
+    giveQuestRewards(quest) {
+        if (!quest.rewards || !this.game.ship) return;
+        
+        quest.rewards.forEach(reward => {
+            switch (reward.type) {
+                case 'credits':
+                    this.game.ship.addResource('credits', reward.quantity);
+                    console.log(`💰 Ricompensa: +${reward.quantity} Crediti`);
+                    break;
+                case 'uridium':
+                    this.game.ship.addResource('uridium', reward.quantity);
+                    console.log(`💎 Ricompensa: +${reward.quantity} Uridium`);
+                    break;
+                case 'honor':
+                    this.game.ship.addResource('honor', reward.quantity);
+                    console.log(`🏆 Ricompensa: +${reward.quantity} Onore`);
+                    break;
+                case 'experience':
+                    this.game.ship.addResource('experience', reward.quantity);
+                    console.log(`⭐ Ricompensa: +${reward.quantity} Esperienza`);
+                    break;
+            }
+        });
+    }
+    
     
     handleClick(x, y) {
         if (!this.visible) {
             return false;
         }
         
+        // Calcola posizione centrata (stesso calcolo di draw)
+        const panelX = (this.game.canvas.width - this.panelWidth) / 2;
+        const panelY = (this.game.canvas.height - this.panelHeight) / 2;
+        
         // Controlla se il click è dentro il pannello
-        const isInsidePanel = x >= this.x && x <= this.x + this.panelWidth && 
-                             y >= this.y && y <= this.y + this.panelHeight;
+        const isInsidePanel = x >= panelX && x <= panelX + this.panelWidth && 
+                             y >= panelY && y <= panelY + this.panelHeight;
         
         // Se il click è fuori dal pannello, chiudilo
         if (!isInsidePanel) {
@@ -427,13 +506,13 @@ export class HomePanel {
         }
         
         // Controlla se clicca su chiudi
-        if (this.isCloseButtonClicked(x, y)) {
+        if (this.isCloseButtonClicked(x, y, panelX, panelY)) {
             this.hide();
             return true;
         }
         
         // Controlla se clicca su una categoria
-        const clickedCategory = this.getClickedCategory(x, y);
+        const clickedCategory = this.getClickedCategory(x, y, panelX, panelY);
         if (clickedCategory) {
             this.selectCategory(clickedCategory);
             return true;
@@ -441,9 +520,7 @@ export class HomePanel {
         
         // Se siamo nel shop, gestisci i click del shop
         if (this.selectedCategory === 'shop') {
-            console.log(`🛒 Click nel shop: (${x}, ${y})`);
-            const handled = this.handleShopClick(x, y);
-            console.log(`🛒 Shop click gestito: ${handled}`);
+            const handled = this.handleShopClick(x, y, panelX, panelY);
             if (handled) {
                 return true;
             }
@@ -451,7 +528,7 @@ export class HomePanel {
         
         // Se siamo nelle quest, gestisci i click delle quest
         if (this.selectedCategory === 'quest') {
-            const handled = this.handleQuestClick(x, y);
+            const handled = this.handleQuestClick(x, y, panelX, panelY);
             if (handled) {
                 return true;
             }
@@ -489,15 +566,15 @@ export class HomePanel {
         }
     }
     
-    isCloseButtonClicked(x, y) {
-        const closeX = this.x + this.panelWidth - 40;
-        const closeY = this.y + 20;
+    isCloseButtonClicked(x, y, panelX, panelY) {
+        const closeX = panelX + this.panelWidth - 40;
+        const closeY = panelY + 20;
         return x >= closeX && x <= closeX + 20 && y >= closeY && y <= closeY + 20;
     }
     
-    getClickedCategory(x, y) {
-        const navX = this.x;
-        const navY = this.y + 60; // Inizia dopo il titolo
+    getClickedCategory(x, y, panelX, panelY) {
+        const navX = panelX;
+        const navY = panelY + 60; // Inizia dopo il titolo
         const itemHeight = 40;
         
         for (let i = 0; i < this.categories.length; i++) {
@@ -523,6 +600,9 @@ export class HomePanel {
         
         // Aggiorna i dati del giocatore
         this.updatePlayerData();
+        
+        // Aggiorna il progresso delle quest
+        this.updateQuestProgress();
         
         // Calcola posizione centrata ogni volta
         this.x = (this.game.canvas.width - this.panelWidth) / 2;
@@ -596,6 +676,8 @@ export class HomePanel {
         // Titolo
         ctx.fillStyle = '#e94560';
         ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
         ctx.fillText('Pannello di controllo', this.x + 20, this.y + 30);
         
         // Pulsante chiudi
@@ -603,7 +685,9 @@ export class HomePanel {
         ctx.fillRect(this.x + this.panelWidth - 40, this.y + 10, 30, 30);
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
-        ctx.fillText('X', this.x + this.panelWidth - 25, this.y + 30);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('X', this.x + this.panelWidth - 25, this.y + 25);
     }
     
     drawNavigationPanel(ctx) {
@@ -630,17 +714,23 @@ export class HomePanel {
             // Icona
             ctx.fillStyle = isSelected ? '#ffffff' : '#e94560';
             ctx.font = '16px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
             ctx.fillText(category.icon, navX + 15, itemY + 15);
             
             // Nome
             ctx.fillStyle = isSelected ? '#ffffff' : '#ffffff';
-        ctx.font = '14px Arial';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
             ctx.fillText(category.name, navX + 40, itemY + 15);
             
             // Freccia selezionata
             if (isSelected) {
-            ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = '#ffffff';
                 ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 ctx.fillText('→', navX + this.navWidth - 25, itemY + 15);
             }
         });
@@ -711,10 +801,10 @@ export class HomePanel {
         // Risorse
         ctx.fillStyle = '#ffffff';
         ctx.font = '14px Arial';
-        ctx.fillText(`${this.playerData.credits.toLocaleString()} CREDITS`, x + this.contentWidth - 200, shipY - 40);
-        ctx.fillText(`${this.playerData.uridium.toLocaleString()} URIDIUM`, x + this.contentWidth - 200, shipY - 20);
-        ctx.fillText(`${this.playerData.experience.toLocaleString()} ESPERIENZA`, x + this.contentWidth - 200, shipY);
-        ctx.fillText(`${this.playerData.honor.toLocaleString()} ONORE`, x + this.contentWidth - 200, shipY + 20);
+        ctx.fillText(`${(this.playerData.credits || 0).toLocaleString()} CREDITS`, x + this.contentWidth - 200, shipY - 40);
+        ctx.fillText(`${(this.playerData.uridium || 0).toLocaleString()} URIDIUM`, x + this.contentWidth - 200, shipY - 20);
+        ctx.fillText(`${(this.playerData.experience || 0).toLocaleString()} ESPERIENZA`, x + this.contentWidth - 200, shipY);
+        ctx.fillText(`${(this.playerData.honor || 0).toLocaleString()} ONORE`, x + this.contentWidth - 200, shipY + 20);
         
         // Divider
         ctx.strokeStyle = '#e94560';
@@ -1106,9 +1196,9 @@ export class HomePanel {
     }
     
     // Gestisce i click nelle quest
-    handleQuestClick(x, y) {
-        const contentX = this.x + this.navWidth;
-        const contentY = this.y + 60;
+    handleQuestClick(x, y, panelX, panelY) {
+        const contentX = panelX + this.navWidth;
+        const contentY = panelY + 60;
         
         // Controlla click sulle tab
         const tabY = contentY + 70;
@@ -1289,27 +1379,21 @@ export class HomePanel {
     }
     
     // Metodi per il sistema shop
-    handleShopClick(x, y) {
-        const contentX = this.x + this.navWidth;
-        const contentY = this.y + 60;
-        
-        console.log(`🛒 Shop click - contentX: ${contentX}, contentY: ${contentY}, click: (${x}, ${y})`);
+    handleShopClick(x, y, panelX, panelY) {
+        const contentX = panelX + this.navWidth;
+        const contentY = panelY + 60;
         
         // Controlla click su tab del negozio (priorità alta)
-        const tabY = contentY + 50;
-        const tabWidth = 120;
-        const tabHeight = 35;
-        
-        console.log(`🛒 Tab area - tabY: ${tabY}, tabWidth: ${tabWidth}, tabHeight: ${tabHeight}`);
+        const tabY = contentY + 70; // Corretto per matchare drawShopTabs
+        const tabWidth = 140; // Corretto per matchare drawShopTabs
+        const tabHeight = 40; // Corretto per matchare drawShopTabs
         
         const tabs = ['ammunition', 'laser', 'generators'];
         for (let index = 0; index < tabs.length; index++) {
             const tabId = tabs[index];
             const tabX = contentX + 20 + index * tabWidth;
-            console.log(`🛒 Tab ${tabId} - tabX: ${tabX}, area: (${tabX}, ${tabY}) to (${tabX + tabWidth}, ${tabY + tabHeight})`);
             if (x >= tabX && x <= tabX + tabWidth && 
                 y >= tabY && y <= tabY + tabHeight) {
-                console.log(`✅ Click su tab: ${tabId}`);
                 this.selectedShopCategory = tabId;
                 return true; // Click gestito, esci subito
             }
@@ -1341,22 +1425,15 @@ export class HomePanel {
             const detailsX = contentX + 20 + imageAreaWidth + 20;
             const detailsY = startY + 20;
             
-            console.log(`🛒 Purchase area - detailsX: ${detailsX}, detailsY: ${detailsY}, category: ${this.selectedShopCategory}`);
-            
             if (this.selectedShopCategory === 'ammunition') {
-                console.log(`🛒 Handling ammunition click`);
                 return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'laser') {
-                console.log(`🛒 Handling laser click`);
                 return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'generators') {
-                console.log(`🛒 Handling generators click`);
                 return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'equipment') {
-                console.log(`🛒 Handling equipment click`);
                 return this.handleEquipmentClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'consumables') {
-                console.log(`🛒 Handling consumables click`);
                 return this.handleConsumablesClick(x, y, detailsX, detailsY, items);
             }
         }
@@ -1468,9 +1545,7 @@ export class HomePanel {
     }
     
     buyItemWithQuantity(itemKey, quantity, pricePerUnit) {
-        console.log(`🛒 Tentativo acquisto: ${itemKey}, quantità: ${quantity}, prezzo: ${pricePerUnit}`);
         const totalPrice = pricePerUnit * quantity;
-        console.log(`💰 Prezzo totale: ${totalPrice}, crediti disponibili: ${this.playerData.credits}`);
         
         if (this.playerData.credits >= totalPrice) {
             // Trova il tipo di item
@@ -1763,12 +1838,15 @@ export class HomePanel {
         // Quantità (in alto a sinistra)
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
         ctx.fillText(`Quantità: ${quantity.toLocaleString()}`, x + 20, y + 25);
         
         // Prezzo (in alto a destra)
         ctx.fillStyle = '#e94560';
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
         ctx.fillText(`${totalPrice.toLocaleString()} x Credits`, x + width - 20, y + 25);
         ctx.textAlign = 'left';
         
@@ -1787,7 +1865,8 @@ export class HomePanel {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('COMPRA', buttonX + buttonWidth/2, buttonY + 30); // Centrato nel pulsante più grande
+        ctx.textBaseline = 'middle';
+        ctx.fillText('COMPRA', buttonX + buttonWidth/2, buttonY + 25); // Centrato nel pulsante più grande
         ctx.textAlign = 'left';
     }
     
@@ -2149,7 +2228,8 @@ export class HomePanel {
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(tab.name, tabX + tabWidth/2, y + 26);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tab.name, tabX + tabWidth/2, y + 20);
             ctx.textAlign = 'left';
         });
     }

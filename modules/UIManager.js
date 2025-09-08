@@ -89,8 +89,8 @@ export class UIManager {
             },
             profile: {
                 type: 'profile',
-                icon: 'P',
-                tooltipText: 'Player Profile',
+                icon: 'S',
+                tooltipText: 'Ship',
                 showCount: false
             },
             inventory: {
@@ -111,25 +111,6 @@ export class UIManager {
                 icon: '⚙',
                 tooltipText: 'Settings',
                 showCount: false
-            },
-            stats: {
-                type: 'stats',
-                icon: 'S',
-                tooltipText: 'Statistics',
-                showCount: false
-            },
-            level: {
-                type: 'level',
-                icon: 'L',
-                tooltipText: 'Level & Experience',
-                showCount: true,
-                updateCount: function() {
-                    // Livello del giocatore
-                    if (this.game && this.game.ship && this.game.ship.experience) {
-                        return this.game.ship.experience.getLevelInfo().level;
-                    }
-                    return 1;
-                }
             },
             home: {
                 type: 'home',

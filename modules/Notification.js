@@ -436,6 +436,32 @@ export class Notification {
         this.add(`${enemyType} distrutto!`, 600, 'success'); // Stessa durata delle ricompense
     }
     
+    // Notifica per quest completata
+    questCompleted(questName, rewards = []) {
+        let message = `🎉 Quest "${questName}" completata!`;
+        
+        if (rewards && rewards.length > 0) {
+            message += `\nRicompense:`;
+            rewards.forEach(reward => {
+                const icon = this.getRewardIcon(reward.type);
+                message += `\n${icon} ${reward.quantity} ${reward.description}`;
+            });
+        }
+        
+        this.add(message, 600, 'success');
+    }
+    
+    // Ottiene l'icona per il tipo di ricompensa
+    getRewardIcon(rewardType) {
+        const icons = {
+            'credits': '💰',
+            'uridium': '💎',
+            'honor': '🏆',
+            'experience': '⭐'
+        };
+        return icons[rewardType] || '🎁';
+    }
+    
     // Notifica per esperienza guadagnata
     expGained(expAmount) {
         this.add(`+${expAmount} XP guadagnati!`, 120, 'info');

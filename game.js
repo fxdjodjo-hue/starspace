@@ -30,7 +30,7 @@ import { InventoryItem } from './modules/InventoryItem.js';
 // import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { HomePanel } from './modules/HomePanel.js';
 import { QuestTracker } from './modules/QuestTracker.js';
-import { ModernSkillbar } from './modules/ModernSkillbar.js';
+import { CategorySkillbar } from './modules/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
 import { UIManager } from './modules/UIManager.js';
 import { ProfilePanel } from './modules/ProfilePanel.js';
@@ -62,8 +62,8 @@ class Game {
         this.explosionManager = new ExplosionEffect();
         this.parallaxBackground = new ParallaxBackground(this.width, this.height);
         // this.dreadspireBackground = new DreadspireBackground(); // Rimosso - solo parallax
-        this.modernSkillbar = new ModernSkillbar();
-        this.modernSkillbar.setGame(this);
+        this.categorySkillbar = new CategorySkillbar();
+        this.categorySkillbar.setGame(this);
         this.ambientEffects = new AmbientEffects(this.width, this.height);
         this.rankSystem = new RankSystem();
         this.playerProfile = new PlayerProfile();
@@ -189,27 +189,14 @@ class Game {
             visible: true
         }));
         
-        // Posizione 3: Impostazioni
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 3, startY, 'settings', {
+        // Posizione 3: Home Dashboard
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 3, startY, 'home', {
             size: iconSize,
             visible: true
         }));
         
-        // Posizione 4: Statistiche
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 4, startY, 'stats', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        // Posizione 5: Livello
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 5, startY, 'level', {
-            size: iconSize,
-            visible: true,
-            subText: this.ship.experience.getLevelInfo().level.toString()
-        }));
-        
-        // Posizione 6: Home Dashboard
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 6, startY, 'home', {
+        // Posizione 4: Impostazioni
+        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 4, startY, 'settings', {
             size: iconSize,
             visible: true
         }));
@@ -236,23 +223,13 @@ class Game {
         });
         
         this.uiManager.registerIcon({
-            ...configs.settings,
-            panel: this.settingsPanel
-        });
-        
-        this.uiManager.registerIcon({
-            ...configs.stats,
-            panel: null // Da implementare
-        });
-        
-        this.uiManager.registerIcon({
-            ...configs.level,
-            panel: null // Da implementare
-        });
-        
-        this.uiManager.registerIcon({
             ...configs.home,
             panel: this.homePanel
+        });
+        
+        this.uiManager.registerIcon({
+            ...configs.settings,
+            panel: this.settingsPanel
         });
     }
     
@@ -433,7 +410,7 @@ class Game {
         // Aggiorna la camera (sempre, ma solo se la nave si è mossa)
         this.camera.update(this.ship);
         
-        // Aggiorna la CategorySkillbar
+        // Aggiorna la ModernSkillbar
         this.categorySkillbar.update();
         
         // Aggiorna popup del pannello Home
@@ -581,15 +558,15 @@ class Game {
         }
         
         
-        // Gestisci click nel pannello home (rimosso - gestito da UIManager)
-        // if (this.homePanel.visible && this.input.isMouseJustPressed()) {
-        //     const mousePos = this.input.getMousePosition();
-        //     const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
-        //     if (handled) {
-        //         this.input.resetMouseJustPressed();
-        //         return; // Click gestito dal pannello
-        //     }
-        // }
+        // Gestisci click nel pannello home
+        if (this.homePanel.visible && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
+            if (handled) {
+                this.input.resetMouseJustPressed();
+                return; // Click gestito dal pannello
+            }
+        }
         
         // Gestisci click nel quest tracker (inizio drag)
         if (this.input.isMouseJustPressed() && mouseOverQuestTracker) {
@@ -815,7 +792,7 @@ class Game {
             const mousePos = this.input.getMousePosition();
             
             // Controlla se il mouse è sopra la skillbar
-            if (this.isClickOnModernSkillbar(mousePos.x, mousePos.y)) {
+            if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
                 const movementDistance = this.input.mouse.movementDistance || 0;
                 
                 // Se è navigazione (movimento > 5px), resetta il click e non gestire
@@ -825,7 +802,7 @@ class Game {
                 }
                 
                 // Se è un click effettivo, gestisci il click sulla skillbar
-                const handled = this.handleModernSkillbarClick(mousePos.x, mousePos.y);
+                const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
                 if (handled) {
                     this.input.resetMouseJustPressed();
                     return; // Esci subito per evitare che la nave si muova
@@ -888,6 +865,14 @@ class Game {
         // Gestisci scroll delle quest se il pannello home è aperto
         if (this.input.hasWheelMovement() && this.homePanel.visible && this.homePanel.selectedCategory === 'quest') {
             const handled = this.homePanel.handleQuestScroll(this.input.mouse.wheelDelta);
+            if (handled) {
+                this.input.resetWheelDelta();
+            }
+        }
+        
+        // Gestione scroll per Quest Tracker (solo se mouse è sopra il tracker)
+        if (this.input.hasWheelMovement() && this.questTracker.visible && !this.questTracker.minimized && this.questTracker.mouseOverTracker) {
+            const handled = this.questTracker.handleWheelScroll(this.input.mouse.wheelDelta);
             if (handled) {
                 this.input.resetWheelDelta();
             }
@@ -992,6 +977,10 @@ class Game {
                 if (this.audioManager) {
                     this.audioManager.playCollectingSound();
                 }
+                
+                // Tracking per quest
+                this.ship.bonusBoxesCollected++;
+                console.log(`📦 Bonus Box raccolta! Totale: ${this.ship.bonusBoxesCollected}`);
                 
                 box.collect(this.ship);
                 return false; // Rimuovi la bonus box dopo la raccolta
@@ -1223,13 +1212,8 @@ class Game {
 
         
         // Disegna CategorySkillbar (non influenzata dallo zoom)
-        this.drawModernSkillbar();
+        this.drawCategorySkillbar();
         
-        // Disegna pulsante impostazioni
-        this.drawSettingsButton();
-        
-        // Disegna pulsante Space Station
-        this.drawSpaceStationButton();
         
         // Disegna pannello impostazioni se aperto
         this.settingsPanel.draw(this.ctx);
@@ -1496,14 +1480,14 @@ class Game {
         this.ctx.textAlign = 'left';
     }
     
-    // Disegna ModernSkillbar
-    drawModernSkillbar() {
+    // Disegna CategorySkillbar
+    drawCategorySkillbar() {
         // Posiziona la skillbar in basso al centro
         const x = (this.width - 600) / 2; // 600 è la larghezza della skillbar
         const y = this.height - 80; // 80px dal basso
         
-        this.modernSkillbar.setPosition(x, y);
-        this.modernSkillbar.draw(this.ctx);
+        this.categorySkillbar.setPosition(x, y);
+        this.categorySkillbar.draw(this.ctx);
     }
     
     // Disegna skillbar MMORPG
@@ -1938,13 +1922,13 @@ class Game {
         return false;
     }
     
-    // Gestisce i click sulla ModernSkillbar
-    handleModernSkillbarClick(mouseX, mouseY) {
-        return this.modernSkillbar.handleClick(mouseX, mouseY);
+    // Gestisce i click sulla CategorySkillbar
+    handleCategorySkillbarClick(mouseX, mouseY) {
+        return this.categorySkillbar.handleClick(mouseX, mouseY);
     }
     
     // Controlla se il click è sulla ModernSkillbar
-    isClickOnModernSkillbar(mouseX, mouseY) {
+    isClickOnCategorySkillbar(mouseX, mouseY) {
         // Posizione della skillbar
         const x = (this.width - 600) / 2; // 600 è la larghezza della skillbar
         const y = this.height - 80; // 80px dal basso
@@ -1959,7 +1943,7 @@ class Game {
         let skillbarBottom = y + barHeight + skillbarMargin;
         
         // Se la skillbar è espansa, estendi i bounds per includere le categorie e armi
-        if (this.modernSkillbar.isExpanded) {
+        if (this.categorySkillbar.isExpanded) {
             skillbarBottom = y + barHeight + 200; // Altezza aggiuntiva per categorie e armi
         }
         
@@ -2059,23 +2043,6 @@ class Game {
         }
     }
     
-    // Disegna pulsante impostazioni
-    drawSettingsButton() {
-        const buttonSize = 40;
-        const buttonX = this.width - buttonSize - 20;
-        const buttonY = 20;
-        
-        this.drawStandardIcon(buttonX, buttonY, '⚙');
-    }
-    
-    // Disegna pulsante Space Station
-    drawSpaceStationButton() {
-        const buttonSize = 40;
-        const buttonX = this.width - buttonSize - 20;
-        const buttonY = 70; // Sotto il pulsante impostazioni
-        
-        this.drawStandardIcon(buttonX, buttonY, '🚀');
-    }
     
     // Disegna il sistema icone UI
     drawIconSystemUI() {
@@ -2280,12 +2247,6 @@ class Game {
                         break;
                     case 'settings':
                         this.settingsPanel.toggle();
-                        break;
-                    case 'stats':
-                        this.notifications.add('Statistiche - In sviluppo', 'info');
-                        break;
-                    case 'level':
-                        this.notifications.add(`Livello ${this.ship.experience.getLevelInfo().level}`, 'info');
                         break;
                     case 'home':
                         this.homePanel.toggle();
