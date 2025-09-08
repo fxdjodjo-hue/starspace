@@ -331,8 +331,17 @@ export class MapManager {
                 // Nella mappa X1, mostra solo il portale che porta alla X2
                 return portal.targetMap === 'x2';
             } else if (this.currentMap === 'x2') {
-                // Nella mappa X2, mostra solo il portale che porta alla X1
-                return portal.targetMap === 'x1';
+                // Nella mappa X2, mostra i portali per X1 e X3
+                return portal.targetMap === 'x1' || portal.targetMap === 'x3';
+            } else if (this.currentMap === 'x3') {
+                // Nella mappa X3, mostra i portali per X2 e X4
+                return portal.targetMap === 'x2' || portal.targetMap === 'x4';
+            } else if (this.currentMap === 'x4') {
+                // Nella mappa X4, mostra i portali per X3 e X5
+                return portal.targetMap === 'x3' || portal.targetMap === 'x5';
+            } else if (this.currentMap === 'x5') {
+                // Nella mappa X5, mostra solo il portale che porta alla X4
+                return portal.targetMap === 'x4';
             }
             return false;
         });

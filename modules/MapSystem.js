@@ -345,7 +345,7 @@ export class MapSystem {
     
     
     // Gestisce il click sui nodi
-    handleClick(x, y, currentMap) {
+    handleClick(x, y, currentMap, mapManager) {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         
@@ -358,6 +358,13 @@ export class MapSystem {
                 if (mapData.status !== 'locked' && mapId !== currentMap) {
                     this.selectedMap = mapId;
                     console.log(`Mappa selezionata: ${mapData.name}`);
+                    
+                    // Cambia effettivamente la mappa
+                    if (mapManager) {
+                        mapManager.changeMap(mapId, mapManager.game.ship);
+                        this.isOpen = false; // Chiudi il sistema mappe dopo il cambio
+                    }
+                    
                     return true; // Click gestito
                 } else if (mapId === currentMap) {
                     console.log(`Sei già nella mappa ${mapData.name}`);

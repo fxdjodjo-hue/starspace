@@ -768,7 +768,7 @@ class Game {
         // Gestisci click sui nodi del sistema mappe (PRIORITÀ ALTA)
         if (this.mapSystem.isOpen && this.input.isLeftClickJustReleased()) {
             const mousePos = this.input.getMousePosition();
-            const handled = this.mapSystem.handleClick(mousePos.x, mousePos.y, this.mapManager.currentMap);
+            const handled = this.mapSystem.handleClick(mousePos.x, mousePos.y, this.mapManager.currentMap, this.mapManager);
             if (handled) {
                 this.input.resetLeftClickReleased();
                 return; // Esce dalla funzione per evitare altri gestori
