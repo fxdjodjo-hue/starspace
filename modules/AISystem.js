@@ -225,38 +225,25 @@ export class AISystem {
         const dy = this.target.y - this.enemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Distanza minima di sicurezza (250 pixel) - molto più lontano
-        const minDistance = 250;
-        const maxDistance = 400; // Distanza massima prima di avvicinarsi
+        // Distanza minima di sicurezza (150 pixel)
+        const minDistance = 150;
         
-        if (distance > maxDistance) {
-            // Se è troppo lontano, avvicinati
+        if (distance > minDistance) {
+            // Se è più lontano della distanza minima, avvicinati sempre
             const moveX = (dx / distance) * this.enemy.speed;
             const moveY = (dy / distance) * this.enemy.speed;
             
             this.enemy.x += moveX;
             this.enemy.y += moveY;
-        } else if (distance > minDistance) {
-            // Se è nella zona di comfort, avvicinati
-            const moveX = (dx / distance) * this.enemy.speed;
-            const moveY = (dy / distance) * this.enemy.speed;
-            
-            this.enemy.x += moveX;
-            this.enemy.y += moveY;
-        } else if (distance < minDistance - 50) {
-            // Se è troppo vicino, allontanati
-            const moveX = -(dx / distance) * this.enemy.speed;
-            const moveY = -(dy / distance) * this.enemy.speed;
+        } else if (distance < minDistance - 20) {
+            // Se è troppo vicino, allontanati leggermente
+            const moveX = -(dx / distance) * this.enemy.speed * 0.5; // Velocità dimezzata quando si allontana
+            const moveY = -(dy / distance) * this.enemy.speed * 0.5;
             
             this.enemy.x += moveX;
             this.enemy.y += moveY;
         }
-        // Se è nella distanza giusta (200-250px), resta fermo
-        // Ma se è troppo lontano, cerca attivamente il giocatore
-        if (distance > maxDistance + 100) {
-            // Se è estremamente lontano, cerca attivamente
-            this.searchForPlayer();
-        }
+        // Se è nella distanza giusta (130-150px), resta fermo e spara
     }
     
     moveAwayFromTarget() {

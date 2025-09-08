@@ -26,13 +26,14 @@ export class Renderer {
             return;
         }
         
-        // Usa lo sprite animato se disponibile, altrimenti fallback al triangolo
+        // Disegna sempre il range di attacco se attivo
+        ship.draw(this.ctx, camera);
+        
+        // Poi disegna lo sprite della nave sopra
         if (ship.sprite && ship.sprite.isLoaded) {
             const screenPos = camera.worldToScreen(ship.x, ship.y);
             const floatingY = Math.sin(ship.floatingOffset) * ship.floatingAmplitude;
             ship.sprite.draw(this.ctx, screenPos.x, screenPos.y, ship.rotation, ship.size, floatingY);
-        } else {
-            ship.draw(this.ctx, camera);
         }
         
         // Disegna effetto riparazione se attivo
