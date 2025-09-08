@@ -32,6 +32,24 @@ export class MapManager {
         
         // Portale da X2 a X1 (lato sinistro di X2)
         this.portals.push(new Portal(500, 5000, 'x1', 14000, 5000, this.game));
+        
+        // Portale da X2 a X3 (lato destro di X2)
+        this.portals.push(new Portal(15000, 5000, 'x3', 1000, 5000, this.game));
+        
+        // Portale da X3 a X2 (lato sinistro di X3)
+        this.portals.push(new Portal(500, 5000, 'x2', 14000, 5000, this.game));
+        
+        // Portale da X3 a X4 (lato basso di X3)
+        this.portals.push(new Portal(8000, 15000, 'x4', 8000, 1000, this.game));
+        
+        // Portale da X4 a X3 (lato alto di X4)
+        this.portals.push(new Portal(8000, 500, 'x3', 8000, 14000, this.game));
+        
+        // Portale da X4 a X5 (lato destro di X4)
+        this.portals.push(new Portal(15000, 5000, 'x5', 1000, 5000, this.game));
+        
+        // Portale da X5 a X4 (lato sinistro di X5)
+        this.portals.push(new Portal(500, 5000, 'x4', 14000, 5000, this.game));
     }
     
     // Carica istanza della mappa corrente

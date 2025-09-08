@@ -327,7 +327,7 @@ export class AudioManager {
         this.loadSound('smartbomb', 'skills/smartbomb/weird-space-sound-03-344943.mp3');
         this.loadSound('fastrepair', 'skills/fastrepair/fastrepair.mp3'); // Suono FastRepair
         this.loadSound('emp', 'skills/emp/emp.mp3'); // Suono EMP
-        this.loadSound('teleport', 'ZetaGate/tpsounds/portalSounds.mp3'); // Suono teletrasporto
+        this.loadSound('teleport', 'ZetaGate/tpsounds/1_portalDone.mp3'); // Suono teletrasporto
         this.loadSound('portalJump', 'ZetaGate/tpsounds/2_portalJump0.mp3'); // Suono salto portale
         this.loadSound('portalDone', 'ZetaGate/tpsounds/1_portalDone.mp3'); // Suono arrivo portale
         

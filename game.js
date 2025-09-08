@@ -399,12 +399,12 @@ class Game {
         
         // Aggiorna la nave solo se nessun evento UI è stato gestito
         if (!uiEventHandled) {
-            console.log('🚀 NAVE AGGIORNATA - uiEventHandled:', uiEventHandled);
+            // console.log('🚀 NAVE AGGIORNATA - uiEventHandled:', uiEventHandled);
             this.ship.update();
             this.ship.updateSprite();
             this.ship.updateTrail();
         } else {
-            console.log('🚫 NAVE NON AGGIORNATA - uiEventHandled:', uiEventHandled);
+            // console.log('🚫 NAVE NON AGGIORNATA - uiEventHandled:', uiEventHandled);
         }
         
         // Aggiorna la camera (sempre, ma solo se la nave si è mossa)

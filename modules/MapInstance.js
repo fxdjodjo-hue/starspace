@@ -48,6 +48,45 @@ export class MapInstance {
                 enemyCount: 20,
                 bonusBoxCount: 8,
                 asteroidCount: 10
+            },
+            x3: { 
+                width: 16000, 
+                height: 10000,
+                background: 'dreadspire',
+                name: 'X3 Sector',
+                description: 'Settore asteroidi - Zona ricca di risorse',
+                hasSpaceStation: false,
+                hasAliens: false, // Solo asteroidi
+                npcType: null,
+                enemyCount: 0,
+                bonusBoxCount: 12, // Più bonus box per compensare
+                asteroidCount: 25 // Molti più asteroidi
+            },
+            x4: { 
+                width: 16000, 
+                height: 10000,
+                background: 'dreadspire',
+                name: 'X4 Sector',
+                description: 'Settore minerario - Asteroidi preziosi',
+                hasSpaceStation: false,
+                hasAliens: false, // Solo asteroidi
+                npcType: null,
+                enemyCount: 0,
+                bonusBoxCount: 15, // Ancora più bonus box
+                asteroidCount: 30 // Asteroidi rari
+            },
+            x5: { 
+                width: 16000, 
+                height: 10000,
+                background: 'dreadspire',
+                name: 'X5 Sector',
+                description: 'Settore estremo - Zona più pericolosa',
+                hasSpaceStation: false,
+                hasAliens: false, // Solo asteroidi per ora
+                npcType: null,
+                enemyCount: 0,
+                bonusBoxCount: 20, // Massimo bonus box
+                asteroidCount: 35 // Asteroidi estremi
             }
         };
         

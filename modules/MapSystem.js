@@ -20,13 +20,49 @@ export class MapSystem {
                 name: 'X2',
                 fullName: 'Settore Secondario', 
                 description: 'Zona avanzata con Streuner Elite - Enhanced aliens',
-                connections: ['x1'],
+                connections: ['x1', 'x3'],
                 npcType: 'npc_x2',
                 color: '#ff4444',
                 status: 'accessible',
                 position: { x: 500, y: 250 },
                 level: 2,
                 difficulty: 'Medio'
+            },
+            'x3': {
+                name: 'X3',
+                fullName: 'Settore Asteroidi',
+                description: 'Zona ricca di asteroidi - Nessun nemico, solo risorse',
+                connections: ['x2', 'x4'],
+                npcType: null, // Nessun NPC, solo asteroidi
+                color: '#ffa500',
+                status: 'accessible',
+                position: { x: 800, y: 250 },
+                level: 3,
+                difficulty: 'Facile'
+            },
+            'x4': {
+                name: 'X4',
+                fullName: 'Settore Minerario',
+                description: 'Zona mineraria avanzata - Asteroidi preziosi',
+                connections: ['x3', 'x5'],
+                npcType: null, // Nessun NPC, solo asteroidi
+                color: '#ff8c00',
+                status: 'accessible',
+                position: { x: 200, y: 450 },
+                level: 4,
+                difficulty: 'Medio'
+            },
+            'x5': {
+                name: 'X5',
+                fullName: 'Settore Estremo',
+                description: 'Zona più lontana - Asteroidi rari e pericolosi',
+                connections: ['x4'],
+                npcType: null, // Nessun NPC, solo asteroidi
+                color: '#ff6347',
+                status: 'accessible',
+                position: { x: 500, y: 450 },
+                level: 5,
+                difficulty: 'Difficile'
             }
         };
     }

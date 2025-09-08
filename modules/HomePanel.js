@@ -364,10 +364,10 @@ export class HomePanel extends UIComponent {
             }
         });
         
-        // Debug per verificare il tracking
-        if (this.game.ship) {
-            console.log(`🔍 Ship tracking - Streuner: ${this.game.ship.streunerKilled}, Bonus Box: ${this.game.ship.bonusBoxesCollected}`);
-        }
+        // Debug per verificare il tracking (rimosso per evitare spam console)
+        // if (this.game.ship) {
+        //     console.log(`🔍 Ship tracking - Streuner: ${this.game.ship.streunerKilled}, Bonus Box: ${this.game.ship.bonusBoxesCollected}`);
+        // }
     }
     
     // Aggiorna una condizione specifica di una quest

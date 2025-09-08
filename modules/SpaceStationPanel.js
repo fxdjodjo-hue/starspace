@@ -476,9 +476,10 @@ export class SpaceStationPanel {
         const currentSpeed = ship.getCurrentSpeed();
         const currentHP = ship.getCurrentHP();
         const maxHP = ship.maxHP;
-        const currentLevel = ship.experience.currentLevel;
-        const currentExp = ship.experience.currentExp;
-        const expToNext = ship.experience.getExpToNextLevel();
+        const levelInfo = ship.getLevelInfo();
+        const currentLevel = levelInfo.level;
+        const currentExp = levelInfo.exp;
+        const expToNext = levelInfo.expNeededForLevel;
         
         // Layout a due colonne
         const leftCol = x + 20;
