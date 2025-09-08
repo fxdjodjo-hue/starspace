@@ -114,16 +114,18 @@ export class Notification {
             isGrouped: isGrouped,
             groupedMessages: isGrouped ? [message] : null,
             // Animazioni
-            alpha: 0,
-            scale: 0.8,
-            slideX: -50,
+            alpha: 1, // Inizia visibile
+            scale: 1, // Scala normale
+            slideX: 0, // No slide
             // Posizione
-            targetY: 0,
-            currentY: 0,
+            targetY: 180, // Posizione iniziale sotto le zone
+            currentY: 180,
             // Effetti
             glowIntensity: 0,
             pulsePhase: 0
         };
+        
+        console.log('📝 Creata notifica:', notification);
         
         this.notifications.push(notification);
         console.log(`Notifica: ${message}`);
@@ -183,6 +185,15 @@ export class Notification {
     
     // Disegna una singola notifica con stile minimalista
     drawSingleNotification(ctx, notification, index) {
+        console.log('🎨 Disegno notifica:', {
+            message: notification.message,
+            alpha: notification.alpha,
+            currentY: notification.currentY,
+            scale: notification.scale,
+            slideX: notification.slideX,
+            type: notification.type
+        });
+        
         // Salva stato del canvas
         ctx.save();
         

@@ -16,7 +16,8 @@ export class CategorySkillbar {
                 items: [
                     { id: 'laser_x1', name: 'X1', icon: 'X1', cooldown: 0, canUse: () => true },
                     { id: 'laser_x2', name: 'X2', icon: 'X2', cooldown: 0, canUse: () => true },
-                    { id: 'laser_x3', name: 'X3', icon: 'X3', cooldown: 0, canUse: () => true }
+                    { id: 'laser_x3', name: 'X3', icon: 'X3', cooldown: 0, canUse: () => true },
+                    { id: 'laser_sab', name: 'SAB', icon: 'SAB', cooldown: 0, canUse: () => true }
                 ]
             },
             missili: {
@@ -343,6 +344,11 @@ export class CategorySkillbar {
             case 'laser_x3':
                 if (this.game.ship.selectLaser('x3')) {
                     this.game.notifications.add('X3 selezionato!', 200, 'info');
+                }
+                break;
+            case 'laser_sab':
+                if (this.game.ship.selectLaser('sab')) {
+                    this.game.notifications.add('SAB selezionato!', 200, 'info');
                 }
                 break;
             

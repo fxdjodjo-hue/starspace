@@ -2,7 +2,6 @@
 import { Projectile } from './Projectile.js';
 import { Missile } from './Missile.js';
 // import { Experience } from './Experience.js'; // Integrato nella Nave
-import { UpgradeManager } from './UpgradeManager.js';
 import { RewardManager } from './RewardManager.js';
 import { ShipSprite } from './ShipSprite.js';
 import { MissileSprite } from './MissileSprite.js';
@@ -45,7 +44,7 @@ export class Ship {
 
         
         // Sistema di combattimento con proiettili
-        this.maxHP = 50; // Valore base più basso
+        this.maxHP = 1000; // HP base della nave
         this.hp = this.maxHP;
         this.isDead = false; // Traccia se la nave è morta
         this.active = true; // Per compatibilità con AI system
@@ -142,7 +141,13 @@ export class Ship {
             credits: 100000, // Crediti di test per acquisti
             uridium: 5000,   // Uridium di test
             honor: 0,
-            experience: 0
+            experience: 0,
+            starEnergy: 100  // Energia iniziale
+        };
+        
+        // Configurazione StarEnergy
+        this.starEnergyConfig = {
+            max: 1000  // Massima energia accumulabile
         };
         
         // Sistema di livelli integrato
@@ -174,8 +179,6 @@ export class Ship {
         this.uridium = 5000;   // Uridium di test
         
         // Sistema di potenziamenti
-        this.upgradeManager = new UpgradeManager();
-        
         // Sistema reward centralizzato
         this.rewardManager = new RewardManager();
         
@@ -336,31 +339,9 @@ export class Ship {
             ctx.restore();
         }
 
-        ctx.save();
-        // Applica la camera per centrare la nave sullo schermo
+        // Disegna lo sprite della nave con effetto fluttuante
         const floatingY = Math.sin(this.floatingOffset) * this.floatingAmplitude;
-        ctx.translate(this.x - camera.x, this.y - camera.y + floatingY);
-        ctx.rotate(this.rotation);
-        
-        // Disegna la nave spaziale
-        ctx.fillStyle = '#4a90e2';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        
-        // Corpo principale (triangolo)
-        ctx.beginPath();
-        ctx.moveTo(this.size/2, 0);
-        ctx.lineTo(-this.size/2, -this.size/3);
-        ctx.lineTo(-this.size/2, this.size/3);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        
-        // Motori posteriori
-        ctx.fillStyle = '#ff8800';
-        ctx.fillRect(-this.size/2 - 5, -this.size/4, 5, this.size/2);
-        
-        ctx.restore();
+        this.sprite.draw(ctx, this.x - camera.x, this.y - camera.y, this.rotation, this.size, floatingY);
         
         // Disegna effetto riparazione se attivo
         if (this.isRepairing) {
@@ -560,6 +541,12 @@ export class Ship {
         
         // Determina se stiamo usando munizioni SAB
         const isSAB = this.selectedLaser === 'sab';
+        console.log('🎯 Tipo laser selezionato:', 
+            JSON.stringify({
+                selectedLaser: this.selectedLaser,
+                isSAB: isSAB
+            }, null, 2)
+        );
         
         // Controlla se ha laser equipaggiati
         const totalLasers = this.getTotalEquippedLasers();
@@ -599,16 +586,9 @@ export class Ship {
         // Offset laterali per i due proiettili
         const lateralOffset = 35; // Distanza laterale dal centro della nave
         
-        // Primo proiettile (sinistra)
+        // Crea un proiettile visivo a sinistra (danno 0)
         const leftOffsetX = this.x + Math.cos(shipDirection - Math.PI/2) * lateralOffset;
         const leftOffsetY = this.y + Math.sin(shipDirection - Math.PI/2) * lateralOffset;
-        
-        console.log('🚀 Creazione Proiettile 1:', {
-            damage: this.projectileDamage / 2,
-            totalShipDamage: this.projectileDamage,
-            position: { x: leftOffsetX, y: leftOffsetY },
-            target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
-        });
         
         const projectile1 = new Projectile(
             leftOffsetX, 
@@ -616,20 +596,14 @@ export class Ship {
             this.selectedTarget.x, 
             this.selectedTarget.y,
             this.projectileSpeed,
-            isSAB ? 0 : this.projectileDamage, // Se SAB, nessun danno
-            isSAB // Flag per Shield Absorber
+            0, // Nessun danno (solo visivo)
+            isSAB,
+            this.selectedLaser
         );
         
-        // Secondo proiettile (destra)
+        // Crea un proiettile visivo a destra (danno 0)
         const rightOffsetX = this.x + Math.cos(shipDirection + Math.PI/2) * lateralOffset;
         const rightOffsetY = this.y + Math.sin(shipDirection + Math.PI/2) * lateralOffset;
-        
-        console.log('🚀 Creazione Proiettile 2:', {
-            damage: this.projectileDamage / 2,
-            totalShipDamage: this.projectileDamage,
-            position: { x: rightOffsetX, y: rightOffsetY },
-            target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
-        });
         
         const projectile2 = new Projectile(
             rightOffsetX, 
@@ -637,12 +611,27 @@ export class Ship {
             this.selectedTarget.x, 
             this.selectedTarget.y,
             this.projectileSpeed,
-            isSAB ? 0 : 0, // Sempre 0 danno (proiettile visivo)
-            isSAB // Flag per Shield Absorber
+            0, // Nessun danno (solo visivo)
+            isSAB,
+            this.selectedLaser
         );
+        
+        // Crea un proiettile invisibile al centro con il danno totale
+        const centerProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.selectedTarget.x,
+            this.selectedTarget.y,
+            this.projectileSpeed,
+            isSAB ? 0 : this.projectileDamage, // Danno totale
+            isSAB,
+            this.selectedLaser
+        );
+        centerProjectile.isInvisible = true; // Flag per non renderizzare il proiettile
         
         this.projectiles.push(projectile1);
         this.projectiles.push(projectile2);
+        this.projectiles.push(centerProjectile);
         
         // Consuma munizioni per il laser selezionato
         this.consumeAmmunition('laser', this.selectedLaser, 2); // 2 munizioni per i due proiettili
@@ -748,35 +737,42 @@ export class Ship {
         // Controlla collisioni proiettili
         let totalDamageThisFrame = 0;
         let hitProjectiles = [];
+        let sabProjectiles = [];
 
         // Prima raccogliamo tutti i proiettili che colpiscono
         this.projectiles.forEach(projectile => {
             if (projectile.checkCollision(this.selectedTarget)) {
-                console.log('💥 Collisione Proiettile:', {
-                    proiettileDamage: projectile.damage,
-                    damageFrameCorrente: totalDamageThisFrame,
-                    isSAB: projectile.isSAB,
-                    position: { x: projectile.x, y: projectile.y },
-                    target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
-                });
-                
                 if (projectile.isSAB) {
-                    // Per SAB, passa il proiettile per gestire l'assorbimento dello scudo
-                    this.selectedTarget.takeDamage(0, projectile);
+                    sabProjectiles.push(projectile);
                 } else {
                     totalDamageThisFrame += projectile.damage;
+                    hitProjectiles.push(projectile);
                 }
-                hitProjectiles.push(projectile);
             }
         });
 
-        // Se abbiamo colpito con almeno un proiettile
+        // Gestisci prima i proiettili SAB
+        sabProjectiles.forEach(projectile => {
+            this.selectedTarget.takeDamage(0, projectile);
+        });
+
+        // Se abbiamo colpito con proiettili normali
         if (totalDamageThisFrame > 0) {
             console.log('🎯 Applicazione Danno Totale:', {
                 dannoTotale: totalDamageThisFrame,
                 proiettiliColpiti: hitProjectiles.length,
                 targetHP: this.selectedTarget.hp
             });
+            
+            // Mostra il numero di danno totale una sola volta
+            if (window.gameInstance && window.gameInstance.damageNumbers) {
+                window.gameInstance.damageNumbers.addNumber(
+                    this.selectedTarget.x, 
+                    this.selectedTarget.y - 20, 
+                    totalDamageThisFrame, 
+                    'outgoing'
+                );
+            }
             
             // Applica il danno una volta sola
             this.selectedTarget.takeDamage(totalDamageThisFrame);
@@ -834,7 +830,17 @@ export class Ship {
             const missile = this.missiles[i];
             if (missile.checkCollision(this.selectedTarget)) {
                 // Missile colpisce il target
-                this.selectedTarget.takeDamage(this.missileDamage);
+                this.selectedTarget.takeDamage(this.missileDamage, null);
+                
+                // Mostra il numero di danno per il missile
+                if (window.gameInstance && window.gameInstance.damageNumbers) {
+                    window.gameInstance.damageNumbers.addNumber(
+                        this.selectedTarget.x, 
+                        this.selectedTarget.y - 20, 
+                        this.missileDamage, 
+                        'outgoing'
+                    );
+                }
                 
                 // Aggiorna il tempo dell'ultimo combattimento (stiamo infliggendo danno)
                 this.lastCombatTime = Date.now();
@@ -1111,6 +1117,12 @@ export class Ship {
         }
         return false;
     }
+    
+    // Equipaggia cannone (compatibilità con negozio)
+    equipCannon(cannonType, amount = 1) {
+        // Per ora i cannoni sono gestiti come laser
+        return this.equipLaser(cannonType, amount);
+    }
 
     unequipLaser(laserType, amount = 1) {
         if (this.equippedLasers.hasOwnProperty(laserType) && this.equippedLasers[laserType] >= amount) {
@@ -1119,6 +1131,21 @@ export class Ship {
             return true;
         }
         return false;
+    }
+
+    // Gestione generatori: ogni generatore equipaggiato fornisce +2 speed
+    equipGenerator(generatorType, amount = 1) {
+        // Applica bonus velocità
+        const speedBonusPerGen = 2;
+        this.speed += speedBonusPerGen * amount;
+        return true;
+    }
+    
+    unequipGenerator(generatorType, amount = 1) {
+        const speedBonusPerGen = 2;
+        const baseSpeed = 2; // Velocità base della nave
+        this.speed = Math.max(baseSpeed, this.speed - speedBonusPerGen * amount);
+        return true;
     }
 
     getEquippedLasers(laserType) {
@@ -1141,8 +1168,12 @@ export class Ship {
         }
         
         // Moltiplica per il tipo di munizioni selezionato
+        // Gestisci SAB separatamente, non ha un moltiplicatore di danno
+        if (this.selectedLaser === 'sab') {
+            return 0; // SAB non fa danno, solo assorbe scudo
+        }
         const multiplier = parseInt(this.selectedLaser.slice(1)); // x1 -> 1, x2 -> 2, x3 -> 3
-        return totalDamage * multiplier;
+        return totalDamage * (isNaN(multiplier) ? 1 : multiplier); // Fallback a 1 se non è un numero valido
     }
     
     setResource(type, amount) {
@@ -1235,32 +1266,10 @@ export class Ship {
         return exp.toString();
     }
     
-    // Ottieni valori aggiornati dalle statistiche
-    getCurrentDamage() {
-        const baseDamage = this.upgradeManager.getValue('damage');
-        const laserDamage = this.getTotalLaserDamage();
-        return baseDamage + laserDamage;
-    }
-    
-    getCurrentFireRate() {
-        return this.upgradeManager.getValue('fireRate');
-    }
-    
-    getCurrentHP() {
-        return this.upgradeManager.getValue('hp');
-    }
-    
-    getCurrentSpeed() {
-        return this.upgradeManager.getValue('speed');
-    }
-    
     // Aggiorna i valori della nave dalle statistiche
     updateStats() {
-        this.projectileDamage = this.getCurrentDamage();
-        this.maxHP = this.getCurrentHP();
-        this.speed = this.getCurrentSpeed();
+        // Mantiene i valori base
         this.hp = Math.min(this.hp, this.maxHP); // Non superare il max HP
-        this.maxShield = this.getCurrentShield();
         this.shield = Math.min(this.shield, this.maxShield); // Non superare il max scudo
     }
     
@@ -1363,7 +1372,7 @@ export class Ship {
     
     // Ottieni valore attuale dello scudo
     getCurrentShield() {
-        return this.upgradeManager.getValue('shield');
+        return this.maxShield; // Ritorna il valore base
     }
     
     // Sistema di riparazione automatica
@@ -1399,10 +1408,21 @@ export class Ship {
     
     // Sistema di selezione armi
     selectLaser(laserType) {
+        // Normalizza il tipo di laser
+        const normalizedType = laserType.trim().toLowerCase();
+        
         // Verifica se il tipo di munizioni esiste
-        if (this.ammunition.laser.hasOwnProperty(laserType)) {
-            this.selectedLaser = laserType;
+        if (this.ammunition.laser.hasOwnProperty(normalizedType)) {
+            this.selectedLaser = normalizedType;
             this.applyWeaponConfigs();
+            
+            // Log per debug
+            console.log('🔫 Laser selezionato:', {
+                original: laserType,
+                normalized: normalizedType,
+                current: this.selectedLaser
+            });
+            
             return true;
         }
         return false;
@@ -1545,5 +1565,42 @@ export class Ship {
     
     get level() {
         return this.experience ? this.experience.level : 1;
+    }
+
+    // Sistema StarEnergy
+    useStarEnergy(amount) {
+        const currentEnergy = this.getResource('starEnergy');
+        if (currentEnergy >= amount) {
+            this.addResource('starEnergy', -amount);
+            this.starEnergyConfig.lastUseTime = Date.now();
+            return true;
+        }
+        
+        // Notifica energia insufficiente
+        if (this.game && this.game.notifications) {
+            this.game.notifications.add("⚡ StarEnergy insufficiente!", "warning");
+        }
+        return false;
+    }
+
+    // Metodo per aggiungere StarEnergy (ad esempio dalle bonus box)
+    addStarEnergy(amount) {
+        const currentEnergy = this.getResource('starEnergy');
+        const newAmount = Math.min(currentEnergy + amount, this.starEnergyConfig.max);
+        this.setResource('starEnergy', newAmount);
+        
+        // Notifica il giocatore
+        if (this.game && this.game.notifications) {
+            this.game.notifications.add(`⚡ +${amount} StarEnergy`, "reward");
+        }
+        
+        return newAmount - currentEnergy; // Ritorna quanto effettivamente aggiunto
+    }
+
+    getStarEnergyInfo() {
+        return {
+            current: this.getResource('starEnergy'),
+            max: this.starEnergyConfig.max
+        };
     }
 }

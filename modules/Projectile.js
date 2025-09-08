@@ -1,6 +1,6 @@
 // Modulo Projectile per i proiettili del combattimento
 export class Projectile {
-    constructor(x, y, targetX, targetY, speed = 8, damage = 25, isSAB = false) {
+    constructor(x, y, targetX, targetY, speed = 8, damage = 25, isSAB = false, laserType = 'x1') {
         this.x = x;
         this.y = y;
         this.targetX = targetX;
@@ -10,6 +10,7 @@ export class Projectile {
         this.active = true;
         this.radius = 3;
         this.isSAB = isSAB; // Flag per proiettili Shield Absorber
+        this.laserType = laserType ? laserType.toLowerCase() : 'x1'; // Tipo di laser (x1, x2, x3)
         
         // Calcola la direzione del proiettile
         const dx = targetX - x;
@@ -25,10 +26,10 @@ export class Projectile {
         }
         
         // Vita del proiettile (per evitare che voli all'infinito)
-        this.maxLifetime = 120; // 2 secondi a 60 FPS
+        this.maxLifetime = 60; // 1 secondo a 60 FPS
         this.lifetime = 0;
         
-        // Carica la texture del laser
+        // Carica la texture base del laser
         this.texture = new Image();
         this.texture.src = 'laser1.png';
         this.textureLoaded = false;
@@ -70,7 +71,7 @@ export class Projectile {
     }
     
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active || this.isInvisible) return;
         
         // Posizione relativa alla camera
         const screenX = this.x - camera.x;
@@ -91,27 +92,109 @@ export class Projectile {
             const laserWidth = 48;
             const laserHeight = 18;
             
+            // Determina il colore del laser
+            let color;
+            if (this.isSAB) {
+                color = '#4A90E2'; // Azzurro per SAB
+            } else {
+                switch(this.laserType) {
+                    case 'x1':
+                        color = '#FF0000'; // Rosso
+                        break;
+                    case 'x2':
+                        color = '#0000FF'; // Blu
+                        break;
+                    case 'x3':
+                        color = '#00FF00'; // Verde
+                        break;
+                    default:
+                        color = '#FF0000'; // Default rosso
+                }
+            }
+            
+            // Applica il colore alla texture
+            ctx.globalCompositeOperation = 'source-over';
             ctx.drawImage(this.texture, -laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
+            
+            // Applica il colore come overlay
+            ctx.globalCompositeOperation = 'source-atop';
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.8; // Regola l'intensità del colore
+            ctx.fillRect(-laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
+            
+            // Aggiungi un glow del colore
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(-laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
+            
+            // Ripristina le impostazioni
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
         } else {
             // Fallback: disegna un proiettile semplice
+            // Colori per tipo di laser
+            let color;
+            console.log('🎨 Rendering proiettile:', 
+                JSON.stringify({
+                    laserType: this.laserType,
+                    isSAB: this.isSAB
+                }, null, 2)
+            );
+            if (this.isSAB) {
+                color = '#4A90E2'; // Azzurro per SAB
+            } else {
+                // Rimuovi eventuali spazi e converti in minuscolo
+                const type = this.laserType.trim().toLowerCase();
+                switch(type) {
+                    case 'x1':
+                        color = '#FF0000'; // Rosso
+                        break;
+                    case 'x2':
+                        color = '#0000FF'; // Blu
+                        break;
+                    case 'x3':
+                        color = '#00FF00'; // Verde
+                        break;
+                    default:
+                        console.log('⚠️ Tipo laser non riconosciuto:', this.laserType, 'normalizzato a:', type);
+                        color = '#FF0000'; // Default rosso
+                }
+            }
+
             // Effetto luminoso
-            ctx.shadowColor = this.isSAB ? '#4A90E2' : '#ff0000';
+            ctx.shadowColor = color;
             ctx.shadowBlur = 8;
             
-            // Proiettile principale (blu per SAB, rosso per laser normale)
-            ctx.fillStyle = this.isSAB ? '#4A90E2' : '#ff0000';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
-            ctx.fill();
+            if (this.isSAB) {
+                // Per SAB disegna cerchi concentrici
+                for (let i = 0; i < 3; i++) {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, this.radius + (i * 3), 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            } else {
+                // Proiettile principale
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
             
-            // Nucleo più luminoso
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, this.radius * 0.6, 0, Math.PI * 2);
-            ctx.fill();
+            // Nucleo più luminoso (solo per non-SAB)
+            if (!this.isSAB) {
+                ctx.fillStyle = color; // Usa lo stesso colore del proiettile principale
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, this.radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
             
             // Scia del proiettile
-            ctx.strokeStyle = this.isSAB ? '#4A90E2' : '#ff0000';
+            ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.globalAlpha = 0.6;
             
@@ -145,23 +228,99 @@ export class Projectile {
             const laserWidth = 48;
             const laserHeight = 18;
             
+            // Determina il colore del laser
+            let color;
+            if (this.isSAB) {
+                color = '#4A90E2'; // Azzurro per SAB
+            } else {
+                switch(this.laserType) {
+                    case 'x1':
+                        color = '#FF0000'; // Rosso
+                        break;
+                    case 'x2':
+                        color = '#0000FF'; // Blu
+                        break;
+                    case 'x3':
+                        color = '#00FF00'; // Verde
+                        break;
+                    default:
+                        color = '#FF0000'; // Default rosso
+                }
+            }
+            
+            // Applica il colore alla texture
+            ctx.globalCompositeOperation = 'source-over';
             ctx.drawImage(this.texture, -laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
+            
+            // Applica il colore come overlay
+            ctx.globalCompositeOperation = 'source-atop';
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.8; // Regola l'intensità del colore
+            ctx.fillRect(-laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
+            
+            // Aggiungi un glow del colore
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(-laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
+            
+            // Ripristina le impostazioni
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
         } else {
-            // Fallback: disegna un proiettile semplice (rosso come il laser)
-            ctx.shadowColor = '#ff0000';
+            // Fallback: disegna un proiettile semplice
+            // Determina il colore in base al tipo di laser
+            let color;
+            if (this.isSAB) {
+                color = '#4A90E2'; // Azzurro per SAB
+            } else {
+                // Rimuovi eventuali spazi e converti in minuscolo
+                const type = this.laserType.trim().toLowerCase();
+                switch(type) {
+                    case 'x1':
+                        color = '#FF0000'; // Rosso
+                        break;
+                    case 'x2':
+                        color = '#0000FF'; // Blu
+                        break;
+                    case 'x3':
+                        color = '#00FF00'; // Verde
+                        break;
+                    default:
+                        console.log('⚠️ Tipo laser non riconosciuto:', this.laserType, 'normalizzato a:', type);
+                        color = '#FF0000'; // Default rosso
+                }
+            }
+
+            ctx.shadowColor = color;
             ctx.shadowBlur = 8;
             
-            ctx.fillStyle = '#ff0000';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fill();
+            if (this.isSAB) {
+                // Per SAB disegna cerchi concentrici
+                for (let i = 0; i < 3; i++) {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + (i * 3), 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            } else {
+                // Proiettile principale
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Nucleo più luminoso
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
             
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.strokeStyle = '#ff0000';
+            ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.globalAlpha = 0.6;
             

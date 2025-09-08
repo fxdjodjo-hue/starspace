@@ -72,6 +72,12 @@ export class FastRepair {
             return false;
         }
 
+        // Costo in StarEnergy
+        const energyCost = 50;
+        if (!ship.useStarEnergy(energyCost)) {
+            return false;
+        }
+
         this.isActive = true;
         this.lastUsedTime = Date.now();
         this.activationTime = Date.now();

@@ -42,6 +42,12 @@ export class Leech {
             return false;
         }
 
+        // Costo in StarEnergy
+        const energyCost = 40;
+        if (!ship.useStarEnergy(energyCost)) {
+            return false;
+        }
+
         this.isActive = true;
         this.lastUsedTime = Date.now();
         this.activationTime = Date.now();

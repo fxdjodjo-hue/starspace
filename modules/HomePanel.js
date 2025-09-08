@@ -1,6 +1,7 @@
 import { UIComponent } from './UIComponent.js';
 import { ShopTab } from './ShopTab.js';
 import { ShopButton } from './ShopButton.js';
+import { InventoryItem } from './InventoryItem.js';
 
 // Pannello Home - Interfaccia principale del giocatore (Online-Ready)
 export class HomePanel extends UIComponent {
@@ -11,6 +12,20 @@ export class HomePanel extends UIComponent {
         this.isOpen = false; // Aggiunta proprietà isOpen per compatibilità
         this.selectedCategory = 'info';
         this.lastSelectedCategory = 'info';
+        
+        // Cronologia delle conversioni StarEnergy
+        this.conversionHistory = [];
+        this.maxHistoryLength = 50; // Mantiene gli ultimi 50 risultati
+        this.historyScrollOffset = 0; // Offset per lo scroll della cronologia
+
+        // Handler per lo scroll della cronologia
+        this.handleWheel = (e) => {
+            if (this.selectedCategory !== 'starenergy') return;
+            
+            const maxScroll = Math.max(0, this.conversionHistory.length * 25 - 200); // 200 è l'altezza visibile della cronologia
+            this.historyScrollOffset = Math.min(Math.max(0, this.historyScrollOffset + e.deltaY * 0.5), maxScroll);
+        };
+        document.addEventListener('wheel', this.handleWheel);
         
         // Dati del giocatore (verranno aggiornati dinamicamente)
         this.playerData = {
@@ -32,6 +47,7 @@ export class HomePanel extends UIComponent {
             { id: 'clan', name: 'Clan', icon: '🏰', available: true },
             { id: 'stats', name: 'Statistiche', icon: '📈', available: true },
             { id: 'map', name: 'Mappa spaziale', icon: '🗺️', available: true },
+            { id: 'starenergy', name: 'Star Energy', icon: '⚡', available: true },
             { id: 'settings', name: 'Impostazioni', icon: '⚙️', available: true },
             { id: 'exit', name: 'Esci', icon: '🚪', available: true }
         ];
@@ -58,9 +74,9 @@ export class HomePanel extends UIComponent {
         this.shopItems = {
             ammunition: {
                 // Laser
-                laser_x1: { name: 'Munizioni Laser X1', price: 10, amount: 100, max: 10000, icon: '🔴', type: 'laser', key: 'x1' },
-                laser_x2: { name: 'Munizioni Laser X2', price: 25, amount: 50, max: 5000, icon: '🟠', type: 'laser', key: 'x2' },
-                laser_x3: { name: 'Munizioni Laser X3', price: 50, amount: 20, max: 2000, icon: '🟡', type: 'laser', key: 'x3' },
+                laser_x1: { name: 'Munizioni Laser (x1 danno)', price: 10, amount: 100, max: 10000, icon: '🔴', type: 'laser', key: 'x1' },
+                laser_x2: { name: 'Munizioni Laser (x2 danno)', price: 25, amount: 50, max: 5000, icon: '🟠', type: 'laser', key: 'x2' },
+                laser_x3: { name: 'Munizioni Laser (x3 danno)', price: 50, amount: 20, max: 2000, icon: '🟡', type: 'laser', key: 'x3' },
                 // Missili
                 missile_r1: { name: 'Missili R1', price: 100, amount: 10, max: 500, icon: '🟢', type: 'missile', key: 'r1' },
                 missile_r2: { name: 'Missili R2', price: 250, amount: 5, max: 250, icon: '🔵', type: 'missile', key: 'r2' },
@@ -74,17 +90,20 @@ export class HomePanel extends UIComponent {
             },
             laser: {
                 // Laser (nella categoria LASER)
-                lf1: { name: 'Laser LF1', price: 150, amount: 10, max: 200, icon: '🔴', type: 'laser', key: 'lf1' },
-                lf2: { name: 'Laser LF2', price: 300, amount: 5, max: 100, icon: '🟠', type: 'laser', key: 'lf2' },
-                lf3: { name: 'Laser LF3', price: 600, amount: 2, max: 50, icon: '🟡', type: 'laser', key: 'lf3' },
-                lf4: { name: 'Laser LF4', price: 1200, amount: 1, max: 25, icon: '🟢', type: 'laser', key: 'lf4' }
+                lf1: { name: 'Laser LF1 (100 danno)', price: 150, amount: 10, max: 200, icon: '🔴', type: 'laser', key: 'lf1', damage: 100 },
+                lf2: { name: 'Laser LF2 (200 danno)', price: 300, amount: 5, max: 100, icon: '🟠', type: 'laser', key: 'lf2', damage: 200 },
+                lf3: { name: 'Laser LF3 (300 danno)', price: 600, amount: 2, max: 50, icon: '🟡', type: 'laser', key: 'lf3', damage: 300 },
+                lf4: { name: 'Laser LF4 (400 danno)', price: 1200, amount: 1, max: 25, icon: '🟢', type: 'laser', key: 'lf4', damage: 400 }
             },
             generators: {
-                // Generatori (nella categoria GENERATORI)
-                generator_1: { name: 'Generatore 1', price: 500, amount: 3, max: 50, icon: '⚡', type: 'generator', key: 'gen1' },
-                generator_2: { name: 'Generatore 2', price: 1000, amount: 2, max: 30, icon: '⚡', type: 'generator', key: 'gen2' },
+                // Generatori e Scudi (categoria GENERATORI)
+                generator_1: { name: 'Generatore 1', price: 500, amount: 1, max: 50, icon: '⚡', type: 'generator', key: 'gen1' },
+                generator_2: { name: 'Generatore 2', price: 1000, amount: 1, max: 30, icon: '⚡', type: 'generator', key: 'gen2' },
                 generator_3: { name: 'Generatore 3', price: 2000, amount: 1, max: 20, icon: '⚡', type: 'generator', key: 'gen3' },
-                generator_4: { name: 'Generatore 4', price: 4000, amount: 1, max: 10, icon: '⚡', type: 'generator', key: 'gen4' }
+                // Scudi nella stessa categoria
+                shield_1: { name: 'Shield 1', price: 600, amount: 1, max: 50, icon: '🛡️', type: 'shield', key: 'sh1', protection: 50 },
+                shield_2: { name: 'Shield 2', price: 1200, amount: 1, max: 30, icon: '🛡️', type: 'shield', key: 'sh2', protection: 100 },
+                shield_3: { name: 'Shield 3', price: 2400, amount: 1, max: 20, icon: '🛡️', type: 'shield', key: 'sh3', protection: 150 }
             },
             consumables: {
                 // Placeholder per consumabili futuri
@@ -344,10 +363,7 @@ export class HomePanel extends UIComponent {
             // Leggi il livello dal sistema integrato
             this.playerData.level = this.game.ship.currentLevel || 1;
             
-            // Sincronizza con upgradeManager per compatibilità
-            this.game.ship.upgradeManager.credits = this.playerData.credits;
-            this.game.ship.upgradeManager.uridium = this.playerData.uridium;
-            this.game.ship.upgradeManager.honor = this.playerData.honor;
+            // Rimosso il codice di sincronizzazione con upgradeManager (non più necessario)
             
         }
     }
@@ -482,6 +498,7 @@ export class HomePanel extends UIComponent {
     
     
     handleClick(x, y) {
+        console.log('🖱️ HomePanel click:', { x, y });
         if (!this.visible) {
             return false;
         }
@@ -765,6 +782,9 @@ export class HomePanel extends UIComponent {
                 break;
             case 'clan':
                 this.drawClanContent(ctx, contentX, contentY);
+                break;
+            case 'starenergy':
+                this.drawStarEnergyContent(ctx, contentX, contentY);
                 break;
             case 'stats':
                 this.drawComingSoon(ctx, contentX, contentY, 'Statistiche');
@@ -1440,7 +1460,7 @@ export class HomePanel extends UIComponent {
             if (this.selectedShopCategory === 'ammunition') {
                 return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'laser') {
-                return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
+                return this.handleLaserClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'generators') {
                 return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'equipment') {
@@ -1560,29 +1580,63 @@ export class HomePanel extends UIComponent {
         const totalPrice = pricePerUnit * quantity;
         
         if (this.playerData.credits >= totalPrice) {
-            // Trova il tipo di item
-            let itemType = 'laser';
-            if (itemKey.startsWith('missile_')) {
-                itemType = 'missile';
-            }
-            
-            // Aggiungi munizioni alla nave (senza limiti)
-            this.game.ship.addAmmunition(itemType, itemKey.split('_')[1], quantity);
-            
             // Deduci crediti dalla nave (Single Source of Truth)
             this.game.ship.addResource('credits', -totalPrice);
             
+            if (this.selectedShopCategory === 'laser' || this.selectedShopCategory === 'generators') {
+                // Per gli item equipaggiabili (laser/generatori/scudi), aggiungi all'inventario
+                const item = this.shopItems[this.selectedShopCategory][itemKey];
+                console.log('🛍️ Creo item dal negozio:', { 
+                    category: this.selectedShopCategory,
+                    itemKey, 
+                    item
+                });
+
+                // Aggiungi all'inventario per ogni quantità
+                for (let i = 0; i < quantity; i++) {
+                    let invItem;
+                    if (this.selectedShopCategory === 'laser') {
+                        invItem = new InventoryItem(
+                            item.name,
+                            'laser',
+                            { damage: item.damage, fireRate: 1.0, key: itemKey }
+                        );
+                    } else {
+                        // Generatori/Scudi
+                        invItem = new InventoryItem(
+                            item.name,
+                            item.type, // 'generator' o 'shield'
+                            { key: item.key, protection: item.protection || 0 }
+                        );
+                    }
+                    console.log('✨ Item creato:', invItem);
+                    this.game.inventory.addItem(invItem);
+                }
+                
+                // Mostra popup di successo
+                this.showPopup(`Acquistato ${quantity}x ${item.name}`, 'success');
+            } else {
+                // Per le munizioni, aggiungi al contatore munizioni
+                let itemType = 'laser';
+                if (itemKey.startsWith('missile_')) {
+                    itemType = 'missile';
+                }
+                
+                // Aggiungi munizioni alla nave (senza limiti)
+                this.game.ship.addAmmunition(itemType, itemKey.split('_')[1], quantity);
+                
+                // Mostra popup di successo
+                this.showPopup(`Acquistate ${quantity.toLocaleString()} ${itemKey.replace('_', ' ')}`, 'success');
+            }
+            
             // Aggiorna i dati del pannello
             this.playerData.credits = this.game.ship.getResource('credits');
-            
-            // Mostra popup di successo
-            this.showPopup(`Acquistate ${quantity.toLocaleString()} ${itemKey.replace('_', ' ')}`, 'success');
             
             // Suono
             if (this.game.audioManager) {
                 this.game.audioManager.playSound('collecting');
             }
-            } else {
+        } else {
             // Crediti insufficienti
             this.showPopup('Crediti insufficienti', 'error');
         }
@@ -1613,9 +1667,23 @@ export class HomePanel extends UIComponent {
         // Placeholder per consumabili
         return false;
     }
+
+    handleLaserClick(x, y, detailsX, detailsY, items) {
+        console.log('⚡ Click su laser:', { x, y, detailsX, detailsY, items });
+        // Usa lo stesso sistema delle munizioni
+        return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
+    }
+
+    handleGeneratorClick(x, y, detailsX, detailsY, items) {
+        console.log('⚡ Click su generatore:', { x, y, detailsX, detailsY, items });
+        // Usa lo stesso sistema delle munizioni
+        return this.handleAmmunitionClick(x, y, detailsX, detailsY, items);
+    }
     
     buyItem(itemKey) {
+        console.log('🛒 buyItem chiamato con:', itemKey);
         const item = this.shopItems[this.selectedShopCategory][itemKey];
+        console.log('📝 Item trovato:', item);
         const totalPrice = item.price * item.amount;
         
         // Controlla se ha abbastanza crediti
@@ -1625,6 +1693,16 @@ export class HomePanel extends UIComponent {
                 // Acquista e equipaggia
                 this.game.ship.addResource('credits', -totalPrice);
                 this.game.ship.equipCannon(item.key, item.amount);
+                
+                // Aggiungi all'inventario come acquisto reale
+                this.game.inventory.addPurchasedItem({
+                    name: item.name,
+                    type: 'cannon',
+                    key: item.key,
+                    amount: item.amount,
+                    price: item.price,
+                    purchasedAt: Date.now()
+                });
                 
                 // Aggiorna i dati del pannello
                 this.playerData.credits = this.game.ship.getResource('credits');
@@ -1637,14 +1715,45 @@ export class HomePanel extends UIComponent {
                 // Suono
                 this.game.audioManager.playSound('collecting');
             } else {
-                // Per laser e missili, controlla munizioni
-                const currentAmmo = this.game.ship.getAmmunition(item.type, item.key);
-                const maxAmmo = this.game.ship.maxAmmunition[item.type][item.key];
-                
-                if (currentAmmo + item.amount <= maxAmmo) {
+                // Gestione separata: ammo vs equip (generatori/scudi)
+                const isAmmo = (item.type === 'laser' || item.type === 'missile');
+                let canPurchase = true;
+                if (isAmmo) {
+                    const currentAmmo = this.game.ship.getAmmunition(item.type, item.key);
+                    const maxAmmo = this.game.ship.maxAmmunition[item.type][item.key];
+                    canPurchase = (currentAmmo + item.amount <= maxAmmo);
+                }
+
+                if (canPurchase) {
                     // Acquista
                     this.game.ship.addResource('credits', -totalPrice);
-                    this.game.ship.addAmmunition(item.type, item.key, item.amount);
+                    if (isAmmo) {
+                        // Ammunizioni
+                        this.game.ship.addAmmunition(item.type, item.key, item.amount);
+                    }
+                    
+                    // Debug acquisto
+                    console.log('🛍️ Acquisto:', {
+                        category: this.selectedShopCategory,
+                        item: item,
+                        isAmmo: isAmmo
+                    });
+
+                    // Aggiungi all'inventario come item equipaggiabile
+                    const invItem = {
+                        id: Date.now() + Math.random().toString(36).substr(2, 9),
+                        name: item.name,
+                        type: item.type,
+                        stats: {
+                            key: item.key,
+                            protection: item.protection || 0,
+                            damage: item.damage || 0
+                        }
+                    };
+                    console.log('📦 Item da aggiungere:', invItem);
+                    
+                    const added = this.game.inventory.addItem(invItem);
+                    console.log('✅ Item aggiunto:', added);
                     
                     // Aggiorna i dati del pannello
                     this.playerData.credits = this.game.ship.getResource('credits');
@@ -1985,6 +2094,7 @@ export class HomePanel extends UIComponent {
     }
     
     drawGeneratorsLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items) {
+        console.log('🎨 Disegno layout generatori:', { items });
         // Area immagine a sinistra
         const imageX = x + 20;
         const imageY = y + 20;
@@ -2403,6 +2513,199 @@ export class HomePanel extends UIComponent {
     }
     
     // Metodo per disegnare il contenuto della categoria Clan
+    useStarEnergy() {
+        // Controlla se abbiamo abbastanza energia
+        const starEnergyInfo = this.game.ship.getStarEnergyInfo();
+        if (starEnergyInfo.current < 1) {
+            this.lastConversionResult = "Non hai abbastanza Star Energy!";
+            if (this.game.notifications) {
+                this.game.notifications.add("⚡ Non hai abbastanza Star Energy!", "warning");
+            }
+            return;
+        }
+
+        // Consuma 1 StarEnergy
+        this.game.ship.useStarEnergy(1);
+
+        // Decidi se dare missili (40%) o laser (60%)
+        if (Math.random() < 0.40) {
+            // Missili
+            const missileTypes = ['r1', 'r2', 'r3'];
+            const randomType = missileTypes[Math.floor(Math.random() * missileTypes.length)];
+            const amount = Math.floor(Math.random() * 3) + 1;
+            
+            this.game.ship.addAmmunition('missile', randomType, amount);
+            
+            const result = `+ ${amount} ${randomType.toUpperCase()} missiles`;
+            this.lastConversionResult = result;
+            this.conversionHistory.unshift({ result, timestamp: Date.now() });
+            if (this.conversionHistory.length > this.maxHistoryLength) {
+                this.conversionHistory.pop();
+            }
+            
+            if (this.game.notifications) {
+                this.game.notifications.add(`🚀 Hai ottenuto ${amount} missili ${randomType.toUpperCase()}!`, "reward");
+            }
+        } else {
+            // Laser
+            const laserTypes = ['x1', 'x2', 'x3'];
+            const randomType = laserTypes[Math.floor(Math.random() * laserTypes.length)];
+            // Più munizioni per i laser dato che si consumano più velocemente
+            const amount = Math.floor(Math.random() * 10) + 5; // 5-15 munizioni
+            
+            this.game.ship.addAmmunition('laser', randomType, amount);
+            
+            const result = `+ ${amount} ${randomType.toUpperCase()} ammo`;
+            this.lastConversionResult = result;
+            this.conversionHistory.unshift({ result, timestamp: Date.now() });
+            if (this.conversionHistory.length > this.maxHistoryLength) {
+                this.conversionHistory.pop();
+            }
+            
+            if (this.game.notifications) {
+                this.game.notifications.add(`🎯 Hai ottenuto ${amount} munizioni ${randomType.toUpperCase()}!`, "reward");
+            }
+        }
+    }
+
+    drawStarEnergyContent(ctx, x, y) {
+        const starEnergyInfo = this.game.ship.getStarEnergyInfo();
+        
+        // Pannello principale centrale
+        const centerX = x + this.contentWidth / 2 - 200;
+        const centerY = y + 50;
+        const panelWidth = 400;
+        const panelHeight = 500;
+
+        // Aggiungi handler per il click se non esiste
+        if (!this.starEnergyClickHandler) {
+            this.starEnergyClickHandler = (e) => {
+                if (this.selectedCategory !== 'starenergy') return;
+
+                const rect = e.target.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                
+                // Coordinate del bottone
+                const buttonX = centerX + panelWidth/2 - 100;
+                const buttonY = centerY + 150;
+                const buttonWidth = 200;
+                const buttonHeight = 40;
+
+                // Controlla se il click è sul bottone
+                if (clickX >= buttonX && clickX <= buttonX + buttonWidth &&
+                    clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+                    this.useStarEnergy();
+                }
+            };
+            
+            // Aggiungi l'event listener
+            document.addEventListener('click', this.starEnergyClickHandler);
+        }
+
+        // Sfondo pannello principale
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.fillRect(centerX, centerY, panelWidth, panelHeight);
+        
+        // Bordo blu luminoso
+        const gradient = ctx.createLinearGradient(centerX, centerY, centerX + panelWidth, centerY);
+        gradient.addColorStop(0, '#1a3f5c');
+        gradient.addColorStop(0.5, '#4a90e2');
+        gradient.addColorStop(1, '#1a3f5c');
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(centerX, centerY, panelWidth, panelHeight);
+
+        // Titolo con effetto glow
+        ctx.fillStyle = '#4a90e2';
+        ctx.shadowColor = '#4a90e2';
+        ctx.shadowBlur = 10;
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('STAR ENERGY', centerX + panelWidth/2, centerY + 40);
+        ctx.shadowBlur = 0;
+
+        // Energia disponibile con effetto glow
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#4a90e2';
+        ctx.shadowBlur = 15;
+        ctx.font = 'bold 48px Arial';
+        ctx.fillText(`${Math.floor(starEnergyInfo.current)}`, centerX + panelWidth/2, centerY + 100);
+        ctx.shadowBlur = 0;
+        
+        // Bottone di conversione con effetto hover
+        const buttonX = centerX + panelWidth/2 - 100;
+        const buttonY = centerY + 150;
+        const buttonWidth = 200;
+        const buttonHeight = 40;
+
+        // Sfondo bottone con gradiente
+        const buttonGradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
+        buttonGradient.addColorStop(0, '#1a3f5c');
+        buttonGradient.addColorStop(1, '#2a4f6c');
+        ctx.fillStyle = buttonGradient;
+        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        // Bordo bottone con glow
+        ctx.strokeStyle = '#4a90e2';
+        ctx.shadowColor = '#4a90e2';
+        ctx.shadowBlur = 5;
+        ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        ctx.shadowBlur = 0;
+
+        // Testo bottone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('CONVERT (1 ENERGY)', centerX + panelWidth/2, buttonY + 25);
+
+        // Info conversione
+        ctx.fillStyle = '#aaaaaa';
+        ctx.font = '14px Arial';
+        ctx.fillText('Convert to ammo (missiles or laser)', centerX + panelWidth/2, buttonY + 60);
+
+        // Mostra risultato ultima conversione con effetto glow
+        if (this.lastConversionResult) {
+            ctx.fillStyle = '#00ff00';
+            ctx.shadowColor = '#00ff00';
+            ctx.shadowBlur = 10;
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText(this.lastConversionResult, centerX + panelWidth/2, buttonY + 100);
+            ctx.shadowBlur = 0;
+        }
+
+        // Sezione cronologia
+        const historyY = buttonY + 140;
+        ctx.fillStyle = '#4a90e2';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('CONVERSION HISTORY', centerX + panelWidth/2, historyY);
+
+        // Area di clip per la cronologia
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(centerX + 10, historyY + 20, panelWidth - 20, 200);
+        ctx.clip();
+
+        // Lista risultati precedenti
+        ctx.font = '14px Arial';
+        this.conversionHistory.forEach((entry, index) => {
+            if (index === 0) return; // Salta il primo che è già mostrato sopra
+            const timeAgo = Math.floor((Date.now() - entry.timestamp) / 1000);
+            const timeStr = timeAgo < 60 ? `${timeAgo}s ago` : `${Math.floor(timeAgo/60)}m ago`;
+            
+            const y = historyY + 30 + (index * 25) - this.historyScrollOffset;
+            // Mostra solo se nell'area visibile
+            if (y > historyY + 20 && y < historyY + 220) {
+                ctx.fillStyle = '#aaaaaa';
+                ctx.fillText(timeStr, centerX + 20, y);
+                
+                ctx.fillStyle = '#00ff00';
+                ctx.fillText(entry.result, centerX + 100, y);
+            }
+        });
+        ctx.restore();
+    }
+
     drawClanContent(ctx, x, y) {
         const centerX = x + this.contentWidth / 2;
         const startY = y + 30;

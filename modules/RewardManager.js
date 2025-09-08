@@ -16,7 +16,8 @@ export class RewardManager {
             credits: rewards.credits || 0,
             uridium: rewards.uridium || 0,
             honor: rewards.honor || 0,
-            experience: rewards.experience || 0
+            experience: rewards.experience || 0,
+            starEnergy: rewards.starEnergy || 0
         };
     }
     
@@ -55,18 +56,31 @@ export class RewardManager {
         
         if (rewards.credits > 0) {
             this.notifications.add(`+${rewards.credits} Credits`, 600, 'reward');
+            window.gameInstance.ship.addResource('credits', rewards.credits);
         }
         
         if (rewards.uridium > 0) {
             this.notifications.add(`+${rewards.uridium} Uridium`, 600, 'reward');
+            window.gameInstance.ship.addResource('uridium', rewards.uridium);
         }
         
         if (rewards.honor > 0) {
             this.notifications.add(`+${rewards.honor} Honor`, 600, 'reward');
+            window.gameInstance.ship.addResource('honor', rewards.honor);
         }
         
         if (rewards.experience > 0) {
             this.notifications.add(`+${rewards.experience} XP`, 600, 'reward');
+            window.gameInstance.ship.addResource('experience', rewards.experience);
+        }
+
+        if (rewards.starEnergy > 0) {
+            this.notifications.add(`⚡ +${rewards.starEnergy} StarEnergy`, 600, 'reward');
+            window.gameInstance.ship.addStarEnergy(rewards.starEnergy);
+        }
+
+        if (rewards.starEnergy > 0) {
+            this.notifications.add(`⚡ +${rewards.starEnergy} StarEnergy`, 600, 'reward');
         }
     }
     
@@ -124,13 +138,24 @@ export class RewardManager {
         };
     }
     
+    // Processa reward per mining (calcola e mostra notifiche)
+    processMiningRewards(credits, uridium, honor) {
+        const rewards = this.calculateMiningRewards(credits, uridium, honor);
+        
+        // Mostra le notifiche per i reward
+        this.showRewardNotifications(rewards);
+        
+        return rewards;
+    }
+    
     // Processa reward per bonus box (calcola e mostra notifiche)
-    processBonusBoxRewards(credits, uridium) {
+    processBonusBoxRewards(credits, uridium, starEnergy) {
         const rewards = {
             credits: credits || 0,
             uridium: uridium || 0,
             honor: 0,
-            experience: 0
+            experience: 0,
+            starEnergy: starEnergy || 0
         };
         
         // Mostra prima la notifica "Bonus box raccolta!"

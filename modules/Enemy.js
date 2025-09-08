@@ -145,7 +145,7 @@ export class Enemy {
         this.y += this.vy;
     }
     
-    takeDamage(damage, projectile = null) {
+    takeDamage(damage, projectile = null, skipDamageNumber = false) {
         this.lastDamageTime = Date.now();
         
         // Se è un proiettile SAB, assorbe solo scudo e non fa danno
@@ -163,21 +163,22 @@ export class Enemy {
         }
         
         // Gestione danno normale
-        // Mostra il numero di danno
-        if (window.gameInstance && window.gameInstance.damageNumbers) {
-            window.gameInstance.damageNumbers.addNumber(this.x, this.y - 20, damage, 'outgoing');
-        }
+        let hpDamage = damage;
+        let shieldDamage = 0;
         
-        // Prima danneggia lo scudo
+        // Prima calcola il danno allo scudo
         if (this.shield > 0) {
-            const shieldDamage = Math.min(damage, this.shield);
+            shieldDamage = Math.min(damage, this.shield);
             this.shield -= shieldDamage;
-            damage -= shieldDamage;
+            hpDamage -= shieldDamage;
         }
         
         // Poi danneggia l'HP
-        if (damage > 0) {
-            this.hp -= damage;
+        if (hpDamage > 0) {
+            this.hp -= hpDamage;
+            
+            // Non mostrare il numero di danno qui, viene mostrato dalla Ship
+            
             if (this.hp <= 0) {
                 this.die();
             }

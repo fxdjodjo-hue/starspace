@@ -6,6 +6,7 @@ export class ShipSprite {
         this.frameCount = 72; // Numero di frame nell'atlas (8 righe x 9 colonne)
         this.isLoaded = false;
         this.atlasData = null;
+        this.currentShip = 1; // 1 per la nave base, 2 per Urus
         
         this.loadSprite();
         this.loadAtlas();
@@ -20,18 +21,39 @@ export class ShipSprite {
         this.image.onerror = () => {
             console.error('❌ Errore nel caricamento dello sprite della nave');
         };
-        this.image.src = 'Urus/ship103.png';
+        this.loadCurrentShipSprite();
     }
     
     async loadAtlas() {
         try {
-            const response = await fetch('Urus/ship103.atlas');
+            const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'Urus/ship02.atlas';
+            console.log('📋 Loading atlas:', atlasFile);
+            const response = await fetch(atlasFile);
             const atlasText = await response.text();
+            console.log('📋 Atlas content:', atlasText.substring(0, 100) + '...');
             this.parseAtlas(atlasText);
-            console.log('📋 Atlas caricato con successo!');
+            console.log('📋 Atlas caricato con successo! Frames:', this.frames.length);
         } catch (error) {
             console.error('❌ Errore nel caricamento dell\'atlas:', error);
         }
+    }
+
+    loadCurrentShipSprite() {
+        const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'Urus/ship02.png';
+        console.log('🎨 Loading sprite:', spriteFile);
+        this.image.src = spriteFile;
+    }
+
+    switchShip(shipNumber) {
+        if (shipNumber === this.currentShip) return;
+        if (shipNumber !== 1 && shipNumber !== 2) return;
+
+        console.log('🚢 Switching to ship:', shipNumber);
+        this.currentShip = shipNumber;
+        this.isLoaded = false;
+        this.frames = [];
+        this.loadSprite();
+        this.loadAtlas();
     }
     
     parseAtlas(atlasText) {
@@ -94,18 +116,40 @@ export class ShipSprite {
     }
     
     draw(ctx, x, y, rotation, size, floatingY = 0) {
-        if (!this.isLoaded || !this.image || this.frames.length === 0) return;
+        if (!this.isLoaded || !this.image || this.frames.length === 0) {
+            console.log('❌ Draw fallito:', {
+                isLoaded: this.isLoaded,
+                hasImage: !!this.image,
+                framesCount: this.frames.length
+            });
+            return;
+        }
         
         // Calcola il frame corretto basandosi sulla rotazione
         const frameIndex = this.getFrameFromRotation(rotation);
         const frame = this.frames[frameIndex];
-        if (!frame) return;
+        if (!frame) {
+            console.log('❌ Frame non trovato:', {
+                frameIndex,
+                rotation,
+                totalFrames: this.frames.length
+            });
+            return;
+        }
         
         // Aumenta la dimensione della nave (moltiplica per 3)
         const shipSize = size * 3;
         
         ctx.save();
         ctx.translate(x, y + floatingY);
+        
+        // Debug info
+        console.log('🎨 Drawing frame:', {
+            frame,
+            position: {x, y},
+            rotation,
+            size: shipSize
+        });
         
         // Disegna il frame corrente con dimensione aumentata
         ctx.drawImage(

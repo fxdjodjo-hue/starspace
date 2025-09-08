@@ -69,6 +69,12 @@ export class EMP {
             return false;
         }
 
+        // Costo in StarEnergy
+        const energyCost = 30;
+        if (!ship.useStarEnergy(energyCost)) {
+            return false;
+        }
+
         this.isActive = true;
         this.lastUsedTime = Date.now();
         this.activationTime = Date.now();

@@ -37,6 +37,7 @@ import { ProfilePanel } from './modules/ProfilePanel.js';
 import { MapManager } from './modules/MapManager.js';
 import { MapSystem } from './modules/MapSystem.js';
 import { RadiationSystem } from './modules/RadiationSystem.js';
+import { DamageNumberSystem } from './modules/DamageNumbers.js';
 
 
 
@@ -56,6 +57,9 @@ class Game {
         this.minimap = new Minimap(this.width, this.height);
         this.sectorSystem = new SectorSystem();
         this.notifications = new Notification();
+        
+        // Sistema numeri di danno
+        this.damageNumbers = new DamageNumberSystem();
         
         // Inizializza RewardManager della nave DOPO aver creato le notifiche
         this.ship.initRewardManager(this.notifications);
@@ -298,6 +302,18 @@ class Game {
     
     
     update() {
+        // Gestisci cambio nave con tasti 1 e 2
+        if (this.input.isKey1JustPressed()) {
+            this.ship.sprite.switchShip(1);
+            this.notifications.add("Nave base selezionata", "info");
+            this.input.resetKey1JustPressed();
+        }
+        if (this.input.isKey2JustPressed()) {
+            this.ship.sprite.switchShip(2);
+            this.notifications.add("Urus Fighter selezionata", "info");
+            this.input.resetKey2JustPressed();
+        }
+
         // === GESTIONE EVENTI UI (PRIORITÀ MASSIMA) ===
         const mousePos = this.input.getMousePosition();
         let uiEventHandled = false;
@@ -962,6 +978,9 @@ class Game {
         // Aggiorna notifiche
         this.notifications.update();
         
+        // Aggiorna i numeri di danno
+        this.damageNumbers.update();
+        
 
     }
     
@@ -1207,6 +1226,9 @@ class Game {
         // Disegna le notifiche (sempre sopra tutto, non influenzate dallo zoom)
         this.notifications.draw(this.ctx);
         
+        // Disegna i numeri di danno
+        this.damageNumbers.draw(this.ctx, this.camera);
+        
         // Aggiorna e disegna il pannello della stazione spaziale solo se presente nella mappa
         if (this.mapManager.shouldShowSpaceStation()) {
             if (this.spaceStationPanel.isOpen) {
@@ -1257,20 +1279,10 @@ class Game {
         // Disegna pannello quest se aperto
     }
     
-    // Inizializza l'inventario con oggetti di esempio
+    // Inizializza l'inventario (nessun mock)
     initializeInventory() {
-        // Aggiungi alcuni oggetti di esempio se l'inventario è vuoto
-        if (this.inventory.items.length === 0) {
-            const exampleItems = InventoryItem.createExampleItems();
-            
-            // Aggiungi più oggetti per testare il sistema a 5 slot
-            for (let i = 0; i < exampleItems.length; i++) {
-                // Aggiungi 2-3 copie di ogni oggetto per testare l'equipaggiamento multiplo
-                for (let j = 0; j < 2; j++) {
-                    this.inventory.addItem(exampleItems[i]);
-                }
-            }
-        }
+        // Intenzionalmente vuoto: niente dati mock in inventario
+        return;
     }
     
     // Controlla l'interazione con la stazione spaziale

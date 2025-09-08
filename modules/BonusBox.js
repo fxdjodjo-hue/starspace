@@ -13,6 +13,7 @@ export class BonusBox {
         // Valori di ricompensa
         this.creditsReward = 0;
         this.uridiumReward = 0;
+        this.starEnergyReward = 0;
         
         // Imposta le ricompense basate sul tipo
         this.setRewards();
@@ -38,20 +39,24 @@ export class BonusBox {
             case 'credits':
                 this.creditsReward = Math.floor(Math.random() * 500) + 200; // 200-700 crediti
                 this.uridiumReward = 0;
+                this.starEnergyReward = Math.floor(Math.random() * 5) + 1; // 1-5 StarEnergy
                 break;
             case 'uridium':
                 this.creditsReward = 0;
                 this.uridiumReward = Math.floor(Math.random() * 15) + 5; // 5-20 uridium
+                this.starEnergyReward = Math.floor(Math.random() * 10) + 5; // 5-15 StarEnergy
                 break;
             case 'mixed':
                 this.creditsReward = Math.floor(Math.random() * 400) + 100; // 100-500 crediti
                 this.uridiumReward = Math.floor(Math.random() * 8) + 3; // 3-11 uridium
+                this.starEnergyReward = Math.floor(Math.random() * 8) + 3; // 3-10 StarEnergy
                 break;
         }
         
         // Garantisce ricompense minime
         if (this.creditsReward < 50) this.creditsReward = 50;
         if (this.uridiumReward < 1) this.uridiumReward = 1;
+        if (this.starEnergyReward < 1) this.starEnergyReward = 1;
     }
     
     update() {
@@ -200,7 +205,7 @@ export class BonusBox {
         
         // Processa prima i reward (per l'ordine corretto nei log)
         if (ship.rewardManager) {
-            ship.rewardManager.processBonusBoxRewards(this.creditsReward, this.uridiumReward);
+            ship.rewardManager.processBonusBoxRewards(this.creditsReward, this.uridiumReward, this.starEnergyReward);
         } else {
             // Fallback per compatibilità
             if (this.creditsReward > 0) {
@@ -210,13 +215,18 @@ export class BonusBox {
             if (this.uridiumReward > 0) {
                 ship.addResource('uridium', this.uridiumReward);
             }
+
+            if (this.starEnergyReward > 0) {
+                ship.addStarEnergy(this.starEnergyReward);
+            }
             
             // Fallback non mostra notifiche (solo RewardManager le gestisce)
         }
         
         return {
             credits: this.creditsReward,
-            uridium: this.uridiumReward
+            uridium: this.uridiumReward,
+            starEnergy: this.starEnergyReward
         };
     }
     

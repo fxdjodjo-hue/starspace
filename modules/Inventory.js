@@ -63,11 +63,48 @@ export class Inventory {
     
     // Aggiungi oggetto all'inventario
     addItem(item) {
+        console.log('📥 Inventory.addItem chiamato con:', item);
         if (this.items.length < this.maxItems) {
             this.items.push(item);
+            console.log('💾 Salvataggio inventory:', this.items);
+            this.save();
             return true;
         }
+        console.log('❌ Inventory pieno:', this.items.length, '>=', this.maxItems);
         return false; // Inventario pieno
+    }
+    
+    // Aggiungi acquisto reale all'inventario
+    addPurchasedItem(purchase) {
+        // Cerca se esiste già un acquisto dello stesso tipo
+        const existingIndex = this.items.findIndex(item => 
+            item.type === 'purchase' && 
+            item.key === purchase.key && 
+            item.purchasedAt === purchase.purchasedAt
+        );
+        
+        if (existingIndex >= 0) {
+            // Aggiorna quantità se esiste già
+            this.items[existingIndex].amount += purchase.amount;
+        } else {
+            // Crea nuovo oggetto acquisto
+            const purchasedItem = {
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                name: purchase.name,
+                type: 'purchase',
+                key: purchase.key,
+                amount: purchase.amount,
+                price: purchase.price,
+                purchasedAt: purchase.purchasedAt,
+                stats: {
+                    category: purchase.type,
+                    originalPrice: purchase.price
+                }
+            };
+            this.items.push(purchasedItem);
+        }
+        
+        this.save();
     }
     
     // Rimuovi oggetto dall'inventario
@@ -83,6 +120,33 @@ export class Inventory {
         const item = this.removeItem(itemIndex);
         if (item && this.equipment[slotType][slotIndex] === null) {
             this.equipment[slotType][slotIndex] = item;
+            
+            // Aggiorna la nave quando equipaggi un laser
+            if (slotType === 'laser' && window.gameInstance && window.gameInstance.ship) {
+                console.log('🔍 Equipaggio laser:', {
+                    item,
+                    name: item.name,
+                    type: item.type,
+                    stats: item.stats,
+                    key: item.stats?.key
+                });
+                window.gameInstance.ship.equipLaser(item.stats.key, 1);
+                console.log('✅ Laser equipaggiati:', window.gameInstance.ship.equippedLasers);
+            }
+            // Aggiorna la nave quando equipaggi un generatore (speed +2 per ognuno)
+            if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
+                // Determina se è un generatore o uno scudo guardando stats.key
+                const key = item.stats?.key || '';
+                if (key.startsWith('gen')) {
+                    window.gameInstance.ship.equipGenerator(key, 1);
+                } else if (key.startsWith('sh')) {
+                    // Scudi: aumenta la capacità scudo
+                    const extra = Number(item.stats?.protection || 0);
+                    window.gameInstance.ship.maxShield += extra;
+                    window.gameInstance.ship.shield += extra;
+                }
+            }
+            
             return true;
         }
         // Se non può essere equipaggiato, rimetti nell'inventario
@@ -97,6 +161,22 @@ export class Inventory {
         if (this.equipment[slotType][slotIndex]) {
             const item = this.equipment[slotType][slotIndex];
             this.equipment[slotType][slotIndex] = null;
+            
+            // Aggiorna la nave quando rimuovi un laser
+            if (slotType === 'laser' && window.gameInstance && window.gameInstance.ship) {
+                window.gameInstance.ship.unequipLaser(item.key, 1);
+            }
+            if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
+                const key = item.stats?.key || '';
+                if (key.startsWith('gen')) {
+                    window.gameInstance.ship.unequipGenerator(key, 1);
+                } else if (key.startsWith('sh')) {
+                    const extra = Number(item.stats?.protection || 0);
+                    window.gameInstance.ship.maxShield = Math.max(0, window.gameInstance.ship.maxShield - extra);
+                    window.gameInstance.ship.shield = Math.min(window.gameInstance.ship.shield, window.gameInstance.ship.maxShield);
+                }
+            }
+            
             this.addItem(item);
             return item;
         }
@@ -119,6 +199,32 @@ export class Inventory {
             const inventoryData = JSON.parse(savedData);
             this.equipment = inventoryData.equipment || this.equipment;
             this.items = inventoryData.items || this.items;
+            
+            // Riapplica gli effetti degli item equipaggiati
+            if (window.gameInstance && window.gameInstance.ship) {
+                // Riapplica laser
+                Object.entries(this.equipment.laser).forEach(([index, item]) => {
+                    if (item && item.stats && item.stats.key) {
+                        console.log('🔄 Riapplico laser:', item);
+                        window.gameInstance.ship.equipLaser(item.stats.key, 1);
+                    }
+                });
+                
+                // Riapplica scudi e generatori
+                Object.entries(this.equipment.shieldGen).forEach(([index, item]) => {
+                    if (item && item.stats && item.stats.key) {
+                        const key = item.stats.key;
+                        console.log('🔄 Riapplico shield/gen:', item);
+                        if (key.startsWith('gen')) {
+                            window.gameInstance.ship.equipGenerator(key, 1);
+                        } else if (key.startsWith('sh')) {
+                            const extra = Number(item.stats?.protection || 0);
+                            window.gameInstance.ship.maxShield += extra;
+                            window.gameInstance.ship.shield += extra;
+                        }
+                    }
+                });
+            }
         }
     }
     
@@ -203,36 +309,20 @@ export class Inventory {
             }
         }
         
-        // Controlla click su slot scudi/generatori (6 slot totali - 2 righe da 3)
-        const shieldGenY1 = equipmentY + 80;  // Prima riga
-        const shieldGenY2 = equipmentY + 120; // Seconda riga
+        // Controlla click su slot scudi/generatori (6 slot totali)
+        const shieldGenY = equipmentY + 180; // Allineato con il rendering
         
-        // Prima riga (slot 0, 1, 2)
-        for (let i = 0; i < 3; i++) {
+        // Tutti gli slot scudi/generatori
+        for (let i = 0; i < 6; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY1 && y <= shieldGenY1 + this.slotSize) {
+                y >= shieldGenY && y <= shieldGenY + this.slotSize) {
                 
                 if (this.equipment.shieldGen[i]) {
+                    console.log('🔄 Disequipaggio slot shieldGen:', i);
                     const item = this.unequipItem('shieldGen', i);
                     if (item) {
-                        this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
-                    }
-                }
-                // Non auto-equipaggiare su slot vuoti
-                return;
-            }
-        }
-        
-        // Seconda riga (slot 3, 4, 5)
-        for (let i = 3; i < 6; i++) {
-            const slotX = equipmentX + ((i - 3) * slotSpacing);
-            if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY2 && y <= shieldGenY2 + this.slotSize) {
-                
-                if (this.equipment.shieldGen[i]) {
-                    const item = this.unequipItem('shieldGen', i);
-                    if (item) {
+                        console.log('✅ Item disequipaggiato:', item);
                         this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
                     }
                 }
@@ -655,7 +745,10 @@ export class Inventory {
             
             // Colore basato sul tipo
             let itemColor = '#ffffff';
-            if (item.type === 'laser') itemColor = '#ff6b6b';
+            if (item.type === 'purchase') {
+                // Acquisti reali - colore dorato
+                itemColor = '#ffd700';
+            } else if (item.type === 'laser') itemColor = '#ff6b6b';
             else if (item.type === 'shield') itemColor = '#4ecdc4';
             else if (item.type === 'generator') itemColor = '#45b7d1';
             else if (item.type === 'extra') itemColor = '#96ceb4';
@@ -673,7 +766,14 @@ export class Inventory {
         ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
-            ctx.fillText(item.name, itemX + this.slotSize / 2, itemY + this.slotSize / 2 + 3);
+            
+            // Per acquisti reali, mostra anche la quantità
+            let displayText = item.name;
+            if (item.type === 'purchase' && item.amount > 1) {
+                displayText = `${item.name} x${item.amount}`;
+            }
+            
+            ctx.fillText(displayText, itemX + this.slotSize / 2, itemY + this.slotSize / 2 + 3);
         }
         
         // Disegna slot vuoti
