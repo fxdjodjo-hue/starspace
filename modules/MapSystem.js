@@ -132,10 +132,33 @@ export class MapSystem {
             this.drawHexagonalNode(ctx, mapData, mapId === currentMap, centerX, centerY);
         });
         
+        // Legenda connessioni
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Legenda Connessioni:', centerX - 400, centerY + 280);
+        
+        const legendItems = [
+            { color: '#4CAF50', text: 'X1 → X2 (Stazione)' },
+            { color: '#2196F3', text: 'X2 → X3 (Asteroidi)' },
+            { color: '#FF9800', text: 'X3 → X4 (Minerario)' },
+            { color: '#F44336', text: 'X4 → X5 (Estremo)' }
+        ];
+        
+        legendItems.forEach((item, index) => {
+            const y = centerY + 300 + (index * 20);
+            ctx.fillStyle = item.color;
+            ctx.fillRect(centerX - 380, y - 8, 15, 15);
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '12px Arial';
+            ctx.fillText(item.text, centerX - 360, y);
+        });
+        
         // Istruzioni
         ctx.fillStyle = '#cccccc';
         ctx.font = 'bold 16px Arial';
-        ctx.fillText('Premi M per chiudere • Click sui nodi per selezionare', centerX, centerY + 320);
+        ctx.textAlign = 'center';
+        ctx.fillText('Premi M per chiudere • Click sui nodi per selezionare', centerX, centerY + 380);
     }
     
     // Disegna sfondo spaziale con stelle
@@ -220,6 +243,12 @@ export class MapSystem {
         ctx.textAlign = 'center';
         ctx.fillText(mapData.name, x, y);
         
+        // Livello e difficoltà
+        ctx.font = '12px Arial';
+        ctx.fillStyle = isCurrent ? '#000000' : '#cccccc';
+        ctx.fillText(`Livello ${mapData.level}`, x, y - 35);
+        ctx.fillText(mapData.difficulty, x, y + 35);
+        
         // Indicatore mappa corrente
         if (isCurrent) {
             ctx.fillStyle = '#000000';
@@ -230,8 +259,8 @@ export class MapSystem {
         // Indicatore di stato (solo per mappe bloccate)
         if (mapData.status === 'locked') {
             ctx.font = 'bold 12px Arial';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText('LOCKED', x, y - 25);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillText('LOCKED', x, y - 50);
         }
     }
     
@@ -252,64 +281,66 @@ export class MapSystem {
     }
     
     drawConnections(ctx, centerX, centerY) {
-        // Connessione X1 -> X2
-        const x1 = centerX + this.mapConnections.x1.position.x - 500;
-        const y1 = centerY + this.mapConnections.x1.position.y - 350;
-        const x2 = centerX + this.mapConnections.x2.position.x - 500;
-        const y2 = centerY + this.mapConnections.x2.position.y - 350;
+        // Funzione helper per ottenere le coordinate di una mappa
+        const getMapCoords = (mapId) => {
+            const mapData = this.mapConnections[mapId];
+            return {
+                x: centerX + mapData.position.x - 500,
+                y: centerY + mapData.position.y - 350
+            };
+        };
         
-        // Ombra della connessione
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.lineWidth = 6;
-        ctx.setLineDash([12, 8]);
-        ctx.beginPath();
-        ctx.moveTo(x1 + 60, y1 + 3);
-        ctx.lineTo(x2 - 60, y2 + 3);
-        ctx.stroke();
+        // Funzione helper per disegnare una connessione
+        const drawConnection = (fromMap, toMap, color = '#ffffff') => {
+            const from = getMapCoords(fromMap);
+            const to = getMapCoords(toMap);
+            
+            // Ombra della connessione
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.lineWidth = 6;
+            ctx.setLineDash([12, 8]);
+            ctx.beginPath();
+            ctx.moveTo(from.x + 60, from.y + 3);
+            ctx.lineTo(to.x - 60, to.y + 3);
+            ctx.stroke();
+            
+            // Connessione principale
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.setLineDash([12, 8]);
+            ctx.beginPath();
+            ctx.moveTo(from.x + 60, from.y);
+            ctx.lineTo(to.x - 60, to.y);
+            ctx.stroke();
+            
+            // Freccia
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const arrowLength = 15;
+            const arrowAngle = Math.PI / 6;
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(to.x - 60, to.y);
+            ctx.lineTo(
+                to.x - 60 - arrowLength * Math.cos(angle - arrowAngle),
+                to.y - arrowLength * Math.sin(angle - arrowAngle)
+            );
+            ctx.lineTo(
+                to.x - 60 - arrowLength * Math.cos(angle + arrowAngle),
+                to.y - arrowLength * Math.sin(angle + arrowAngle)
+            );
+            ctx.closePath();
+            ctx.fill();
+        };
         
-        // Connessione principale con gradiente elegante
-        const gradient = ctx.createLinearGradient(x1 + 60, y1, x2 - 60, y2);
-        gradient.addColorStop(0, '#ffffff');
-        gradient.addColorStop(0.3, '#cccccc');
-        gradient.addColorStop(0.7, '#aaaaaa');
-        gradient.addColorStop(1, '#888888');
+        // Disegna tutte le connessioni
+        drawConnection('x1', 'x2', '#4CAF50'); // Verde per X1->X2
+        drawConnection('x2', 'x3', '#2196F3'); // Blu per X2->X3
+        drawConnection('x3', 'x4', '#FF9800'); // Arancione per X3->X4
+        drawConnection('x4', 'x5', '#F44336'); // Rosso per X4->X5
         
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 3;
-        ctx.setLineDash([12, 8]);
-        ctx.beginPath();
-        ctx.moveTo(x1 + 60, y1);
-        ctx.lineTo(x2 - 60, y2);
-        ctx.stroke();
-        
-        // Effetto di energia lungo la connessione
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(x1 + 60, y1);
-        ctx.lineTo(x2 - 60, y2);
-        ctx.stroke();
-        
-        // Freccia elegante
-        const angle = Math.atan2(y2 - y1, x2 - x1);
-        const arrowLength = 20;
-        const arrowX = x2 - 60 - arrowLength * Math.cos(angle);
-        const arrowY = y2 - arrowLength * Math.sin(angle);
-        
+        // Reset line dash
         ctx.setLineDash([]);
-        ctx.fillStyle = '#888888';
-        ctx.beginPath();
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(arrowX + arrowLength * Math.cos(angle - 0.5), arrowY + arrowLength * Math.sin(angle - 0.5));
-        ctx.lineTo(arrowX + arrowLength * Math.cos(angle + 0.5), arrowY + arrowLength * Math.sin(angle + 0.5));
-        ctx.closePath();
-        ctx.fill();
-        
-        // Bordo della freccia
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
     }
     
     
