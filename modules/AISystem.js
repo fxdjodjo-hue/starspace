@@ -321,12 +321,14 @@ export class AISystem {
         // Implementa attacco al giocatore
         if (this.target && this.target.active) {
             // Calcola danno basato sulla configurazione NPC
-            const damage = this.enemy.damage || this.enemy.config.damage || 20;
+            // Danno casuale tra -2.5 e +2.5 dal danno base
+            const baseDamage = this.enemy.damage || this.enemy.config.damage || 20;
+            const variation = (Math.random() * 5) - 2.5; // Variazione di ±2.5
+            const damage = Math.round(baseDamage + variation);
             
-            // TEMPORANEAMENTE DISABILITATO PER TEST
-            // if (this.game.ship && this.game.ship.takeDamage) {
-            //     this.game.ship.takeDamage(damage);
-            // }
+            if (this.game.ship && this.game.ship.takeDamage) {
+                this.game.ship.takeDamage(damage);
+            }
         }
         
         this.attackTimer = this.config.attackCooldown;
@@ -407,8 +409,7 @@ export class AISystem {
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const projectile = this.projectiles[i];
             if (projectile.checkCollision(this.target)) {
-                // TEMPORANEAMENTE DISABILITATO PER TEST
-                // this.target.takeDamage(projectile.damage);
+                this.target.takeDamage(projectile.damage);
                 
                 // Rimuovi il proiettile
                 projectile.deactivate();

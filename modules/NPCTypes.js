@@ -7,12 +7,12 @@ export class NPCTypes {
                 name: 'Streuner',
                 description: 'Currently the weakest of aliens. Located in X-1, X-2.',
                 sprite: 'alien',
-                maxHP: 8000, // Aumentato per test AI
-                maxShield: 4000, // Aumentato per test AI
+                maxHP: 800, // HP base Streuner
+                maxShield: 400, // Shield base Streuner
                 shieldRegenRate: 1.0,
                 shieldRegenDelay: 3000,
                 speed: 2.8, // 280 base speed
-                damage: 17.5, // 15-20 average damage
+                damage: 17.5, // Base damage (±2.5 variation = 15-20 range)
                 radius: 16,
                 hitboxRadius: 42,
                 colors: {
@@ -43,12 +43,12 @@ export class NPCTypes {
                 name: 'Streuner',
                 description: 'Currently the weakest of aliens. Located in X-1, X-2.',
                 sprite: 'alien',
-                maxHP: 8000,  // Aumentato per test AI
-                maxShield: 4000,  // Aumentato per test AI
+                maxHP: 800,  // HP base Streuner
+                maxShield: 400,  // Shield base Streuner
                 shieldRegenRate: 1.0,  // Stesso di X1
                 shieldRegenDelay: 3000,  // Stesso di X1
                 speed: 2.8,  // Stesso di X1
-                damage: 17.5,  // Stesso di X1
+                damage: 17.5,  // Base damage (±2.5 variation = 15-20 range)
                 radius: 16,  // Stesso di X1
                 hitboxRadius: 42,  // Stesso di X1
                 colors: {
