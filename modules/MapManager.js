@@ -31,27 +31,27 @@ export class MapManager {
         this.createPortalsForCurrentMap();
     }
     
-    // Crea i portali per la mappa corrente
+    // Crea i portali per la mappa corrente - SISTEMA SEMPLICE: navigazione lineare X1->X2->X3->X4->X5
     createPortalsForCurrentMap() {
         this.portals = []; // Pulisci i portali esistenti
         
         if (this.currentMap === 'x1') {
-            // Solo portale per X2
+            // X1 -> X2 (lato destro)
             this.portals.push(new Portal(15000, 5000, 'x2', 1000, 5000, this.game));
         } else if (this.currentMap === 'x2') {
-            // Portali per X1 e X3
+            // X2 -> X1 (lato sinistro) e X2 -> X3 (lato destro)
             this.portals.push(new Portal(500, 5000, 'x1', 14000, 5000, this.game));
             this.portals.push(new Portal(15000, 5000, 'x3', 1000, 5000, this.game));
         } else if (this.currentMap === 'x3') {
-            // Portali per X2 e X4
+            // X3 -> X2 (lato sinistro) e X3 -> X4 (lato destro)
             this.portals.push(new Portal(500, 5000, 'x2', 14000, 5000, this.game));
-            this.portals.push(new Portal(8000, 15000, 'x4', 8000, 1000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'x4', 1000, 5000, this.game));
         } else if (this.currentMap === 'x4') {
-            // Portali per X3 e X5
-            this.portals.push(new Portal(8000, 500, 'x3', 8000, 14000, this.game));
+            // X4 -> X3 (lato sinistro) e X4 -> X5 (lato destro)
+            this.portals.push(new Portal(500, 5000, 'x3', 14000, 5000, this.game));
             this.portals.push(new Portal(15000, 5000, 'x5', 1000, 5000, this.game));
         } else if (this.currentMap === 'x5') {
-            // Solo portale per X4
+            // X5 -> X4 (lato sinistro)
             this.portals.push(new Portal(500, 5000, 'x4', 14000, 5000, this.game));
         }
     }
@@ -143,18 +143,21 @@ export class MapManager {
         // Salva stato corrente prima del cambio
         this.saveCurrentMapState();
         
+        // Salva la mappa di origine
+        const fromMap = this.currentMap;
+        
         // Cambia mappa
         this.currentMap = newMap;
         
         // Ricrea i portali per la nuova mappa
         this.createPortalsForCurrentMap();
         
-        // Trova il portale di destinazione corretto
-        const targetPortal = this.portals.find(p => p.targetMap === newMap);
-        if (targetPortal) {
-            // Posiziona la nave al centro del portale di destinazione
-            ship.x = targetPortal.targetX + targetPortal.width / 2;
-            ship.y = targetPortal.targetY + targetPortal.height / 2;
+        // Trova il portale di arrivo in base alla mappa di origine
+        const arrivalPortal = this.getArrivalPortal(newMap, fromMap);
+        if (arrivalPortal) {
+            // Posiziona la nave al centro del portale di arrivo
+            ship.x = arrivalPortal.x + arrivalPortal.width / 2;
+            ship.y = arrivalPortal.y + arrivalPortal.height / 2;
         }
         
         // Aggiorna la camera
@@ -178,6 +181,41 @@ export class MapManager {
         
         // Aggiorna il background
         this.updateBackground();
+    }
+    
+    // Ottiene il portale di arrivo in base alla mappa di origine e destinazione
+    getArrivalPortal(toMap, fromMap) {
+        // ANDATA: X1→X2→X3→X4→X5
+        if (fromMap === 'x1' && toMap === 'x2') {
+            // X1 destro → atterri in X2 sinistro (quello che porta a X1)
+            return new Portal(500, 5000, 'x1', 14000, 5000, this.game);
+        } else if (fromMap === 'x2' && toMap === 'x3') {
+            // X2 destro → atterri in X3 sinistro (quello che porta a X2)
+            return new Portal(500, 5000, 'x2', 14000, 5000, this.game);
+        } else if (fromMap === 'x3' && toMap === 'x4') {
+            // X3 destro → atterri in X4 sinistro (quello che porta a X3)
+            return new Portal(500, 5000, 'x3', 14000, 5000, this.game);
+        } else if (fromMap === 'x4' && toMap === 'x5') {
+            // X4 destro → atterri in X5 sinistro (quello che porta a X4)
+            return new Portal(500, 5000, 'x4', 14000, 5000, this.game);
+        }
+        
+        // RITORNO: X5→X4→X3→X2→X1
+        else if (fromMap === 'x5' && toMap === 'x4') {
+            // X5 sinistro → atterri in X4 destro (quello che porta a X5)
+            return new Portal(15000, 5000, 'x5', 1000, 5000, this.game);
+        } else if (fromMap === 'x4' && toMap === 'x3') {
+            // X4 sinistro → atterri in X3 destro (quello che porta a X4)
+            return new Portal(15000, 5000, 'x4', 1000, 5000, this.game);
+        } else if (fromMap === 'x3' && toMap === 'x2') {
+            // X3 sinistro → atterri in X2 destro (quello che porta a X3)
+            return new Portal(15000, 5000, 'x3', 1000, 5000, this.game);
+        } else if (fromMap === 'x2' && toMap === 'x1') {
+            // X2 sinistro → atterri in X1 destro (quello che porta a X2)
+            return new Portal(15000, 5000, 'x2', 1000, 5000, this.game);
+        }
+        
+        return null;
     }
     
     // Salva stato corrente della mappa
