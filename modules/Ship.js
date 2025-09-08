@@ -75,7 +75,7 @@ export class Ship {
         this.maxMissiles = 3; // Massimo 3 missili contemporaneamente
         
         // Sistema selezione armi
-        this.selectedLaser = 'x1'; // x1, x2, x3
+        this.selectedLaser = 'x1'; // x1, x2, x3, sab
         this.selectedMissile = 'r1'; // r1, r2, r3
         
         // Sistema laser equipaggiati
@@ -99,7 +99,8 @@ export class Ship {
             laser: {
                 x1: 1000, // Munizioni laser X1
                 x2: 500,  // Munizioni laser X2
-                x3: 200   // Munizioni laser X3
+                x3: 200,  // Munizioni laser X3
+                sab: 100  // Shield Absorber - assorbe scudo invece di fare danno
             },
             missile: {
                 r1: 50,   // Missili R1
@@ -557,6 +558,9 @@ export class Ship {
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance > this.attackRange) return;
         
+        // Determina se stiamo usando munizioni SAB
+        const isSAB = this.selectedLaser === 'sab';
+        
         // Controlla se ha laser equipaggiati
         const totalLasers = this.getTotalEquippedLasers();
         console.log('🔍 Controllo laser:', { 
@@ -612,7 +616,8 @@ export class Ship {
             this.selectedTarget.x, 
             this.selectedTarget.y,
             this.projectileSpeed,
-            this.projectileDamage // Danno totale sul primo proiettile
+            isSAB ? 0 : this.projectileDamage, // Se SAB, nessun danno
+            isSAB // Flag per Shield Absorber
         );
         
         // Secondo proiettile (destra)
@@ -632,7 +637,8 @@ export class Ship {
             this.selectedTarget.x, 
             this.selectedTarget.y,
             this.projectileSpeed,
-            0 // Proiettile visivo senza danno
+            isSAB ? 0 : 0, // Sempre 0 danno (proiettile visivo)
+            isSAB // Flag per Shield Absorber
         );
         
         this.projectiles.push(projectile1);
@@ -749,11 +755,17 @@ export class Ship {
                 console.log('💥 Collisione Proiettile:', {
                     proiettileDamage: projectile.damage,
                     damageFrameCorrente: totalDamageThisFrame,
+                    isSAB: projectile.isSAB,
                     position: { x: projectile.x, y: projectile.y },
                     target: { x: this.selectedTarget.x, y: this.selectedTarget.y }
                 });
                 
-                totalDamageThisFrame += projectile.damage;
+                if (projectile.isSAB) {
+                    // Per SAB, passa il proiettile per gestire l'assorbimento dello scudo
+                    this.selectedTarget.takeDamage(0, projectile);
+                } else {
+                    totalDamageThisFrame += projectile.damage;
+                }
                 hitProjectiles.push(projectile);
             }
         });

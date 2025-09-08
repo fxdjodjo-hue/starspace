@@ -145,8 +145,28 @@ export class Enemy {
         this.y += this.vy;
     }
     
-    takeDamage(damage) {
+    takeDamage(damage, projectile = null) {
         this.lastDamageTime = Date.now();
+        
+        // Se è un proiettile SAB, assorbe solo scudo e non fa danno
+        if (projectile && projectile.isSAB) {
+            if (this.shield > 0) {
+                const shieldAbsorbed = Math.min(this.shield, 50); // Assorbe 50 di scudo
+                this.shield -= shieldAbsorbed;
+                
+                // Mostra il numero di scudo assorbito in blu
+                if (window.gameInstance && window.gameInstance.damageNumbers) {
+                    window.gameInstance.damageNumbers.addNumber(this.x, this.y - 20, shieldAbsorbed, 'shield');
+                }
+            }
+            return;
+        }
+        
+        // Gestione danno normale
+        // Mostra il numero di danno
+        if (window.gameInstance && window.gameInstance.damageNumbers) {
+            window.gameInstance.damageNumbers.addNumber(this.x, this.y - 20, damage, 'outgoing');
+        }
         
         // Prima danneggia lo scudo
         if (this.shield > 0) {

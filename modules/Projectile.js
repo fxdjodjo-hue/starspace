@@ -1,6 +1,6 @@
 // Modulo Projectile per i proiettili del combattimento
 export class Projectile {
-    constructor(x, y, targetX, targetY, speed = 8, damage = 25) {
+    constructor(x, y, targetX, targetY, speed = 8, damage = 25, isSAB = false) {
         this.x = x;
         this.y = y;
         this.targetX = targetX;
@@ -9,6 +9,7 @@ export class Projectile {
         this.damage = damage;
         this.active = true;
         this.radius = 3;
+        this.isSAB = isSAB; // Flag per proiettili Shield Absorber
         
         // Calcola la direzione del proiettile
         const dx = targetX - x;
@@ -94,11 +95,11 @@ export class Projectile {
         } else {
             // Fallback: disegna un proiettile semplice
             // Effetto luminoso
-            ctx.shadowColor = '#ff0000';
+            ctx.shadowColor = this.isSAB ? '#4A90E2' : '#ff0000';
             ctx.shadowBlur = 8;
             
-            // Proiettile principale (rosso come il laser)
-            ctx.fillStyle = '#ff0000';
+            // Proiettile principale (blu per SAB, rosso per laser normale)
+            ctx.fillStyle = this.isSAB ? '#4A90E2' : '#ff0000';
             ctx.beginPath();
             ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
             ctx.fill();
@@ -110,7 +111,7 @@ export class Projectile {
             ctx.fill();
             
             // Scia del proiettile
-            ctx.strokeStyle = '#ff0000';
+            ctx.strokeStyle = this.isSAB ? '#4A90E2' : '#ff0000';
             ctx.lineWidth = 2;
             ctx.globalAlpha = 0.6;
             
