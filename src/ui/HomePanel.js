@@ -1,7 +1,7 @@
 import { UIComponent } from './UIComponent.js';
 import { ShopTab } from './ShopTab.js';
 import { ShopButton } from './ShopButton.js';
-import { InventoryItem } from './InventoryItem.js';
+import { InventoryItem } from '../systems/InventoryItem.js';
 
 // Pannello Home - Interfaccia principale del giocatore (Online-Ready)
 export class HomePanel extends UIComponent {
@@ -370,6 +370,8 @@ export class HomePanel extends UIComponent {
     
     // Aggiorna il progresso delle quest
     updateQuestProgress() {
+        console.log(`🔍 updateQuestProgress chiamato - Streuner: ${this.game.ship?.streunerKilled || 'N/A'}, Bonus Box: ${this.game.ship?.bonusBoxesCollected || 'N/A'}`);
+        
         // Aggiorna solo le quest accettate
         Object.keys(this.questData.accettate).forEach(levelKey => {
             const levelQuests = this.questData.accettate[levelKey];
@@ -379,11 +381,6 @@ export class HomePanel extends UIComponent {
                 });
             }
         });
-        
-        // Debug per verificare il tracking (rimosso per evitare spam console)
-        // if (this.game.ship) {
-        //     console.log(`🔍 Ship tracking - Streuner: ${this.game.ship.streunerKilled}, Bonus Box: ${this.game.ship.bonusBoxesCollected}`);
-        // }
     }
     
     // Aggiorna una condizione specifica di una quest
@@ -400,11 +397,13 @@ export class HomePanel extends UIComponent {
                         const newCompleted = Math.min(this.game.ship.streunerKilled, condition.quantity);
                         if (newCompleted !== condition.completed) {
                             condition.completed = newCompleted;
-                            console.log(`📊 Quest progresso: ${condition.completed}/${condition.quantity} Streuner`);
+                            console.log(`📊 Quest progresso: ${condition.completed}/${condition.quantity} Streuner (Ship: ${this.game.ship.streunerKilled})`);
                         }
                         if (condition.completed < condition.quantity) {
                             allConditionsCompleted = false;
                         }
+                    } else {
+                        console.log(`⚠️ Ship o streunerKilled non disponibile per quest tracking`);
                     }
                     break;
                     

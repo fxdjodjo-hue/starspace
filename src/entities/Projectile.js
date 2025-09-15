@@ -344,7 +344,14 @@ export class Projectile {
         const dy = this.y - enemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        return distance < enemy.radius + this.radius;
+        const hasCollided = distance < enemy.radius + this.radius;
+        
+        // Se c'è una collisione, disattiva immediatamente il proiettile
+        if (hasCollided) {
+            this.deactivate();
+        }
+        
+        return hasCollided;
     }
     
     // Disattiva il proiettile

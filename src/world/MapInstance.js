@@ -1,5 +1,5 @@
 // Sistema di Istanze Mappa - Preparato per Online
-import { NPCTypes } from './NPCTypes.js';
+import { NPCTypes } from '../entities/NPCTypes.js';
 
 export class MapInstance {
     constructor(mapId, instanceId = 'default') {

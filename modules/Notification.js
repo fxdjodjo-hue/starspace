@@ -15,14 +15,14 @@ export class Notification {
     
     // Gestisce le notifiche in modo intelligente
     handleNotification(message, duration, type) {
-        // Se è una notifica di azione, crea un nuovo gruppo
+        // Se è una notifica di azione, pulisci e crea nuova
         if (message.includes('raccolta') || message.includes('distrutto')) {
             this.clearAll();
             this.createNotification(message, duration, 'success');
             return;
         }
         
-        // Se è una ricompensa, aggiungi all'ultima azione
+        // Per le ricompense, aggiungi alla notifica esistente se c'è
         if (type === 'reward' && message.includes('+')) {
             const lastNotification = this.notifications[this.notifications.length - 1];
             if (lastNotification && lastNotification.type === 'success') {
@@ -37,7 +37,6 @@ export class Notification {
         }
         
         // Per altre notifiche, crea una nuova
-        this.clearAll();
         this.createNotification(message, duration, type);
     }
     

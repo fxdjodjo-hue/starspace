@@ -1,42 +1,42 @@
 // Gioco Spaziale - File Principale
-import { Ship } from './modules/Ship.js';
-import { Camera } from './modules/Camera.js';
-import { Input } from './modules/Input.js';
-import { World } from './modules/World.js';
-import { Renderer } from './modules/Renderer.js';
+import { Ship } from './src/entities/Ship.js';
+import { Camera } from './src/core/Camera.js';
+import { Input } from './src/core/Input.js';
+import { World } from './src/world/World.js';
+import { Renderer } from './src/core/Renderer.js';
 import { Minimap } from './modules/Minimap.js';
-import { Enemy } from './modules/Enemy.js';
+import { Enemy } from './src/entities/Enemy.js';
 import { Notification } from './modules/Notification.js';
-import { SectorSystem } from './modules/SectorSystem.js';
+import { SectorSystem } from './src/world/SectorSystem.js';
 import { ExplosionEffect } from './modules/ExplosionEffect.js';
 import { ParallaxBackground } from './modules/ParallaxBackground.js';
 import { AmbientEffects } from './modules/AmbientEffects.js';
-import { RankSystem } from './modules/RankSystem.js';
+import { RankSystem } from './src/systems/RankSystem.js';
 import { PlayerProfile } from './modules/PlayerProfile.js';
-import { AudioManager } from './modules/AudioManager.js';
-import { SettingsPanel } from './modules/SettingsPanel.js';
-import { BonusBox } from './modules/BonusBox.js';
-import { SpaceStation } from './modules/SpaceStation.js';
+import { AudioManager } from './src/systems/AudioManager.js';
+import { SettingsPanel } from './src/ui/SettingsPanel.js';
+import { BonusBox } from './src/entities/BonusBox.js';
+import { SpaceStation } from './src/entities/SpaceStation.js';
 import { ZoneNotification } from './modules/ZoneNotification.js';
-import { SpaceStationPanel } from './modules/SpaceStationPanel.js';
-import { InteractiveAsteroid } from './modules/InteractiveAsteroid.js';
+import { SpaceStationPanel } from './src/ui/SpaceStationPanel.js';
+import { InteractiveAsteroid } from './src/entities/InteractiveAsteroid.js';
 import { DeathPopup } from './modules/DeathPopup.js';
 import { Smartbomb } from './modules/Smartbomb.js';
 import { FastRepair } from './modules/FastRepair.js';
 import { EMP } from './modules/EMP.js';
 import { Leech } from './modules/Leech.js';
-import { Inventory } from './modules/Inventory.js';
-import { InventoryItem } from './modules/InventoryItem.js';
+import { Inventory } from './src/systems/Inventory.js';
+import { InventoryItem } from './src/systems/InventoryItem.js';
 // import { DreadspireBackground } from './modules/DreadspireBackground.js';
-import { HomePanel } from './modules/HomePanel.js';
-import { QuestTracker } from './modules/QuestTracker.js';
-import { CategorySkillbar } from './modules/CategorySkillbar.js';
+import { HomePanel } from './src/ui/HomePanel.js';
+import { QuestTracker } from './src/systems/QuestTracker.js';
+import { CategorySkillbar } from './src/ui/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
-import { UIManager } from './modules/UIManager.js';
-import { ProfilePanel } from './modules/ProfilePanel.js';
-import { MapManager } from './modules/MapManager.js';
-import { MapSystem } from './modules/MapSystem.js';
-import { RadiationSystem } from './modules/RadiationSystem.js';
+import { UIManager } from './src/ui/UIManager.js';
+import { ProfilePanel } from './src/ui/ProfilePanel.js';
+import { MapManager } from './src/world/MapManager.js';
+import { MapSystem } from './src/world/MapSystem.js';
+import { RadiationSystem } from './src/systems/RadiationSystem.js';
 import { DamageNumberSystem } from './modules/DamageNumbers.js';
 
 
@@ -922,6 +922,10 @@ class Game {
             // Poi processa i reward (RewardManager gestisce le notifiche delle ricompense)
             const enemyConfig = combatResult.enemyConfig || this.ship.getEnemyConfig(combatResult.enemyType);
             this.ship.processEnemyKill(combatResult.enemyType, enemyConfig);
+            
+            // Aggiorna il progresso delle quest
+            this.homePanel.updateQuestProgress();
+            this.questTracker.updateActiveQuests();
         }
         
         // Aggiorna nemici
@@ -1008,6 +1012,10 @@ class Game {
                 console.log(`📦 Bonus Box raccolta! Totale: ${this.ship.bonusBoxesCollected}`);
                 
                 box.collect(this.ship);
+                
+                // Aggiorna il progresso delle quest
+                this.homePanel.updateQuestProgress();
+                this.questTracker.updateActiveQuests();
                 return false; // Rimuovi la bonus box dopo la raccolta
             }
             

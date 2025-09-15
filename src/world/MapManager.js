@@ -1,7 +1,7 @@
 import { Portal } from './Portal.js';
-import { Enemy } from './Enemy.js';
-import { BonusBox } from './BonusBox.js';
-import { InteractiveAsteroid } from './InteractiveAsteroid.js';
+import { Enemy } from '../entities/Enemy.js';
+import { BonusBox } from '../entities/BonusBox.js';
+import { InteractiveAsteroid } from '../entities/InteractiveAsteroid.js';
 import { MapInstance } from './MapInstance.js';
 import { MapPersistence } from './MapPersistence.js';
 import { ObjectManager } from './ObjectManager.js';

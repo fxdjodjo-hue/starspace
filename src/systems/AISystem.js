@@ -1,5 +1,5 @@
 // Sistema AI per NPC - Comportamenti modulari
-import { EnemyProjectile } from './EnemyProjectile.js';
+import { EnemyProjectile } from '../entities/EnemyProjectile.js';
 
 export class AISystem {
     constructor(enemy, game) {

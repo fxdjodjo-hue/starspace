@@ -1,7 +1,7 @@
 // Modulo Nemico
 import { AlienSprite } from './AlienSprite.js';
 import { NPCTypes } from './NPCTypes.js';
-import { AISystem } from './AISystem.js';
+import { AISystem } from '../systems/AISystem.js';
 
 export class Enemy {
     constructor(x, y, type = 'npc_x1') {
@@ -148,6 +148,11 @@ export class Enemy {
     takeDamage(damage, projectile = null, skipDamageNumber = false) {
         this.lastDamageTime = Date.now();
         
+        // Disattiva immediatamente il proiettile all'impatto
+        if (projectile && projectile.active) {
+            projectile.deactivate();
+        }
+        
         // Se è un proiettile SAB, assorbe solo scudo e non fa danno
         if (projectile && projectile.isSAB) {
             if (this.shield > 0) {
@@ -156,7 +161,7 @@ export class Enemy {
                 
                 // Mostra il numero di scudo assorbito in blu
                 if (window.gameInstance && window.gameInstance.damageNumbers) {
-                    window.gameInstance.damageNumbers.addNumber(this.x, this.y - 20, shieldAbsorbed, 'shield');
+                    window.gameInstance.damageNumbers.addNumber(this, shieldAbsorbed, 'shield');
                 }
             }
             return;

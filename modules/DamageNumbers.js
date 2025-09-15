@@ -1,26 +1,19 @@
 // Sistema per visualizzare i numeri di danno fluttuanti
 export class DamageNumber {
-    constructor(x, y, damage, type = 'outgoing') {
-        this.x = x;
-        this.y = y;
+    constructor(entity, damage, type = 'outgoing') {
+        this.entity = entity; // Riferimento all'entità (nave o nemico)
         this.damage = Math.round(damage);
         this.type = type; // 'outgoing' o 'incoming'
         this.alpha = 1.0;
         this.scale = 1.0;
         this.lifetime = 180; // 3 secondi a 60 FPS
-        this.velocity = {
-            x: (Math.random() - 0.5) * 2, // Movimento casuale orizzontale
-            y: -1 // Movimento verso l'alto più lento
-        };
+        this.offsetY = -40; // Offset verticale sopra l'entità
     }
 
     update() {
-        // Aggiorna posizione
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
-
-        // Rallenta il movimento verticale
-        this.velocity.y *= 0.98; // Rallenta più gradualmente
+        if (!this.entity || !this.entity.active) {
+            return false; // Rimuovi il numero se l'entità non è più attiva
+        }
 
         // Diminuisci l'alpha gradualmente
         // Mantieni l'alpha a 1 per i primi 2 secondi, poi dissolvenza nell'ultimo secondo
@@ -32,17 +25,35 @@ export class DamageNumber {
         // Riduci il lifetime
         this.lifetime--;
 
+        // Fai fluttuare leggermente l'offset verticale
+        this.offsetY = -40 - (Math.sin(this.lifetime * 0.05) * 5);
+
         return this.lifetime > 0;
     }
 
     draw(ctx, camera) {
-        const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        if (!this.entity || !this.entity.active) return;
+        
+        // Usa la posizione dell'entità invece di una posizione fissa
+        const screenX = this.entity.x - camera.x;
+        const screenY = this.entity.y - camera.y + this.offsetY;
 
         ctx.save();
         
         // Imposta lo stile in base al tipo di danno
-        ctx.fillStyle = this.type === 'outgoing' ? '#ff3333' : '#ffffff';
+        switch(this.type) {
+            case 'outgoing':
+                ctx.fillStyle = '#ff3333'; // Rosso per danno inflitto
+                break;
+            case 'incoming':
+                ctx.fillStyle = '#ffffff'; // Bianco per danno ricevuto
+                break;
+            case 'shield':
+                ctx.fillStyle = '#4A90E2'; // Blu per danno allo scudo
+                break;
+            default:
+                ctx.fillStyle = '#ffffff';
+        }
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2;
         
@@ -72,8 +83,8 @@ export class DamageNumberSystem {
         this.numbers = [];
     }
 
-    addNumber(x, y, damage, type = 'outgoing') {
-        this.numbers.push(new DamageNumber(x, y, damage, type));
+    addNumber(entity, damage, type = 'outgoing') {
+        this.numbers.push(new DamageNumber(entity, damage, type));
     }
 
     update() {

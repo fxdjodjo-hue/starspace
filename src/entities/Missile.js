@@ -1,6 +1,8 @@
 // Modulo Missile per i missili del combattimento
+import { MISSILE_CONFIG } from '../utils/Constants.js';
+
 export class Missile {
-    constructor(x, y, targetX, targetY, speed = 4, damage = 50) {
+    constructor(x, y, targetX, targetY, speed = MISSILE_CONFIG.SPEED, damage = MISSILE_CONFIG.DAMAGE) {
         this.x = x;
         this.y = y;
         this.targetX = targetX;
@@ -10,7 +12,7 @@ export class Missile {
         this.active = true;
         this.radius = 8;
         this.rotation = 0;
-        this.lifetime = 300; // 5 secondi a 60fps
+        this.lifetime = MISSILE_CONFIG.LIFETIME; // Durata ottimizzata
         
         // Calcola direzione iniziale - SEMPLICE
         const dx = this.targetX - this.x;
@@ -54,10 +56,18 @@ export class Missile {
                 const targetVx = (dx / distance) * this.speed;
                 const targetVy = (dy / distance) * this.speed;
                 
-                // Accelerazione graduale per un effetto più realistico
-                const acceleration = 0.15; // Velocità di accelerazione
+                // Accelerazione ottimizzata per maggiore reattività
+                const acceleration = MISSILE_CONFIG.ACCELERATION;
                 this.vx += (targetVx - this.vx) * acceleration;
                 this.vy += (targetVy - this.vy) * acceleration;
+                
+                // Garantisce una velocità minima per evitare missili troppo lenti
+                const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (currentSpeed < this.speed * MISSILE_CONFIG.MIN_SPEED_FACTOR) {
+                    const speedMultiplier = (this.speed * MISSILE_CONFIG.MIN_SPEED_FACTOR) / currentSpeed;
+                    this.vx *= speedMultiplier;
+                    this.vy *= speedMultiplier;
+                }
                 
                 // Aggiorna la rotazione (aggiungi 90 gradi per orientamento corretto)
                 this.rotation = Math.atan2(this.vy, this.vx) + Math.PI / 2;

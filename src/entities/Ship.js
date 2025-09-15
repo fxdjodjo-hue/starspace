@@ -2,12 +2,13 @@
 import { Projectile } from './Projectile.js';
 import { Missile } from './Missile.js';
 // import { Experience } from './Experience.js'; // Integrato nella Nave
-import { RewardManager } from './RewardManager.js';
+import { RewardManager } from '../systems/RewardManager.js';
 import { ShipSprite } from './ShipSprite.js';
 import { MissileSprite } from './MissileSprite.js';
-import { TrailSystem } from './TrailSystem.js';
-import { RepairEffect } from './RepairEffect.js';
-import { ShieldEffect } from './ShieldEffect.js';
+import { TrailSystem } from '../systems/TrailSystem.js';
+import { RepairEffect } from '../systems/RepairEffect.js';
+import { ShieldEffect } from '../systems/ShieldEffect.js';
+import { MISSILE_CONFIG } from '../utils/Constants.js';
 
 export class Ship {
     constructor(x, y, size = 40, game = null) {
@@ -67,11 +68,11 @@ export class Ship {
         
         // Sistema missili
         this.missiles = [];
-        this.missileFireRate = 180; // Missili ogni 180 frame (3 secondi)
+        this.missileFireRate = MISSILE_CONFIG.FIRE_RATE; // Missili ogni 180 frame (3 secondi)
         this.missileTimer = 0;
-        this.missileDamage = 50;
-        this.missileSpeed = 4;
-        this.maxMissiles = 3; // Massimo 3 missili contemporaneamente
+        this.missileDamage = MISSILE_CONFIG.DAMAGE;
+        this.missileSpeed = MISSILE_CONFIG.SPEED; // Velocità ottimizzata
+        this.maxMissiles = MISSILE_CONFIG.MAX_COUNT; // Massimo 3 missili contemporaneamente
         
         // Sistema selezione armi
         this.selectedLaser = 'x1'; // x1, x2, x3, sab
@@ -124,8 +125,8 @@ export class Ship {
         
         // Configurazione base laser
         this.laserConfig = {
-            fireRate: 120,  // Fire rate fisso per tutti i laser (0.5 colpi al secondo)
-            speed: 8,     // Velocità proiettile fissa
+            fireRate: 60,   // Fire rate fisso per tutti i laser (1 colpo al secondo)
+            speed: 16,     // Velocità proiettile aumentata per animazione più veloce
             color: '#ff0000'
         };
         
@@ -767,8 +768,7 @@ export class Ship {
             // Mostra il numero di danno totale una sola volta
             if (window.gameInstance && window.gameInstance.damageNumbers) {
                 window.gameInstance.damageNumbers.addNumber(
-                    this.selectedTarget.x, 
-                    this.selectedTarget.y - 20, 
+                    this.selectedTarget,
                     totalDamageThisFrame, 
                     'outgoing'
                 );
@@ -835,8 +835,7 @@ export class Ship {
                 // Mostra il numero di danno per il missile
                 if (window.gameInstance && window.gameInstance.damageNumbers) {
                     window.gameInstance.damageNumbers.addNumber(
-                        this.selectedTarget.x, 
-                        this.selectedTarget.y - 20, 
+                        this.selectedTarget,
                         this.missileDamage, 
                         'outgoing'
                     );
@@ -993,13 +992,22 @@ export class Ship {
     
     // Processa reward per nemico distrutto usando RewardManager
     processEnemyKill(enemyType, enemyConfig = null) {
+        console.log(`🔍 processEnemyKill chiamato - enemyType: "${enemyType}", enemyConfig:`, enemyConfig);
+        
         // Calcola i reward (RewardManager è solo un calcolatore)
         const results = this.rewardManager.processEnemyKill(enemyType, enemyConfig);
         
-        // Tracking per quest
-        if (enemyType === 'npc_x1' || enemyType === 'npc_x2') {
+        // Tracking per quest - controlla il tipo e la configurazione per identificare Streuner
+        const isStreuner = enemyType === 'npc_x1' || 
+                          enemyType === 'npc_x2' || 
+                          enemyType === 'streuner' ||
+                          (enemyConfig && enemyConfig.name && enemyConfig.name.toLowerCase().includes('streuner'));
+        
+        if (isStreuner) {
             this.streunerKilled++;
-            console.log(`🎯 Streuner ucciso! Totale: ${this.streunerKilled}`);
+            console.log(`🎯 Streuner ucciso! Tipo: "${enemyType}", Nome: "${enemyConfig?.name || 'N/A'}", Totale: ${this.streunerKilled}`);
+        } else {
+            console.log(`⚠️ Nemico ucciso ma non riconosciuto come Streuner: "${enemyType}", Nome: "${enemyConfig?.name || 'N/A'}"`);
         }
         
         // Applica i reward alla nave usando il sistema unificato
@@ -1299,9 +1307,9 @@ export class Ship {
             }
         }
         
-        // Mostra il numero di danno
+            // Mostra il numero di danno
         if (window.gameInstance && window.gameInstance.damageNumbers) {
-            window.gameInstance.damageNumbers.addNumber(this.x, this.y - 20, damage, 'incoming');
+            window.gameInstance.damageNumbers.addNumber(this, damage, 'incoming');
         }
         
         if (this.shield > 0) {

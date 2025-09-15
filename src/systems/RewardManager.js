@@ -78,10 +78,6 @@ export class RewardManager {
             this.notifications.add(`⚡ +${rewards.starEnergy} StarEnergy`, 600, 'reward');
             window.gameInstance.ship.addStarEnergy(rewards.starEnergy);
         }
-
-        if (rewards.starEnergy > 0) {
-            this.notifications.add(`⚡ +${rewards.starEnergy} StarEnergy`, 600, 'reward');
-        }
     }
     
     // Configurazione nemici
