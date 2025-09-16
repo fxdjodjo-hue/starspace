@@ -153,6 +153,10 @@ class Game {
         console.log('🎮 Game constructor - creating StartScreen');
         this.startScreen = new StartScreen(this);
         this.logoutButton = new LogoutButton(this);
+        
+        // Registra il pulsante di logout nel UIManager
+        this.uiManager.setLogoutButton(this.logoutButton);
+        
         console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
         
         // Test globale per verificare se gli eventi da tastiera funzionano
@@ -334,10 +338,7 @@ class Game {
         // Aggiorna l'input PRIMA di tutto
         this.input.update();
         
-        // Aggiorna il pulsante di logout
-        if (this.authSystem && this.authSystem.isLoggedIn) {
-            this.logoutButton.update();
-        }
+        // Il pulsante di logout è ora aggiornato dal UIManager
         
         // Aggiorna e gestisci TUTTO della schermata iniziale (tastiera + mouse), poi esci
         if (this.startScreen.isVisible) {
@@ -655,12 +656,12 @@ class Game {
         }
         
         
-        // Gestisci click sul pulsante di logout
-        if (this.authSystem && this.authSystem.isLoggedIn && this.input.isLeftClickJustReleased()) {
+        // Gestisci click su elementi UI (incluso logout button)
+        if (this.input.isLeftClickJustReleased()) {
             const mousePos = this.input.getMousePosition();
-            if (this.logoutButton.handleClick(mousePos.x, mousePos.y)) {
+            if (this.uiManager.handleClick(mousePos.x, mousePos.y)) {
                 this.input.resetLeftClickReleased();
-                return; // Click gestito dal logout button
+                return; // Click gestito dal sistema UI
             }
         }
         
@@ -1438,11 +1439,7 @@ class Game {
         
         // Disegna pannello quest se aperto
         
-        // Disegna il pulsante di logout PER ULTIMO (sempre sopra tutto)
-        if (this.authSystem && this.authSystem.isLoggedIn) {
-            console.log('🔓 Game render - disegnando logout button ALLA FINE');
-            this.logoutButton.draw(this.ctx);
-        }
+        // Il pulsante di logout è ora gestito dal UIManager
     }
     
     // Inizializza l'inventario (nessun mock)
