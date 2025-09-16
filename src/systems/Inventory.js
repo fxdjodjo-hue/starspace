@@ -230,39 +230,51 @@ export class Inventory {
         return null;
     }
     
-    // Equipaggia oggetto
-    equipItem(itemIndex, slotType, slotIndex) {
+    // Equipaggia oggetto (metodo unificato)
+    equipItem(itemIndex, slotType, slotIndex, droneIndex = null) {
         const item = this.removeItem(itemIndex);
-        if (item && this.equipment[slotType][slotIndex] === null) {
-            this.equipment[slotType][slotIndex] = item;
-            
-            // Aggiorna la nave quando equipaggi un laser
-            if (slotType === 'laser' && window.gameInstance && window.gameInstance.ship) {
-                console.log('🔍 Equipaggio laser:', {
-                    item,
-                    name: item.name,
-                    type: item.type,
-                    stats: item.stats,
-                    key: item.stats?.key
-                });
-                window.gameInstance.ship.equipLaser(item.stats.key, 1);
-                console.log('✅ Laser equipaggiati:', window.gameInstance.ship.equippedLasers);
-            }
-            // Aggiorna la nave quando equipaggi un generatore (speed +2 per ognuno)
-            if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
-                // Determina se è un generatore o uno scudo guardando stats.key
-                const key = item.stats?.key || '';
-                if (key.startsWith('gen')) {
-                    window.gameInstance.ship.equipGenerator(key, 1);
-                } else if (key.startsWith('sh')) {
-                    // Scudi: aumenta la capacità scudo
-                    const extra = Number(item.stats?.protection || 0);
-                    window.gameInstance.ship.maxShield += extra;
-                    window.gameInstance.ship.shield += extra;
+        if (item) {
+            // Equipaggiamento su drone UAV
+            if (droneIndex !== null && slotType === 'uav') {
+                const drone = this.equipment.uav[droneIndex];
+                if (drone && drone.equippedItems && drone.equippedItems[slotIndex] === null) {
+                    drone.equippedItems[slotIndex] = item;
+                    this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
+                    return true;
                 }
             }
-            
-            return true;
+            // Equipaggiamento normale
+            else if (this.equipment[slotType][slotIndex] === null) {
+                this.equipment[slotType][slotIndex] = item;
+                
+                // Aggiorna la nave quando equipaggi un laser
+                if (slotType === 'laser' && window.gameInstance && window.gameInstance.ship) {
+                    console.log('🔍 Equipaggio laser:', {
+                        item,
+                        name: item.name,
+                        type: item.type,
+                        stats: item.stats,
+                        key: item.stats?.key
+                    });
+                    window.gameInstance.ship.equipLaser(item.stats.key, 1);
+                    console.log('✅ Laser equipaggiati:', window.gameInstance.ship.equippedLasers);
+                }
+                // Aggiorna la nave quando equipaggi un generatore (speed +2 per ognuno)
+                if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
+                    // Determina se è un generatore o uno scudo guardando stats.key
+                    const key = item.stats?.key || '';
+                    if (key.startsWith('gen')) {
+                        window.gameInstance.ship.equipGenerator(key, 1);
+                    } else if (key.startsWith('sh')) {
+                        // Scudi: aumenta la capacità scudo
+                        const extra = Number(item.stats?.protection || 0);
+                        window.gameInstance.ship.maxShield += extra;
+                        window.gameInstance.ship.shield += extra;
+                    }
+                }
+                
+                return true;
+            }
         }
         // Se non può essere equipaggiato, rimetti nell'inventario
         if (item) {
@@ -271,9 +283,21 @@ export class Inventory {
         return false;
     }
     
-    // Rimuovi equipaggiamento
-    unequipItem(slotType, slotIndex) {
-        if (this.equipment[slotType][slotIndex]) {
+    // Rimuovi equipaggiamento (metodo unificato)
+    unequipItem(slotType, slotIndex, droneIndex = null) {
+        // Rimozione da drone UAV
+        if (droneIndex !== null && slotType === 'uav') {
+            const drone = this.equipment.uav[droneIndex];
+            if (drone && drone.equippedItems && drone.equippedItems[slotIndex]) {
+                const item = drone.equippedItems[slotIndex];
+                drone.equippedItems[slotIndex] = null;
+                this.addItem(item);
+                this.showPopup(`${item.name} rimosso da ${drone.name}`, 'info');
+                return item;
+            }
+        }
+        // Rimozione normale
+        else if (this.equipment[slotType][slotIndex]) {
             const item = this.equipment[slotType][slotIndex];
             this.equipment[slotType][slotIndex] = null;
             
@@ -541,7 +565,7 @@ export class Inventory {
         return false;
     }
     
-    // Equipaggia oggetto automaticamente nel primo slot disponibile
+    // Equipaggia oggetto automaticamente nel primo slot disponibile (usa metodo unificato)
     equipItemToFirstAvailableSlot(item) {
         // Trova il primo drone con slot disponibili
         for (let droneIndex = 0; droneIndex < this.equipment.uav.length; droneIndex++) {
@@ -555,17 +579,11 @@ export class Inventory {
             // Cerca il primo slot vuoto
             for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
                 if (!drone.equippedItems[slotIndex]) {
-                    // Equipaggia l'oggetto
-                    this.equipItemOnDrone(droneIndex, slotIndex, item);
-                    
-                    // Rimuovi l'oggetto dall'inventario
+                    // Usa il metodo unificato di equipaggiamento
                     const itemIndex = this.items.findIndex(i => i === item);
                     if (itemIndex !== -1) {
-                        this.items.splice(itemIndex, 1);
+                        return this.equipItem(itemIndex, 'uav', slotIndex, droneIndex);
                     }
-                    
-                    this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
-                    return true;
                 }
             }
         }
@@ -631,17 +649,9 @@ export class Inventory {
         }
     }
     
-    // Rimuovi oggetto da drone
+    // Rimuovi oggetto da drone (usa metodo unificato)
     unequipItemFromDrone(droneIndex, slotIndex) {
-        if (droneIndex >= 0 && droneIndex < this.equipment.uav.length) {
-            const drone = this.equipment.uav[droneIndex];
-            if (slotIndex >= 0 && slotIndex < drone.slots && drone.equippedItems && drone.equippedItems[slotIndex]) {
-                const item = drone.equippedItems[slotIndex];
-                drone.equippedItems[slotIndex] = null;
-                this.addItem(item);
-                this.showPopup(`${item.name} rimosso da ${drone.name}`, 'info');
-            }
-        }
+        return this.unequipItem('uav', slotIndex, droneIndex);
     }
     
     // Gestisci click sugli slot di equipaggiamento
