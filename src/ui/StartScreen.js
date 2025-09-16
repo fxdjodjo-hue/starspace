@@ -61,6 +61,18 @@ export class StartScreen {
             height: 50,
             text: 'INIZIA GIOCO'
         };
+
+        // Pulsante carica salvataggio
+        this.loadButton = {
+            x: this.x + 80,
+            y: this.y + 500,
+            width: 200,
+            height: 50,
+            text: 'CARICA SALVATAGGIO'
+        };
+
+        // Flag presenza salvataggio
+        this.hasExistingSave = false;
     }
     
     // Aggiorna la schermata
@@ -78,6 +90,13 @@ export class StartScreen {
         if (this.cursorBlinkTime >= 500) {
             this.cursorVisible = !this.cursorVisible;
             this.cursorBlinkTime = 0;
+        }
+
+        // Aggiorna stato salvataggio esistente
+        try {
+            this.hasExistingSave = !!this.game.saveSystem && this.game.saveSystem.hasSave('main');
+        } catch (e) {
+            this.hasExistingSave = false;
         }
     }
     
@@ -120,6 +139,9 @@ export class StartScreen {
         
         // Pulsante start
         this.drawStartButton(ctx);
+
+        // Pulsante carica
+        this.drawLoadButton(ctx);
         
         ctx.textAlign = 'left';
     }
@@ -263,6 +285,25 @@ export class StartScreen {
         
         ctx.textAlign = 'left';
     }
+
+    // Disegna il pulsante di carica
+    drawLoadButton(ctx) {
+        const button = this.loadButton;
+        const canLoad = this.hasExistingSave;
+        
+        ctx.fillStyle = canLoad ? 'rgba(74, 226, 144, 0.8)' : 'rgba(100, 100, 100, 0.5)';
+        ctx.fillRect(button.x, button.y, button.width, button.height);
+        
+        ctx.strokeStyle = canLoad ? '#4ae290' : '#666666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(button.x, button.y, button.width, button.height);
+        
+        ctx.fillStyle = canLoad ? '#0b1e12' : '#888888';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(button.text, button.x + button.width/2, button.y + 30);
+        ctx.textAlign = 'left';
+    }
     
     // Gestisce i click
     handleClick(x, y) {
@@ -314,6 +355,17 @@ export class StartScreen {
             console.log('✅ Click su pulsante start');
             if (this.nickname.trim() !== '' && this.selectedFaction !== null) {
                 this.startGame();
+                return true;
+            }
+        }
+
+        // Click su pulsante carica salvataggio
+        const loadBtn = this.loadButton;
+        if (x >= loadBtn.x && x <= loadBtn.x + loadBtn.width &&
+            y >= loadBtn.y && y <= loadBtn.y + loadBtn.height) {
+            console.log('📁 Click su pulsante carica salvataggio');
+            if (this.hasExistingSave) {
+                this.loadGame();
                 return true;
             }
         }
@@ -392,6 +444,22 @@ export class StartScreen {
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
         this.game.notifications.add(`Benvenuto ${this.nickname} nella fazione ${faction.name}!`, 'success');
+    }
+
+    // Carica il gioco da salvataggio esistente
+    loadGame() {
+        if (!this.game.saveSystem) return;
+        const ok = this.game.saveSystem.load('main');
+        if (ok) {
+            // Assicura di caricare istanza mappa
+            if (this.game.mapManager) {
+                this.game.mapManager.loadCurrentMapInstance();
+            }
+            this.isVisible = false;
+            this.game.notifications.add('📁 Salvataggio caricato. Bentornato!', 2000, 'success');
+        } else {
+            this.game.notifications.add('❌ Nessun salvataggio valido trovato', 3000, 'error');
+        }
     }
     
     // Mostra la schermata

@@ -647,11 +647,11 @@ class Game {
         
         
         // Gestisci click nel pannello home
-        if (this.homePanel.visible && this.input.isMouseJustPressed()) {
+        if (this.homePanel.visible && this.input.isLeftClickJustReleased()) {
             const mousePos = this.input.getMousePosition();
             const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
             if (handled) {
-                this.input.resetMouseJustPressed();
+                this.input.resetLeftClickReleased();
                 return; // Click gestito dal pannello
             }
         }
