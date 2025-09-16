@@ -2,7 +2,7 @@
 export class LogoutButton {
     constructor(game) {
         this.game = game;
-        this.isVisible = false;
+        this.isVisible = true; // Sempre visibile quando l'utente è loggato
         this.isCountingDown = false;
         this.countdownTime = 5; // 5 secondi
         this.currentCountdown = 0;
@@ -20,6 +20,8 @@ export class LogoutButton {
         this.borderColor = '#ffffff';
         this.textColor = '#ffffff';
         this.countdownColor = '#ffeb3b';
+        
+        console.log('🔓 LogoutButton creato - posizione:', this.x, this.y);
     }
     
     // Mostra il pulsante
@@ -96,7 +98,12 @@ export class LogoutButton {
     
     // Disegna il pulsante
     draw(ctx) {
-        if (!this.isVisible) return;
+        if (!this.isVisible) {
+            console.log('🔓 LogoutButton non visibile, skip draw');
+            return;
+        }
+        
+        console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
         
         // Colore di sfondo
         const bgColor = this.isHovered ? this.hoverBackgroundColor : this.backgroundColor;
@@ -131,6 +138,8 @@ export class LogoutButton {
             ctx.fillStyle = this.countdownColor;
             ctx.fillRect(this.x + 2, this.y + this.height - 4, barWidth, 2);
         }
+        
+        console.log('🔓 LogoutButton disegnato con successo');
     }
     
     // Gestisce il click
