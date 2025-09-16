@@ -50,6 +50,10 @@ export class Inventory {
 
         // Oggetto selezionato per equipaggiamento su drone
         this.selectedItemForDrone = null;
+        
+        // Scroll per droni UAV
+        this.uavScrollY = 0;
+        this.uavItemHeight = 80; // Altezza di ogni drone
     }
     
     // Aggiungi droni di esempio
@@ -369,6 +373,23 @@ export class Inventory {
             return;
         }
         
+        // Controlla se il mouse è sopra un oggetto per il tooltip
+        if (this.currentTab === 'equipment') {
+            this.checkTooltip(x, y);
+        }
+    }
+    
+    // Gestisci scroll per UAV
+    handleUAVScroll(deltaY) {
+        if (this.currentTab !== 'uav') return;
+        
+        const scrollSpeed = 20;
+        this.uavScrollY -= deltaY * scrollSpeed;
+        
+        // Limita lo scroll
+        const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - 400);
+        this.uavScrollY = Math.max(0, Math.min(this.uavScrollY, maxScroll));
+        
         // Controlla hover sugli oggetti equipaggiati
         this.checkEquipmentHover(x, y);
         
@@ -442,50 +463,53 @@ export class Inventory {
     handleUAVClick(x, y) {
         const uavY = this.panelY + 120;
         const uavX = this.panelX + 50;
-        const slotSpacing = 65;
+        const droneAreaWidth = 300;
+        const droneAreaHeight = 400;
 
         // Assicurati che equipment.uav sia inizializzato
         if (!this.equipment.uav) {
             this.equipment.uav = [];
         }
 
-        // Controlla click sui droni equipaggiati
+        // Controlla click sui droni equipaggiati (layout verticale)
         this.equipment.uav.forEach((drone, droneIndex) => {
-            const droneX = uavX + droneIndex * (this.slotSize + slotSpacing);
-            const droneWidth = this.slotSize * 2 + 10;
-            const droneHeight = this.slotSize + 40;
+            const droneY = uavY + (droneIndex * this.uavItemHeight) - this.uavScrollY;
+            const droneX = uavX + 10;
+            const droneWidth = droneAreaWidth - 20;
+            const droneHeight = this.uavItemHeight - 20;
 
             // Click sul drone (area generale)
             if (x >= droneX && x <= droneX + droneWidth &&
-                y >= uavY && y <= uavY + droneHeight) {
+                y >= droneY && y <= droneY + droneHeight) {
 
                 // Click sui slot del drone
-                for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
-                    const slotX = droneX + 5 + slotIndex * (this.slotSize + 5);
-                    const slotY = uavY + 5;
+                const slotSize = 30;
+                const slotSpacing = 5;
+                const slotStartX = droneX + 10;
+                const slotY = droneY + 35;
 
-                    if (x >= slotX && x <= slotX + this.slotSize &&
-                        y >= slotY && y <= slotY + this.slotSize) {
+                for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
+                    const slotX = slotStartX + slotIndex * (slotSize + slotSpacing);
+
+                    if (x >= slotX && x <= slotX + slotSize &&
+                        y >= slotY && y <= slotY + slotSize) {
 
                         // Se c'è un oggetto equipaggiato, rimuovilo
                         if (drone.equippedItems && drone.equippedItems[slotIndex]) {
                             this.unequipItemFromDrone(droneIndex, slotIndex);
                         }
-                        // Altrimenti cerca un oggetto nell'inventario da equipaggiare
+                        // Altrimenti mostra messaggio per equipaggiare dall'inventario
                         else {
-                            this.equipItemOnDroneFromInventory(droneIndex, slotIndex);
+                            this.showPopup('Click su un oggetto dell\'inventario per equipaggiarlo', 'info');
                         }
                         return true;
                     }
                 }
-
-                // I droni non possono essere rimossi una volta acquistati
-                // Click sul drone non fa nulla
             }
         });
 
         // Controlla click sull'inventario del player
-        const inventoryX = uavX + 400;
+        const inventoryX = uavX + droneAreaWidth + 20;
         const inventoryY = uavY - 20;
         const itemSize = 50;
         const itemsPerRow = 4;
@@ -506,9 +530,8 @@ export class Inventory {
             if (x >= itemX && x <= itemX + itemSize && 
                 y >= itemY && y <= itemY + itemSize) {
                 
-                // Click su oggetto dell'inventario - seleziona per equipaggiamento
-                this.selectedItemForDrone = item;
-                this.showPopup(`${item.name} selezionato per equipaggiamento`, 'info');
+                // Click su oggetto dell'inventario - equipaggia automaticamente
+                this.equipItemToFirstAvailableSlot(item);
                 return true;
             }
 
@@ -518,6 +541,40 @@ export class Inventory {
         return false;
     }
     
+    // Equipaggia oggetto automaticamente nel primo slot disponibile
+    equipItemToFirstAvailableSlot(item) {
+        // Trova il primo drone con slot disponibili
+        for (let droneIndex = 0; droneIndex < this.equipment.uav.length; droneIndex++) {
+            const drone = this.equipment.uav[droneIndex];
+            
+            // Inizializza equippedItems se non esiste
+            if (!drone.equippedItems) {
+                drone.equippedItems = new Array(drone.slots).fill(null);
+            }
+            
+            // Cerca il primo slot vuoto
+            for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
+                if (!drone.equippedItems[slotIndex]) {
+                    // Equipaggia l'oggetto
+                    this.equipItemOnDrone(droneIndex, slotIndex, item);
+                    
+                    // Rimuovi l'oggetto dall'inventario
+                    const itemIndex = this.items.findIndex(i => i === item);
+                    if (itemIndex !== -1) {
+                        this.items.splice(itemIndex, 1);
+                    }
+                    
+                    this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
+                    return true;
+                }
+            }
+        }
+        
+        // Nessun slot disponibile
+        this.showPopup('Tutti i slot dei droni sono occupati!', 'error');
+        return false;
+    }
+
     // Equipaggia oggetto su drone dall'inventario
     equipItemOnDroneFromInventory(droneIndex, slotIndex) {
         // Se c'è un oggetto selezionato, usalo
@@ -968,7 +1025,6 @@ export class Inventory {
     drawUAV(ctx) {
         const uavY = this.panelY + 120;
         const uavX = this.panelX + 50;
-        const slotSpacing = 65;
         
         // Assicurati che equipment.uav sia inizializzato
         if (!this.equipment.uav) {
@@ -981,23 +1037,130 @@ export class Inventory {
         ctx.textAlign = 'left';
         ctx.fillText(`DRONI UAV (${this.equipment.uav.length}/8)`, uavX, uavY - 20);
         
-        // Disegna droni equipaggiati
+        // Area droni con scroll
+        const droneAreaWidth = 300;
+        const droneAreaHeight = 400;
+        const droneAreaX = uavX;
+        const droneAreaY = uavY;
+        
+        // Sfondo area droni
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight);
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight);
+        
+        // Calcola scroll
+        const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - droneAreaHeight);
+        this.uavScrollY = Math.max(0, Math.min(this.uavScrollY, maxScroll));
+        
+        // Disegna droni con scroll
+        ctx.save();
+        ctx.rect(droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight);
+        ctx.clip();
+        
         this.equipment.uav.forEach((drone, index) => {
-            const droneX = uavX + index * (this.slotSize + slotSpacing);
-            this.drawEquippedDrone(ctx, droneX, uavY, drone, index);
+            const droneY = droneAreaY + (index * this.uavItemHeight) - this.uavScrollY;
+            if (droneY + this.uavItemHeight > droneAreaY && droneY < droneAreaY + droneAreaHeight) {
+                this.drawDroneVertical(ctx, droneAreaX + 10, droneY + 10, droneAreaWidth - 20, this.uavItemHeight - 20, drone, index);
+            }
         });
         
+        ctx.restore();
+        
+        // Scrollbar se necessario
+        if (maxScroll > 0) {
+            this.drawUAVScrollbar(ctx, droneAreaX + droneAreaWidth - 10, droneAreaY, 10, droneAreaHeight, maxScroll);
+        }
+        
         // Inventario del player a destra
-        this.drawUAVInventory(ctx, uavX + 400, uavY - 20);
+        this.drawUAVInventory(ctx, uavX + droneAreaWidth + 20, uavY - 20);
         
         // Informazioni UAV
         ctx.fillStyle = '#cccccc';
         ctx.font = '14px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('I droni UAV possono equipaggiare laser o scudi', uavX, uavY + 200);
-        ctx.fillText('Flax: 1 slot | Iris: 2 slot', uavX, uavY + 220);
-        ctx.fillText('Massimo 8 droni totali (Flax + Iris)', uavX, uavY + 240);
-        ctx.fillText('I droni acquistati sono permanenti', uavX, uavY + 260);
+        ctx.fillText('I droni UAV possono equipaggiare laser o scudi', uavX, uavY + droneAreaHeight + 20);
+        ctx.fillText('Flax: 1 slot | Iris: 2 slot', uavX, uavY + droneAreaHeight + 40);
+        ctx.fillText('Massimo 8 droni totali (Flax + Iris)', uavX, uavY + droneAreaHeight + 60);
+        ctx.fillText('I droni acquistati sono permanenti', uavX, uavY + droneAreaHeight + 80);
+        ctx.fillText('Click su oggetti per equipaggiare automaticamente', uavX, uavY + droneAreaHeight + 100);
+    }
+
+    // Disegna drone verticalmente
+    drawDroneVertical(ctx, x, y, width, height, drone, droneIndex) {
+        // Sfondo drone
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, y, width, height);
+        
+        // Bordo drone
+        ctx.strokeStyle = drone.color || '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Nome drone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(drone.name, x + 10, y + 20);
+        
+        // Icona drone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px Arial';
+        ctx.fillText('🚁', x + width - 30, y + 20);
+        
+        // Slot del drone
+        const slotSize = 30;
+        const slotSpacing = 5;
+        const slotStartX = x + 10;
+        const slotY = y + 35;
+        
+        for (let i = 0; i < drone.slots; i++) {
+            const slotX = slotStartX + i * (slotSize + slotSpacing);
+            
+            // Slot
+            ctx.fillStyle = drone.equippedItems && drone.equippedItems[i] ? '#444444' : '#222222';
+            ctx.fillRect(slotX, slotY, slotSize, slotSize);
+            
+            // Bordo slot
+            ctx.strokeStyle = drone.equippedItems && drone.equippedItems[i] ? '#ffffff' : '#666666';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(slotX, slotY, slotSize, slotSize);
+            
+            // Icona oggetto equipaggiato
+            if (drone.equippedItems && drone.equippedItems[i]) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                
+                const item = drone.equippedItems[i];
+                if (item.type === 'laser') {
+                    ctx.fillText('⚡', slotX + slotSize/2, slotY + slotSize/2 + 5);
+                } else if (item.type === 'shield') {
+                    ctx.fillText('🛡️', slotX + slotSize/2, slotY + slotSize/2 + 5);
+                }
+                ctx.textAlign = 'left';
+            }
+        }
+    }
+    
+    // Disegna scrollbar per UAV
+    drawUAVScrollbar(ctx, x, y, width, height, maxScroll) {
+        // Sfondo scrollbar
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, y, width, height);
+        
+        // Barra di scroll
+        const scrollbarHeight = Math.max(20, (height * height) / (height + maxScroll));
+        const scrollbarY = y + (this.uavScrollY / maxScroll) * (height - scrollbarHeight);
+        
+        ctx.fillStyle = '#666666';
+        ctx.fillRect(x, scrollbarY, width, scrollbarHeight);
+        
+        // Bordo scrollbar
+        ctx.strokeStyle = '#999999';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, scrollbarY, width, scrollbarHeight);
     }
 
     // Disegna inventario del player per UAV
@@ -1036,9 +1199,10 @@ export class Inventory {
             ctx.fillStyle = '#333333';
             ctx.fillRect(itemX, itemY, itemSize, itemSize);
 
-            // Bordo oggetto
-            ctx.strokeStyle = item.type === 'laser' ? '#4a90e2' : '#50c878';
-            ctx.lineWidth = 2;
+            // Bordo oggetto (evidenzia se selezionato)
+            const isSelected = this.selectedItemForDrone === item;
+            ctx.strokeStyle = isSelected ? '#ffd700' : (item.type === 'laser' ? '#4a90e2' : '#50c878');
+            ctx.lineWidth = isSelected ? 3 : 2;
             ctx.strokeRect(itemX, itemY, itemSize, itemSize);
 
             // Icona oggetto
@@ -1049,7 +1213,7 @@ export class Inventory {
             ctx.textAlign = 'left';
 
             // Nome oggetto
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = isSelected ? '#ffd700' : '#ffffff';
             ctx.font = '10px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(item.name, itemX + itemSize/2, itemY + itemSize + 15);
