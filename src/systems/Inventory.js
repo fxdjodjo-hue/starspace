@@ -243,6 +243,10 @@ export class Inventory {
                 const drone = this.equipment.uav[droneIndex];
                 if (drone && drone.equippedItems && drone.equippedItems[slotIndex] === null) {
                     drone.equippedItems[slotIndex] = item;
+                    
+                    // Applica effetti del drone alla nave
+                    this.applyDroneEffects();
+                    
                     this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
                     return true;
                 }
@@ -295,6 +299,10 @@ export class Inventory {
             if (drone && drone.equippedItems && drone.equippedItems[slotIndex]) {
                 const item = drone.equippedItems[slotIndex];
                 drone.equippedItems[slotIndex] = null;
+                
+                // Riapplica effetti dei droni (senza l'oggetto rimosso)
+                this.applyDroneEffects();
+                
                 this.addItem(item);
                 this.showPopup(`${item.name} rimosso da ${drone.name}`, 'info');
                 return item;
@@ -354,6 +362,9 @@ export class Inventory {
                     drone.equippedItems = new Array(drone.slots).fill(null);
                 }
             });
+            
+            // Applica effetti dei droni al caricamento
+            this.applyDroneEffects();
             
             // Riapplica gli effetti degli item equipaggiati
             if (window.gameInstance && window.gameInstance.ship) {
@@ -670,6 +681,68 @@ export class Inventory {
     // Rimuovi oggetto da drone (usa metodo unificato)
     unequipItemFromDrone(droneIndex, slotIndex) {
         return this.unequipItem('uav', slotIndex, droneIndex);
+    }
+    
+    // Applica effetti dei droni UAV alla nave
+    applyDroneEffects() {
+        if (!window.gameInstance || !window.gameInstance.ship) return;
+        
+        // Reset effetti precedenti dei droni
+        this.resetDroneEffects();
+        
+        // Applica effetti di tutti i droni equipaggiati
+        this.equipment.uav.forEach((drone, droneIndex) => {
+            if (drone.equippedItems) {
+                drone.equippedItems.forEach((item, slotIndex) => {
+                    if (item) {
+                        this.applyDroneItemEffect(item, drone);
+                    }
+                });
+            }
+        });
+    }
+    
+    // Reset effetti dei droni
+    resetDroneEffects() {
+        if (!window.gameInstance || !window.gameInstance.ship) return;
+        
+        const ship = window.gameInstance.ship;
+        
+        // Reset danno bonus dei droni
+        if (ship.droneDamageBonus) {
+            ship.droneDamageBonus = 0;
+        }
+        
+        // Reset protezione bonus dei droni
+        if (ship.droneShieldBonus) {
+            ship.droneShieldBonus = 0;
+        }
+    }
+    
+    // Applica effetto di un oggetto equipaggiato su drone
+    applyDroneItemEffect(item, drone) {
+        if (!window.gameInstance || !window.gameInstance.ship) return;
+        
+        const ship = window.gameInstance.ship;
+        
+        // Inizializza bonus se non esistono
+        if (!ship.droneDamageBonus) ship.droneDamageBonus = 0;
+        if (!ship.droneShieldBonus) ship.droneShieldBonus = 0;
+        
+        // Applica bonus basato sul tipo di oggetto
+        if (item.type === 'laser') {
+            // Bonus danno per laser sui droni
+            const damage = item.damage || item.stats?.damage || 0;
+            ship.droneDamageBonus += damage;
+            
+            console.log(`🚁 Drone ${drone.name}: +${damage} danno da ${item.name}`);
+        } else if (item.type === 'shield') {
+            // Bonus protezione per scudi sui droni
+            const protection = item.protection || item.stats?.protection || 0;
+            ship.droneShieldBonus += protection;
+            
+            console.log(`🚁 Drone ${drone.name}: +${protection} protezione da ${item.name}`);
+        }
     }
     
     // Gestisci click sugli slot di equipaggiamento
