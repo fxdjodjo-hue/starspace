@@ -112,35 +112,6 @@ export class HomePanel extends UIComponent {
             },
             consumables: {
                 // Placeholder per consumabili futuri
-            },
-            uav: {
-                // Droni UAV
-                flax_drone: { 
-                    name: 'Flax Drone', 
-                    price: 1000, 
-                    amount: 1, 
-                    max: 5, 
-                    icon: '🚁', 
-                    type: 'uav', 
-                    key: 'flax_drone',
-                    droneType: 'flax',
-                    slots: 1,
-                    description: 'Drone Flax - 1 slot per laser o scudi',
-                    cost: { credits: 1000 }
-                },
-                iris_drone: { 
-                    name: 'Iris Drone', 
-                    price: 500, 
-                    amount: 1, 
-                    max: 3, 
-                    icon: '🚁', 
-                    type: 'uav', 
-                    key: 'iris_drone',
-                    droneType: 'iris',
-                    slots: 2,
-                    description: 'Drone Iris - 2 slot per laser o scudi',
-                    cost: { uridium: 500 }
-                }
             }
         };
         
@@ -149,7 +120,6 @@ export class HomePanel extends UIComponent {
         this.selectedAmmoItem = 'laser_x1'; // Item selezionato per visualizzazione
         this.selectedLaserItem = 'lf1'; // Item selezionato per laser
         this.selectedGeneratorItem = 'generator_1'; // Item selezionato per generatori
-        this.selectedUAVItem = 'flax_drone'; // Item selezionato per UAV
         
         // Scroll orizzontale thumbnail
         this.thumbnailScrollX = 0;
@@ -1585,7 +1555,7 @@ export class HomePanel extends UIComponent {
         }
         
         // Controlla click su thumbnail in basso (priorità alta)
-        if (['ammunition', 'laser', 'generators', 'uav'].includes(this.selectedShopCategory)) {
+        if (['ammunition', 'laser', 'generators'].includes(this.selectedShopCategory)) {
             const previewY = contentY + 90 + 500 + 10;
             
             // Controlla click su frecce di scroll
@@ -1826,76 +1796,9 @@ export class HomePanel extends UIComponent {
     }
     
     handleUAVClick(x, y, detailsX, detailsY, items) {
-        // Gestisce click sui droni UAV
-        const selectedItem = items[this.selectedUAVItem];
-        if (!selectedItem) return false;
-        
-        // Area pulsanti acquisto
-        const buttonY = detailsY + 300;
-        const buttonWidth = 120;
-        const buttonHeight = 35;
-        const buttonSpacing = 10;
-        
-        // Pulsante "Acquista 1"
-        const buy1X = detailsX + 20;
-        if (x >= buy1X && x <= buy1X + buttonWidth && 
-            y >= buttonY && y <= buttonY + buttonHeight) {
-            this.buyUAVItem(this.selectedUAVItem, 1);
-            return true;
-        }
-        
+        // La tab UAV ora mostra solo i droni equipaggiati, non gestisce acquisti
+        // I droni vengono equipaggiati dall'inventario
         return false;
-    }
-    
-    // Acquista drone UAV
-    buyUAVItem(itemKey, quantity = 1) {
-        const item = this.shopItems.uav[itemKey];
-        if (!item) return;
-        
-        const totalPrice = item.price * quantity;
-        const currency = item.cost.credits ? 'credits' : 'uridium';
-        const playerCurrency = currency === 'credits' ? this.playerData.credits : this.playerData.uridium;
-        
-        // Controlla se ha abbastanza valuta
-        if (playerCurrency >= totalPrice) {
-            // Deduci valuta
-            if (currency === 'credits') {
-                this.game.ship.addResource('credits', -totalPrice);
-            } else {
-                this.game.ship.addResource('uridium', -totalPrice);
-            }
-            
-            // Crea il drone per l'inventario
-            const drone = {
-                id: item.key,
-                name: item.name,
-                type: 'uav',
-                droneType: item.droneType,
-                rarity: item.droneType === 'flax' ? 'common' : 'rare',
-                description: item.description,
-                cost: item.cost,
-                slots: item.slots,
-                icon: item.icon,
-                color: item.droneType === 'flax' ? '#4a90e2' : '#ff6b6b'
-            };
-            
-            // Aggiungi all'inventario
-            for (let i = 0; i < quantity; i++) {
-                this.game.inventory.addItem(drone);
-            }
-            
-            // Notifica acquisto
-            this.game.notifications.add(`${item.name} acquistato!`, 'success');
-            
-            console.log('🛍️ Drone acquistato:', {
-                item: item.name,
-                quantity: quantity,
-                totalPrice: totalPrice,
-                currency: currency
-            });
-        } else {
-            this.game.notifications.add(`Valuta insufficiente!`, 'error');
-        }
     }
 
     handleLaserClick(x, y, detailsX, detailsY, items) {
@@ -2390,103 +2293,120 @@ export class HomePanel extends UIComponent {
     }
     
     drawUAVLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items) {
-        // Area immagine grande a sinistra
-        const imageX = x + 20;
-        const imageY = y + 20;
-        const imageSize = 380;
-        
-        // Sfondo immagine
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(imageX, imageY, imageSize, imageSize);
-        ctx.strokeStyle = '#ff6b6b';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(imageX, imageY, imageSize, imageSize);
-        
-        // Titolo drone selezionato
-        const selectedItem = items[this.selectedUAVItem];
-        if (selectedItem) {
-            ctx.fillStyle = '#ff6b6b';
-            ctx.font = 'bold 28px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(selectedItem.name, imageX + imageSize/2, imageY + 40);
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText('Drone UAV', imageX + imageSize/2, imageY + 70);
-        }
-        
-        // Icona drone grande centrata
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 100px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('🚁', imageX + imageSize/2, imageY + imageSize/2 + 40);
-        ctx.textAlign = 'left';
-        
-        // Stats drone
-        if (selectedItem) {
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Slot: ${selectedItem.slots}`, imageX + imageSize/2, imageY + imageSize - 50);
-            ctx.fillText(`Tipo: ${selectedItem.droneType.toUpperCase()}`, imageX + imageSize/2, imageY + imageSize - 30);
-            ctx.textAlign = 'left';
-        }
-        
-        // Area dettagli a destra
-        const detailsX = x + 20 + imageAreaWidth + 20;
-        const detailsY = y + 20;
-        
-        // Titolo dettagli
+        // Titolo sezione UAV
         ctx.fillStyle = '#ff6b6b';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText('Dettagli Drone', detailsX, detailsY + 30);
+        ctx.fillText('DRONI UAV', x + 20, y + 30);
         
-        if (selectedItem) {
-            // Descrizione
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '16px Arial';
-            ctx.fillText(selectedItem.description, detailsX, detailsY + 70);
-            
-            // Caratteristiche
-            ctx.fillStyle = '#cccccc';
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText('Caratteristiche:', detailsX, detailsY + 120);
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '14px Arial';
-            ctx.fillText(`• Slot disponibili: ${selectedItem.slots}`, detailsX, detailsY + 150);
-            ctx.fillText(`• Tipo: ${selectedItem.droneType}`, detailsX, detailsY + 170);
-            ctx.fillText(`• Può equipaggiare: Laser e Scudi`, detailsX, detailsY + 190);
-            
-            // Prezzo
-            const currency = selectedItem.cost.credits ? 'Crediti' : 'Uridium';
-            const price = selectedItem.cost.credits || selectedItem.cost.uridium;
-            
-            ctx.fillStyle = '#ffd700';
+        // Sfondo area principale
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(x, y + 50, this.contentWidth - 40, areaHeight - 30);
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y + 50, this.contentWidth - 40, areaHeight - 30);
+        
+        // Mostra droni equipaggiati
+        const equippedDrones = this.game.inventory.equipment.uav || [];
+        
+        if (equippedDrones.length === 0) {
+            // Nessun drone equipaggiato
+            ctx.fillStyle = '#888888';
             ctx.font = 'bold 20px Arial';
-            ctx.fillText(`Prezzo: ${price.toLocaleString()} ${currency}`, detailsX, detailsY + 230);
-            
-            // Pulsante acquisto
-            const buttonY = detailsY + 280;
-            const buttonWidth = 120;
-            const buttonHeight = 35;
-            
-            // Sfondo pulsante
-            ctx.fillStyle = '#ff6b6b';
-            ctx.fillRect(detailsX + 20, buttonY, buttonWidth, buttonHeight);
-            
-            // Bordo pulsante
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(detailsX + 20, buttonY, buttonWidth, buttonHeight);
-            
-            // Testo pulsante
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Acquista 1', detailsX + 20 + buttonWidth/2, buttonY + buttonHeight/2 + 5);
+            ctx.fillText('Nessun drone equipaggiato', x + (this.contentWidth - 40)/2, y + 50 + (areaHeight - 30)/2);
             ctx.textAlign = 'left';
+            
+            // Istruzioni
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Vai all\'inventario per equipaggiare i droni', x + (this.contentWidth - 40)/2, y + 50 + (areaHeight - 30)/2 + 40);
+            ctx.textAlign = 'left';
+        } else {
+            // Disegna droni equipaggiati
+            const droneWidth = 200;
+            const droneHeight = 120;
+            const droneSpacing = 20;
+            const startX = x + 30;
+            const startY = y + 80;
+            
+            equippedDrones.forEach((drone, index) => {
+                const droneX = startX + index * (droneWidth + droneSpacing);
+                const droneY = startY;
+                
+                this.drawDroneInShop(ctx, droneX, droneY, droneWidth, droneHeight, drone, index);
+            });
         }
+        
+        // Informazioni sui droni
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '14px Arial';
+        ctx.fillText('I droni UAV forniscono slot per equipaggiare laser e scudi', x + 20, y + areaHeight + 20);
+        ctx.fillText('Flax: 1 slot | Iris: 2 slot', x + 20, y + areaHeight + 40);
+    }
+    
+    // Disegna un drone nel negozio
+    drawDroneInShop(ctx, x, y, width, height, drone, droneIndex) {
+        // Sfondo drone
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, y, width, height);
+        
+        // Bordo drone
+        ctx.strokeStyle = drone.color || '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Nome drone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(drone.name, x + width/2, y + 20);
+        
+        // Icona drone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '32px Arial';
+        ctx.fillText('🚁', x + width/2, y + 50);
+        
+        // Slot del drone
+        const slotSize = 30;
+        const slotSpacing = 5;
+        const slotStartX = x + (width - (drone.slots * slotSize + (drone.slots - 1) * slotSpacing)) / 2;
+        const slotY = y + 70;
+        
+        for (let i = 0; i < drone.slots; i++) {
+            const slotX = slotStartX + i * (slotSize + slotSpacing);
+            
+            // Slot
+            ctx.fillStyle = drone.equippedItems && drone.equippedItems[i] ? '#444444' : '#222222';
+            ctx.fillRect(slotX, slotY, slotSize, slotSize);
+            
+            // Bordo slot
+            ctx.strokeStyle = drone.equippedItems && drone.equippedItems[i] ? '#ffffff' : '#666666';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(slotX, slotY, slotSize, slotSize);
+            
+            // Icona oggetto equipaggiato
+            if (drone.equippedItems && drone.equippedItems[i]) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                
+                const item = drone.equippedItems[i];
+                if (item.type === 'laser') {
+                    ctx.fillText('⚡', slotX + slotSize/2, slotY + slotSize/2 + 5);
+                } else if (item.type === 'shield') {
+                    ctx.fillText('🛡️', slotX + slotSize/2, slotY + slotSize/2 + 5);
+                }
+                ctx.textAlign = 'left';
+            }
+        }
+        
+        // Info slot
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${drone.slots} slot`, x + width/2, y + height - 10);
+        ctx.textAlign = 'left';
     }
     
     drawModernShopItem(ctx, x, y, item, key, width, height) {
@@ -2587,8 +2507,6 @@ export class HomePanel extends UIComponent {
                 isSelected = itemKey === this.selectedLaserItem;
             } else if (this.selectedShopCategory === 'generators') {
                 isSelected = itemKey === this.selectedGeneratorItem;
-            } else if (this.selectedShopCategory === 'uav') {
-                isSelected = itemKey === this.selectedUAVItem;
             }
             
             // Bordo evidenziato per item selezionato
