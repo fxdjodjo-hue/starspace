@@ -1573,7 +1573,7 @@ export class HomePanel extends UIComponent {
         const tabWidth = 140; // Corretto per matchare drawShopTabs
         const tabHeight = 40; // Corretto per matchare drawShopTabs
         
-        const tabs = ['ammunition', 'laser', 'generators'];
+        const tabs = ['ammunition', 'laser', 'generators', 'uav'];
         for (let index = 0; index < tabs.length; index++) {
             const tabId = tabs[index];
             const tabX = contentX + 20 + index * tabWidth;
@@ -2656,7 +2656,8 @@ export class HomePanel extends UIComponent {
         const tabs = [
             { id: 'ammunition', name: 'MUNIZIONI', color: '#e94560' },
             { id: 'laser', name: 'LASER', color: '#4a90e2' },
-            { id: 'generators', name: 'GENERATORI', color: '#50c878' }
+            { id: 'generators', name: 'GENERATORI', color: '#50c878' },
+            { id: 'uav', name: 'UAV', color: '#ff6b6b' }
         ];
         
         const tabWidth = 140;
