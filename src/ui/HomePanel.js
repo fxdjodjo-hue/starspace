@@ -1866,7 +1866,7 @@ export class HomePanel extends UIComponent {
                 this.game.ship.addResource('uridium', -totalPrice);
             }
             
-            // Crea il drone per l'inventario
+            // Crea il drone per l'inventario UAV
             const drone = {
                 id: item.key,
                 name: item.name,
@@ -1877,22 +1877,24 @@ export class HomePanel extends UIComponent {
                 cost: item.cost,
                 slots: item.slots,
                 icon: item.icon,
-                color: item.droneType === 'flax' ? '#4a90e2' : '#ff6b6b'
+                color: item.droneType === 'flax' ? '#4a90e2' : '#ff6b6b',
+                equippedItems: new Array(item.slots).fill(null) // Inizializza slot vuoti
             };
             
-            // Aggiungi all'inventario
+            // Aggiungi direttamente alla tab UAV dell'inventario
             for (let i = 0; i < quantity; i++) {
-                this.game.inventory.addItem(drone);
+                this.game.inventory.equipment.uav.push(drone);
             }
             
             // Notifica acquisto
-            this.game.notifications.add(`${item.name} acquistato!`, 'success');
+            this.game.notifications.add(`${item.name} acquistato e aggiunto alla tab UAV!`, 'success');
             
             console.log('🛍️ Drone acquistato:', {
                 item: item.name,
                 quantity: quantity,
                 totalPrice: totalPrice,
-                currency: currency
+                currency: currency,
+                addedToUAV: true
             });
         } else {
             this.game.notifications.add(`Valuta insufficiente!`, 'error');
