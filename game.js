@@ -43,7 +43,6 @@ import { SaveSystem } from './src/systems/SaveSystem.js';
 import { SaveLoadPanel } from './src/ui/SaveLoadPanel.js';
 import { FactionSystem } from './src/systems/FactionSystem.js';
 import { AuthSystem } from './src/systems/AuthSystem.js';
-import { LogoutButton } from './src/ui/LogoutButton.js';
 
 
 
@@ -152,8 +151,6 @@ class Game {
         // Schermata di selezione iniziale
         console.log('🎮 Game constructor - creating StartScreen');
         this.startScreen = new StartScreen(this);
-        this.logoutButton = new LogoutButton(this);
-        
         console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
         
         // Test globale per verificare se gli eventi da tastiera funzionano
@@ -184,8 +181,7 @@ class Game {
         this.uiManager = new UIManager(this);
         this.initUIManager();
         
-        // Registra il pulsante di logout nel UIManager (dopo che è stato creato)
-        this.uiManager.setLogoutButton(this.logoutButton);
+        // Il logout è ora gestito dalla HomePanel
         
         // Inizializza audio e altri sistemi
         this.initAudio();

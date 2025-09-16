@@ -10,8 +10,7 @@ export class UIManager {
         this.startY = 20;
         this.iconSize = 50;
         
-        // Pulsante di logout (sempre visibile quando loggato)
-        this.logoutButton = null;
+        // Il logout è ora gestito dalla HomePanel
     }
     
     // Registra una nuova icona
@@ -62,44 +61,22 @@ export class UIManager {
     // Disegna tutte le icone
     draw(ctx) {
         this.icons.forEach(icon => icon.draw(ctx));
-        
-        // Disegna il pulsante di logout se l'utente è loggato
-        if (this.logoutButton && this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            this.logoutButton.draw(ctx);
-        }
     }
     
-    // Aggiorna il pulsante di logout
+    // Aggiorna tutte le icone
     update() {
         this.icons.forEach(icon => icon.update());
-        
-        if (this.logoutButton && this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            this.logoutButton.update();
-        }
     }
     
-    // Gestisce i click su tutte le icone e il pulsante di logout
+    // Gestisce i click su tutte le icone
     handleClick(x, y) {
-        // Prima controlla il pulsante di logout (priorità massima)
-        if (this.logoutButton && this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            if (this.logoutButton.handleClick(x, y)) {
-                return true;
-            }
-        }
-        
-        // Poi controlla le icone in ordine inverso (ultima in cima)
+        // Controlla le icone in ordine inverso (ultima in cima)
         for (let i = this.icons.length - 1; i >= 0; i--) {
             if (this.icons[i].handleClick(x, y)) {
                 return true; // Click gestito
             }
         }
         return false; // Nessun click gestito
-    }
-    
-    // Imposta il pulsante di logout
-    setLogoutButton(logoutButton) {
-        this.logoutButton = logoutButton;
-        console.log('🔓 UIManager - LogoutButton registrato');
     }
     
     // Configurazione predefinita per icone comuni

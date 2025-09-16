@@ -557,6 +557,14 @@ export class HomePanel extends UIComponent {
             }
         }
         
+        // Se siamo in exit, gestisci i click del logout
+        if (this.selectedCategory === 'exit') {
+            const handled = this.handleLogoutClick(x, y, panelX, panelY);
+            if (handled) {
+                return true;
+            }
+        }
+        
         // Se siamo nelle fazioni, gestisci i click delle fazioni
         if (this.selectedCategory === 'factions') {
             const contentX = panelX + this.navWidth;
@@ -824,7 +832,7 @@ export class HomePanel extends UIComponent {
                 this.drawComingSoon(ctx, contentX, contentY, 'Impostazioni');
                 break;
             case 'exit':
-                this.drawComingSoon(ctx, contentX, contentY, 'Esci');
+                this.drawLogoutContent(ctx, contentX, contentY);
                 break;
         }
     }
@@ -1253,6 +1261,97 @@ export class HomePanel extends UIComponent {
         ctx.fillText('Coming Soon...', x + this.contentWidth / 2, y + this.panelHeight / 2);
         
         ctx.textAlign = 'left';
+    }
+    
+    drawLogoutContent(ctx, x, y) {
+        const centerX = x + this.contentWidth / 2;
+        
+        // Titolo
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🚪 Logout', centerX, y + 50);
+        
+        // Messaggio informativo
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '16px Arial';
+        ctx.fillText('Sei sicuro di voler uscire dal gioco?', centerX, y + 100);
+        
+        // Informazioni utente corrente
+        if (this.game.authSystem && this.game.authSystem.currentUser) {
+            ctx.fillStyle = '#4a90e2';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Utente: ${this.game.authSystem.currentUser.nickname}`, centerX, y + 130);
+            ctx.fillText(`Fazione: ${this.game.authSystem.currentUser.faction}`, centerX, y + 150);
+        }
+        
+        // Pulsante di logout
+        const buttonX = centerX - 100;
+        const buttonY = y + 200;
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+        
+        // Sfondo pulsante
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        // Bordo pulsante
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        // Testo pulsante
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('CONFERMA LOGOUT', centerX, buttonY + 32);
+        
+        // Messaggio di avviso
+        ctx.fillStyle = '#ff6b6b';
+        ctx.font = '12px Arial';
+        ctx.fillText('Il gioco verrà salvato automaticamente', centerX, y + 280);
+        
+        ctx.textAlign = 'left';
+    }
+    
+    // Gestisce i click nella sezione logout
+    handleLogoutClick(x, y, panelX, panelY) {
+        const contentX = panelX + this.navWidth;
+        const contentY = panelY + 60;
+        
+        const centerX = contentX + this.contentWidth / 2;
+        const buttonX = centerX - 100;
+        const buttonY = contentY + 200;
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+        
+        // Controlla se clicca sul pulsante di logout
+        if (x >= buttonX && x <= buttonX + buttonWidth && 
+            y >= buttonY && y <= buttonY + buttonHeight) {
+            
+            // Esegui il logout
+            if (this.game.authSystem) {
+                // Salva il gioco prima del logout
+                if (this.game.saveSystem) {
+                    this.game.saveSystem.save('main');
+                }
+                
+                // Esegui il logout
+                this.game.authSystem.logout();
+                
+                // Chiudi il pannello home
+                this.hide();
+                
+                // Mostra notifica
+                if (this.game.notifications) {
+                    this.game.notifications.add('Logout effettuato con successo', 'success');
+                }
+            }
+            
+            return true;
+        }
+        
+        return false;
     }
     
     // Gestisce i click nelle quest
