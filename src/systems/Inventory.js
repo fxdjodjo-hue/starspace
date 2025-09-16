@@ -975,11 +975,11 @@ export class Inventory {
             this.equipment.uav = [];
         }
         
-        // Titolo UAV
+        // Titolo UAV con contatore
         ctx.fillStyle = '#ff6b6b';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('DRONI UAV', uavX, uavY - 20);
+        ctx.fillText(`DRONI UAV (${this.equipment.uav.length}/8)`, uavX, uavY - 20);
         
         // Disegna droni equipaggiati
         this.equipment.uav.forEach((drone, index) => {
@@ -996,7 +996,8 @@ export class Inventory {
         ctx.textAlign = 'left';
         ctx.fillText('I droni UAV possono equipaggiare laser o scudi', uavX, uavY + 200);
         ctx.fillText('Flax: 1 slot | Iris: 2 slot', uavX, uavY + 220);
-        ctx.fillText('I droni acquistati sono permanenti', uavX, uavY + 240);
+        ctx.fillText('Massimo 8 droni totali (Flax + Iris)', uavX, uavY + 240);
+        ctx.fillText('I droni acquistati sono permanenti', uavX, uavY + 260);
     }
 
     // Disegna inventario del player per UAV

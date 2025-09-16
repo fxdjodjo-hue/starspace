@@ -1840,6 +1840,14 @@ export class HomePanel extends UIComponent {
         const buy1X = detailsX + 20;
         if (x >= buy1X && x <= buy1X + buttonWidth && 
             y >= buttonY && y <= buttonY + buttonHeight) {
+            
+            // Controlla se il limite è stato raggiunto
+            const currentUAVCount = this.game.inventory.equipment.uav.length;
+            if (currentUAVCount >= 8) {
+                this.game.notifications.add('Limite massimo droni UAV raggiunto! (8/8)', 'error');
+                return true;
+            }
+            
             this.buyUAVItem(this.selectedUAVItem, 1);
             return true;
         }
@@ -1859,6 +1867,13 @@ export class HomePanel extends UIComponent {
         
         // Controlla se ha abbastanza valuta
         if (playerCurrency >= totalPrice) {
+            // Controlla limite massimo droni UAV (8 totali)
+            const currentUAVCount = this.game.inventory.equipment.uav.length;
+            if (currentUAVCount + quantity > 8) {
+                this.game.notifications.add(`Limite massimo droni UAV raggiunto! (${currentUAVCount}/8)`, 'error');
+                return;
+            }
+            
             // Deduci valuta
             if (currency === 'credits') {
                 this.game.ship.addResource('credits', -totalPrice);
@@ -1887,14 +1902,15 @@ export class HomePanel extends UIComponent {
             }
             
             // Notifica acquisto
-            this.game.notifications.add(`${item.name} acquistato e aggiunto alla tab UAV!`, 'success');
+            this.game.notifications.add(`${item.name} acquistato! (${currentUAVCount + quantity}/8 droni)`, 'success');
             
             console.log('🛍️ Drone acquistato:', {
                 item: item.name,
                 quantity: quantity,
                 totalPrice: totalPrice,
                 currency: currency,
-                addedToUAV: true
+                addedToUAV: true,
+                totalDrones: currentUAVCount + quantity
             });
         } else {
             this.game.notifications.add(`Valuta insufficiente!`, 'error');
@@ -2474,21 +2490,30 @@ export class HomePanel extends UIComponent {
             const buttonWidth = 120;
             const buttonHeight = 35;
             
+            // Controlla se il limite è stato raggiunto
+            const currentUAVCount = this.game.inventory.equipment.uav.length;
+            const canBuy = currentUAVCount < 8;
+            
             // Sfondo pulsante
-            ctx.fillStyle = '#ff6b6b';
+            ctx.fillStyle = canBuy ? '#ff6b6b' : '#666666';
             ctx.fillRect(detailsX + 20, buttonY, buttonWidth, buttonHeight);
             
             // Bordo pulsante
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = canBuy ? '#ffffff' : '#999999';
             ctx.lineWidth = 2;
             ctx.strokeRect(detailsX + 20, buttonY, buttonWidth, buttonHeight);
             
             // Testo pulsante
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = canBuy ? '#ffffff' : '#cccccc';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Acquista 1', detailsX + 20 + buttonWidth/2, buttonY + buttonHeight/2 + 5);
+            ctx.fillText(canBuy ? 'Acquista 1' : 'Limite Raggiunto', detailsX + 20 + buttonWidth/2, buttonY + buttonHeight/2 + 5);
             ctx.textAlign = 'left';
+            
+            // Mostra contatore droni
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Droni attuali: ${currentUAVCount}/8`, detailsX + 20, buttonY + buttonHeight + 20);
         }
     }
     
