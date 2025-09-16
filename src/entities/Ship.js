@@ -38,6 +38,15 @@ export class Ship {
             isInClan: false
         };
         
+        // Metodo per aggiornare il nome del giocatore
+        this.setPlayerName = (newName) => {
+            if (newName && newName.trim().length > 0) {
+                this.playerName = newName.trim();
+                return true;
+            }
+            return false;
+        };
+        
         // Sistema di fluttuazione
         this.floatingOffset = 0;
         this.floatingSpeed = 0.02;

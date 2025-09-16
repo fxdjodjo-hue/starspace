@@ -131,7 +131,6 @@ export class StartScreen {
     
     // Aggiorna la schermata
     update(deltaTime) {
-        console.log('🔄 StartScreen update - isVisible:', this.isVisible, 'isTyping:', this.isTyping, 'mode:', this.mode);
         
         // Blink del cursore
         this.cursorBlinkTime += deltaTime;
@@ -516,7 +515,6 @@ export class StartScreen {
     handleClick(x, y) {
         if (!this.isVisible) return false;
         
-        console.log('🎯 StartScreen handleClick at:', x, y);
         
         // Click su input nickname (solo se non loggato)
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
@@ -668,12 +666,15 @@ export class StartScreen {
         }
         
         // Aggiorna la fazione dell'utente
+        console.log('🎮 Updating user faction to:', this.selectedFaction);
         const result = this.game.authSystem.updateUserFaction(this.selectedFaction);
         
         if (result.success) {
+            console.log('🎮 Faction updated successfully, user data:', this.game.authSystem.currentUser);
             this.showSuccess('Fazione selezionata! Avvio del gioco...');
             setTimeout(() => {
-                this.startGame();
+                // Usa startGameFromLogin per usare i dati dell'utente loggato
+                this.startGameFromLogin(this.game.authSystem.currentUser);
             }, 1000);
         } else {
             this.showError(result.error);
@@ -687,6 +688,19 @@ export class StartScreen {
             // Carica salvataggio utente
             if (this.game.authSystem.loadUserGame()) {
                 console.log('🎮 User game loaded, hiding StartScreen');
+                
+                // Aggiorna nickname e fazione della nave con i dati dell'utente
+                const user = this.game.authSystem.currentUser;
+                if (user) {
+                    console.log('🎮 Loading user data:', user.nickname, user.faction);
+                    this.game.playerProfile.setNickname(user.nickname);
+                    this.game.ship.setPlayerName(user.nickname);
+                    this.game.factionSystem.joinFaction(user.faction);
+                    
+                    // Verifica che la fazione sia stata impostata correttamente
+                    console.log('🎮 Current faction after load:', this.game.factionSystem.currentFaction);
+                }
+                
                 this.hide();
                 this.game.notifications.add('Gioco caricato!', 'success');
             } else {
@@ -715,6 +729,7 @@ export class StartScreen {
         
         // Imposta nickname e fazione dall'utente loggato
         this.game.playerProfile.setNickname(user.nickname);
+        this.game.ship.setPlayerName(user.nickname); // Aggiorna anche il nome della nave
         this.game.factionSystem.joinFaction(user.faction);
         
         // Imposta mappa di partenza basata sulla fazione dell'utente
@@ -733,6 +748,11 @@ export class StartScreen {
         // Avvia l'audio del gioco
         this.game.startGameAudio();
         
+        // Salva automaticamente il gioco per l'utente
+        if (this.game.saveSystem) {
+            this.game.saveSystem.save(this.game.authSystem.getUserSaveKey());
+        }
+        
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === user.faction);
         this.game.notifications.add(`Bentornato ${user.nickname} nella fazione ${faction.fullName}!`, 'success');
@@ -745,6 +765,7 @@ export class StartScreen {
         
         // Imposta nickname e fazione
         this.game.playerProfile.setNickname(this.nickname.trim());
+        this.game.ship.setPlayerName(this.nickname.trim()); // Aggiorna anche il nome della nave
         this.game.factionSystem.joinFaction(this.selectedFaction);
         
         // Imposta mappa di partenza basata sulla fazione
@@ -796,6 +817,11 @@ export class StartScreen {
     // Gestisce logout
     handleLogout() {
         if (this.game.authSystem) {
+            // Salva il gioco prima del logout
+            if (this.game.saveSystem) {
+                this.game.saveSystem.save(this.game.authSystem.getUserSaveKey());
+            }
+            
             this.game.authSystem.logout();
             this.clearMessages();
             this.showSuccess('Logout effettuato');
