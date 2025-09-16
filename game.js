@@ -149,7 +149,6 @@ class Game {
         this.homePanel = new HomePanel(this);
         
         // Schermata di selezione iniziale
-        console.log('🎮 Game constructor - creating StartScreen');
         this.startScreen = new StartScreen(this);
         console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
         
@@ -280,7 +279,6 @@ class Game {
 
         
         // NON avviare la musica automaticamente - solo quando il gioco inizia
-        console.log('🔊 Audio caricato ma non avviato');
     }
     
     // Avvia l'audio del gioco (chiamato quando il gioco inizia davvero)
@@ -293,7 +291,6 @@ class Game {
                 this.audioManager.playSystemReadySound();
             }, 500);
             
-            console.log('🔊 Audio del gioco avviato');
         }
         
         // Applica le impostazioni salvate
@@ -310,8 +307,7 @@ class Game {
         // Rendi l'istanza del gioco disponibile globalmente per il ridimensionamento
         window.gameInstance = this;
         
-        // Avvia il gioco
-        this.gameLoop();
+        // NON avviare il game loop qui - sarà avviato dopo il caricamento degli asset
     }
     
     // Gestisce il ridimensionamento del canvas
@@ -357,6 +353,9 @@ class Game {
                     this.input.resetKey(key);
                 }
             });
+            
+            // Reset solo dei tasti processati nel StartScreen
+            this.input.resetKeysJustPressed();
 
             // Mouse (click su input/fazioni/start)
             if (this.input.isLeftClickJustReleased()) {
@@ -930,7 +929,7 @@ class Game {
                 // Se è un click effettivo, gestisci il click sulla skillbar
                 const handled = this.handleCategorySkillbarClick(mousePos.x, mousePos.y);
                 if (handled) {
-                    this.input.resetMouseJustPressed();
+                    this.input.resetMouseJustPressed(); // Reset dopo l'uso
                     return; // Esci subito per evitare che la nave si muova
                 }
             }
@@ -1264,7 +1263,6 @@ class Game {
         
         // Disegna la schermata di selezione iniziale se visibile
         if (this.startScreen.isVisible) {
-            console.log('🎨 Game render - StartScreen visible, drawing...');
             this.startScreen.draw(this.ctx);
             return; // Non disegnare il gioco se la start screen è visibile
         }
@@ -2455,9 +2453,15 @@ class Game {
     }
     
     gameLoop() {
-        this.update();
-        this.render();
-        requestAnimationFrame(() => this.gameLoop());
+        try {
+            this.update();
+            this.render();
+            requestAnimationFrame(() => this.gameLoop());
+        } catch (error) {
+            console.error('❌ Error in game loop:', error);
+            // Riavvia il game loop dopo un errore
+            setTimeout(() => this.gameLoop(), 100);
+        }
     }
     
     /**
@@ -2546,6 +2550,15 @@ window.addEventListener('load', () => {
     // Mostra sempre la StartScreen all'avvio
     console.log('🎮 Avvio gioco - mostrando StartScreen');
     game.startScreen.show();
+    
+    // Avvia il game loop dopo un breve delay per permettere il caricamento degli asset
+    setTimeout(() => {
+        try {
+            game.gameLoop();
+        } catch (error) {
+            console.error('❌ Error starting game loop:', error);
+        }
+    }, 1000); // 1 secondo di delay per permettere il caricamento degli asset
     
     // NON riprodurre suoni automaticamente - solo quando il gioco inizia davvero
 });

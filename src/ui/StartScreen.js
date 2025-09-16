@@ -163,8 +163,6 @@ export class StartScreen {
     draw(ctx) {
         if (!this.isVisible) return;
         
-        console.log('🎨 Drawing StartScreen at:', this.x, this.y);
-        
         // Sfondo semi-trasparente
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, 0, this.game.width, this.game.height);
@@ -199,9 +197,15 @@ export class StartScreen {
             this.drawPasswordInput(ctx);
         }
         
-        // Selezione fazione (solo per registrazione)
-        if (this.mode === 'register') {
+        // Selezione fazione (solo per selezione fazione)
+        if (this.mode === 'faction_selection') {
         this.drawFactionSelection(ctx);
+        } else if (this.mode === 'register') {
+            // Messaggio per registrazione
+            ctx.fillStyle = '#4a90e2';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('La fazione verrà selezionata dopo la registrazione', this.x + this.width / 2, this.y + 350);
         } else {
             // Messaggio informativo per login
             ctx.fillStyle = '#4a90e2';
@@ -308,7 +312,12 @@ export class StartScreen {
         ctx.fillStyle = '#ffffff';
         ctx.font = '18px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('Fazione:', this.x + 100, this.y + 350);
+        
+        if (this.mode === 'faction_selection') {
+            ctx.fillText('Seleziona la tua fazione:', this.x + 100, this.y + 350);
+        } else {
+            ctx.fillText('Fazione:', this.x + 100, this.y + 350);
+        }
         
         const cardWidth = 180;
         const cardHeight = 100;
@@ -527,8 +536,8 @@ export class StartScreen {
             }
         }
         
-        // Click su fazioni (solo per registrazione)
-        if (this.mode === 'register') {
+        // Click su fazioni (solo per selezione fazione)
+        if (this.mode === 'faction_selection') {
             let factionClicked = false;
         this.factions.forEach((faction, index) => {
             const cardWidth = 180;
@@ -546,6 +555,8 @@ export class StartScreen {
                 }
             });
             if (factionClicked) {
+                // Conferma la scelta della fazione
+                this.handleFactionSelection();
                 return true;
             }
         }
@@ -626,6 +637,26 @@ export class StartScreen {
             return;
         }
         
+        if (!this.game.authSystem) {
+            this.showError('Sistema di autenticazione non disponibile');
+            return;
+        }
+        
+        // Registra senza fazione
+        const result = this.game.authSystem.register(this.nickname.trim(), this.password, null);
+        
+        if (result.success) {
+            this.showSuccess('Registrazione completata! Ora seleziona la tua fazione.');
+            // Passa alla selezione fazione
+            this.mode = 'faction_selection';
+            this.clearMessages();
+        } else {
+            this.showError(result.error);
+        }
+    }
+    
+    // Gestisce selezione fazione dopo registrazione
+    handleFactionSelection() {
         if (!this.selectedFaction) {
             this.showError('Seleziona una fazione');
             return;
@@ -636,10 +667,11 @@ export class StartScreen {
             return;
         }
         
-        const result = this.game.authSystem.register(this.nickname.trim(), this.password, this.selectedFaction);
+        // Aggiorna la fazione dell'utente
+        const result = this.game.authSystem.updateUserFaction(this.selectedFaction);
         
         if (result.success) {
-            this.showSuccess('Registrazione completata!');
+            this.showSuccess('Fazione selezionata! Avvio del gioco...');
             setTimeout(() => {
                 this.startGame();
             }, 1000);
@@ -650,9 +682,11 @@ export class StartScreen {
     
     // Gestisce caricamento gioco
     handleLoadGame() {
+        console.log('🎮 handleLoadGame called - isLoggedIn:', this.game.authSystem ? this.game.authSystem.isLoggedIn : false);
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             // Carica salvataggio utente
             if (this.game.authSystem.loadUserGame()) {
+                console.log('🎮 User game loaded, hiding StartScreen');
                 this.hide();
                 this.game.notifications.add('Gioco caricato!', 'success');
             } else {
@@ -842,7 +876,13 @@ export class StartScreen {
         // Controlla se c'è già una sessione attiva
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             console.log('🎮 Utente già loggato, mostrando StartScreen con opzioni...');
-            // Non nascondere automaticamente, mostra le opzioni
+            
+            // Se l'utente non ha una fazione, passa alla selezione fazione
+            if (!this.game.authSystem.currentUser.faction) {
+                this.mode = 'faction_selection';
+                this.showSuccess('Seleziona la tua fazione per continuare');
+            }
+            
             return;
         }
         
@@ -853,6 +893,6 @@ export class StartScreen {
     hide() {
         this.isVisible = false;
         this.isTyping = false;
-        console.log('🎮 StartScreen hidden');
+        console.log('🎮 StartScreen hidden - isVisible:', this.isVisible);
     }
 }

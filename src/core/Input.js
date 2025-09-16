@@ -368,6 +368,12 @@ export class Input {
         this.keysJustPressed.clear();
     }
     
+    // Reset di tutti i tasti (sia pressed che justPressed)
+    resetAllKeys() {
+        this.keys = {};
+        this.keysJustPressed.clear();
+    }
+    
     // Resetta il delta della rotella del mouse
     resetWheelDelta() {
         this.mouse.wheelDelta = 0;
@@ -399,6 +405,7 @@ export class Input {
         return pressedKeys;
     }
     
+    
     // Resetta una chiave specifica
     resetKey(key) {
         if (this.keys[key]) {
@@ -418,15 +425,8 @@ export class Input {
     
     // Aggiorna l'input (da chiamare ogni frame)
     update() {
-        // Resetta i flag "just" per il mouse
-        this.mouse.leftClickJustPressed = false;
-        this.mouse.rightClickJustReleased = false;
+        // NON resettare i flag "just" qui - vengono resettati manualmente quando usati
         this.mouse.wheelDelta = 0;
-        
-        // Resetta i flag "just" per i tasti speciali
-        this.ctrlJustPressed = false;
-        this.rJustPressed = false;
-        this.sJustPressed = false;
         this.dJustPressed = false;
         this.key1JustPressed = false;
         this.key2JustPressed = false;

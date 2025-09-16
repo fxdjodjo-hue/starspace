@@ -17,8 +17,8 @@ export class AuthSystem {
     register(nickname, password, faction) {
         try {
             // Validazione input
-            if (!nickname || !password || !faction) {
-                throw new Error('Nickname, password e fazione sono obbligatori');
+            if (!nickname || !password) {
+                throw new Error('Nickname e password sono obbligatori');
             }
             
             if (nickname.length < 3) {
@@ -60,6 +60,34 @@ export class AuthSystem {
             
         } catch (error) {
             console.error('❌ Errore registrazione:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    /**
+     * Aggiorna la fazione dell'utente corrente
+     */
+    updateUserFaction(faction) {
+        try {
+            if (!this.isLoggedIn || !this.currentUser) {
+                throw new Error('Utente non loggato');
+            }
+            
+            if (!faction) {
+                throw new Error('Fazione obbligatoria');
+            }
+            
+            // Aggiorna la fazione dell'utente corrente
+            this.currentUser.faction = faction;
+            
+            // Salva l'utente aggiornato
+            this.saveUser(this.currentUser);
+            
+            console.log('✅ Fazione aggiornata:', faction);
+            return { success: true };
+            
+        } catch (error) {
+            console.error('❌ Errore aggiornamento fazione:', error);
             return { success: false, error: error.message };
         }
     }
