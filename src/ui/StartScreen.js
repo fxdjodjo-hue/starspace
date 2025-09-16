@@ -193,7 +193,7 @@ export class StartScreen {
         
         // Input nickname (solo se non loggato)
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
-            this.drawNicknameInput(ctx);
+        this.drawNicknameInput(ctx);
             
             // Input password
             this.drawPasswordInput(ctx);
@@ -445,8 +445,13 @@ export class StartScreen {
             return true;
         }
         
-        // Enter per confermare
+        // Enter per confermare (solo se non siamo in modalità login automatica)
         if (key === 'Enter') {
+            if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+                // Se già loggato, non fare nulla con Enter
+                return true;
+            }
+            
             if (this.mode === 'login') {
                 this.handleLogin();
             } else {
@@ -471,8 +476,13 @@ export class StartScreen {
             return true;
         }
         
-        // Caratteri alfanumerici e spazio
+        // Caratteri alfanumerici e spazio (solo se non siamo in modalità login automatica)
         if (key.startsWith('Key') || key.startsWith('Digit') || key === 'Space') {
+            // Se siamo già loggati, non permettere input
+            if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+                return true;
+            }
+            
             let char = '';
             if (key.startsWith('Key')) {
                 char = key.replace('Key', '').toLowerCase();
@@ -499,20 +509,22 @@ export class StartScreen {
         
         console.log('🎯 StartScreen handleClick at:', x, y);
         
-        // Click su input nickname
-        if (this.isMouseOverInput(this.nicknameInput, x, y)) {
-            console.log('✅ Click su input nickname');
-            this.currentInput = 'nickname';
-            this.isTyping = true;
-            return true;
-        }
-        
-        // Click su input password
-        if (this.isMouseOverInput(this.passwordInput, x, y)) {
-            console.log('✅ Click su input password');
-            this.currentInput = 'password';
-            this.isTyping = true;
-            return true;
+        // Click su input nickname (solo se non loggato)
+        if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
+            if (this.isMouseOverInput(this.nicknameInput, x, y)) {
+                console.log('✅ Click su input nickname');
+                this.currentInput = 'nickname';
+                this.isTyping = true;
+                return true;
+            }
+            
+            // Click su input password
+            if (this.isMouseOverInput(this.passwordInput, x, y)) {
+                console.log('✅ Click su input password');
+                this.currentInput = 'password';
+                this.isTyping = true;
+                return true;
+            }
         }
         
         // Click su fazioni (solo per registrazione)
@@ -538,25 +550,27 @@ export class StartScreen {
             }
         }
         
-        // Click su pulsanti
-        if (this.isMouseOverButton(this.loginButton)) {
-            console.log('✅ Click su pulsante login');
-            this.handleLogin();
-            return true;
-        }
-        
-        if (this.isMouseOverButton(this.registerButton)) {
-            console.log('✅ Click su pulsante registrati');
-            this.handleRegister();
-            return true;
-        }
-        
-        if (this.isMouseOverButton(this.modeToggleButton)) {
-            console.log('✅ Click su toggle modalità');
-            this.mode = this.mode === 'login' ? 'register' : 'login';
-            this.clearMessages();
+        // Click su pulsanti (solo se non loggato)
+        if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
+            if (this.isMouseOverButton(this.loginButton)) {
+                console.log('✅ Click su pulsante login');
+                this.handleLogin();
                 return true;
             }
+            
+            if (this.isMouseOverButton(this.registerButton)) {
+                console.log('✅ Click su pulsante registrati');
+                this.handleRegister();
+                return true;
+            }
+            
+            if (this.isMouseOverButton(this.modeToggleButton)) {
+                console.log('✅ Click su toggle modalità');
+                this.mode = this.mode === 'login' ? 'register' : 'login';
+                this.clearMessages();
+                return true;
+            }
+        }
         
         if (this.hasExistingSave && this.isMouseOverButton(this.loadButton)) {
             console.log('✅ Click su pulsante carica salvataggio');
@@ -662,6 +676,9 @@ export class StartScreen {
     
     // Avvia il gioco da login (usa fazione esistente)
     startGameFromLogin(user) {
+        // Chiudi tutti i pannelli aperti
+        this.closeAllPanels();
+        
         // Imposta nickname e fazione dall'utente loggato
         this.game.playerProfile.setNickname(user.nickname);
         this.game.factionSystem.joinFaction(user.faction);
@@ -686,6 +703,9 @@ export class StartScreen {
     
     // Avvia il gioco da registrazione (usa fazione selezionata)
     startGame() {
+        // Chiudi tutti i pannelli aperti
+        this.closeAllPanels();
+        
         // Imposta nickname e fazione
         this.game.playerProfile.setNickname(this.nickname.trim());
         this.game.factionSystem.joinFaction(this.selectedFaction);
@@ -745,6 +765,48 @@ export class StartScreen {
             this.selectedFaction = null;
             this.mode = 'login';
         }
+    }
+    
+    // Chiude tutti i pannelli aperti
+    closeAllPanels() {
+        console.log('🚪 Chiudendo tutti i pannelli aperti...');
+        
+        // HomePanel
+        if (this.game.homePanel) {
+            this.game.homePanel.hide();
+        }
+        
+        // ProfilePanel
+        if (this.game.profilePanel) {
+            this.game.profilePanel.close();
+        }
+        
+        // SettingsPanel
+        if (this.game.settingsPanel) {
+            this.game.settingsPanel.isOpen = false;
+        }
+        
+        // FactionPanel
+        if (this.game.factionPanel) {
+            this.game.factionPanel.close();
+        }
+        
+        // SaveLoadPanel
+        if (this.game.saveLoadPanel) {
+            this.game.saveLoadPanel.isOpen = false;
+        }
+        
+        // SpaceStationPanel
+        if (this.game.spaceStationPanel) {
+            this.game.spaceStationPanel.isOpen = false;
+        }
+        
+        // MapSystem
+        if (this.game.mapSystem) {
+            this.game.mapSystem.isOpen = false;
+        }
+        
+        console.log('✅ Tutti i pannelli chiusi');
     }
     
     // Pulisce i messaggi
