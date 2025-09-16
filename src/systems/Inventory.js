@@ -479,12 +479,8 @@ export class Inventory {
                     }
                 }
 
-                // Click sul drone stesso (per rimuoverlo)
-                if (x >= droneX + 5 && x <= droneX + droneWidth - 5 &&
-                    y >= uavY + 5 && y <= uavY + droneHeight - 5) {
-                    this.unequipUAV(droneIndex);
-                    return true;
-                }
+                // I droni non possono essere rimossi una volta acquistati
+                // Click sul drone non fa nulla
             }
         });
 
@@ -550,40 +546,11 @@ export class Inventory {
         }
     }
     
-    // Equipaggia un drone UAV
-    equipUAV(droneIndex) {
-        // Trova il primo drone disponibile nell'inventario
-        const itemIndex = this.items.findIndex(item => item.type === 'uav');
-        if (itemIndex !== -1) {
-            const drone = this.items[itemIndex];
-            // Inizializza gli slot del drone
-            drone.equippedItems = new Array(drone.slots).fill(null);
-            this.equipment.uav.push(drone);
-            this.items.splice(itemIndex, 1);
-            this.showPopup(`Drone ${drone.name} equipaggiato!`, 'success');
-        } else {
-            this.showPopup('Nessun drone disponibile nell\'inventario', 'error');
-        }
-    }
+    // I droni UAV vengono aggiunti direttamente alla tab UAV quando acquistati
+    // Non possono essere equipaggiati/rimossi dall'inventario generale
     
-    // Rimuovi drone UAV
-    unequipUAV(droneIndex) {
-        if (droneIndex >= 0 && droneIndex < this.equipment.uav.length) {
-            const drone = this.equipment.uav[droneIndex];
-            
-            // Rimuovi tutti gli oggetti equipaggiati dal drone
-            if (drone.equippedItems) {
-                drone.equippedItems.forEach(item => {
-                    if (item) {
-                        this.addItem(item);
-                    }
-                });
-            }
-            
-            this.equipment.uav.splice(droneIndex, 1);
-            this.showPopup(`Drone ${drone.name} rimosso`, 'info');
-        }
-    }
+    // I droni UAV non possono essere rimossi una volta acquistati
+    // Sono permanenti nella tab UAV
     
     // Equipaggia oggetto su drone
     equipItemOnDrone(droneIndex, slotIndex, item) {
@@ -1029,6 +996,7 @@ export class Inventory {
         ctx.textAlign = 'left';
         ctx.fillText('I droni UAV possono equipaggiare laser o scudi', uavX, uavY + 200);
         ctx.fillText('Flax: 1 slot | Iris: 2 slot', uavX, uavY + 220);
+        ctx.fillText('I droni acquistati sono permanenti', uavX, uavY + 240);
     }
 
     // Disegna inventario del player per UAV
@@ -1109,6 +1077,11 @@ export class Inventory {
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(drone.name, x + droneWidth / 2, y - 5);
+        
+        // Icona drone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px Arial';
+        ctx.fillText('🚁', x + droneWidth / 2, y + 15);
         
         // Disegna slot del drone
         for (let i = 0; i < drone.slots; i++) {
