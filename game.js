@@ -279,10 +279,22 @@ class Game {
         // Test del suono del motore dopo il caricamento
 
         
-        // Avvia la musica di sottofondo dopo un breve delay
-        setTimeout(() => {
+        // NON avviare la musica automaticamente - solo quando il gioco inizia
+        console.log('🔊 Audio caricato ma non avviato');
+    }
+    
+    // Avvia l'audio del gioco (chiamato quando il gioco inizia davvero)
+    startGameAudio() {
+        if (this.audioManager) {
             this.audioManager.startBackgroundMusic();
-        }, 1000);
+            
+            // Riproduci suono di system ready
+            setTimeout(() => {
+                this.audioManager.playSystemReadySound();
+            }, 500);
+            
+            console.log('🔊 Audio del gioco avviato');
+        }
         
         // Applica le impostazioni salvate
         this.settingsPanel.applyAudioSettings();
@@ -334,43 +346,30 @@ class Game {
         // Aggiorna l'input PRIMA di tutto
         this.input.update();
         
-        // Il pulsante di logout è ora aggiornato dal UIManager
-        
-        // Aggiorna e gestisci TUTTO della schermata iniziale (tastiera + mouse), poi esci
+        // Se la StartScreen è visibile, gestisci SOLO quella e ferma tutto il resto
         if (this.startScreen.isVisible) {
-            console.log('🎮 Game update - StartScreen visible, updating...');
             this.startScreen.update(16); // 16ms = ~60fps
 
             // Tastiera (nickname)
-            console.log('⌨️ Game keyboard - StartScreen visible, handling keys...');
             const keys = this.input.getPressedKeys();
-            console.log('🔑 Pressed keys:', keys);
-            console.log('🔑 Input keys object:', this.input.keys);
-            if (keys.length > 0) {
-                console.log('🔑 Keys detected:', keys);
-                console.log('🔑 StartScreen isTyping:', this.startScreen.isTyping);
-            }
             keys.forEach(key => {
                 if (this.startScreen.handleKeyPress(key)) {
-                    console.log('✅ Key handled:', key);
                     this.input.resetKey(key);
                 }
             });
 
             // Mouse (click su input/fazioni/start)
-            console.log('🖱️ Game click check - StartScreen visible, isLeftClickJustReleased:', this.input.isLeftClickJustReleased());
             if (this.input.isLeftClickJustReleased()) {
-                console.log('🖱️ Game click - StartScreen visible, handling click...');
                 const mousePos = this.input.getMousePosition();
-                console.log('🖱️ Mouse position:', mousePos);
                 if (this.startScreen.handleClick(mousePos.x, mousePos.y)) {
-                    console.log('✅ StartScreen click handled');
                     this.input.resetLeftClickReleased();
                 }
             }
 
-            return; // Non aggiornare/gestire altro finché la start screen è visibile
+            return; // STOP - Non aggiornare/gestire altro finché la start screen è visibile
         }
+        
+        // Il gioco principale inizia SOLO quando la StartScreen non è visibile
         
         // Gestisci cambio nave con tasti 1 e 2
         if (this.input.isKey1JustPressed()) {
@@ -2548,10 +2547,5 @@ window.addEventListener('load', () => {
     console.log('🎮 Avvio gioco - mostrando StartScreen');
     game.startScreen.show();
     
-    // Riproduci suono di system ready dopo un breve delay
-    setTimeout(() => {
-        if (game.audioManager) {
-            game.audioManager.playSystemReadySound();
-        }
-    }, 1000); // 1 secondo di delay per permettere il caricamento completo
+    // NON riprodurre suoni automaticamente - solo quando il gioco inizia davvero
 });

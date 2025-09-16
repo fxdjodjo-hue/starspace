@@ -512,7 +512,7 @@ export class StartScreen {
         // Click su input nickname (solo se non loggato)
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
             if (this.isMouseOverInput(this.nicknameInput, x, y)) {
-                console.log('✅ Click su input nickname');
+            console.log('✅ Click su input nickname');
                 this.currentInput = 'nickname';
                 this.isTyping = true;
                 return true;
@@ -522,8 +522,8 @@ export class StartScreen {
             if (this.isMouseOverInput(this.passwordInput, x, y)) {
                 console.log('✅ Click su input password');
                 this.currentInput = 'password';
-                this.isTyping = true;
-                return true;
+            this.isTyping = true;
+            return true;
             }
         }
         
@@ -568,7 +568,7 @@ export class StartScreen {
                 console.log('✅ Click su toggle modalità');
                 this.mode = this.mode === 'login' ? 'register' : 'login';
                 this.clearMessages();
-                return true;
+            return true;
             }
         }
         
@@ -696,6 +696,9 @@ export class StartScreen {
         // Nascondi la schermata
         this.hide();
         
+        // Avvia l'audio del gioco
+        this.game.startGameAudio();
+        
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === user.faction);
         this.game.notifications.add(`Bentornato ${user.nickname} nella fazione ${faction.fullName}!`, 'success');
@@ -729,6 +732,9 @@ export class StartScreen {
         
         // Nascondi la schermata
         this.hide();
+        
+        // Avvia l'audio del gioco
+        this.game.startGameAudio();
         
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
