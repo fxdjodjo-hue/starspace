@@ -112,6 +112,14 @@ export class StartScreen {
             height: 50,
             text: 'LOGOUT'
         };
+        
+        this.startGameButton = {
+            x: this.x + 300,
+            y: this.y + 500,
+            width: 200,
+            height: 50,
+            text: 'INIZIA GIOCO'
+        };
 
         // Stato salvataggi
         this.hasExistingSave = false;
@@ -177,13 +185,19 @@ export class StartScreen {
         // Sottotitolo
         ctx.font = '18px Arial';
         ctx.fillStyle = '#cccccc';
-        ctx.fillText('Accedi o registrati per iniziare', this.x + this.width / 2, this.y + 80);
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            ctx.fillText(`Benvenuto ${this.game.authSystem.currentUser.nickname}!`, this.x + this.width / 2, this.y + 80);
+        } else {
+            ctx.fillText('Accedi o registrati per iniziare', this.x + this.width / 2, this.y + 80);
+        }
         
-        // Input nickname
-        this.drawNicknameInput(ctx);
-        
-        // Input password
-        this.drawPasswordInput(ctx);
+        // Input nickname (solo se non loggato)
+        if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
+            this.drawNicknameInput(ctx);
+            
+            // Input password
+            this.drawPasswordInput(ctx);
+        }
         
         // Selezione fazione (solo per registrazione)
         if (this.mode === 'register') {
@@ -350,22 +364,29 @@ export class StartScreen {
     
     // Disegna pulsanti
     drawButtons(ctx) {
-        // Pulsante Login
-        this.drawButton(ctx, this.loginButton, this.mode === 'login');
-        
-        // Pulsante Registrati
-        this.drawButton(ctx, this.registerButton, this.mode === 'register');
-        
-        // Pulsante toggle modalità
-        this.drawButton(ctx, this.modeToggleButton, false);
+        // Pulsanti di login/registrazione (solo se non loggato)
+        if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
+            // Pulsante Login
+            this.drawButton(ctx, this.loginButton, this.mode === 'login');
+            
+            // Pulsante Registrati
+            this.drawButton(ctx, this.registerButton, this.mode === 'register');
+            
+            // Pulsante toggle modalità
+            this.drawButton(ctx, this.modeToggleButton, false);
+        }
         
         // Pulsante carica salvataggio (solo se c'è un salvataggio)
         if (this.hasExistingSave) {
             this.drawButton(ctx, this.loadButton, false);
         }
         
-        // Pulsante logout (solo se loggato)
+        // Pulsanti per utente loggato
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            // Pulsante inizia gioco
+            this.drawButton(ctx, this.startGameButton, false);
+            
+            // Pulsante logout
             this.drawButton(ctx, this.logoutButton, false);
         }
     }
@@ -546,10 +567,18 @@ export class StartScreen {
             return true;
         }
         
-        if (this.game.authSystem && this.game.authSystem.isLoggedIn && this.isMouseOverButton(this.logoutButton)) {
-            console.log('✅ Click su pulsante logout');
-            this.handleLogout();
-            return true;
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            if (this.isMouseOverButton(this.startGameButton)) {
+                console.log('✅ Click su pulsante inizia gioco');
+                this.handleLoadGame();
+                return true;
+            }
+            
+            if (this.isMouseOverButton(this.logoutButton)) {
+                console.log('✅ Click su pulsante logout');
+                this.handleLogout();
+                return true;
+            }
         }
         
         // Click fuori dagli input - stop typing
@@ -753,11 +782,8 @@ export class StartScreen {
         
         // Controlla se c'è già una sessione attiva
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            console.log('🎮 Utente già loggato, caricamento automatico...');
-            // Carica automaticamente il gioco dell'utente loggato
-            setTimeout(() => {
-                this.handleLoadGame();
-            }, 500); // Piccolo delay per permettere il rendering
+            console.log('🎮 Utente già loggato, mostrando StartScreen con opzioni...');
+            // Non nascondere automaticamente, mostra le opzioni
             return;
         }
         
