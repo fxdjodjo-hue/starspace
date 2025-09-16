@@ -420,7 +420,6 @@ export class Input {
     update() {
         // Resetta i flag "just" per il mouse
         this.mouse.leftClickJustPressed = false;
-        this.mouse.leftClickJustReleased = false;
         this.mouse.rightClickJustReleased = false;
         this.mouse.wheelDelta = 0;
         
@@ -431,8 +430,10 @@ export class Input {
         this.dJustPressed = false;
         this.key1JustPressed = false;
         this.key2JustPressed = false;
-        
-        // Resetta il Set dei tasti appena premuti
+    }
+
+    // Pulisce i tasti appena premuti (da chiamare a fine frame dopo aver gestito gli input)
+    clearJustPressed() {
         this.keysJustPressed.clear();
     }
 }

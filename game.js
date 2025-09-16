@@ -330,17 +330,13 @@ class Game {
         // Aggiorna l'input PRIMA di tutto
         this.input.update();
         
-        // Aggiorna la schermata di selezione iniziale
+        // Aggiorna e gestisci TUTTO della schermata iniziale (tastiera + mouse), poi esci
         if (this.startScreen.isVisible) {
             console.log('🎮 Game update - StartScreen visible, updating...');
             this.startScreen.update(16); // 16ms = ~60fps
-            return; // Non aggiornare il gioco se la start screen è visibile
-        }
-        
-        // Gestisci input da tastiera per la schermata di selezione iniziale
-        if (this.startScreen.isVisible) {
+
+            // Tastiera (nickname)
             console.log('⌨️ Game keyboard - StartScreen visible, handling keys...');
-            // Gestisci input da tastiera per nickname
             const keys = this.input.getPressedKeys();
             console.log('🔑 Pressed keys:', keys);
             console.log('🔑 Input keys object:', this.input.keys);
@@ -354,8 +350,20 @@ class Game {
                     this.input.resetKey(key);
                 }
             });
-            
-            return; // Non gestire altri input se la start screen è visibile
+
+            // Mouse (click su input/fazioni/start)
+            console.log('🖱️ Game click check - StartScreen visible, isLeftClickJustReleased:', this.input.isLeftClickJustReleased());
+            if (this.input.isLeftClickJustReleased()) {
+                console.log('🖱️ Game click - StartScreen visible, handling click...');
+                const mousePos = this.input.getMousePosition();
+                console.log('🖱️ Mouse position:', mousePos);
+                if (this.startScreen.handleClick(mousePos.x, mousePos.y)) {
+                    console.log('✅ StartScreen click handled');
+                    this.input.resetLeftClickReleased();
+                }
+            }
+
+            return; // Non aggiornare/gestire altro finché la start screen è visibile
         }
         
         // Gestisci cambio nave con tasti 1 e 2
@@ -395,20 +403,7 @@ class Game {
             mouseOverQuestTracker = true;
         }
         
-        // Gestisci click sulla schermata di selezione iniziale (priorità massima)
-        if (this.startScreen.isVisible) {
-            console.log('🖱️ Game click check - StartScreen visible, isLeftClickJustReleased:', this.input.isLeftClickJustReleased());
-            if (this.input.isLeftClickJustReleased()) {
-                console.log('🖱️ Game click - StartScreen visible, handling click...');
-                const mousePos = this.input.getMousePosition();
-                console.log('🖱️ Mouse position:', mousePos);
-                if (this.startScreen.handleClick(mousePos.x, mousePos.y)) {
-                    console.log('✅ StartScreen click handled');
-                    this.input.resetLeftClickReleased();
-                    return; // Esce dalla funzione per evitare altri gestori
-                }
-            }
-        }
+        // Click della start screen già gestiti nel blocco sopra quando visibile
         
         // Gestisci click sul quest tracker PRIMA di tutto (priorità massima)
         if (this.input.isLeftClickJustReleased() && mouseOverQuestTracker) {
@@ -871,6 +866,7 @@ class Game {
         
         // Comando per aprire/chiudere sistema mappe (tasto M)
         if (this.input.isKeyJustPressed('KeyM') && this.mapSystem) {
+            console.log('🗺️ Toggle MapSystem');
             this.mapSystem.toggle();
         }
         
@@ -2501,9 +2497,11 @@ class Game {
             };
         }
         
-        // Reset mappa
+        // Reset mappa: usa la fazione corrente se disponibile
         if (this.mapManager) {
-            this.mapManager.currentMap = 'v1'; // Mappa di partenza per VENUS
+            const factionId = this.factionSystem?.currentFaction || null;
+            const startingMaps = { venus: 'v1', mars: 'm1', eic: 'e1' };
+            this.mapManager.currentMap = startingMaps[factionId] || 'v1';
         }
         
         // Reset camera
