@@ -1273,10 +1273,7 @@ class Game {
             return; // Non disegnare il gioco se la start screen è visibile
         }
         
-        // Disegna il pulsante di logout se l'utente è loggato
-        if (this.authSystem && this.authSystem.isLoggedIn) {
-            this.logoutButton.draw(this.ctx);
-        }
+        // Il pulsante di logout verrà disegnato alla fine, dopo tutti gli altri elementi UI
         
         
         // Salva il contesto per applicare lo zoom
@@ -1440,6 +1437,12 @@ class Game {
         this.profilePanel.draw(this.ctx);
         
         // Disegna pannello quest se aperto
+        
+        // Disegna il pulsante di logout PER ULTIMO (sempre sopra tutto)
+        if (this.authSystem && this.authSystem.isLoggedIn) {
+            console.log('🔓 Game render - disegnando logout button ALLA FINE');
+            this.logoutButton.draw(this.ctx);
+        }
     }
     
     // Inizializza l'inventario (nessun mock)

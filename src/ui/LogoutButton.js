@@ -103,7 +103,7 @@ export class LogoutButton {
             return;
         }
         
-        // Debug: console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
+        console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
         
         // Colore di sfondo
         const bgColor = this.isHovered ? this.hoverBackgroundColor : this.backgroundColor;
