@@ -154,9 +154,6 @@ class Game {
         this.startScreen = new StartScreen(this);
         this.logoutButton = new LogoutButton(this);
         
-        // Registra il pulsante di logout nel UIManager
-        this.uiManager.setLogoutButton(this.logoutButton);
-        
         console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
         
         // Test globale per verificare se gli eventi da tastiera funzionano
@@ -186,6 +183,9 @@ class Game {
         // Nuovo sistema unificato icone UI
         this.uiManager = new UIManager(this);
         this.initUIManager();
+        
+        // Registra il pulsante di logout nel UIManager (dopo che è stato creato)
+        this.uiManager.setLogoutButton(this.logoutButton);
         
         // Inizializza audio e altri sistemi
         this.initAudio();
