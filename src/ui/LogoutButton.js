@@ -21,20 +21,18 @@ export class LogoutButton {
         this.textColor = '#ffffff';
         this.countdownColor = '#ffeb3b';
         
-        console.log('🔓 LogoutButton creato - posizione:', this.x, this.y);
+        // Debug: console.log('🔓 LogoutButton creato - posizione:', this.x, this.y);
     }
     
     // Mostra il pulsante
     show() {
         this.isVisible = true;
-        console.log('🔓 LogoutButton mostrato');
     }
     
     // Nasconde il pulsante
     hide() {
         this.isVisible = false;
         this.stopCountdown();
-        console.log('🔓 LogoutButton nascosto');
     }
     
     // Avvia il countdown
@@ -44,11 +42,8 @@ export class LogoutButton {
         this.isCountingDown = true;
         this.currentCountdown = this.countdownTime;
         
-        console.log('⏰ Countdown logout iniziato:', this.currentCountdown);
-        
         this.countdownInterval = setInterval(() => {
             this.currentCountdown--;
-            console.log('⏰ Countdown logout:', this.currentCountdown);
             
             if (this.currentCountdown <= 0) {
                 this.performLogout();
@@ -64,7 +59,6 @@ export class LogoutButton {
         }
         this.isCountingDown = false;
         this.currentCountdown = 0;
-        console.log('⏰ Countdown logout fermato');
     }
     
     // Esegue il logout
@@ -73,7 +67,6 @@ export class LogoutButton {
         
         if (this.game.authSystem) {
             this.game.authSystem.logout();
-            console.log('🚪 Logout eseguito');
             
             // Mostra StartScreen
             if (this.game.startScreen) {
@@ -99,11 +92,10 @@ export class LogoutButton {
     // Disegna il pulsante
     draw(ctx) {
         if (!this.isVisible) {
-            console.log('🔓 LogoutButton non visibile, skip draw');
             return;
         }
         
-        console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
+        // Debug: console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
         
         // Colore di sfondo
         const bgColor = this.isHovered ? this.hoverBackgroundColor : this.backgroundColor;
@@ -143,7 +135,6 @@ export class LogoutButton {
             ctx.fillRect(this.x + 2, this.y + this.height - 4, barWidth, 2);
         }
         
-        // Debug: console.log('🔓 LogoutButton disegnato con successo');
     }
     
     // Gestisce il click
