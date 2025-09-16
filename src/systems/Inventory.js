@@ -54,6 +54,10 @@ export class Inventory {
         // Scroll per droni UAV
         this.uavScrollY = 0;
         this.uavItemHeight = 80; // Altezza di ogni drone
+        
+        // Prevenzione click multipli
+        this.lastEquipTime = 0;
+        this.equipCooldown = 100; // 100ms di cooldown
     }
     
     // Aggiungi droni di esempio
@@ -555,7 +559,10 @@ export class Inventory {
                 y >= itemY && y <= itemY + itemSize) {
                 
                 // Click su oggetto dell'inventario - equipaggia automaticamente
-                this.equipItemToFirstAvailableSlot(item);
+                // Controlla che l'oggetto sia ancora nell'inventario
+                if (this.items.includes(item)) {
+                    this.equipItemToFirstAvailableSlot(item);
+                }
                 return true;
             }
 
@@ -567,6 +574,20 @@ export class Inventory {
     
     // Equipaggia oggetto automaticamente nel primo slot disponibile (usa metodo unificato)
     equipItemToFirstAvailableSlot(item) {
+        // Controlla cooldown per evitare click multipli
+        const currentTime = Date.now();
+        if (currentTime - this.lastEquipTime < this.equipCooldown) {
+            return false;
+        }
+        this.lastEquipTime = currentTime;
+        
+        // Trova l'oggetto nell'inventario per ottenere l'indice corretto
+        const itemIndex = this.items.findIndex(i => i === item);
+        if (itemIndex === -1) {
+            this.showPopup('Oggetto non trovato nell\'inventario', 'error');
+            return false;
+        }
+        
         // Trova il primo drone con slot disponibili
         for (let droneIndex = 0; droneIndex < this.equipment.uav.length; droneIndex++) {
             const drone = this.equipment.uav[droneIndex];
@@ -580,10 +601,7 @@ export class Inventory {
             for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
                 if (!drone.equippedItems[slotIndex]) {
                     // Usa il metodo unificato di equipaggiamento
-                    const itemIndex = this.items.findIndex(i => i === item);
-                    if (itemIndex !== -1) {
-                        return this.equipItem(itemIndex, 'uav', slotIndex, droneIndex);
-                    }
+                    return this.equipItem(itemIndex, 'uav', slotIndex, droneIndex);
                 }
             }
         }
