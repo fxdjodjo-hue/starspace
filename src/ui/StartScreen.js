@@ -385,9 +385,6 @@ export class StartScreen {
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             // Pulsante inizia gioco
             this.drawButton(ctx, this.startGameButton, false);
-            
-            // Pulsante logout
-            this.drawButton(ctx, this.logoutButton, false);
         }
     }
     
@@ -571,12 +568,6 @@ export class StartScreen {
             if (this.isMouseOverButton(this.startGameButton)) {
                 console.log('✅ Click su pulsante inizia gioco');
                 this.handleLoadGame();
-                return true;
-            }
-            
-            if (this.isMouseOverButton(this.logoutButton)) {
-                console.log('✅ Click su pulsante logout');
-                this.handleLogout();
                 return true;
             }
         }

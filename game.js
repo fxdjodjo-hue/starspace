@@ -43,6 +43,7 @@ import { SaveSystem } from './src/systems/SaveSystem.js';
 import { SaveLoadPanel } from './src/ui/SaveLoadPanel.js';
 import { FactionSystem } from './src/systems/FactionSystem.js';
 import { AuthSystem } from './src/systems/AuthSystem.js';
+import { LogoutButton } from './src/ui/LogoutButton.js';
 
 
 
@@ -151,6 +152,7 @@ class Game {
         // Schermata di selezione iniziale
         console.log('🎮 Game constructor - creating StartScreen');
         this.startScreen = new StartScreen(this);
+        this.logoutButton = new LogoutButton(this);
         console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
         
         // Test globale per verificare se gli eventi da tastiera funzionano
@@ -331,6 +333,11 @@ class Game {
     update() {
         // Aggiorna l'input PRIMA di tutto
         this.input.update();
+        
+        // Aggiorna il pulsante di logout
+        if (this.authSystem && this.authSystem.isLoggedIn) {
+            this.logoutButton.update();
+        }
         
         // Aggiorna e gestisci TUTTO della schermata iniziale (tastiera + mouse), poi esci
         if (this.startScreen.isVisible) {
@@ -647,6 +654,15 @@ class Game {
             }
         }
         
+        
+        // Gestisci click sul pulsante di logout
+        if (this.authSystem && this.authSystem.isLoggedIn && this.input.isLeftClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            if (this.logoutButton.handleClick(mousePos.x, mousePos.y)) {
+                this.input.resetLeftClickReleased();
+                return; // Click gestito dal logout button
+            }
+        }
         
         // Gestisci click nel pannello home
         if (this.homePanel.visible && this.input.isLeftClickJustReleased()) {
@@ -1255,6 +1271,11 @@ class Game {
             console.log('🎨 Game render - StartScreen visible, drawing...');
             this.startScreen.draw(this.ctx);
             return; // Non disegnare il gioco se la start screen è visibile
+        }
+        
+        // Disegna il pulsante di logout se l'utente è loggato
+        if (this.authSystem && this.authSystem.isLoggedIn) {
+            this.logoutButton.draw(this.ctx);
         }
         
         
