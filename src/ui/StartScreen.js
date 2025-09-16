@@ -450,6 +450,11 @@ export class StartScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
+        // Salva subito la nuova partita, così al prossimo avvio sarà caricabile
+        if (this.game.saveSystem) {
+            this.game.saveSystem.save('main');
+        }
+        
         // Nascondi la schermata
         this.isVisible = false;
         
