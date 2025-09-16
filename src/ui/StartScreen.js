@@ -9,8 +9,8 @@ export class StartScreen {
         // Posizioni e dimensioni
         this.width = 800;
         this.height = 600;
-        this.x = (game.width - this.width) / 2;
-        this.y = (game.height - this.height) / 2;
+        this.x = (game.canvas.width - this.width) / 2;
+        this.y = (game.canvas.height - this.height) / 2;
         
         // Modalità: 'login' o 'register'
         this.mode = 'login';
@@ -177,7 +177,7 @@ export class StartScreen {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('SPACE MMORPG', this.x + this.width / 2, this.y + 50);
+        ctx.fillText('STARSPACE', this.x + this.width / 2, this.y + 50);
         
         // Sottotitolo
         ctx.font = '18px Arial';

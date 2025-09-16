@@ -50,6 +50,10 @@ class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
+        
+        // Imposta dimensioni dinamiche del canvas
+        this.setCanvasSize();
+        
         this.width = this.canvas.width;
         this.height = this.canvas.height;
         
@@ -197,6 +201,19 @@ class Game {
             // Pulisce anche le coordinate del click quando la nave arriva
 
         };
+    }
+    
+    // Imposta le dimensioni del canvas dinamicamente
+    setCanvasSize() {
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // Imposta le dimensioni del canvas
+        this.canvas.width = containerWidth;
+        this.canvas.height = containerHeight;
+        
+        console.log('📐 Canvas size set to:', containerWidth, 'x', containerHeight);
     }
     
     // Inizializza il sistema icone UI

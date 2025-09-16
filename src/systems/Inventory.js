@@ -8,12 +8,16 @@ export class Inventory {
         this.equipment = {
             laser: new Array(3).fill(null),      // 3 slot laser
             shieldGen: new Array(6).fill(null),  // 6 slot scudi/generatori (3+3)
-            extra: new Array(3).fill(null)       // 3 slot extra
+            extra: new Array(3).fill(null),      // 3 slot extra
+            uav: []                               // Droni UAV equipaggiati
         };
         
         // Inventario (oggetti posseduti)
         this.items = [];
         this.maxItems = 50; // Massimo 50 oggetti nell'inventario
+        
+        // Aggiungi alcuni droni di esempio
+        this.addSampleDrones();
         
         // Dimensioni e posizioni
         this.panelWidth = 1100;
@@ -36,6 +40,110 @@ export class Inventory {
         this.tooltip = null;
         this.mouseX = 0;
         this.mouseY = 0;
+        
+        // Sistema di tab
+        this.currentTab = 'equipment'; // 'equipment', 'uav'
+        this.tabs = [
+            { id: 'equipment', name: 'EQUIPAGGIAMENTO', color: '#4a90e2' },
+            { id: 'uav', name: 'UAV', color: '#ff6b6b' }
+        ];
+    }
+    
+    // Aggiungi droni di esempio
+    addSampleDrones() {
+        const sampleDrones = [
+            {
+                id: 'flax_drone',
+                name: 'Flax Drone',
+                type: 'uav',
+                droneType: 'flax',
+                rarity: 'common',
+                description: 'Drone Flax - 1 slot per laser o scudi',
+                cost: {
+                    credits: 1000
+                },
+                slots: 1,
+                icon: '🚁',
+                color: '#4a90e2'
+            },
+            {
+                id: 'iris_drone',
+                name: 'Iris Drone',
+                type: 'uav',
+                droneType: 'iris',
+                rarity: 'rare',
+                description: 'Drone Iris - 2 slot per laser o scudi',
+                cost: {
+                    uridium: 500
+                },
+                slots: 2,
+                icon: '🚁',
+                color: '#ff6b6b'
+            }
+        ];
+        
+        // Aggiungi i droni all'inventario
+        sampleDrones.forEach(drone => {
+            this.addItem(drone);
+        });
+        
+        // Aggiungi alcuni laser e scudi di esempio
+        this.addSampleWeapons();
+    }
+    
+    // Aggiungi armi di esempio
+    addSampleWeapons() {
+        const sampleWeapons = [
+            {
+                id: 'laser_1',
+                name: 'Laser Base',
+                type: 'laser',
+                rarity: 'common',
+                description: 'Laser di base per droni',
+                damage: 25,
+                range: 200,
+                icon: '⚡',
+                color: '#ff6b6b'
+            },
+            {
+                id: 'laser_2',
+                name: 'Laser Avanzato',
+                type: 'laser',
+                rarity: 'rare',
+                description: 'Laser potente per droni',
+                damage: 50,
+                range: 300,
+                icon: '⚡',
+                color: '#ff0000'
+            },
+            {
+                id: 'shield_1',
+                name: 'Scudo Base',
+                type: 'shield',
+                rarity: 'common',
+                description: 'Scudo di base per droni',
+                protection: 100,
+                recharge: 10,
+                icon: '🛡️',
+                color: '#4ecdc4'
+            },
+            {
+                id: 'shield_2',
+                name: 'Scudo Avanzato',
+                type: 'shield',
+                rarity: 'rare',
+                description: 'Scudo potente per droni',
+                protection: 200,
+                recharge: 15,
+                icon: '🛡️',
+                color: '#00ffff'
+            }
+        ];
+        
+        // Aggiungi le armi all'inventario
+        sampleWeapons.forEach(weapon => {
+            this.addItem(weapon);
+        });
     }
     
     // Apri/chiudi inventario
@@ -277,13 +385,167 @@ export class Inventory {
             window.gameInstance.audioManager.playClickSound();
         }
         
+        // Controlla click su tab
+        if (this.handleTabClick(x, y)) {
+            return true;
+        }
+        
         // Gestisci click sugli slot di equipaggiamento
         this.handleEquipmentClick(x, y);
+        
+        // Gestisci click sui droni UAV se siamo nella tab UAV
+        if (this.currentTab === 'uav') {
+            this.handleUAVClick(x, y);
+        }
         
         // Gestisci click sull'inventario
         this.handleInventoryClick(x, y);
         
         return true;
+    }
+    
+    // Gestisci click su tab
+    handleTabClick(x, y) {
+        const tabHeight = 40;
+        const tabY = this.panelY + 60;
+        const tabWidth = this.panelWidth / this.tabs.length;
+        
+        // Controlla se il click è nell'area delle tab
+        if (y >= tabY && y <= tabY + tabHeight) {
+            this.tabs.forEach((tab, index) => {
+                const tabX = this.panelX + index * tabWidth;
+                if (x >= tabX && x <= tabX + tabWidth) {
+                    this.currentTab = tab.id;
+                    return true;
+                }
+            });
+        }
+        return false;
+    }
+    
+    // Gestisci click sui droni UAV
+    handleUAVClick(x, y) {
+        const uavY = this.panelY + 120;
+        const uavX = this.panelX + 50;
+        const slotSpacing = 65;
+        
+        // Controlla click sui droni equipaggiati
+        this.equipment.uav.forEach((drone, droneIndex) => {
+            const droneX = uavX + droneIndex * (this.slotSize * 2 + slotSpacing);
+            const droneWidth = this.slotSize * 2 + 10;
+            const droneHeight = this.slotSize + 40;
+            
+            // Click sul drone (area generale)
+            if (x >= droneX && x <= droneX + droneWidth && 
+                y >= uavY && y <= uavY + droneHeight) {
+                
+                // Click sui slot del drone
+                for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
+                    const slotX = droneX + 5 + slotIndex * (this.slotSize + 5);
+                    const slotY = uavY + 5;
+                    
+                    if (x >= slotX && x <= slotX + this.slotSize && 
+                        y >= slotY && y <= slotY + this.slotSize) {
+                        
+                        // Se c'è un oggetto equipaggiato, rimuovilo
+                        if (drone.equippedItems[slotIndex]) {
+                            this.unequipItemFromDrone(droneIndex, slotIndex);
+                        }
+                        // Altrimenti cerca un oggetto nell'inventario da equipaggiare
+                        else {
+                            this.equipItemOnDroneFromInventory(droneIndex, slotIndex);
+                        }
+                        return true;
+                    }
+                }
+                
+                // Click sul drone stesso (per rimuoverlo)
+                if (x >= droneX + 5 && x <= droneX + droneWidth - 5 && 
+                    y >= uavY + 5 && y <= uavY + droneHeight - 5) {
+                    this.unequipUAV(droneIndex);
+                    return true;
+                }
+            }
+        });
+        
+        // Se non ci sono droni equipaggiati, equipaggia il primo disponibile
+        if (this.equipment.uav.length === 0) {
+            this.equipUAV(0);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Equipaggia oggetto su drone dall'inventario
+    equipItemOnDroneFromInventory(droneIndex, slotIndex) {
+        // Trova il primo laser o scudo disponibile nell'inventario
+        const itemIndex = this.items.findIndex(item => 
+            item.type === 'laser' || item.type === 'shield'
+        );
+        
+        if (itemIndex !== -1) {
+            const item = this.items[itemIndex];
+            this.equipItemOnDrone(droneIndex, slotIndex, item);
+            this.items.splice(itemIndex, 1);
+        } else {
+            this.showPopup('Nessun laser o scudo disponibile nell\'inventario', 'error');
+        }
+    }
+    
+    // Equipaggia un drone UAV
+    equipUAV(droneIndex) {
+        // Trova il primo drone disponibile nell'inventario
+        const itemIndex = this.items.findIndex(item => item.type === 'uav');
+        if (itemIndex !== -1) {
+            const drone = this.items[itemIndex];
+            // Inizializza gli slot del drone
+            drone.equippedItems = new Array(drone.slots).fill(null);
+            this.equipment.uav.push(drone);
+            this.items.splice(itemIndex, 1);
+            this.showPopup(`Drone ${drone.name} equipaggiato!`, 'success');
+        } else {
+            this.showPopup('Nessun drone disponibile nell\'inventario', 'error');
+        }
+    }
+    
+    // Rimuovi drone UAV
+    unequipUAV(droneIndex) {
+        if (droneIndex >= 0 && droneIndex < this.equipment.uav.length) {
+            const drone = this.equipment.uav[droneIndex];
+            this.equipment.uav.splice(droneIndex, 1);
+            this.addItem(drone);
+            this.showPopup(`Drone ${drone.name} rimosso`, 'info');
+        }
+    }
+    
+    // Equipaggia oggetto su drone
+    equipItemOnDrone(droneIndex, slotIndex, item) {
+        if (droneIndex >= 0 && droneIndex < this.equipment.uav.length) {
+            const drone = this.equipment.uav[droneIndex];
+            if (slotIndex >= 0 && slotIndex < drone.slots) {
+                // Controlla che l'oggetto sia laser o scudo
+                if (item.type === 'laser' || item.type === 'shield') {
+                    drone.equippedItems[slotIndex] = item;
+                    this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
+                } else {
+                    this.showPopup('I droni possono equipaggiare solo laser o scudi', 'error');
+                }
+            }
+        }
+    }
+    
+    // Rimuovi oggetto da drone
+    unequipItemFromDrone(droneIndex, slotIndex) {
+        if (droneIndex >= 0 && droneIndex < this.equipment.uav.length) {
+            const drone = this.equipment.uav[droneIndex];
+            if (slotIndex >= 0 && slotIndex < drone.slots && drone.equippedItems[slotIndex]) {
+                const item = drone.equippedItems[slotIndex];
+                drone.equippedItems[slotIndex] = null;
+                this.addItem(item);
+                this.showPopup(`${item.name} rimosso da ${drone.name}`, 'info');
+            }
+        }
     }
     
     // Gestisci click sugli slot di equipaggiamento
@@ -612,11 +874,16 @@ export class Inventory {
         ctx.textAlign = 'center';
         ctx.fillText('INVENTARIO', this.panelX + this.panelWidth / 2, this.panelY + 40);
         
-        // Disegna equipaggiamento
-        this.drawEquipment(ctx);
+        // Disegna tab
+        this.drawTabs(ctx);
         
-        // Disegna inventario
-        this.drawInventory(ctx);
+        // Disegna contenuto basato sulla tab corrente
+        if (this.currentTab === 'equipment') {
+            this.drawEquipment(ctx);
+            this.drawInventory(ctx);
+        } else if (this.currentTab === 'uav') {
+            this.drawUAV(ctx);
+        }
         
         // Istruzioni
         ctx.fillStyle = '#cccccc';
@@ -629,6 +896,112 @@ export class Inventory {
         
         // Disegna tooltip
         this.drawTooltip(ctx);
+    }
+    
+    // Disegna le tab
+    drawTabs(ctx) {
+        const tabHeight = 40;
+        const tabY = this.panelY + 60;
+        const tabWidth = this.panelWidth / this.tabs.length;
+        
+        this.tabs.forEach((tab, index) => {
+            const tabX = this.panelX + index * tabWidth;
+            const isActive = this.currentTab === tab.id;
+            
+            // Sfondo tab
+            ctx.fillStyle = isActive ? tab.color : '#333333';
+            ctx.fillRect(tabX, tabY, tabWidth, tabHeight);
+            
+            // Bordo tab
+            ctx.strokeStyle = isActive ? '#ffffff' : '#666666';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(tabX, tabY, tabWidth, tabHeight);
+            
+            // Testo tab
+            ctx.fillStyle = isActive ? '#ffffff' : '#cccccc';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(tab.name, tabX + tabWidth / 2, tabY + 25);
+        });
+    }
+    
+    // Disegna sezione UAV
+    drawUAV(ctx) {
+        const uavY = this.panelY + 120;
+        const uavX = this.panelX + 50;
+        const slotSpacing = 65;
+        
+        // Titolo UAV
+        ctx.fillStyle = '#ff6b6b';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('DRONI UAV', uavX, uavY - 20);
+        
+        // Disegna droni equipaggiati
+        this.equipment.uav.forEach((drone, index) => {
+            const droneX = uavX + index * (this.slotSize + slotSpacing);
+            this.drawEquippedDrone(ctx, droneX, uavY, drone, index);
+        });
+        
+        // Informazioni UAV
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('I droni UAV possono equipaggiare laser o scudi', uavX, uavY + 200);
+        ctx.fillText('Flax: 1 slot | Iris: 2 slot', uavX, uavY + 220);
+    }
+    
+    // Disegna drone equipaggiato con i suoi slot
+    drawEquippedDrone(ctx, x, y, drone, droneIndex) {
+        const droneWidth = this.slotSize * 2 + 10; // Larghezza per 2 slot + spazio
+        const droneHeight = this.slotSize + 40; // Altezza slot + spazio per nome
+        
+        // Sfondo drone
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, y, droneWidth, droneHeight);
+        
+        // Bordo drone
+        ctx.strokeStyle = drone.color || '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, droneWidth, droneHeight);
+        
+        // Nome drone
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(drone.name, x + droneWidth / 2, y - 5);
+        
+        // Disegna slot del drone
+        for (let i = 0; i < drone.slots; i++) {
+            const slotX = x + 5 + i * (this.slotSize + 5);
+            const slotY = y + 5;
+            this.drawDroneSlot(ctx, slotX, slotY, drone.equippedItems ? drone.equippedItems[i] : null, droneIndex, i);
+        }
+    }
+    
+    // Disegna singolo slot del drone
+    drawDroneSlot(ctx, x, y, item, droneIndex, slotIndex) {
+        // Slot
+        ctx.fillStyle = item ? '#444444' : '#222222';
+        ctx.fillRect(x, y, this.slotSize, this.slotSize);
+        
+        // Bordo slot
+        ctx.strokeStyle = item ? '#ffffff' : '#666666';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, this.slotSize, this.slotSize);
+        
+        if (item) {
+            // Icona oggetto
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            
+            if (item.type === 'laser') {
+                ctx.fillText('⚡', x + this.slotSize / 2, y + this.slotSize / 2 + 5);
+            } else if (item.type === 'shield') {
+                ctx.fillText('🛡️', x + this.slotSize / 2, y + this.slotSize / 2 + 5);
+            }
+        }
     }
     
     // Disegna equipaggiamento
