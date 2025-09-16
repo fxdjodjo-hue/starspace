@@ -104,6 +104,14 @@ export class StartScreen {
             height: 50,
             text: 'CARICA SALVATAGGIO'
         };
+        
+        this.logoutButton = {
+            x: this.x + 320,
+            y: this.y + 570,
+            width: 150,
+            height: 50,
+            text: 'LOGOUT'
+        };
 
         // Stato salvataggi
         this.hasExistingSave = false;
@@ -179,7 +187,7 @@ export class StartScreen {
         
         // Selezione fazione (solo per registrazione)
         if (this.mode === 'register') {
-            this.drawFactionSelection(ctx);
+        this.drawFactionSelection(ctx);
         } else {
             // Messaggio informativo per login
             ctx.fillStyle = '#4a90e2';
@@ -355,6 +363,11 @@ export class StartScreen {
         if (this.hasExistingSave) {
             this.drawButton(ctx, this.loadButton, false);
         }
+        
+        // Pulsante logout (solo se loggato)
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            this.drawButton(ctx, this.logoutButton, false);
+        }
     }
     
     // Disegna singolo pulsante
@@ -487,8 +500,8 @@ export class StartScreen {
         // Click su fazioni (solo per registrazione)
         if (this.mode === 'register') {
             let factionClicked = false;
-            this.factions.forEach((faction, index) => {
-                const cardWidth = 180;
+        this.factions.forEach((faction, index) => {
+            const cardWidth = 180;
                 const cardHeight = 100;
                 const cardSpacing = 20;
                 const startX = this.x + 100;
@@ -497,8 +510,8 @@ export class StartScreen {
                 const cardY = startY;
                 
                 if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
-                    console.log('✅ Click su fazione:', faction.name);
-                    this.selectedFaction = faction.id;
+                console.log('✅ Click su fazione:', faction.name);
+                this.selectedFaction = faction.id;
                     factionClicked = true;
                 }
             });
@@ -524,12 +537,18 @@ export class StartScreen {
             console.log('✅ Click su toggle modalità');
             this.mode = this.mode === 'login' ? 'register' : 'login';
             this.clearMessages();
-            return true;
-        }
+                return true;
+            }
         
         if (this.hasExistingSave && this.isMouseOverButton(this.loadButton)) {
             console.log('✅ Click su pulsante carica salvataggio');
             this.handleLoadGame();
+            return true;
+        }
+        
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn && this.isMouseOverButton(this.logoutButton)) {
+            console.log('✅ Click su pulsante logout');
+            this.handleLogout();
             return true;
         }
         
@@ -694,6 +713,20 @@ export class StartScreen {
         }, 3000);
     }
     
+    // Gestisce logout
+    handleLogout() {
+        if (this.game.authSystem) {
+            this.game.authSystem.logout();
+            this.clearMessages();
+            this.showSuccess('Logout effettuato');
+            // Reset dei campi
+            this.nickname = '';
+            this.password = '';
+            this.selectedFaction = null;
+            this.mode = 'login';
+        }
+    }
+    
     // Pulisce i messaggi
     clearMessages() {
         this.errorMessage = '';
@@ -717,6 +750,17 @@ export class StartScreen {
     show() {
         this.isVisible = true;
         this.isTyping = true;
+        
+        // Controlla se c'è già una sessione attiva
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            console.log('🎮 Utente già loggato, caricamento automatico...');
+            // Carica automaticamente il gioco dell'utente loggato
+            setTimeout(() => {
+                this.handleLoadGame();
+            }, 500); // Piccolo delay per permettere il rendering
+            return;
+        }
+        
         console.log('🎮 StartScreen shown - typing enabled');
     }
     

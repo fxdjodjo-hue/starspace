@@ -2527,13 +2527,9 @@ class Game {
 window.addEventListener('load', () => {
     const game = new Game();
     
-    // Prova a caricare un salvataggio esistente
-    if (game.saveSystem.hasSave()) {
-        console.log('📁 Salvataggio trovato, caricamento automatico...');
-        game.saveSystem.load();
-    } else {
-        console.log('🆕 Nessun salvataggio trovato, inizio nuovo gioco');
-    }
+    // Mostra sempre la StartScreen all'avvio
+    console.log('🎮 Avvio gioco - mostrando StartScreen');
+    game.startScreen.show();
     
     // Riproduci suono di system ready dopo un breve delay
     setTimeout(() => {
