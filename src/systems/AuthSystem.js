@@ -110,18 +110,18 @@ export class AuthSystem {
     startLogoutCountdown() {
         let countdown = 5; // 5 secondi
         
-        // Mostra notifica iniziale
+        // Crea una notifica speciale per il countdown
         if (this.game.notifications) {
-            this.game.notifications.add(`🚪 Logout in ${countdown} secondi...`, 'warning');
+            this.logoutNotificationId = this.game.notifications.addCountdownNotification(`🚪 Logout in ${countdown} secondi...`, 'warning');
         }
         
         const countdownInterval = setInterval(() => {
             countdown--;
             
             if (countdown > 0) {
-                // Aggiorna notifica
-                if (this.game.notifications) {
-                    this.game.notifications.add(`🚪 Logout in ${countdown} secondi...`, 'warning');
+                // Aggiorna la notifica esistente
+                if (this.game.notifications && this.logoutNotificationId) {
+                    this.game.notifications.updateCountdownNotification(this.logoutNotificationId, `🚪 Logout in ${countdown} secondi...`);
                 }
             } else {
                 // Esegui logout
@@ -139,8 +139,12 @@ export class AuthSystem {
         this.isLoggedIn = false;
         this.clearSession();
         
-        // Mostra notifica di successo
+        // Rimuovi la notifica di countdown e mostra successo
         if (this.game.notifications) {
+            // Rimuovi la notifica di countdown
+            this.game.notifications.notifications = this.game.notifications.notifications.filter(n => n.id !== 'logout_countdown');
+            
+            // Mostra notifica di successo
             this.game.notifications.add('✅ Logout effettuato con successo', 'success');
         }
         

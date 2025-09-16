@@ -13,6 +13,46 @@ export class Notification {
         this.handleNotification(message, duration, type);
     }
     
+    // Aggiungi una notifica di countdown (specializzata per logout)
+    addCountdownNotification(message, type = 'warning') {
+        const notification = {
+            id: 'logout_countdown', // ID fisso per il countdown
+            message: message,
+            duration: 6000, // 6 secondi per dare tempo al countdown
+            remainingTime: 6000,
+            type: type,
+            isCountdown: true, // Flag speciale per countdown
+            // Animazioni
+            alpha: 1,
+            scale: 1,
+            slideX: 0,
+            // Posizione
+            targetY: 180,
+            currentY: 180,
+            // Effetti
+            glowIntensity: 0,
+            pulsePhase: 0
+        };
+        
+        // Rimuovi eventuali notifiche di countdown precedenti
+        this.notifications = this.notifications.filter(n => n.id !== 'logout_countdown');
+        
+        this.notifications.push(notification);
+        console.log('📝 Creata notifica countdown:', message);
+        
+        return 'logout_countdown';
+    }
+    
+    // Aggiorna una notifica di countdown
+    updateCountdownNotification(id, newMessage) {
+        const notification = this.notifications.find(n => n.id === id);
+        if (notification) {
+            notification.message = newMessage;
+            notification.remainingTime = 6000; // Reset del tempo
+            console.log('📝 Aggiornata notifica countdown:', newMessage);
+        }
+    }
+    
     // Gestisce le notifiche in modo intelligente
     handleNotification(message, duration, type) {
         // Se è una notifica di azione, pulisci e crea nuova
