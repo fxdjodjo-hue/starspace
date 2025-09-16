@@ -71,8 +71,10 @@ export class StartScreen {
             text: 'CARICA SALVATAGGIO'
         };
 
-        // Flag presenza salvataggio
+        // Stato salvataggi
         this.hasExistingSave = false;
+        this.availableSaves = [];
+        this.preferredSaveKey = 'main';
     }
     
     // Aggiorna la schermata
@@ -94,9 +96,19 @@ export class StartScreen {
 
         // Aggiorna stato salvataggio esistente
         try {
-            this.hasExistingSave = !!this.game.saveSystem && this.game.saveSystem.hasSave('main');
+            if (this.game.saveSystem) {
+                const keysToCheck = ['main', 'slot_1', 'slot_2', 'slot_3'];
+                this.availableSaves = keysToCheck.filter(k => this.game.saveSystem.hasSave(k));
+                this.hasExistingSave = this.availableSaves.length > 0;
+                // Preferisci 'main' se esiste, altrimenti il primo slot disponibile
+                this.preferredSaveKey = this.availableSaves.includes('main') ? 'main' : (this.availableSaves[0] || 'main');
+            } else {
+                this.hasExistingSave = false;
+                this.availableSaves = [];
+            }
         } catch (e) {
             this.hasExistingSave = false;
+            this.availableSaves = [];
         }
     }
     
@@ -449,7 +461,8 @@ export class StartScreen {
     // Carica il gioco da salvataggio esistente
     loadGame() {
         if (!this.game.saveSystem) return;
-        const ok = this.game.saveSystem.load('main');
+        const key = this.preferredSaveKey || 'main';
+        const ok = this.game.saveSystem.load(key);
         if (ok) {
             // Assicura di caricare istanza mappa
             if (this.game.mapManager) {
