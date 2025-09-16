@@ -296,8 +296,8 @@ export class Minimap {
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        // Rimuovi "Sector" dal nome della mappa
-        const shortName = currentMap.name.replace(' Sector', '');
+        // Estrai solo la parte prima dello spazio (V1, V2, M1, M2, E1, E2, etc.)
+        const shortName = currentMap.name.split(' ')[0];
         ctx.fillText(`MAP: ${shortName}`, this.mapInfoX, this.y - 8);
     }
     

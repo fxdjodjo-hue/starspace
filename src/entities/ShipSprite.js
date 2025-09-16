@@ -143,13 +143,7 @@ export class ShipSprite {
         ctx.save();
         ctx.translate(x, y + floatingY);
         
-        // Debug info
-        console.log('🎨 Drawing frame:', {
-            frame,
-            position: {x, y},
-            rotation,
-            size: shipSize
-        });
+        // Debug info (rimosso per performance)
         
         // Disegna il frame corrente con dimensione aumentata
         ctx.drawImage(

@@ -10,7 +10,7 @@ import { ObjectManager } from './ObjectManager.js';
 export class MapManager {
     constructor(game) {
         this.game = game;
-        this.currentMap = 'x1';
+        this.currentMap = 'v1'; // Mappa di partenza per VENUS
         
         // Nuovo sistema di persistenza
         this.persistence = new MapPersistence();
@@ -35,7 +35,11 @@ export class MapManager {
     createPortalsForCurrentMap() {
         this.portals = []; // Pulisci i portali esistenti
         
-        if (this.currentMap === 'x1') {
+        if (this.currentMap === 'v1') {
+            // V1 -> V2 (lato destro) e V1 -> T-1 (centro)
+            this.portals.push(new Portal(15000, 5000, 'v2', 1000, 5000, this.game));
+            this.portals.push(new Portal(8000, 5000, 't-1', 8000, 5000, this.game));
+        } else if (this.currentMap === 'x1') {
             // X1 -> X2 (lato destro)
             this.portals.push(new Portal(15000, 5000, 'x2', 1000, 5000, this.game));
         } else if (this.currentMap === 'x2') {

@@ -184,14 +184,7 @@ export class Notification {
     
     // Disegna una singola notifica con stile minimalista
     drawSingleNotification(ctx, notification, index) {
-        console.log('🎨 Disegno notifica:', {
-            message: notification.message,
-            alpha: notification.alpha,
-            currentY: notification.currentY,
-            scale: notification.scale,
-            slideX: notification.slideX,
-            type: notification.type
-        });
+        // Debug rimosso per performance
         
         // Salva stato del canvas
         ctx.save();

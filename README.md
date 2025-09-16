@@ -24,6 +24,20 @@ Un gioco spaziale MMORPG stile DarkOrbit sviluppato in JavaScript vanilla con Ca
 - **Effetti**: Esplosioni, scie, effetti ambientali
 - **Audio**: Musica di sottofondo e effetti sonori
 
+### 💾 **Sistema di Salvataggio**
+- **Salvataggio Automatico**: Ogni 30 secondi
+- **Salvataggio Manuale**: Tasto F5 per salvare immediatamente
+- **Backup Automatici**: Fino a 5 backup con timestamp
+- **Caricamento Automatico**: All'avvio se esiste un salvataggio
+- **Gestione Completa**: Pannelli UI per salvare/caricare/eliminare
+
+### 🎯 **Sistema Fazioni**
+- **3 Fazioni Disponibili**: EIC, MARS, VENUS
+- **Equilibrio Iniziale**: Nessun bonus per mantenere equilibrio
+- **Tecnologie Esclusive**: Armi e equipaggiamenti unici
+- **Sistema Reputazione**: Reputazione con ogni fazione
+- **PvP Faction-Based**: Danno modificato contro nemici/alleati
+
 ## 🕹️ Controlli
 
 | Tasto/Azione | Funzione |
@@ -33,6 +47,11 @@ Un gioco spaziale MMORPG stile DarkOrbit sviluppato in JavaScript vanilla con Ca
 | **CTRL** | Avvia/ferma attacco automatico |
 | **E** | Interagisci con la stazione spaziale |
 | **1-4** | Attiva abilità speciali |
+| **F5** | Salva il gioco |
+| **F6** | Apri pannello salvataggio |
+| **F7** | Apri pannello caricamento |
+| **F8** | Apri pannello fazioni |
+| **F9** | Carica salvataggio |
 | **C** | Aggiungi crediti (test) |
 | **U** | Aggiungi uridium (test) |
 | **O** | Aggiungi onore (test) |

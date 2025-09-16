@@ -992,8 +992,6 @@ export class Ship {
     
     // Processa reward per nemico distrutto usando RewardManager
     processEnemyKill(enemyType, enemyConfig = null) {
-        console.log(`🔍 processEnemyKill chiamato - enemyType: "${enemyType}", enemyConfig:`, enemyConfig);
-        
         // Calcola i reward (RewardManager è solo un calcolatore)
         const results = this.rewardManager.processEnemyKill(enemyType, enemyConfig);
         
@@ -1005,9 +1003,6 @@ export class Ship {
         
         if (isStreuner) {
             this.streunerKilled++;
-            console.log(`🎯 Streuner ucciso! Tipo: "${enemyType}", Nome: "${enemyConfig?.name || 'N/A'}", Totale: ${this.streunerKilled}`);
-        } else {
-            console.log(`⚠️ Nemico ucciso ma non riconosciuto come Streuner: "${enemyType}", Nome: "${enemyConfig?.name || 'N/A'}"`);
         }
         
         // Applica i reward alla nave usando il sistema unificato

@@ -29,6 +29,7 @@ import { Inventory } from './src/systems/Inventory.js';
 import { InventoryItem } from './src/systems/InventoryItem.js';
 // import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { HomePanel } from './src/ui/HomePanel.js';
+import { StartScreen } from './src/ui/StartScreen.js';
 import { QuestTracker } from './src/systems/QuestTracker.js';
 import { CategorySkillbar } from './src/ui/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
@@ -38,6 +39,9 @@ import { MapManager } from './src/world/MapManager.js';
 import { MapSystem } from './src/world/MapSystem.js';
 import { RadiationSystem } from './src/systems/RadiationSystem.js';
 import { DamageNumberSystem } from './modules/DamageNumbers.js';
+import { SaveSystem } from './src/systems/SaveSystem.js';
+import { SaveLoadPanel } from './src/ui/SaveLoadPanel.js';
+import { FactionSystem } from './src/systems/FactionSystem.js';
 
 
 
@@ -105,6 +109,17 @@ class Game {
         // Sistema notifiche di zona
         this.zoneNotifications = new ZoneNotification();
         
+        // Sistema di salvataggio
+        this.saveSystem = new SaveSystem(this);
+        this.saveLoadPanel = new SaveLoadPanel(this);
+        
+        // Sistema fazioni
+        this.factionSystem = new FactionSystem();
+        
+        // Sistema visualizzazione mappe (dopo factionSystem)
+        this.mapSystem = new MapSystem();
+        this.mapSystem.setFactionSystem(this.factionSystem);
+        
         // Popup di morte
         this.deathPopup = new DeathPopup();
         
@@ -131,6 +146,16 @@ class Game {
         // Pannello Home Dashboard
         this.homePanel = new HomePanel(this);
         
+        // Schermata di selezione iniziale
+        console.log('🎮 Game constructor - creating StartScreen');
+        this.startScreen = new StartScreen(this);
+        console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
+        
+        // Test globale per verificare se gli eventi da tastiera funzionano
+        document.addEventListener('keydown', (e) => {
+            console.log('🔑 GLOBAL KEYDOWN TEST:', e.code, e.key);
+        });
+        
         // Quest Tracker (mini pannello per quest attive)
         this.questTracker = new QuestTracker(this);
         
@@ -143,8 +168,8 @@ class Game {
         // Sistema di gestione mappe e portali
         this.mapManager = new MapManager(this);
         
-        // Sistema visualizzazione mappe
-        this.mapSystem = new MapSystem();
+        // Sistema visualizzazione mappe (inizializzato dopo factionSystem)
+        // this.mapSystem sarà inizializzato dopo factionSystem
         
         // Sistema icone UI (in alto a sinistra)
         this.iconSystemUI = [];
@@ -302,6 +327,37 @@ class Game {
     
     
     update() {
+        // Aggiorna l'input PRIMA di tutto
+        this.input.update();
+        
+        // Aggiorna la schermata di selezione iniziale
+        if (this.startScreen.isVisible) {
+            console.log('🎮 Game update - StartScreen visible, updating...');
+            this.startScreen.update(16); // 16ms = ~60fps
+            return; // Non aggiornare il gioco se la start screen è visibile
+        }
+        
+        // Gestisci input da tastiera per la schermata di selezione iniziale
+        if (this.startScreen.isVisible) {
+            console.log('⌨️ Game keyboard - StartScreen visible, handling keys...');
+            // Gestisci input da tastiera per nickname
+            const keys = this.input.getPressedKeys();
+            console.log('🔑 Pressed keys:', keys);
+            console.log('🔑 Input keys object:', this.input.keys);
+            if (keys.length > 0) {
+                console.log('🔑 Keys detected:', keys);
+                console.log('🔑 StartScreen isTyping:', this.startScreen.isTyping);
+            }
+            keys.forEach(key => {
+                if (this.startScreen.handleKeyPress(key)) {
+                    console.log('✅ Key handled:', key);
+                    this.input.resetKey(key);
+                }
+            });
+            
+            return; // Non gestire altri input se la start screen è visibile
+        }
+        
         // Gestisci cambio nave con tasti 1 e 2
         if (this.input.isKey1JustPressed()) {
             this.ship.sprite.switchShip(1);
@@ -337,6 +393,21 @@ class Game {
         // Controlla se il mouse è sopra il quest tracker
         if (this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y)) {
             mouseOverQuestTracker = true;
+        }
+        
+        // Gestisci click sulla schermata di selezione iniziale (priorità massima)
+        if (this.startScreen.isVisible) {
+            console.log('🖱️ Game click check - StartScreen visible, isLeftClickJustReleased:', this.input.isLeftClickJustReleased());
+            if (this.input.isLeftClickJustReleased()) {
+                console.log('🖱️ Game click - StartScreen visible, handling click...');
+                const mousePos = this.input.getMousePosition();
+                console.log('🖱️ Mouse position:', mousePos);
+                if (this.startScreen.handleClick(mousePos.x, mousePos.y)) {
+                    console.log('✅ StartScreen click handled');
+                    this.input.resetLeftClickReleased();
+                    return; // Esce dalla funzione per evitare altri gestori
+                }
+            }
         }
         
         // Gestisci click sul quest tracker PRIMA di tutto (priorità massima)
@@ -433,6 +504,12 @@ class Game {
         if (this.homePanel.visible) {
             this.homePanel.updatePopup(16); // 16ms = ~60fps
         }
+        
+        // Aggiorna pannello salvataggio/caricamento
+        if (this.saveLoadPanel.isOpen) {
+            this.saveLoadPanel.update();
+        }
+        
         
         // Controlla collisioni bonus box IMMEDIATAMENTE dopo il movimento della nave
         this.checkBonusBoxCollisions();
@@ -584,6 +661,16 @@ class Game {
             }
         }
         
+        // Gestisci click nel pannello salvataggio/caricamento
+        if (this.saveLoadPanel.isOpen && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            if (this.saveLoadPanel.handleClick(mousePos.x, mousePos.y)) {
+                this.input.resetMouseJustPressed();
+                return; // Click gestito dal pannello
+            }
+        }
+        
+        
         // Gestisci click nel quest tracker (inizio drag)
         if (this.input.isMouseJustPressed() && mouseOverQuestTracker) {
             const mousePos = this.input.getMousePosition();
@@ -623,6 +710,13 @@ class Game {
         if (this.profilePanel.isDragging && this.input.isMouseDown()) {
             const mousePos = this.input.getMousePosition();
             this.profilePanel.handleMouseMove(mousePos.x, mousePos.y);
+        }
+        
+        
+        // Gestisci movimento mouse nel pannello home
+        if (this.homePanel.visible) {
+            const mousePos = this.input.getMousePosition();
+            this.homePanel.handleMouseMove(mousePos.x, mousePos.y);
         }
         
         // Gestisci inizio drag del profile panel (quando si clicca sulla barra del titolo)
@@ -776,7 +870,7 @@ class Game {
         
         
         // Comando per aprire/chiudere sistema mappe (tasto M)
-        if (this.input.isKeyJustPressed('KeyM')) {
+        if (this.input.isKeyJustPressed('KeyM') && this.mapSystem) {
             this.mapSystem.toggle();
         }
         
@@ -788,7 +882,7 @@ class Game {
         // Gestore duplicato rimosso - gestito sopra
         
         // Gestisci click sui nodi del sistema mappe (PRIORITÀ ALTA)
-        if (this.mapSystem.isOpen && this.input.isLeftClickJustReleased()) {
+        if (this.mapSystem && this.mapSystem.isOpen && this.input.isLeftClickJustReleased()) {
             const mousePos = this.input.getMousePosition();
             const handled = this.mapSystem.handleClick(mousePos.x, mousePos.y, this.mapManager.currentMap, this.mapManager);
             if (handled) {
@@ -970,6 +1064,35 @@ class Game {
             this.notifications.add('💥 Danno ricevuto per test!', 200, 'warning');
         }
         
+        // Controlli per il sistema di salvataggio
+        // Tasto F5 per salvare
+        if (this.input.isKeyJustPressed('F5')) {
+            this.saveSystem.save();
+        }
+        
+        // Tasto F9 per caricare
+        if (this.input.isKeyJustPressed('F9')) {
+            this.saveSystem.load();
+        }
+        
+        // Tasto F6 per aprire pannello salvataggio
+        if (this.input.isKeyJustPressed('F6')) {
+            this.saveLoadPanel.open('save');
+        }
+        
+        // Tasto F7 per aprire pannello caricamento
+        if (this.input.isKeyJustPressed('F7')) {
+            this.saveLoadPanel.open('load');
+        }
+        
+        // Tasto F8 per aprire pannello home (ora include fazioni)
+        if (this.input.isKeyJustPressed('F8')) {
+            this.homePanel.toggle();
+            if (this.homePanel.visible) {
+                this.homePanel.selectedCategory = 'factions';
+            }
+        }
+        
         // Aggiorna notifiche di zona
         this.zoneNotifications.update();
         
@@ -1129,6 +1252,13 @@ class Game {
         // Pulisci il canvas
         this.renderer.clear();
         
+        // Disegna la schermata di selezione iniziale se visibile
+        if (this.startScreen.isVisible) {
+            console.log('🎨 Game render - StartScreen visible, drawing...');
+            this.startScreen.draw(this.ctx);
+            return; // Non disegnare il gioco se la start screen è visibile
+        }
+        
         
         // Salva il contesto per applicare lo zoom
         this.ctx.save();
@@ -1257,8 +1387,14 @@ class Game {
         // Disegna pannello home se aperto
         this.homePanel.draw(this.ctx);
         
+        // Disegna pannello salvataggio/caricamento se aperto
+        this.saveLoadPanel.draw(this.ctx);
+        
+        
         // Disegna sistema mappe se aperto
-        this.mapSystem.draw(this.ctx, this.mapManager.currentMap);
+        if (this.mapSystem) {
+            this.mapSystem.draw(this.ctx, this.mapManager.currentMap);
+        }
         
         // Disegna sistema icone UI DOPO i pannelli (per evitare che l'overlay le oscuri)
         // this.drawIconSystemUI(); // Temporaneamente disabilitato per testare il nuovo sistema
@@ -1509,6 +1645,20 @@ class Game {
         this.ctx.font = 'bold 14px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(nickname, screenPos.x, screenPos.y + offsetY);
+        
+        // Aggiungi pallino colorato della fazione se il giocatore è in una fazione
+        const currentFaction = this.factionSystem?.getCurrentFaction();
+        if (currentFaction) {
+            const textWidth = this.ctx.measureText(nickname).width;
+            const dotX = screenPos.x + textWidth/2 + 8; // 8px di spazio dal testo
+            const dotY = screenPos.y + offsetY - 2; // Allineato con il testo
+            
+            // Disegna il pallino colorato
+            this.ctx.fillStyle = currentFaction.color;
+            this.ctx.beginPath();
+            this.ctx.arc(dotX, dotY, 4, 0, 2 * Math.PI);
+            this.ctx.fill();
+        }
         
         // Ripristina l'allineamento del testo
         this.ctx.textAlign = 'left';
@@ -2189,7 +2339,7 @@ class Game {
     // Gestisce tutti gli eventi di gioco con priorità bassa
     handleGameEvents(mousePos, uiEventHandled = false) {
         // Gestisci input per il movimento continuo (solo se non si è sopra le icone UI o il quest tracker)
-        if (this.input.isMouseDown() && !uiEventHandled && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.visible && !this.mapSystem.isOpen) {
+        if (this.input.isMouseDown() && !uiEventHandled && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.settingsPanel.draggingSlider && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.visible && !(this.mapSystem && this.mapSystem.isOpen)) {
             // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
             if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
                 const movementDistance = this.input.mouse.movementDistance || 0;
@@ -2231,7 +2381,7 @@ class Game {
         }
         
         // Gestisci click per movimento del player (solo se non ci sono click sui pannelli UI)
-        if (this.input.isLeftClickJustReleased() && !uiEventHandled && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.visible && !this.mapSystem.isOpen) {
+        if (this.input.isLeftClickJustReleased() && !uiEventHandled && !this.upgradePanelOpen && !this.settingsPanel.isOpen && !this.spaceStationPanel.isOpen && !this.inventory.isOpen && !this.homePanel.visible && !(this.mapSystem && this.mapSystem.isOpen)) {
             // Non muovere se il click è sulla skillbar E non è navigazione (movimento > 5px)
             if (this.isClickOnCategorySkillbar(mousePos.x, mousePos.y)) {
                 const movementDistance = this.input.mouse.movementDistance || 0;
@@ -2295,11 +2445,95 @@ class Game {
         this.render();
         requestAnimationFrame(() => this.gameLoop());
     }
+    
+    /**
+     * Resetta il gioco per iniziare una nuova partita
+     */
+    resetGame() {
+        // Reset della nave
+        this.ship.x = 8000;
+        this.ship.y = 5000;
+        this.ship.hp = this.ship.maxHP;
+        this.ship.shield = this.ship.maxShield;
+        this.ship.currentLevel = 1;
+        this.ship.resources.experience = 0;
+        this.ship.resources.credits = 100000;
+        this.ship.resources.uridium = 5000;
+        this.ship.resources.honor = 0;
+        this.ship.resources.starEnergy = 100;
+        this.ship.streunerKilled = 0;
+        this.ship.bonusBoxesCollected = 0;
+        this.ship.isDead = false;
+        this.ship.active = true;
+        
+        // Reset equipaggiamento
+        this.ship.equippedLasers = { lf1: 0, lf2: 0, lf3: 0, lf4: 0 };
+        this.ship.ammunition = {
+            laser: { x1: 1000, x2: 500, x3: 200, sab: 100 },
+            missile: { r1: 50, r2: 25, r3: 10 }
+        };
+        this.ship.selectedLaser = 'x1';
+        this.ship.selectedMissile = 'r1';
+        
+        // Reset clan
+        this.ship.clan = {
+            id: null,
+            name: '',
+            tag: '',
+            role: 'none',
+            joinedAt: null,
+            isInClan: false
+        };
+        
+        // Reset quest
+        if (this.questTracker) {
+            this.questTracker.activeQuests = [];
+            this.questTracker.completedQuests = [];
+        }
+        
+        // Reset inventario
+        if (this.inventory) {
+            this.inventory.items = [];
+            this.inventory.equipment = {
+                laser: new Array(3).fill(null),
+                shieldGen: new Array(6).fill(null),
+                extra: new Array(3).fill(null)
+            };
+        }
+        
+        // Reset mappa
+        if (this.mapManager) {
+            this.mapManager.currentMap = 'v1'; // Mappa di partenza per VENUS
+        }
+        
+        // Reset camera
+        this.camera.x = this.ship.x - this.width / 2;
+        this.camera.y = this.ship.y - this.height / 2;
+        
+        // Pulisci nemici e bonus box
+        this.enemies = [];
+        this.bonusBoxes = [];
+        
+        // Notifica il giocatore
+        if (this.notifications) {
+            this.notifications.add('🆕 Nuovo gioco iniziato!', 3000, 'success');
+        }
+        
+        console.log('🆕 Gioco resettato per nuova partita');
+    }
 }
 
 // Avvia il gioco quando la pagina è caricata
 window.addEventListener('load', () => {
     const game = new Game();
+    
+    // Prova a caricare un salvataggio esistente
+    if (game.saveSystem.hasSave()) {
+        console.log('📁 Salvataggio trovato, caricamento automatico...');
+        game.saveSystem.load();
+    } else {
+        console.log('🆕 Nessun salvataggio trovato, inizio nuovo gioco');
+    }
     
     // Riproduci suono di system ready dopo un breve delay
     setTimeout(() => {

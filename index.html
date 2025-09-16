@@ -72,7 +72,7 @@
 <body>
     <div id="gameContainer">
         <div id="canvasContainer">
-            <canvas id="gameCanvas" width="1920" height="1080"></canvas>
+            <canvas id="gameCanvas" width="1920" height="1080" tabindex="0"></canvas>
         </div>
         
 
@@ -187,6 +187,20 @@
                     window.gameInstance.handleResize(newWidth, newHeight);
                 }
             }
+            
+            // Focus sul canvas per abilitare gli eventi da tastiera (immediatamente dopo DOMContentLoaded)
+            canvas.focus();
+            
+            // Test per verificare se gli eventi da tastiera funzionano sul canvas
+            canvas.addEventListener('keydown', function(e) {
+                console.log('🔑 CANVAS KEYDOWN TEST:', e.code, e.key);
+            });
+            
+            // Focus sul canvas quando viene cliccato
+            canvas.addEventListener('click', function() {
+                canvas.focus();
+                console.log('🎯 Canvas focused for keyboard input');
+            });
             
             // Ridimensiona al caricamento della pagina
             window.addEventListener('load', function() {

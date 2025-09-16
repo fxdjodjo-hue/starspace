@@ -13,6 +13,10 @@ export class HomePanel extends UIComponent {
         this.selectedCategory = 'info';
         this.lastSelectedCategory = 'info';
         
+        // Fazioni
+        this.selectedFactionId = null;
+        this.hoveredFactionId = null;
+        
         // Cronologia delle conversioni StarEnergy
         this.conversionHistory = [];
         this.maxHistoryLength = 50; // Mantiene gli ultimi 50 risultati
@@ -45,9 +49,10 @@ export class HomePanel extends UIComponent {
             { id: 'shop', name: 'Negozio', icon: '🛒', available: true },
             { id: 'quest', name: 'Quest', icon: '📋', available: true },
             { id: 'clan', name: 'Clan', icon: '🏰', available: true },
+            { id: 'factions', name: 'Fazioni', icon: '⚔️', available: true },
+            { id: 'starenergy', name: 'Star Energy', icon: '⚡', available: true },
             { id: 'stats', name: 'Statistiche', icon: '📈', available: true },
             { id: 'map', name: 'Mappa spaziale', icon: '🗺️', available: true },
-            { id: 'starenergy', name: 'Star Energy', icon: '⚡', available: true },
             { id: 'settings', name: 'Impostazioni', icon: '⚙️', available: true },
             { id: 'exit', name: 'Esci', icon: '🚪', available: true }
         ];
@@ -370,8 +375,6 @@ export class HomePanel extends UIComponent {
     
     // Aggiorna il progresso delle quest
     updateQuestProgress() {
-        console.log(`🔍 updateQuestProgress chiamato - Streuner: ${this.game.ship?.streunerKilled || 'N/A'}, Bonus Box: ${this.game.ship?.bonusBoxesCollected || 'N/A'}`);
-        
         // Aggiorna solo le quest accettate
         Object.keys(this.questData.accettate).forEach(levelKey => {
             const levelQuests = this.questData.accettate[levelKey];
@@ -397,13 +400,10 @@ export class HomePanel extends UIComponent {
                         const newCompleted = Math.min(this.game.ship.streunerKilled, condition.quantity);
                         if (newCompleted !== condition.completed) {
                             condition.completed = newCompleted;
-                            console.log(`📊 Quest progresso: ${condition.completed}/${condition.quantity} Streuner (Ship: ${this.game.ship.streunerKilled})`);
                         }
                         if (condition.completed < condition.quantity) {
                             allConditionsCompleted = false;
                         }
-                    } else {
-                        console.log(`⚠️ Ship o streunerKilled non disponibile per quest tracking`);
                     }
                     break;
                     
@@ -413,7 +413,6 @@ export class HomePanel extends UIComponent {
                         const newCompleted = Math.min(this.game.ship.bonusBoxesCollected, condition.quantity);
                         if (newCompleted !== condition.completed) {
                             condition.completed = newCompleted;
-                            console.log(`📊 Quest progresso: ${condition.completed}/${condition.quantity} Bonus Box`);
                         }
                         if (condition.completed < condition.quantity) {
                             allConditionsCompleted = false;
@@ -497,7 +496,6 @@ export class HomePanel extends UIComponent {
     
     
     handleClick(x, y) {
-        console.log('🖱️ HomePanel click:', { x, y });
         if (!this.visible) {
             return false;
         }
@@ -559,9 +557,37 @@ export class HomePanel extends UIComponent {
             }
         }
         
+        // Se siamo nelle fazioni, gestisci i click delle fazioni
+        if (this.selectedCategory === 'factions') {
+            const contentX = panelX + this.navWidth;
+            const contentY = panelY + 60;
+            const handled = this.handleFactionClick(x, y, contentX, contentY);
+            if (handled) {
+                return true;
+            }
+        }
+        
         // Se siamo nel pannello home e non è stato gestito, restituisci true
         // per evitare che il click venga gestito da altri elementi
         return true;
+    }
+    
+    // Gestisce il movimento del mouse per hover effects
+    handleMouseMove(x, y) {
+        if (!this.visible) {
+            return;
+        }
+        
+        // Calcola posizione centrata (stesso calcolo di draw)
+        const panelX = (this.game.canvas.width - this.panelWidth) / 2;
+        const panelY = (this.game.canvas.height - this.panelHeight) / 2;
+        
+        // Se siamo nelle fazioni, gestisci il movimento del mouse per hover
+        if (this.selectedCategory === 'factions') {
+            const contentX = panelX + this.navWidth;
+            const contentY = panelY + 60;
+            this.handleFactionMouseMove(x, y, contentX, contentY);
+        }
     }
     
     
@@ -784,6 +810,9 @@ export class HomePanel extends UIComponent {
                 break;
             case 'starenergy':
                 this.drawStarEnergyContent(ctx, contentX, contentY);
+                break;
+            case 'factions':
+                this.drawFactionContent(ctx, contentX, contentY);
                 break;
             case 'stats':
                 this.drawComingSoon(ctx, contentX, contentY, 'Statistiche');
@@ -2968,6 +2997,326 @@ export class HomePanel extends UIComponent {
         if (this.game.notifications) {
             this.game.notifications.add(result.message, 3000, result.success ? 'success' : 'error');
         }
+    }
+    
+    // Disegna il contenuto delle fazioni
+    drawFactionContent(ctx, x, y) {
+        if (!this.game.factionSystem) {
+            this.drawComingSoon(ctx, x, y, 'Sistema Fazioni');
+            return;
+        }
+        
+        const currentFaction = this.game.factionSystem.getCurrentFaction();
+        const allFactions = this.game.factionSystem.getAllFactions();
+        
+        // Calcola le dimensioni e posizioni dinamicamente - sfruttiamo tutto lo spazio
+        const panelWidth = 600;
+        const panelHeight = 180;
+        const panelX = x + 20;
+        const panelY = y + 30;
+        
+        // Titolo
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('Sistema Fazioni', panelX, panelY - 10);
+        
+        // Informazioni fazione corrente
+        if (currentFaction) {
+            this.drawCurrentFactionInfo(ctx, panelX, panelY, currentFaction, panelWidth, panelHeight);
+        } else {
+            this.drawNoFactionInfo(ctx, panelX, panelY, panelWidth, panelHeight);
+        }
+        
+        // Lista fazioni disponibili - sfruttiamo tutto lo spazio
+        const cardWidth = 280;
+        const cardHeight = 300;
+        const cardSpacing = 20;
+        const cardsStartX = panelX;
+        const cardsStartY = panelY + panelHeight + 30;
+        
+        this.drawFactionList(ctx, cardsStartX, cardsStartY, allFactions, currentFaction, cardWidth, cardHeight, cardSpacing);
+    }
+    
+    // Disegna informazioni fazione corrente
+    drawCurrentFactionInfo(ctx, x, y, faction, panelWidth = 600, panelHeight = 180) {
+        
+        // Sfondo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(x, y, panelWidth, panelHeight);
+        
+        // Bordo colorato
+        ctx.strokeStyle = faction.color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, panelWidth, panelHeight);
+        
+        // Icona e nome (più grandi)
+        ctx.fillStyle = faction.color;
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText(`${faction.icon} ${faction.name}`, x + 15, y + 35);
+        
+        // Nome completo
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.fillText(faction.fullName, x + 15, y + 60);
+        
+        // Descrizione (più spazio)
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#cccccc';
+        const description = this.wrapText(ctx, faction.description, panelWidth - 40);
+        let textY = y + 85;
+        description.forEach(line => {
+            ctx.fillText(line, x + 15, textY);
+            textY += 18;
+        });
+        
+        // Pulsante abbandona
+        const buttonWidth = 100;
+        const buttonHeight = 25;
+        const buttonX = x + panelWidth - buttonWidth - 20;
+        const buttonY = y + panelHeight - buttonHeight - 10;
+        
+        ctx.fillStyle = '#e94560';
+        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Abbandona', buttonX + buttonWidth/2, buttonY + 17);
+        ctx.textAlign = 'left';
+    }
+    
+    // Disegna informazioni quando non si è in una fazione
+    drawNoFactionInfo(ctx, x, y, panelWidth = 600, panelHeight = 180) {
+        
+        // Sfondo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(x, y, panelWidth, panelHeight);
+        
+        // Bordo grigio
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, panelWidth, panelHeight);
+        
+        // Testo
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('Nessuna Fazione', x + 15, y + 30);
+        
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#cccccc';
+        ctx.fillText('Scegli una fazione per iniziare la tua avventura!', x + 15, y + 55);
+    }
+    
+    // Disegna lista delle fazioni
+    drawFactionList(ctx, x, y, factions, currentFaction, cardWidth = 280, cardHeight = 300, cardSpacing = 20) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('Fazioni Disponibili', x, y - 20);
+        
+        const startX = x;
+        const startY = y;
+        
+        factions.forEach((faction, index) => {
+            const cardX = startX + index * (cardWidth + cardSpacing);
+            const cardY = startY;
+            
+            this.drawFactionCard(ctx, cardX, cardY, cardWidth, cardHeight, faction, currentFaction);
+        });
+    }
+    
+    // Disegna una carta fazione
+    drawFactionCard(ctx, x, y, width, height, faction, currentFaction) {
+        const isCurrentFaction = currentFaction && currentFaction.id === faction.id;
+        
+        // Sfondo
+        ctx.fillStyle = isCurrentFaction ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(x, y, width, height);
+        
+        // Bordo
+        ctx.strokeStyle = isCurrentFaction ? '#00ff00' : faction.color;
+        ctx.lineWidth = isCurrentFaction ? 3 : 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Icona fazione (più grande)
+        ctx.fillStyle = faction.color;
+        ctx.font = '32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(faction.icon, x + width/2, y + 40);
+        
+        // Nome fazione (più grande)
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText(faction.name, x + width/2, y + 75);
+        
+        // Nome completo
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#cccccc';
+        ctx.fillText(faction.fullName, x + width/2, y + 100);
+        
+        // Descrizione (con wrap text per evitare sovrapposizioni)
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#aaaaaa';
+        const description = this.wrapText(ctx, faction.description, width - 30);
+        let textY = y + 130;
+        description.forEach(line => {
+            ctx.fillText(line, x + width/2, textY);
+            textY += 16;
+        });
+        
+        // Stato fazione (più in basso)
+        const statusY = y + height - 25;
+        
+        if (isCurrentFaction) {
+            ctx.fillStyle = '#00ff00';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('✓ Fazione Attiva', x + width/2, statusY);
+        } else {
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Clicca per selezionare', x + width/2, statusY);
+        }
+        
+        ctx.textAlign = 'left';
+    }
+    
+    // Gestisce i click nel contenuto delle fazioni
+    handleFactionClick(x, y, contentX, contentY) {
+        if (this.selectedCategory !== 'factions') return false;
+        
+        const currentFaction = this.game.factionSystem?.getCurrentFaction();
+        const allFactions = this.game.factionSystem?.getAllFactions() || [];
+        
+        // Calcola le dimensioni e posizioni dinamicamente - sfruttiamo tutto lo spazio
+        const panelWidth = 600;
+        const panelHeight = 180;
+        const panelX = contentX + 20;
+        const panelY = contentY + 30;
+        
+        // Pulsante abbandona fazione corrente (se presente)
+        if (currentFaction) {
+            const buttonWidth = 100;
+            const buttonHeight = 25;
+            const buttonX = panelX + panelWidth - buttonWidth - 20;
+            const buttonY = panelY + panelHeight - buttonHeight - 10;
+            
+            if (x >= buttonX && x <= buttonX + buttonWidth && 
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                this.leaveFaction();
+                return true;
+            }
+        }
+        
+        // Click sulle carte fazioni - sfruttiamo tutto lo spazio
+        const cardWidth = 280;
+        const cardHeight = 300;
+        const cardSpacing = 20;
+        const cardsStartX = panelX;
+        const cardsStartY = panelY + panelHeight + 30;
+        
+        allFactions.forEach((faction, index) => {
+            const cardX = cardsStartX + index * (cardWidth + cardSpacing);
+            const cardY = cardsStartY;
+            
+            // L'intera area della card è cliccabile
+            if (x >= cardX && x <= cardX + cardWidth && 
+                y >= cardY && y <= cardY + cardHeight) {
+                
+                if (currentFaction && currentFaction.id === faction.id) {
+                    // Se è la fazione corrente, non fare nulla (già attiva)
+                    return true;
+                }
+                
+                // Unisciti alla fazione cliccata
+                this.joinFaction(faction);
+                return true;
+            }
+        });
+        return false;
+    }
+    
+    // Gestisce il movimento del mouse per hover
+    handleFactionMouseMove(x, y, contentX, contentY) {
+        if (this.selectedCategory !== 'factions') {
+            this.hoveredFactionId = null;
+            return;
+        }
+        
+        const allFactions = this.game.factionSystem?.getAllFactions() || [];
+        const cardWidth = 200;
+        const cardHeight = 280;
+        const cardSpacing = 20;
+        const startX = contentX + 20;
+        const startY = contentY + 200 + 30;
+        
+        this.hoveredFactionId = null;
+        
+        allFactions.forEach((faction, index) => {
+            const cardX = startX + index * (cardWidth + cardSpacing);
+            const cardY = startY;
+            
+            if (x >= cardX && x <= cardX + cardWidth && 
+                y >= cardY && y <= cardY + cardHeight) {
+                this.hoveredFactionId = faction.id;
+                return;
+            }
+        });
+    }
+    
+    // Unisce una fazione
+    joinFaction(faction) {
+        if (!this.game.factionSystem) {
+            return;
+        }
+        
+        if (typeof this.game.factionSystem.joinFaction !== 'function') {
+            if (this.game.notifications) {
+                this.game.notifications.add('Errore: Sistema fazioni non disponibile', 3000, 'error');
+            }
+            return;
+        }
+        
+        const result = this.game.factionSystem.joinFaction(faction.id);
+        
+        if (this.game.notifications) {
+            this.game.notifications.add(result.message, 3000, result.success ? 'success' : 'error');
+        }
+        
+        if (result.success) {
+            this.selectedFactionId = null;
+        }
+    }
+    
+    // Abbandona la fazione corrente
+    leaveFaction() {
+        if (!this.game.factionSystem) return;
+        
+        const result = this.game.factionSystem.leaveFaction();
+        
+        if (this.game.notifications) {
+            this.game.notifications.add(result.message, 3000, result.success ? 'success' : 'error');
+        }
+    }
+    
+    // Wraps text to fit within a given width
+    wrapText(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0];
+        
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const width = ctx.measureText(currentLine + ' ' + word).width;
+            if (width < maxWidth) {
+                currentLine += ' ' + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        lines.push(currentLine);
+        return lines;
     }
     
 }

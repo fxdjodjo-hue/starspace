@@ -23,6 +23,7 @@ export class MapInstance {
     // Configurazione delle mappe
     getMapConfig(mapId) {
         const configs = {
+            // Mappe legacy (mantenute per compatibilità)
             x1: { 
                 width: 16000, 
                 height: 10000,
@@ -31,7 +32,7 @@ export class MapInstance {
                 description: 'Settore principale con stazione spaziale',
                 hasSpaceStation: true,
                 hasAliens: true,
-                npcType: 'npc_x1', // Usa nuovo sistema NPC
+                npcType: 'npc_x1',
                 enemyCount: 15,
                 bonusBoxCount: 8,
                 asteroidCount: 10
@@ -87,10 +88,285 @@ export class MapInstance {
                 enemyCount: 0,
                 bonusBoxCount: 20, // Massimo bonus box
                 asteroidCount: 35 // Asteroidi estremi
+            },
+
+            // MAPPE VRU (VENUS)
+            'v1': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'V1 Research Station Alpha',
+                description: 'Stazione di ricerca avanzata con tecnologie all\'avanguardia',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_vru_7',
+                enemyCount: 12,
+                bonusBoxCount: 10,
+                asteroidCount: 8,
+                faction: 'venus'
+            },
+            'v2': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'V2 Research Station Beta',
+                description: 'Laboratorio di ricerca secondario con esperimenti avanzati',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_vru_6',
+                enemyCount: 15,
+                bonusBoxCount: 8,
+                asteroidCount: 12,
+                faction: 'venus'
+            },
+            'v3': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'V3 Research Station Gamma',
+                description: 'Centro di ricerca principale con tecnologie sperimentali',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_vru_5',
+                enemyCount: 18,
+                bonusBoxCount: 12,
+                asteroidCount: 10,
+                faction: 'venus'
+            },
+            'v4': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'V4 Research Station Delta',
+                description: 'Zona di test per nuove tecnologie e armi',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_vru_2',
+                enemyCount: 22,
+                bonusBoxCount: 10,
+                asteroidCount: 15,
+                faction: 'venus'
+            },
+            'v5': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'V5 Research Station Omega',
+                description: 'Stazione di ricerca principale con tecnologie più avanzate',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_vru_1',
+                enemyCount: 25,
+                bonusBoxCount: 15,
+                asteroidCount: 12,
+                faction: 'venus'
+            },
+            'v6': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'V6 Research Station Epsilon',
+                description: 'Zona di ricerca avanzata con esperimenti pericolosi',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_vru_3',
+                enemyCount: 30,
+                bonusBoxCount: 20,
+                asteroidCount: 18,
+                faction: 'venus'
+            },
+
+            // MAPPE MMO (MARS)
+            'm1': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'MMO-7 Mining Outpost Alpha',
+                description: 'Avamposto minerario principale con estrazione di risorse',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_mmo_7',
+                enemyCount: 10,
+                bonusBoxCount: 12,
+                asteroidCount: 20,
+                faction: 'mars'
+            },
+            'mmo-6': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'MMO-6 Mining Outpost Beta',
+                description: 'Zona di estrazione secondaria con miniere attive',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_mmo_6',
+                enemyCount: 14,
+                bonusBoxCount: 10,
+                asteroidCount: 25,
+                faction: 'mars'
+            },
+            'mmo-5': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'MMO-5 Mining Outpost Gamma',
+                description: 'Centro di produzione mineraria con raffinerie',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_mmo_5',
+                enemyCount: 16,
+                bonusBoxCount: 14,
+                asteroidCount: 30,
+                faction: 'mars'
+            },
+            'mmo-3': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'MMO-3 Mining Outpost Delta',
+                description: 'Zona di estrazione profonda con miniere pericolose',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_mmo_3',
+                enemyCount: 20,
+                bonusBoxCount: 12,
+                asteroidCount: 35,
+                faction: 'mars'
+            },
+            'mmo-2': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'MMO-2 Mining Outpost Epsilon',
+                description: 'Centro di produzione principale con raffinerie avanzate',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_mmo_2',
+                enemyCount: 24,
+                bonusBoxCount: 16,
+                asteroidCount: 28,
+                faction: 'mars'
+            },
+            'mmo-1': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'MMO-1 Mining Outpost Omega',
+                description: 'Zona di estrazione estrema con miniere più profonde',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_mmo_1',
+                enemyCount: 28,
+                bonusBoxCount: 18,
+                asteroidCount: 40,
+                faction: 'mars'
+            },
+
+            // MAPPE EIC (EIC)
+            'eic-7': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'EIC-7 Corporation Alpha',
+                description: 'Sede principale della corporazione terrestre',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_eic_7',
+                enemyCount: 8,
+                bonusBoxCount: 15,
+                asteroidCount: 6,
+                faction: 'eic'
+            },
+            'eic-6': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'EIC-6 Corporation Beta',
+                description: 'Centro commerciale secondario con mercati attivi',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_eic_6',
+                enemyCount: 12,
+                bonusBoxCount: 18,
+                asteroidCount: 8,
+                faction: 'eic'
+            },
+            'eic-5': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'EIC-5 Corporation Gamma',
+                description: 'Hub commerciale principale con scambi interplanetari',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_eic_5',
+                enemyCount: 15,
+                bonusBoxCount: 20,
+                asteroidCount: 10,
+                faction: 'eic'
+            },
+            'eic-3': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'EIC-3 Corporation Delta',
+                description: 'Zona di produzione industriale con fabbriche',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_eic_3',
+                enemyCount: 18,
+                bonusBoxCount: 16,
+                asteroidCount: 12,
+                faction: 'eic'
+            },
+            'eic-2': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'EIC-2 Corporation Epsilon',
+                description: 'Centro di produzione avanzata con tecnologie industriali',
+                hasSpaceStation: true,
+                hasAliens: true,
+                npcType: 'npc_eic_2',
+                enemyCount: 22,
+                bonusBoxCount: 22,
+                asteroidCount: 14,
+                faction: 'eic'
+            },
+            'eic-1': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'EIC-1 Corporation Omega',
+                description: 'Sede centrale della corporazione con tecnologie più avanzate',
+                hasSpaceStation: false,
+                hasAliens: true,
+                npcType: 'npc_eic_1',
+                enemyCount: 26,
+                bonusBoxCount: 25,
+                asteroidCount: 16,
+                faction: 'eic'
+            },
+
+            // MAPPA PVP
+            't-1': {
+                width: 16000,
+                height: 10000,
+                background: 'dreadspire',
+                name: 'T-1 PvP Battle Zone',
+                description: 'Zona di combattimento PvP tra fazioni - Attualmente vuota',
+                hasSpaceStation: false,
+                hasAliens: false,
+                npcType: null,
+                enemyCount: 0,
+                bonusBoxCount: 0,
+                asteroidCount: 0,
+                faction: 'neutral',
+                isPvP: true
             }
         };
         
-        return configs[mapId] || configs.x1;
+        return configs[mapId] || configs.v1;
     }
     
     // Genera oggetti iniziali per la mappa

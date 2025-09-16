@@ -99,6 +99,7 @@ export class Input {
         
         // Tastiera
         document.addEventListener('keydown', (e) => {
+            console.log('🔑 Input.js keydown event:', e.code, e.key);
             this.keys[e.code] = true;
             this.keysJustPressed.add(e.code);
             
@@ -124,6 +125,20 @@ export class Input {
             if (e.code === 'KeyD') {
                 this.dPressed = true;
                 this.dJustPressed = true; // Flag per toggle
+            }
+            
+            // Gestisci tasti speciali per StartScreen
+            if (e.code === 'Enter') {
+                this.keys['Enter'] = true;
+                this.keysJustPressed.add('Enter');
+            }
+            if (e.code === 'Backspace') {
+                this.keys['Backspace'] = true;
+                this.keysJustPressed.add('Backspace');
+            }
+            if (e.code === 'Space') {
+                this.keys['Space'] = true;
+                this.keysJustPressed.add('Space');
             }
 
             // Gestisci tasto 1 per nave base
@@ -155,6 +170,17 @@ export class Input {
             // Gestisci rilascio D
             if (e.code === 'KeyD') {
                 this.dPressed = false;
+            }
+            
+            // Gestisci rilascio tasti speciali per StartScreen
+            if (e.code === 'Enter') {
+                this.keys['Enter'] = false;
+            }
+            if (e.code === 'Backspace') {
+                this.keys['Backspace'] = false;
+            }
+            if (e.code === 'Space') {
+                this.keys['Space'] = false;
             }
 
             // Gestisci rilascio tasto 1
@@ -362,5 +388,51 @@ export class Input {
         // Se il mouse non si è mosso molto dal click iniziale, è un click effettivo
         // Questo aiuta a distinguere tra click e drag
         return !this.hasMouseMoved() || this.mouse.movementDistance < 5;
+    }
+    
+    // Ottiene tutte le chiavi attualmente premute
+    getPressedKeys() {
+        const pressedKeys = Object.keys(this.keys).filter(key => this.keys[key]);
+        if (pressedKeys.length > 0) {
+            console.log('🔑 Input.js getPressedKeys:', pressedKeys);
+        }
+        return pressedKeys;
+    }
+    
+    // Resetta una chiave specifica
+    resetKey(key) {
+        if (this.keys[key]) {
+            this.keys[key] = false;
+        }
+    }
+    
+    // Controlla se un tasto specifico è stato appena premuto
+    isKeyJustPressed(key) {
+        return this.keysJustPressed.has(key);
+    }
+    
+    // Resetta un tasto specifico
+    resetKeyJustPressed(key) {
+        this.keysJustPressed.delete(key);
+    }
+    
+    // Aggiorna l'input (da chiamare ogni frame)
+    update() {
+        // Resetta i flag "just" per il mouse
+        this.mouse.leftClickJustPressed = false;
+        this.mouse.leftClickJustReleased = false;
+        this.mouse.rightClickJustReleased = false;
+        this.mouse.wheelDelta = 0;
+        
+        // Resetta i flag "just" per i tasti speciali
+        this.ctrlJustPressed = false;
+        this.rJustPressed = false;
+        this.sJustPressed = false;
+        this.dJustPressed = false;
+        this.key1JustPressed = false;
+        this.key2JustPressed = false;
+        
+        // Resetta il Set dei tasti appena premuti
+        this.keysJustPressed.clear();
     }
 }
