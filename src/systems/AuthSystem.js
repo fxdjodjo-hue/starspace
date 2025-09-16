@@ -98,12 +98,57 @@ export class AuthSystem {
     }
     
     /**
-     * Logout utente
+     * Logout utente con countdown
      */
     logout() {
+        this.startLogoutCountdown();
+    }
+    
+    /**
+     * Avvia il countdown di logout
+     */
+    startLogoutCountdown() {
+        let countdown = 5; // 5 secondi
+        
+        // Mostra notifica iniziale
+        if (this.game.notifications) {
+            this.game.notifications.add(`🚪 Logout in ${countdown} secondi...`, 'warning');
+        }
+        
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            
+            if (countdown > 0) {
+                // Aggiorna notifica
+                if (this.game.notifications) {
+                    this.game.notifications.add(`🚪 Logout in ${countdown} secondi...`, 'warning');
+                }
+            } else {
+                // Esegui logout
+                clearInterval(countdownInterval);
+                this.performLogout();
+            }
+        }, 1000);
+    }
+    
+    /**
+     * Esegue effettivamente il logout
+     */
+    performLogout() {
         this.currentUser = null;
         this.isLoggedIn = false;
         this.clearSession();
+        
+        // Mostra notifica di successo
+        if (this.game.notifications) {
+            this.game.notifications.add('✅ Logout effettuato con successo', 'success');
+        }
+        
+        // Mostra StartScreen
+        if (this.game.startScreen) {
+            this.game.startScreen.show();
+        }
+        
         console.log('✅ Logout effettuato');
     }
     

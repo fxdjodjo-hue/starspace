@@ -1309,7 +1309,7 @@ export class HomePanel extends UIComponent {
         // Messaggio di avviso
         ctx.fillStyle = '#ff6b6b';
         ctx.font = '12px Arial';
-        ctx.fillText('Il gioco verrà salvato automaticamente', centerX, y + 280);
+        ctx.fillText('Il gioco verrà salvato e uscirai in 5 secondi', centerX, y + 280);
         
         ctx.textAlign = 'left';
     }
@@ -1329,23 +1329,18 @@ export class HomePanel extends UIComponent {
         if (x >= buttonX && x <= buttonX + buttonWidth && 
             y >= buttonY && y <= buttonY + buttonHeight) {
             
-            // Esegui il logout
+            // Esegui il logout (con countdown)
             if (this.game.authSystem) {
                 // Salva il gioco prima del logout
                 if (this.game.saveSystem) {
                     this.game.saveSystem.save('main');
                 }
                 
-                // Esegui il logout
-                this.game.authSystem.logout();
-                
                 // Chiudi il pannello home
                 this.hide();
                 
-                // Mostra notifica
-                if (this.game.notifications) {
-                    this.game.notifications.add('Logout effettuato con successo', 'success');
-                }
+                // Avvia il logout con countdown
+                this.game.authSystem.logout();
             }
             
             return true;
