@@ -177,8 +177,16 @@ export class StartScreen {
         // Input password
         this.drawPasswordInput(ctx);
         
-        // Selezione fazione
-        this.drawFactionSelection(ctx);
+        // Selezione fazione (solo per registrazione)
+        if (this.mode === 'register') {
+            this.drawFactionSelection(ctx);
+        } else {
+            // Messaggio informativo per login
+            ctx.fillStyle = '#4a90e2';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('La tua fazione sarà caricata automaticamente', this.x + this.width / 2, this.y + 350);
+        }
         
         // Pulsanti
         this.drawButtons(ctx);
@@ -476,25 +484,27 @@ export class StartScreen {
             return true;
         }
         
-        // Click su fazioni
-        let factionClicked = false;
-        this.factions.forEach((faction, index) => {
-            const cardWidth = 180;
-            const cardHeight = 100;
-            const cardSpacing = 20;
-            const startX = this.x + 100;
-            const startY = this.y + 370;
-            const cardX = startX + index * (cardWidth + cardSpacing);
-            const cardY = startY;
-            
-            if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
-                console.log('✅ Click su fazione:', faction.name);
-                this.selectedFaction = faction.id;
-                factionClicked = true;
+        // Click su fazioni (solo per registrazione)
+        if (this.mode === 'register') {
+            let factionClicked = false;
+            this.factions.forEach((faction, index) => {
+                const cardWidth = 180;
+                const cardHeight = 100;
+                const cardSpacing = 20;
+                const startX = this.x + 100;
+                const startY = this.y + 370;
+                const cardX = startX + index * (cardWidth + cardSpacing);
+                const cardY = startY;
+                
+                if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
+                    console.log('✅ Click su fazione:', faction.name);
+                    this.selectedFaction = faction.id;
+                    factionClicked = true;
+                }
+            });
+            if (factionClicked) {
+                return true;
             }
-        });
-        if (factionClicked) {
-            return true;
         }
         
         // Click su pulsanti
@@ -539,11 +549,6 @@ export class StartScreen {
             return;
         }
         
-        if (!this.selectedFaction) {
-            this.showError('Seleziona una fazione');
-            return;
-        }
-        
         if (!this.game.authSystem) {
             this.showError('Sistema di autenticazione non disponibile');
             return;
@@ -554,7 +559,7 @@ export class StartScreen {
         if (result.success) {
             this.showSuccess('Login effettuato con successo!');
             setTimeout(() => {
-                this.startGame();
+                this.startGameFromLogin(result.user);
             }, 1000);
         } else {
             this.showError(result.error);
@@ -616,7 +621,31 @@ export class StartScreen {
         }
     }
     
-    // Avvia il gioco
+    // Avvia il gioco da login (usa fazione esistente)
+    startGameFromLogin(user) {
+        // Imposta nickname e fazione dall'utente loggato
+        this.game.playerProfile.setNickname(user.nickname);
+        this.game.factionSystem.joinFaction(user.faction);
+        
+        // Imposta mappa di partenza basata sulla fazione dell'utente
+        const startingMaps = {
+            'venus': 'v1',
+            'mars': 'm1',
+            'eic': 'e1'
+        };
+        
+        this.game.mapManager.currentMap = startingMaps[user.faction] || 'v1';
+        this.game.mapManager.loadCurrentMapInstance();
+        
+        // Nascondi la schermata
+        this.hide();
+        
+        // Notifica di benvenuto
+        const faction = this.factions.find(f => f.id === user.faction);
+        this.game.notifications.add(`Bentornato ${user.nickname} nella fazione ${faction.fullName}!`, 'success');
+    }
+    
+    // Avvia il gioco da registrazione (usa fazione selezionata)
     startGame() {
         // Imposta nickname e fazione
         this.game.playerProfile.setNickname(this.nickname.trim());
