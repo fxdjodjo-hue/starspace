@@ -42,6 +42,7 @@ import { DamageNumberSystem } from './modules/DamageNumbers.js';
 import { SaveSystem } from './src/systems/SaveSystem.js';
 import { SaveLoadPanel } from './src/ui/SaveLoadPanel.js';
 import { FactionSystem } from './src/systems/FactionSystem.js';
+import { AuthSystem } from './src/systems/AuthSystem.js';
 
 
 
@@ -111,6 +112,7 @@ class Game {
         
         // Sistema di salvataggio
         this.saveSystem = new SaveSystem(this);
+        this.authSystem = new AuthSystem(this);
         this.saveLoadPanel = new SaveLoadPanel(this);
         
         // Sistema fazioni

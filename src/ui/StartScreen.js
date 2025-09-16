@@ -1,14 +1,10 @@
-// Schermata di Selezione Iniziale - Nickname e Fazione
+// Schermata di Selezione Iniziale - Login/Registrazione e Fazione
 export class StartScreen {
     constructor(game) {
         console.log('🏗️ StartScreen constructor - creating StartScreen');
         this.game = game;
         this.isVisible = true;
-        this.selectedFaction = null;
-        this.nickname = '';
         this.isTyping = true; // Inizia automaticamente in modalità typing
-        this.cursorVisible = true;
-        this.cursorBlinkTime = 0;
         
         // Posizioni e dimensioni
         this.width = 800;
@@ -16,13 +12,33 @@ export class StartScreen {
         this.x = (game.width - this.width) / 2;
         this.y = (game.height - this.height) / 2;
         
-        // Input field per nickname
+        // Modalità: 'login' o 'register'
+        this.mode = 'login';
+        
+        // Input utente
+        this.nickname = '';
+        this.password = '';
+        this.maxNicknameLength = 20;
+        this.maxPasswordLength = 30;
+        this.cursorVisible = true;
+        this.cursorBlinkTime = 0;
+        this.currentInput = 'nickname'; // 'nickname' o 'password'
+        
+        // Input fields
         this.nicknameInput = {
             x: this.x + 100,
             y: this.y + 200,
             width: 300,
             height: 40,
             placeholder: 'Inserisci il tuo nickname...'
+        };
+        
+        this.passwordInput = {
+            x: this.x + 100,
+            y: this.y + 260,
+            width: 300,
+            height: 40,
+            placeholder: 'Inserisci la tua password...'
         };
         
         // Fazioni disponibili
@@ -53,19 +69,37 @@ export class StartScreen {
             }
         ];
         
-        // Pulsante start
-        this.startButton = {
-            x: this.x + 300,
+        // Fazione selezionata
+        this.selectedFaction = null;
+        
+        // Pulsanti
+        this.loginButton = {
+            x: this.x + 100,
             y: this.y + 500,
-            width: 200,
+            width: 150,
             height: 50,
-            text: 'INIZIA GIOCO'
+            text: 'LOGIN'
         };
-
-        // Pulsante carica salvataggio
-        this.loadButton = {
-            x: this.x + 80,
+        
+        this.registerButton = {
+            x: this.x + 270,
             y: this.y + 500,
+            width: 150,
+            height: 50,
+            text: 'REGISTRATI'
+        };
+        
+        this.modeToggleButton = {
+            x: this.x + 440,
+            y: this.y + 500,
+            width: 150,
+            height: 50,
+            text: 'NUOVO ACCOUNT'
+        };
+        
+        this.loadButton = {
+            x: this.x + 100,
+            y: this.y + 570,
             width: 200,
             height: 50,
             text: 'CARICA SALVATAGGIO'
@@ -75,17 +109,13 @@ export class StartScreen {
         this.hasExistingSave = false;
         this.availableSaves = [];
         this.preferredSaveKey = 'main';
+        this.errorMessage = '';
+        this.successMessage = '';
     }
     
     // Aggiorna la schermata
     update(deltaTime) {
-        console.log('🔄 StartScreen update - isVisible:', this.isVisible, 'isTyping:', this.isTyping, 'nickname:', this.nickname, 'selectedFaction:', this.selectedFaction);
-        
-        // Debug: se isTyping è false ma dovrebbe essere true, forzalo
-        if (this.isVisible && !this.isTyping && this.nickname === '') {
-            console.log('🔧 Forcing isTyping to true for new StartScreen');
-            this.isTyping = true;
-        }
+        console.log('🔄 StartScreen update - isVisible:', this.isVisible, 'isTyping:', this.isTyping, 'mode:', this.mode);
         
         // Blink del cursore
         this.cursorBlinkTime += deltaTime;
@@ -96,11 +126,12 @@ export class StartScreen {
 
         // Aggiorna stato salvataggio esistente
         try {
-            if (this.game.saveSystem) {
+            if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+                this.hasExistingSave = this.game.authSystem.hasUserSave();
+            } else if (this.game.saveSystem) {
                 const keysToCheck = ['main', 'slot_1', 'slot_2', 'slot_3'];
                 this.availableSaves = keysToCheck.filter(k => this.game.saveSystem.hasSave(k));
                 this.hasExistingSave = this.availableSaves.length > 0;
-                // Preferisci 'main' se esiste, altrimenti il primo slot disponibile
                 this.preferredSaveKey = this.availableSaves.includes('main') ? 'main' : (this.availableSaves[0] || 'main');
             } else {
                 this.hasExistingSave = false;
@@ -114,327 +145,478 @@ export class StartScreen {
     
     // Disegna la schermata
     draw(ctx) {
-        console.log('🎨 StartScreen draw - isVisible:', this.isVisible, 'canvas size:', ctx.canvas.width, 'x', ctx.canvas.height);
         if (!this.isVisible) return;
+        
+        console.log('🎨 Drawing StartScreen at:', this.x, this.y);
         
         // Sfondo semi-trasparente
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, 0, this.game.width, this.game.height);
         
         // Pannello principale
-        ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
-        // Bordo del pannello
+        ctx.fillStyle = '#1a1a1a';
         ctx.strokeStyle = '#4a90e2';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
         ctx.strokeRect(this.x, this.y, this.width, this.height);
-        
-        console.log('🎨 Drawing panel at:', this.x, this.y, 'size:', this.width, 'x', this.height);
         
         // Titolo
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('SPACE MMORPG', this.x + this.width/2, this.y + 60);
+        ctx.fillText('SPACE MMORPG', this.x + this.width / 2, this.y + 50);
         
         // Sottotitolo
         ctx.font = '18px Arial';
         ctx.fillStyle = '#cccccc';
-        ctx.fillText('Scegli il tuo nickname e la tua fazione', this.x + this.width/2, this.y + 90);
+        ctx.fillText('Accedi o registrati per iniziare', this.x + this.width / 2, this.y + 80);
         
         // Input nickname
         this.drawNicknameInput(ctx);
         
-        // Selezione fazioni
+        // Input password
+        this.drawPasswordInput(ctx);
+        
+        // Selezione fazione
         this.drawFactionSelection(ctx);
         
-        // Pulsante start
-        this.drawStartButton(ctx);
-
-        // Pulsante carica
-        this.drawLoadButton(ctx);
+        // Pulsanti
+        this.drawButtons(ctx);
         
-        ctx.textAlign = 'left';
+        // Messaggi di errore/successo
+        this.drawMessages(ctx);
     }
     
-    // Disegna l'input per il nickname
+    // Disegna input nickname
     drawNicknameInput(ctx) {
         const input = this.nicknameInput;
         
-        console.log('🎨 Drawing nickname input at:', input.x, input.y, 'size:', input.width, 'x', input.height);
-        
         // Label
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = '16px Arial';
         ctx.textAlign = 'left';
         ctx.fillText('Nickname:', input.x, input.y - 10);
         
         // Input field
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillStyle = '#2a2a2a';
+        ctx.strokeStyle = this.currentInput === 'nickname' ? '#4a90e2' : '#666666';
+        ctx.lineWidth = this.currentInput === 'nickname' ? 3 : 2;
         ctx.fillRect(input.x, input.y, input.width, input.height);
-        
-        // Bordo
-        ctx.strokeStyle = this.isTyping ? '#4a90e2' : '#666666';
-        ctx.lineWidth = this.isTyping ? 3 : 2;
         ctx.strokeRect(input.x, input.y, input.width, input.height);
         
-        // Glow effect quando sta digitando
-        if (this.isTyping) {
+        // Glow effect quando attivo
+        if (this.currentInput === 'nickname') {
             ctx.shadowColor = '#4a90e2';
             ctx.shadowBlur = 10;
             ctx.strokeRect(input.x, input.y, input.width, input.height);
             ctx.shadowBlur = 0;
         }
         
-        // Testo
+        // Testo inserito
         ctx.fillStyle = '#ffffff';
         ctx.font = '16px Arial';
-        let displayText = this.nickname || input.placeholder;
-        if (this.nickname === '') {
-            ctx.fillStyle = '#888888';
+        ctx.textAlign = 'left';
+        let displayText = this.nickname;
+        if (displayText === '' && this.currentInput !== 'nickname') {
+            displayText = input.placeholder;
+            ctx.fillStyle = '#666666';
         }
-        ctx.fillText(displayText, input.x + 10, input.y + 25);
         
         // Cursore
-        if (this.isTyping && this.cursorVisible) {
-            const textWidth = ctx.measureText(this.nickname).width;
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(input.x + 10 + textWidth, input.y + 10, 2, 20);
+        if (this.currentInput === 'nickname' && this.cursorVisible) {
+            displayText += '|';
         }
+        
+        ctx.fillText(displayText, input.x + 10, input.y + 25);
     }
     
-    // Disegna la selezione delle fazioni
-    drawFactionSelection(ctx) {
-        console.log('🎨 Drawing faction selection at:', this.x + 100, this.y + 280);
+    // Disegna input password
+    drawPasswordInput(ctx) {
+        const input = this.passwordInput;
         
         // Label
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = '16px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('Fazione:', this.x + 100, this.y + 280);
+        ctx.fillText('Password:', input.x, input.y - 10);
         
-        // Fazioni
+        // Input field
+        ctx.fillStyle = '#2a2a2a';
+        ctx.strokeStyle = this.currentInput === 'password' ? '#4a90e2' : '#666666';
+        ctx.lineWidth = this.currentInput === 'password' ? 3 : 2;
+        ctx.fillRect(input.x, input.y, input.width, input.height);
+        ctx.strokeRect(input.x, input.y, input.width, input.height);
+        
+        // Glow effect quando attivo
+        if (this.currentInput === 'password') {
+            ctx.shadowColor = '#4a90e2';
+            ctx.shadowBlur = 10;
+            ctx.strokeRect(input.x, input.y, input.width, input.height);
+            ctx.shadowBlur = 0;
+        }
+        
+        // Testo inserito (mascherare con asterischi)
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        let displayText = this.password.replace(/./g, '*');
+        if (displayText === '' && this.currentInput !== 'password') {
+            displayText = input.placeholder;
+            ctx.fillStyle = '#666666';
+        }
+        
+        // Cursore
+        if (this.currentInput === 'password' && this.cursorVisible) {
+            displayText += '|';
+        }
+        
+        ctx.fillText(displayText, input.x + 10, input.y + 25);
+    }
+    
+    // Disegna selezione fazione
+    drawFactionSelection(ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Fazione:', this.x + 100, this.y + 350);
+        
+        const cardWidth = 180;
+        const cardHeight = 100;
+        const cardSpacing = 20;
+        const startX = this.x + 100;
+        const startY = this.y + 370;
+        
         this.factions.forEach((faction, index) => {
-            const cardX = this.x + 100 + (index * 200);
-            const cardY = this.y + 300;
-            const cardWidth = 180;
-            const cardHeight = 120;
+            const cardX = startX + index * (cardWidth + cardSpacing);
+            const cardY = startY;
             
-            console.log('🎨 Drawing faction card', index, 'at:', cardX, cardY, 'size:', cardWidth, 'x', cardHeight);
+            // Colore bordo basato su selezione
             const isSelected = this.selectedFaction === faction.id;
-            
-            // Sfondo della card
-            ctx.fillStyle = isSelected ? 'rgba(74, 144, 226, 0.3)' : 'rgba(255, 255, 255, 0.1)';
-            ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
-            
-            // Bordo
             ctx.strokeStyle = isSelected ? faction.color : '#666666';
-            ctx.lineWidth = isSelected ? 3 : 1;
+            ctx.lineWidth = isSelected ? 3 : 2;
+            
+            // Sfondo carta
+            ctx.fillStyle = isSelected ? 'rgba(74, 144, 226, 0.1)' : '#2a2a2a';
+            ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
             ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
             
             // Icona
             ctx.fillStyle = faction.color;
             ctx.font = '24px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(faction.icon, cardX + cardWidth/2, cardY + 30);
+            ctx.fillText(faction.icon, cardX + cardWidth / 2, cardY + 30);
             
-            // Nome
+            // Nome fazione
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 14px Arial';
-            ctx.fillText(faction.name, cardX + cardWidth/2, cardY + 55);
-            
-            // Nome completo
-            ctx.font = '10px Arial';
-            ctx.fillStyle = '#cccccc';
-            ctx.fillText(faction.fullName, cardX + cardWidth/2, cardY + 75);
+            ctx.fillText(faction.name, cardX + cardWidth / 2, cardY + 50);
             
             // Descrizione
-            ctx.font = '9px Arial';
-            ctx.fillStyle = '#aaaaaa';
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '10px Arial';
             const words = faction.description.split(' ');
-            const lines = [];
-            let currentLine = '';
+            let line = '';
+            let y = cardY + 70;
             words.forEach(word => {
-                if (currentLine.length + word.length > 25) {
-                    lines.push(currentLine);
-                    currentLine = word;
+                const testLine = line + word + ' ';
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > cardWidth - 10) {
+                    ctx.fillText(line, cardX + cardWidth / 2, y);
+                    line = word + ' ';
+                    y += 12;
                 } else {
-                    currentLine += (currentLine ? ' ' : '') + word;
+                    line = testLine;
                 }
             });
-            if (currentLine) lines.push(currentLine);
-            
-            lines.forEach((line, lineIndex) => {
-                ctx.fillText(line, cardX + cardWidth/2, cardY + 90 + (lineIndex * 12));
-            });
+            ctx.fillText(line, cardX + cardWidth / 2, y);
         });
-        
-        ctx.textAlign = 'left';
     }
     
-    // Disegna il pulsante start
-    drawStartButton(ctx) {
-        const button = this.startButton;
-        const canStart = this.nickname.trim() !== '' && this.selectedFaction !== null;
+    // Disegna pulsanti
+    drawButtons(ctx) {
+        // Pulsante Login
+        this.drawButton(ctx, this.loginButton, this.mode === 'login');
         
-        console.log('🎨 Drawing start button at:', button.x, button.y, 'size:', button.width, 'x', button.height, 'canStart:', canStart);
+        // Pulsante Registrati
+        this.drawButton(ctx, this.registerButton, this.mode === 'register');
         
-        // Sfondo del pulsante
-        ctx.fillStyle = canStart ? 'rgba(74, 144, 226, 0.8)' : 'rgba(100, 100, 100, 0.5)';
+        // Pulsante toggle modalità
+        this.drawButton(ctx, this.modeToggleButton, false);
+        
+        // Pulsante carica salvataggio (solo se c'è un salvataggio)
+        if (this.hasExistingSave) {
+            this.drawButton(ctx, this.loadButton, false);
+        }
+    }
+    
+    // Disegna singolo pulsante
+    drawButton(ctx, button, isActive) {
+        const isHovered = this.isMouseOverButton(button);
+        
+        // Colore sfondo
+        if (isActive) {
+            ctx.fillStyle = '#4a90e2';
+        } else if (isHovered) {
+            ctx.fillStyle = '#5ba0f2';
+        } else {
+            ctx.fillStyle = '#666666';
+        }
+        
+        // Disegna pulsante
         ctx.fillRect(button.x, button.y, button.width, button.height);
         
         // Bordo
-        ctx.strokeStyle = canStart ? '#4a90e2' : '#666666';
+        ctx.strokeStyle = isActive ? '#ffffff' : '#999999';
         ctx.lineWidth = 2;
         ctx.strokeRect(button.x, button.y, button.width, button.height);
         
         // Testo
-        ctx.fillStyle = canStart ? '#ffffff' : '#888888';
-        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(button.text, button.x + button.width/2, button.y + 30);
-        
-        ctx.textAlign = 'left';
-    }
-
-    // Disegna il pulsante di carica
-    drawLoadButton(ctx) {
-        const button = this.loadButton;
-        const canLoad = this.hasExistingSave;
-        
-        ctx.fillStyle = canLoad ? 'rgba(74, 226, 144, 0.8)' : 'rgba(100, 100, 100, 0.5)';
-        ctx.fillRect(button.x, button.y, button.width, button.height);
-        
-        ctx.strokeStyle = canLoad ? '#4ae290' : '#666666';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(button.x, button.y, button.width, button.height);
-        
-        ctx.fillStyle = canLoad ? '#0b1e12' : '#888888';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(button.text, button.x + button.width/2, button.y + 30);
-        ctx.textAlign = 'left';
+        ctx.fillText(button.text, button.x + button.width / 2, button.y + 30);
     }
     
-    // Gestisce i click
+    // Disegna messaggi di errore/successo
+    drawMessages(ctx) {
+        if (this.errorMessage) {
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.errorMessage, this.x + this.width / 2, this.y + 120);
+        }
+        
+        if (this.successMessage) {
+            ctx.fillStyle = '#27ae60';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.successMessage, this.x + this.width / 2, this.y + 120);
+        }
+    }
+    
+    // Gestisce input da tastiera
+    handleKeyPress(key) {
+        if (!this.isVisible || !this.isTyping) return false;
+        
+        console.log('🔑 StartScreen handleKeyPress - key:', key, 'currentInput:', this.currentInput);
+        
+        // Tab per cambiare input
+        if (key === 'Tab') {
+            this.currentInput = this.currentInput === 'nickname' ? 'password' : 'nickname';
+            return true;
+        }
+        
+        // Enter per confermare
+        if (key === 'Enter') {
+            if (this.mode === 'login') {
+                this.handleLogin();
+            } else {
+                this.handleRegister();
+            }
+            return true;
+        }
+        
+        // Escape per uscire
+        if (key === 'Escape') {
+            this.isTyping = false;
+            return true;
+        }
+        
+        // Backspace
+        if (key === 'Backspace') {
+            if (this.currentInput === 'nickname' && this.nickname.length > 0) {
+                this.nickname = this.nickname.slice(0, -1);
+            } else if (this.currentInput === 'password' && this.password.length > 0) {
+                this.password = this.password.slice(0, -1);
+            }
+            return true;
+        }
+        
+        // Caratteri alfanumerici e spazio
+        if (key.startsWith('Key') || key.startsWith('Digit') || key === 'Space') {
+            let char = '';
+            if (key.startsWith('Key')) {
+                char = key.replace('Key', '').toLowerCase();
+            } else if (key.startsWith('Digit')) {
+                char = key.replace('Digit', '');
+            } else if (key === 'Space') {
+                char = ' ';
+            }
+            
+            if (this.currentInput === 'nickname' && this.nickname.length < this.maxNicknameLength) {
+                this.nickname += char;
+            } else if (this.currentInput === 'password' && this.password.length < this.maxPasswordLength) {
+                this.password += char;
+            }
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Gestisce click del mouse
     handleClick(x, y) {
         if (!this.isVisible) return false;
         
-        console.log('🎯 StartScreen click at:', x, y);
+        console.log('🎯 StartScreen handleClick at:', x, y);
         
         // Click su input nickname
-        const input = this.nicknameInput;
-        if (x >= input.x && x <= input.x + input.width && 
-            y >= input.y && y <= input.y + input.height) {
+        if (this.isMouseOverInput(this.nicknameInput, x, y)) {
             console.log('✅ Click su input nickname');
+            this.currentInput = 'nickname';
             this.isTyping = true;
             return true;
-        } else {
-            // Click fuori dall'input - ferma la digitazione se era attiva
-            if (this.isTyping) {
-                console.log('🔄 Click fuori dall\'input - stop typing');
-                this.isTyping = false;
-            }
+        }
+        
+        // Click su input password
+        if (this.isMouseOverInput(this.passwordInput, x, y)) {
+            console.log('✅ Click su input password');
+            this.currentInput = 'password';
+            this.isTyping = true;
+            return true;
         }
         
         // Click su fazioni
         let factionClicked = false;
         this.factions.forEach((faction, index) => {
-            const cardX = this.x + 100 + (index * 200);
-            const cardY = this.y + 300;
             const cardWidth = 180;
-            const cardHeight = 120;
+            const cardHeight = 100;
+            const cardSpacing = 20;
+            const startX = this.x + 100;
+            const startY = this.y + 370;
+            const cardX = startX + index * (cardWidth + cardSpacing);
+            const cardY = startY;
             
-            console.log('🎯 Checking faction', index, 'bounds:', cardX, cardY, cardWidth, cardHeight, 'click at:', x, y);
-            
-            if (x >= cardX && x <= cardX + cardWidth && 
-                y >= cardY && y <= cardY + cardHeight) {
-                console.log('✅ Click su fazione:', faction.name, 'ID:', faction.id);
+            if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
+                console.log('✅ Click su fazione:', faction.name);
                 this.selectedFaction = faction.id;
                 factionClicked = true;
             }
         });
-        
         if (factionClicked) {
             return true;
         }
         
-        // Click su pulsante start
-        const button = this.startButton;
-        if (x >= button.x && x <= button.x + button.width && 
-            y >= button.y && y <= button.y + button.height) {
-            console.log('✅ Click su pulsante start');
-            if (this.nickname.trim() !== '' && this.selectedFaction !== null) {
+        // Click su pulsanti
+        if (this.isMouseOverButton(this.loginButton)) {
+            console.log('✅ Click su pulsante login');
+            this.handleLogin();
+            return true;
+        }
+        
+        if (this.isMouseOverButton(this.registerButton)) {
+            console.log('✅ Click su pulsante registrati');
+            this.handleRegister();
+            return true;
+        }
+        
+        if (this.isMouseOverButton(this.modeToggleButton)) {
+            console.log('✅ Click su toggle modalità');
+            this.mode = this.mode === 'login' ? 'register' : 'login';
+            this.clearMessages();
+            return true;
+        }
+        
+        if (this.hasExistingSave && this.isMouseOverButton(this.loadButton)) {
+            console.log('✅ Click su pulsante carica salvataggio');
+            this.handleLoadGame();
+            return true;
+        }
+        
+        // Click fuori dagli input - stop typing
+        if (this.isTyping) {
+            console.log('🔄 Click fuori dagli input - stop typing');
+            this.isTyping = false;
+        }
+        
+        return false;
+    }
+    
+    // Gestisce login
+    handleLogin() {
+        if (!this.nickname.trim() || !this.password.trim()) {
+            this.showError('Inserisci nickname e password');
+            return;
+        }
+        
+        if (!this.selectedFaction) {
+            this.showError('Seleziona una fazione');
+            return;
+        }
+        
+        if (!this.game.authSystem) {
+            this.showError('Sistema di autenticazione non disponibile');
+            return;
+        }
+        
+        const result = this.game.authSystem.login(this.nickname.trim(), this.password);
+        
+        if (result.success) {
+            this.showSuccess('Login effettuato con successo!');
+            setTimeout(() => {
                 this.startGame();
-                return true;
-            }
+            }, 1000);
+        } else {
+            this.showError(result.error);
         }
-
-        // Click su pulsante carica salvataggio
-        const loadBtn = this.loadButton;
-        if (x >= loadBtn.x && x <= loadBtn.x + loadBtn.width &&
-            y >= loadBtn.y && y <= loadBtn.y + loadBtn.height) {
-            console.log('📁 Click su pulsante carica salvataggio');
-            if (this.hasExistingSave) {
-                this.loadGame();
-                return true;
-            }
-        }
-        
-        return false;
     }
     
-    // Gestisce l'input da tastiera
-    handleKeyPress(key) {
-        if (!this.isVisible || !this.isTyping) return false;
-        
-        console.log('🔑 StartScreen handleKeyPress - key:', key, 'nickname:', this.nickname);
-        
-        // Test key per debug
-        if (key === 'KeyT') {
-            this.nickname += 'TEST';
-            console.log('🧪 Test key pressed - nickname now:', this.nickname);
-            return true;
+    // Gestisce registrazione
+    handleRegister() {
+        if (!this.nickname.trim() || !this.password.trim()) {
+            this.showError('Inserisci nickname e password');
+            return;
         }
         
-        if (key === 'Enter') {
-            // Se il nickname è valido, termina la digitazione
-            if (this.nickname.trim() !== '') {
-                this.isTyping = false;
-            }
-            return true;
+        if (!this.selectedFaction) {
+            this.showError('Seleziona una fazione');
+            return;
         }
         
-        if (key === 'Backspace') {
-            this.nickname = this.nickname.slice(0, -1);
-            return true;
+        if (!this.game.authSystem) {
+            this.showError('Sistema di autenticazione non disponibile');
+            return;
         }
         
-        // Gestisci i codici delle chiavi (lettere)
-        if (key.startsWith('Key') && this.nickname.length < 20) {
-            const char = key.charAt(3).toLowerCase();
-            this.nickname += char;
-            return true;
-        }
+        const result = this.game.authSystem.register(this.nickname.trim(), this.password, this.selectedFaction);
         
-        // Gestisci numeri
-        if (key.startsWith('Digit') && this.nickname.length < 20) {
-            const digit = key.charAt(5); // Digit0, Digit1, etc.
-            this.nickname += digit;
-            return true;
+        if (result.success) {
+            this.showSuccess('Registrazione completata!');
+            setTimeout(() => {
+                this.startGame();
+            }, 1000);
+        } else {
+            this.showError(result.error);
         }
-        
-        // Gestisci spazio
-        if (key === 'Space' && this.nickname.length < 20) {
-            this.nickname += ' ';
-            return true;
-        }
-        
-        return false;
     }
     
-    // Inizia il gioco
+    // Gestisce caricamento gioco
+    handleLoadGame() {
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            // Carica salvataggio utente
+            if (this.game.authSystem.loadUserGame()) {
+                this.hide();
+                this.game.notifications.add('Gioco caricato!', 'success');
+            } else {
+                this.showError('Errore nel caricamento del salvataggio');
+            }
+        } else if (this.game.saveSystem) {
+            // Carica salvataggio tradizionale
+            const keysToCheck = ['main', 'slot_1', 'slot_2', 'slot_3'];
+            for (const key of keysToCheck) {
+                if (this.game.saveSystem.hasSave(key)) {
+                    this.game.saveSystem.load(key);
+                    this.game.mapManager.loadCurrentMapInstance();
+                    this.hide();
+                    this.game.notifications.add('Gioco caricato!', 'success');
+                    return;
+                }
+            }
+            this.showError('Nessun salvataggio trovato');
+        }
+    }
+    
+    // Avvia il gioco
     startGame() {
         // Imposta nickname e fazione
         this.game.playerProfile.setNickname(this.nickname.trim());
@@ -450,45 +632,69 @@ export class StartScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
-        // Salva subito la nuova partita, così al prossimo avvio sarà caricabile
-        if (this.game.saveSystem) {
+        // Salva il gioco se l'utente è loggato
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            this.game.authSystem.saveUserGame();
+        } else if (this.game.saveSystem) {
             this.game.saveSystem.save('main');
         }
         
         // Nascondi la schermata
-        this.isVisible = false;
+        this.hide();
         
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
-        this.game.notifications.add(`Benvenuto ${this.nickname} nella fazione ${faction.name}!`, 'success');
+        this.game.notifications.add(`Benvenuto ${this.nickname} nella fazione ${faction.fullName}!`, 'success');
     }
-
-    // Carica il gioco da salvataggio esistente
-    loadGame() {
-        if (!this.game.saveSystem) return;
-        const key = this.preferredSaveKey || 'main';
-        const ok = this.game.saveSystem.load(key);
-        if (ok) {
-            // Assicura di caricare istanza mappa
-            if (this.game.mapManager) {
-                this.game.mapManager.loadCurrentMapInstance();
-            }
-            this.isVisible = false;
-            this.game.notifications.add('📁 Salvataggio caricato. Bentornato!', 2000, 'success');
-        } else {
-            this.game.notifications.add('❌ Nessun salvataggio valido trovato', 3000, 'error');
-        }
+    
+    // Mostra messaggio di errore
+    showError(message) {
+        this.errorMessage = message;
+        this.successMessage = '';
+        setTimeout(() => {
+            this.errorMessage = '';
+        }, 5000);
+    }
+    
+    // Mostra messaggio di successo
+    showSuccess(message) {
+        this.successMessage = message;
+        this.errorMessage = '';
+        setTimeout(() => {
+            this.successMessage = '';
+        }, 3000);
+    }
+    
+    // Pulisce i messaggi
+    clearMessages() {
+        this.errorMessage = '';
+        this.successMessage = '';
+    }
+    
+    // Controlla se il mouse è sopra un input
+    isMouseOverInput(input, x, y) {
+        return x >= input.x && x <= input.x + input.width && 
+               y >= input.y && y <= input.y + input.height;
+    }
+    
+    // Controlla se il mouse è sopra un pulsante
+    isMouseOverButton(button) {
+        const mousePos = this.game.input.getMousePosition();
+        return mousePos.x >= button.x && mousePos.x <= button.x + button.width && 
+               mousePos.y >= button.y && mousePos.y <= button.y + button.height;
     }
     
     // Mostra la schermata
     show() {
         this.isVisible = true;
-        this.isTyping = true; // Abilita automaticamente la digitazione
+        this.isTyping = true;
         console.log('🎮 StartScreen shown - typing enabled');
     }
     
     // Nasconde la schermata
     hide() {
         this.isVisible = false;
+        this.isTyping = false;
+        console.log('🎮 StartScreen hidden');
     }
 }
