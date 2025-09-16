@@ -1275,10 +1275,7 @@ class Game {
         
         // Disegna il pulsante di logout se l'utente è loggato
         if (this.authSystem && this.authSystem.isLoggedIn) {
-            console.log('🔓 Game render - utente loggato, disegnando logout button');
             this.logoutButton.draw(this.ctx);
-        } else {
-            console.log('🔓 Game render - utente NON loggato, skip logout button');
         }
         
         

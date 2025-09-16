@@ -8,11 +8,11 @@ export class LogoutButton {
         this.currentCountdown = 0;
         this.countdownInterval = null;
         
-        // Posizione in alto a destra
-        this.x = game.width - 120;
+        // Posizione in alto a destra (più visibile)
+        this.x = game.width - 150;
         this.y = 20;
-        this.width = 100;
-        this.height = 40;
+        this.width = 120;
+        this.height = 50;
         
         // Stili
         this.backgroundColor = '#e74c3c';
@@ -103,7 +103,7 @@ export class LogoutButton {
             return;
         }
         
-        console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
+        // Debug: console.log('🔓 LogoutButton drawing at:', this.x, this.y, 'size:', this.width, 'x', this.height);
         
         // Colore di sfondo
         const bgColor = this.isHovered ? this.hoverBackgroundColor : this.backgroundColor;
@@ -112,23 +112,27 @@ export class LogoutButton {
         ctx.fillStyle = bgColor;
         ctx.fillRect(this.x, this.y, this.width, this.height);
         
-        // Disegna bordo
+        // Disegna ombra
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(this.x + 2, this.y + 2, this.width, this.height);
+        
+        // Disegna bordo spesso
         ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.strokeRect(this.x, this.y, this.width, this.height);
         
         // Testo del pulsante
         ctx.fillStyle = this.textColor;
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         
-        let buttonText = 'LOGOUT';
+        let buttonText = '🚪 LOGOUT';
         if (this.isCountingDown) {
-            buttonText = `LOGOUT (${this.currentCountdown})`;
+            buttonText = `🚪 LOGOUT (${this.currentCountdown})`;
             ctx.fillStyle = this.countdownColor;
         }
         
-        ctx.fillText(buttonText, this.x + this.width / 2, this.y + this.height / 2 + 5);
+        ctx.fillText(buttonText, this.x + this.width / 2, this.y + this.height / 2 + 6);
         
         // Barra di countdown
         if (this.isCountingDown) {
@@ -139,7 +143,7 @@ export class LogoutButton {
             ctx.fillRect(this.x + 2, this.y + this.height - 4, barWidth, 2);
         }
         
-        console.log('🔓 LogoutButton disegnato con successo');
+        // Debug: console.log('🔓 LogoutButton disegnato con successo');
     }
     
     // Gestisce il click
