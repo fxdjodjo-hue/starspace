@@ -308,6 +308,11 @@ export class Inventory {
             this.equipment = inventoryData.equipment || this.equipment;
             this.items = inventoryData.items || this.items;
             
+            // Assicurati che equipment.uav sia sempre inizializzato
+            if (!this.equipment.uav) {
+                this.equipment.uav = [];
+            }
+            
             // Riapplica gli effetti degli item equipaggiati
             if (window.gameInstance && window.gameInstance.ship) {
                 // Riapplica laser
@@ -428,6 +433,11 @@ export class Inventory {
         const uavY = this.panelY + 120;
         const uavX = this.panelX + 50;
         const slotSpacing = 65;
+        
+        // Assicurati che equipment.uav sia inizializzato
+        if (!this.equipment.uav) {
+            this.equipment.uav = [];
+        }
         
         // Controlla click sui droni equipaggiati
         this.equipment.uav.forEach((drone, droneIndex) => {
@@ -930,6 +940,11 @@ export class Inventory {
         const uavY = this.panelY + 120;
         const uavX = this.panelX + 50;
         const slotSpacing = 65;
+        
+        // Assicurati che equipment.uav sia inizializzato
+        if (!this.equipment.uav) {
+            this.equipment.uav = [];
+        }
         
         // Titolo UAV
         ctx.fillStyle = '#ff6b6b';
