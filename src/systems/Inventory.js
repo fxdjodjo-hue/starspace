@@ -329,9 +329,9 @@ export class Inventory {
             return;
         }
         
-        // Controlla se il mouse è sopra un oggetto per il tooltip
-        if (this.currentTab === 'equipment') {
-            this.checkTooltip(x, y);
+        // Gestisci scroll per UAV se siamo nella tab UAV
+        if (this.currentTab === 'uav') {
+            this.handleUAVScroll(0); // Solo per aggiornare la posizione del mouse
         }
     }
     
