@@ -60,46 +60,54 @@ export class Inventory {
         this.equipCooldown = 100; // 100ms di cooldown
     }
     
-    // Aggiungi droni di esempio
+    // Aggiungi droni di esempio direttamente nella sezione UAV
     addSampleDrones() {
-        const sampleDrones = [
-            {
-                id: 'flax_drone',
-                name: 'Flax Drone',
-                type: 'uav',
-                droneType: 'flax',
-                rarity: 'common',
-                description: 'Drone Flax - 1 slot per laser o scudi',
-                cost: {
-                    credits: 1000
-                },
-                slots: 1,
-                icon: '🚁',
-                color: '#4a90e2'
+        // Flax Drone (1 slot) - aggiunto direttamente a equipment.uav
+        const flaxDrone = {
+            id: 'flax_drone',
+            name: 'Flax Drone',
+            type: 'uav',
+            droneType: 'flax',
+            rarity: 'common',
+            description: 'Drone Flax - 1 slot per laser o scudi',
+            cost: {
+                credits: 1000
             },
-            {
-                id: 'iris_drone',
-                name: 'Iris Drone',
-                type: 'uav',
-                droneType: 'iris',
-                rarity: 'rare',
-                description: 'Drone Iris - 2 slot per laser o scudi',
-                cost: {
-                    uridium: 500
-                },
-                slots: 2,
-                icon: '🚁',
-                color: '#ff6b6b'
-            }
-        ];
-        
-        // Aggiungi i droni all'inventario
-        sampleDrones.forEach(drone => {
-            this.addItem(drone);
-        });
+            slots: 1,
+            icon: '🚁',
+            color: '#4a90e2',
+            equippedItems: new Array(1).fill(null) // Inizializza slot vuoti
+        };
+        this.equipment.uav.push(flaxDrone);
+
+        // Iris Drone (2 slot) - aggiunto direttamente a equipment.uav
+        const irisDrone = {
+            id: 'iris_drone',
+            name: 'Iris Drone',
+            type: 'uav',
+            droneType: 'iris',
+            rarity: 'rare',
+            description: 'Drone Iris - 2 slot per laser o scudi',
+            cost: {
+                uridium: 500
+            },
+            slots: 2,
+            icon: '🚁',
+            color: '#ff6b6b',
+            equippedItems: new Array(2).fill(null) // Inizializza slot vuoti
+        };
+        this.equipment.uav.push(irisDrone);
         
         // Aggiungi alcuni laser e scudi di esempio
         this.addSampleWeapons();
+        
+        // Rimuovi eventuali droni dall'inventario generale (se presenti)
+        this.cleanupDronesFromInventory();
+    }
+    
+    // Rimuovi droni dall'inventario generale (dovrebbero essere solo in equipment.uav)
+    cleanupDronesFromInventory() {
+        this.items = this.items.filter(item => item.type !== 'uav');
     }
     
     // Aggiungi armi di esempio
@@ -365,6 +373,9 @@ export class Inventory {
             
             // Applica effetti dei droni al caricamento
             this.applyDroneEffects();
+            
+            // Pulisci eventuali droni dall'inventario generale
+            this.cleanupDronesFromInventory();
             
             // Riapplica gli effetti degli item equipaggiati
             if (window.gameInstance && window.gameInstance.ship) {
