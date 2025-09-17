@@ -16,8 +16,11 @@ export class Inventory {
         this.items = [];
         this.maxItems = 50; // Massimo 50 oggetti nell'inventario
         
-        // Aggiungi alcuni droni di esempio
-        this.addSampleDrones();
+        // Aggiungi oggetti di esempio solo in modalità sviluppo
+        if (this.isDevelopmentMode()) {
+            this.addSampleDrones();
+            this.addSampleWeapons();
+        }
         
         // Dimensioni e posizioni
         this.panelWidth = 1100;
@@ -98,9 +101,6 @@ export class Inventory {
         };
         this.equipment.uav.push(irisDrone);
         
-        // Aggiungi alcuni laser e scudi di esempio
-        this.addSampleWeapons();
-        
         // Rimuovi eventuali droni dall'inventario generale (se presenti)
         this.cleanupDronesFromInventory();
     }
@@ -108,6 +108,33 @@ export class Inventory {
     // Rimuovi droni dall'inventario generale (dovrebbero essere solo in equipment.uav)
     cleanupDronesFromInventory() {
         this.items = this.items.filter(item => item.type !== 'uav');
+    }
+    
+    // Controlla se siamo in modalità sviluppo
+    isDevelopmentMode() {
+        // Modalità sviluppo se:
+        // 1. Siamo su localhost
+        // 2. C'è un parametro ?dev=true nell'URL
+        // 3. C'è una variabile di ambiente di sviluppo
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const hasDevParam = new URLSearchParams(window.location.search).get('dev') === 'true';
+        const hasDevEnv = window.location.search.includes('dev=true') || window.location.hash.includes('dev=true');
+        
+        return isLocalhost || hasDevParam || hasDevEnv;
+    }
+    
+    // Pulisci oggetti di esempio per giocatori reali
+    cleanupSampleItems() {
+        // Rimuovi droni di esempio dall'equipment.uav
+        this.equipment.uav = this.equipment.uav.filter(drone => 
+            drone.id !== 'flax_drone' && drone.id !== 'iris_drone'
+        );
+        
+        // Rimuovi armi di esempio dall'inventario
+        const sampleWeaponIds = ['laser_1', 'laser_2', 'shield_1', 'shield_2'];
+        this.items = this.items.filter(item => !sampleWeaponIds.includes(item.id));
+        
+        console.log('🧹 Oggetti di esempio rimossi per giocatore reale');
     }
     
     // Aggiungi armi di esempio
@@ -376,6 +403,11 @@ export class Inventory {
             
             // Pulisci eventuali droni dall'inventario generale
             this.cleanupDronesFromInventory();
+            
+            // Pulisci oggetti di esempio se non siamo in modalità sviluppo
+            if (!this.isDevelopmentMode()) {
+                this.cleanupSampleItems();
+            }
             
             // Riapplica gli effetti degli item equipaggiati
             if (window.gameInstance && window.gameInstance.ship) {
