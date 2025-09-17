@@ -208,6 +208,7 @@ export class Inventory {
             const drone = this.equipment.uav[droneIndex];
             if (drone && drone.equippedItems && drone.equippedItems[slotIndex]) {
                 const item = drone.equippedItems[slotIndex];
+                console.log(`🚁 Rimuovendo ${item.name} da drone ${droneIndex}, slot ${slotIndex}`);
                 drone.equippedItems[slotIndex] = null;
                 
                 // Riapplica effetti dei droni (senza l'oggetto rimosso)
@@ -216,6 +217,8 @@ export class Inventory {
                 this.addItem(item);
                 this.showPopup(`${item.name} rimosso da ${drone.name}`, 'info');
                 return item;
+            } else {
+                console.log(`🚁 Nessun oggetto da rimuovere: drone ${droneIndex}, slot ${slotIndex}`);
             }
         }
         // Rimozione normale
@@ -449,10 +452,12 @@ export class Inventory {
 
                         // Se c'è un oggetto equipaggiato, rimuovilo
                         if (drone.equippedItems && drone.equippedItems[slotIndex]) {
+                            console.log(`🚁 Click su slot equipaggiato: drone ${droneIndex}, slot ${slotIndex}`);
                             this.unequipItemFromDrone(droneIndex, slotIndex);
                         }
                         // Altrimenti mostra messaggio per equipaggiare dall'inventario
                         else {
+                            console.log(`🚁 Click su slot vuoto: drone ${droneIndex}, slot ${slotIndex}`);
                             this.showPopup('Click su un oggetto dell\'inventario per equipaggiarlo', 'info');
                         }
                         return true;
