@@ -61,6 +61,8 @@ export class Renderer {
                 ship.shieldEffect.reset();
             }
         }
+        
+        // I droni UAV sono disegnati separatamente nel game loop
     }
     
     drawTarget(ship, camera) {
@@ -88,10 +90,6 @@ export class Renderer {
         }
     }
     
-
-    
-
-    
     // La minimappa è ora gestita dal modulo Minimap separato
     
     // Metodo per disegnare effetti particellari (futuro)
@@ -102,5 +100,76 @@ export class Renderer {
     // Metodo per disegnare UI (futuro)
     drawUI(gameState) {
         // Implementazione futura per barre HP, munizioni, ecc.
+    }
+    
+    // Disegna i droni UAV semplici attorno alla nave
+    drawUAVDrones(ship, camera, inventory) {
+        if (!inventory || !inventory.equipment || !inventory.equipment.uav) return;
+        const uavItems = inventory.equipment.uav;
+        if (!uavItems || uavItems.length === 0) return;
+        
+        // Posizioni in cerchio attorno alla nave
+        const radius = 120;
+        const angleStep = (2 * Math.PI) / uavItems.length;
+        
+        uavItems.forEach((drone, index) => {
+            if (!drone || !drone.droneType) return;
+            
+            // Calcola posizione in cerchio
+            const angle = (index * angleStep) + ship.rotation;
+            const droneX = ship.x + Math.cos(angle) * radius;
+            const droneY = ship.y + Math.sin(angle) * radius;
+            
+            // Converti in coordinate schermo
+            const screenPos = camera.worldToScreen(droneX, droneY);
+            
+            // Disegna il drone
+            this.drawSimpleDrone(screenPos.x, screenPos.y, drone.droneType, drone.equippedItems);
+        });
+    }
+    
+    // Disegna un drone semplice (cerchio per Flax, quadrato per Iris)
+    drawSimpleDrone(x, y, droneType, equippedItems) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+        
+        const size = droneType === 'flax' ? 12 : 16;
+        const color = droneType === 'flax' ? '#f5f5dc' : '#d2b48c';
+        
+        // Disegna forma base
+        this.ctx.fillStyle = color;
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 1;
+        
+        if (droneType === 'flax') {
+            // Cerchio per Flax
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, size/2, 0, 2 * Math.PI);
+            this.ctx.fill();
+            this.ctx.stroke();
+        } else {
+            // Quadrato per Iris
+            this.ctx.fillRect(-size/2, -size/2, size, size);
+            this.ctx.strokeRect(-size/2, -size/2, size, size);
+        }
+        
+        // Disegna slot equipaggiati
+        if (equippedItems && equippedItems.length > 0) {
+            equippedItems.forEach((item, slotIndex) => {
+                if (item) {
+                    const slotSize = 3;
+                    const slotX = (slotIndex - (equippedItems.length - 1) / 2) * 6;
+                    const slotY = -size/2 - 5;
+                    
+                    this.ctx.fillStyle = item.type === 'laser' ? '#ffff00' : '#00ff00';
+                    this.ctx.fillRect(slotX - slotSize/2, slotY - slotSize/2, slotSize, slotSize);
+                    this.ctx.strokeStyle = '#ffffff';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.strokeRect(slotX - slotSize/2, slotY - slotSize/2, slotSize, slotSize);
+                }
+            });
+        }
+        
+        this.ctx.restore();
     }
 }

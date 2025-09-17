@@ -8,6 +8,7 @@ export class HomePanel extends UIComponent {
     constructor(game) {
         super('home-panel', { x: 0, y: 0, width: 1200, height: 800 });
         this.game = game;
+        console.log('🚁 HomePanel constructor - game.droneManager:', this.game.droneManager);
         this.visible = false;
         this.isOpen = false; // Aggiunta proprietà isOpen per compatibilità
         this.selectedCategory = 'info';
@@ -1789,6 +1790,9 @@ export class HomePanel extends UIComponent {
             // Aggiorna i dati del pannello
             this.playerData.credits = this.game.ship.getResource('credits');
             
+            // Salva l'inventario
+            this.game.inventory.save();
+            
             // Suono
             if (this.game.audioManager) {
                 this.game.audioManager.playSound('collecting');
@@ -1881,25 +1885,58 @@ export class HomePanel extends UIComponent {
                 this.game.ship.addResource('uridium', -totalPrice);
             }
             
-            // Crea il drone per l'inventario UAV
-            const drone = {
-                id: item.key,
-                name: item.name,
-                type: 'uav',
-                droneType: item.droneType,
-                rarity: item.droneType === 'flax' ? 'common' : 'rare',
-                description: item.description,
-                cost: item.cost,
-                slots: item.slots,
-                icon: item.icon,
-                color: item.droneType === 'flax' ? '#4a90e2' : '#ff6b6b',
-                equippedItems: new Array(item.slots).fill(null) // Inizializza slot vuoti
-            };
+                    // Crea il drone per l'inventario UAV
+                    const droneData = {
+                        id: item.key,
+                        name: item.name,
+                        type: 'uav',
+                        droneType: item.droneType,
+                        rarity: item.droneType === 'flax' ? 'common' : 'rare',
+                        description: item.description,
+                        cost: item.cost,
+                        slots: item.slots,
+                        icon: item.icon,
+                        color: item.droneType === 'flax' ? '#4a90e2' : '#ff6b6b',
+                        equippedItems: new Array(item.slots).fill(null) // Inizializza slot vuoti
+                    };
+                    
+                    // Aggiungi alla tab UAV dell'inventario
+                    for (let i = 0; i < quantity; i++) {
+                        this.game.inventory.equipment.uav.push(droneData);
+                    }
+                    
+                    // Crea droni reali nel DroneManager
+                    if (this.game.droneManager) {
+                        for (let i = 0; i < quantity; i++) {
+                            // Crea un ID univoco per ogni drone
+                            const uniqueDroneData = {
+                                ...droneData,
+                                id: `${droneData.droneType}_${Date.now()}_${i}`
+                            };
+                            this.game.droneManager.addDrone(uniqueDroneData);
+                        }
+                    } else {
+                        console.log('🚁 DroneManager non disponibile, creando al volo...');
+                        // Importa e crea DroneManager al volo
+                        import('../systems/DroneManager.js').then(({ DroneManager }) => {
+                            this.game.droneManager = new DroneManager(this.game);
+                            console.log('🚁 DroneManager creato al volo:', this.game.droneManager);
+                            
+                            // Aggiungi i droni
+                            for (let i = 0; i < quantity; i++) {
+                                const uniqueDroneData = {
+                                    ...droneData,
+                                    id: `${droneData.droneType}_${Date.now()}_${i}`
+                                };
+                                this.game.droneManager.addDrone(uniqueDroneData);
+                            }
+                        }).catch(error => {
+                            console.error('🚁 Errore nel caricamento DroneManager:', error);
+                        });
+                    }
             
-            // Aggiungi direttamente alla tab UAV dell'inventario
-            for (let i = 0; i < quantity; i++) {
-                this.game.inventory.equipment.uav.push(drone);
-            }
+            // Salva l'inventario
+            this.game.inventory.save();
             
             // Notifica acquisto
             this.game.notifications.add(`${item.name} acquistato! (${currentUAVCount + quantity}/8 droni)`, 'success');
@@ -1956,6 +1993,9 @@ export class HomePanel extends UIComponent {
                 // Aggiorna i dati del pannello
                 this.playerData.credits = this.game.ship.getResource('credits');
                 
+                // Salva l'inventario
+                this.game.inventory.save();
+                
                 // Notifica
                 if (this.game.notifications) {
                     this.game.notifications.add(`✅ Equipaggiato: ${item.name} x${item.amount}`, 'success');
@@ -2006,6 +2046,9 @@ export class HomePanel extends UIComponent {
                     
                     // Aggiorna i dati del pannello
                     this.playerData.credits = this.game.ship.getResource('credits');
+                    
+                    // Salva l'inventario
+                    this.game.inventory.save();
                     
                     // Notifica
                     if (this.game.notifications) {

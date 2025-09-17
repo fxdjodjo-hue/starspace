@@ -25,6 +25,7 @@ import { QuestTracker } from './systems/QuestTracker.js';
 import { RankSystem } from './systems/RankSystem.js';
 import { RewardManager } from './systems/RewardManager.js';
 import { RadiationSystem } from './systems/RadiationSystem.js';
+import { DroneManager } from './systems/DroneManager.js';
 
 // UI
 import { UIManager } from './ui/UIManager.js';
@@ -66,6 +67,7 @@ import { DamageNumberSystem } from '../modules/DamageNumbers.js';
 
 export class Game {
     constructor() {
+        console.log('🚁 Game.js: Constructor chiamato!');
         // Inizializza canvas e contesto
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
@@ -149,6 +151,7 @@ export class Game {
      * Inizializza i sistemi di gioco
      */
     initializeSystems() {
+        console.log('🚁 Game.js: initializeSystems chiamato!');
         // Sistemi di gioco
         this.audioManager = new AudioManager();
         this.inventory = new Inventory();
@@ -156,6 +159,9 @@ export class Game {
         this.rankSystem = new RankSystem();
         this.rewardManager = new RewardManager();
         this.radiationSystem = new RadiationSystem();
+        console.log('🚁 Game.js: Creando DroneManager...');
+        this.droneManager = new DroneManager(this);
+        console.log('🚁 Game.js: DroneManager creato:', this.droneManager);
         
         // Registra sistemi nel core
         this.gameCore.registerSystem('audio', this.audioManager);
@@ -164,6 +170,7 @@ export class Game {
         this.gameCore.registerSystem('rankSystem', this.rankSystem);
         this.gameCore.registerSystem('rewardManager', this.rewardManager);
         this.gameCore.registerSystem('radiationSystem', this.radiationSystem);
+        this.gameCore.registerSystem('droneManager', this.droneManager);
     }
 
     /**

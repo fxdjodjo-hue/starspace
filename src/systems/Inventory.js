@@ -329,13 +329,13 @@ export class Inventory {
             return;
         }
         
-        // Gestisci scroll per UAV se siamo nella tab UAV
+        // Gestisci hover per tooltip se siamo nella tab UAV
         if (this.currentTab === 'uav') {
-            this.handleUAVScroll(0); // Solo per aggiornare la posizione del mouse
+            this.checkUAVHover(x, y);
         }
     }
     
-    // Gestisci scroll per UAV
+    // Gestisci scroll per UAV (metodo semplificato con pulsanti)
     handleUAVScroll(deltaY) {
         if (this.currentTab !== 'uav') return;
         
@@ -345,12 +345,94 @@ export class Inventory {
         // Limita lo scroll
         const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - 400);
         this.uavScrollY = Math.max(0, Math.min(this.uavScrollY, maxScroll));
-        
-        // Controlla hover sugli oggetti equipaggiati
-        this.checkEquipmentHover(x, y);
-        
-        // Controlla hover sugli oggetti dell'inventario
-        this.checkInventoryHover(x, y);
+    }
+    
+    // Controlla hover per UAV
+    checkUAVHover(x, y) {
+        const uavY = this.panelY + 120;
+        const uavX = this.panelX + 50;
+        const droneAreaWidth = 300;
+        const droneAreaHeight = 400;
+
+        // Assicurati che equipment.uav sia inizializzato
+        if (!this.equipment.uav) {
+            this.equipment.uav = [];
+        }
+
+        // Controlla hover sui droni equipaggiati
+        this.equipment.uav.forEach((drone, droneIndex) => {
+            const droneY = uavY + (droneIndex * this.uavItemHeight) - this.uavScrollY;
+            const droneX = uavX + 10;
+            const droneWidth = droneAreaWidth - 20;
+            const droneHeight = this.uavItemHeight - 20;
+
+            // Hover sul drone
+            if (x >= droneX && x <= droneX + droneWidth &&
+                y >= droneY && y <= droneY + droneHeight) {
+
+                // Hover sui slot del drone
+                const slotSize = 30;
+                const slotSpacing = 5;
+                const slotStartX = droneX + 10;
+                const slotY = droneY + 35;
+
+                for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
+                    const slotX = slotStartX + slotIndex * (slotSize + slotSpacing);
+
+                    if (x >= slotX && x <= slotX + slotSize &&
+                        y >= slotY && y <= slotY + slotSize) {
+
+                        // Se c'è un oggetto equipaggiato, mostra tooltip
+                        if (drone.equippedItems && drone.equippedItems[slotIndex]) {
+                            this.tooltip = {
+                                item: drone.equippedItems[slotIndex],
+                                x: slotX,
+                                y: slotY
+                            };
+                        } else {
+                            this.tooltip = null;
+                        }
+                        return;
+                    }
+                }
+            }
+        });
+
+        // Controlla hover sull'inventario del player
+        const inventoryX = uavX + droneAreaWidth + 20;
+        const inventoryY = uavY - 20;
+        const itemSize = 50;
+        const itemsPerRow = 4;
+
+        const availableItems = this.items.filter(item => 
+            item.type === 'laser' || item.type === 'shield'
+        );
+
+        let itemX = inventoryX;
+        let itemY = inventoryY + 30;
+
+        availableItems.forEach((item, index) => {
+            if (index > 0 && index % itemsPerRow === 0) {
+                itemX = inventoryX;
+                itemY += itemSize + 10;
+            }
+
+            if (x >= itemX && x <= itemX + itemSize && 
+                y >= itemY && y <= itemY + itemSize) {
+                
+                this.tooltip = {
+                    item: item,
+                    x: itemX,
+                    y: itemY
+                };
+                return;
+            }
+
+            itemX += itemSize + 10;
+        });
+
+        // Se non è sopra nessun oggetto, rimuovi il tooltip
+        this.tooltip = null;
     }
     
     // Gestisci click del mouse
@@ -465,6 +547,37 @@ export class Inventory {
                 }
             }
         });
+
+        // Controlla click sui pulsanti di scroll
+        const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - 400);
+        if (maxScroll > 0) {
+            const buttonHeight = 30;
+            const buttonY = uavY + droneAreaHeight + 10;
+            const upButtonX = uavX;
+            const upButtonWidth = 50;
+            const downButtonX = uavX + upButtonWidth + 10;
+            const downButtonWidth = 50;
+
+            // Click su pulsante scroll su
+            if (x >= upButtonX && x <= upButtonX + upButtonWidth &&
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                if (this.uavScrollY > 0) {
+                    this.uavScrollY = Math.max(0, this.uavScrollY - 80);
+                    console.log('🚁 Scroll su, nuovo uavScrollY:', this.uavScrollY);
+                }
+                return true;
+            }
+
+            // Click su pulsante scroll giù
+            if (x >= downButtonX && x <= downButtonX + downButtonWidth &&
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                if (this.uavScrollY < maxScroll) {
+                    this.uavScrollY = Math.min(maxScroll, this.uavScrollY + 80);
+                    console.log('🚁 Scroll giù, nuovo uavScrollY:', this.uavScrollY);
+                }
+                return true;
+            }
+        }
 
         // Controlla click sull'inventario del player
         const inventoryX = uavX + droneAreaWidth + 20;
@@ -1088,9 +1201,9 @@ export class Inventory {
         
         ctx.restore();
         
-        // Scrollbar se necessario
+        // Pulsanti di scroll se necessario
         if (maxScroll > 0) {
-            this.drawUAVScrollbar(ctx, droneAreaX + droneAreaWidth - 10, droneAreaY, 10, droneAreaHeight, maxScroll);
+            this.drawUAVScrollButtons(ctx, droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight, maxScroll);
         }
         
         // Inventario del player a destra
@@ -1181,6 +1294,56 @@ export class Inventory {
         ctx.strokeStyle = '#999999';
         ctx.lineWidth = 1;
         ctx.strokeRect(x, scrollbarY, width, scrollbarHeight);
+    }
+    
+    // Disegna pulsanti di scroll per UAV
+    drawUAVScrollButtons(ctx, x, y, width, height, maxScroll) {
+        if (maxScroll <= 0) return;
+        
+        const buttonHeight = 30;
+        const buttonY = y + height + 10;
+        
+        // Pulsante scroll su
+        const upButtonX = x;
+        const upButtonY = buttonY;
+        const upButtonWidth = 50;
+        
+        // Sfondo pulsante su
+        ctx.fillStyle = this.uavScrollY > 0 ? '#ff6b6b' : '#666666';
+        ctx.fillRect(upButtonX, upButtonY, upButtonWidth, buttonHeight);
+        
+        // Bordo pulsante su
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(upButtonX, upButtonY, upButtonWidth, buttonHeight);
+        
+        // Freccia su
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('↑', upButtonX + upButtonWidth/2, upButtonY + buttonHeight/2 + 5);
+        
+        // Pulsante scroll giù
+        const downButtonX = x + upButtonWidth + 10;
+        const downButtonY = buttonY;
+        const downButtonWidth = 50;
+        
+        // Sfondo pulsante giù
+        ctx.fillStyle = this.uavScrollY < maxScroll ? '#ff6b6b' : '#666666';
+        ctx.fillRect(downButtonX, downButtonY, downButtonWidth, buttonHeight);
+        
+        // Bordo pulsante giù
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(downButtonX, downButtonY, downButtonWidth, buttonHeight);
+        
+        // Freccia giù
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('↓', downButtonX + downButtonWidth/2, downButtonY + buttonHeight/2 + 5);
+        
+        ctx.textAlign = 'left';
     }
 
     // Disegna inventario del player per UAV

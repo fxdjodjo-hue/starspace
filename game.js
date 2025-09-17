@@ -548,6 +548,8 @@ class Game {
         // Aggiorna inventario
         this.inventory.update();
         
+        // I droni UAV sono ora gestiti semplicemente dal Renderer
+        
         // Aggiorna quest tracker
         this.questTracker.update();
         
@@ -1020,6 +1022,12 @@ class Game {
             }
         }
         
+        // Gestione scroll per UAV (solo se l'inventario è aperto e siamo nella tab UAV)
+        if (this.input.hasWheelMovement() && this.inventory.isOpen && this.inventory.currentTab === 'uav') {
+            this.inventory.handleUAVScroll(this.input.mouse.wheelDelta);
+            this.input.resetWheelDelta();
+        }
+        
         // Reset del flag click appena premuto (alla fine di tutti i gestori)
         this.input.resetMouseJustPressed();
     }
@@ -1331,6 +1339,13 @@ class Game {
         
         // Disegna la nave
         this.renderer.drawShip(this.ship, this.camera);
+        
+        // Disegna i droni UAV semplici
+        if (this.inventory && this.inventory.equipment && this.inventory.equipment.uav && this.inventory.equipment.uav.length > 0) {
+            this.renderer.drawUAVDrones(this.ship, this.camera, this.inventory);
+        }
+        
+        // Sistema droni semplificato - gestito dal Renderer
         
         // Disegna l'effetto di radiazione intorno alla nave (dentro la sezione zoom)
         this.radiationSystem.drawRadiationEffect(this.ctx, this.camera, this.ship);
