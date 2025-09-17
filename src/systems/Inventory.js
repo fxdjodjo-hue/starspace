@@ -16,11 +16,7 @@ export class Inventory {
         this.items = [];
         this.maxItems = 50; // Massimo 50 oggetti nell'inventario
         
-        // Aggiungi oggetti di esempio solo in modalità sviluppo
-        if (this.isDevelopmentMode()) {
-            this.addSampleDrones();
-            this.addSampleWeapons();
-        }
+        // Non aggiungere oggetti di esempio automaticamente
         
         // Dimensioni e posizioni
         this.panelWidth = 1100;
@@ -63,134 +59,13 @@ export class Inventory {
         this.equipCooldown = 100; // 100ms di cooldown
     }
     
-    // Aggiungi droni di esempio direttamente nella sezione UAV
-    addSampleDrones() {
-        // Flax Drone (1 slot) - aggiunto direttamente a equipment.uav
-        const flaxDrone = {
-            id: 'flax_drone',
-            name: 'Flax Drone',
-            type: 'uav',
-            droneType: 'flax',
-            rarity: 'common',
-            description: 'Drone Flax - 1 slot per laser o scudi',
-            cost: {
-                credits: 1000
-            },
-            slots: 1,
-            icon: '🚁',
-            color: '#4a90e2',
-            equippedItems: new Array(1).fill(null) // Inizializza slot vuoti
-        };
-        this.equipment.uav.push(flaxDrone);
-
-        // Iris Drone (2 slot) - aggiunto direttamente a equipment.uav
-        const irisDrone = {
-            id: 'iris_drone',
-            name: 'Iris Drone',
-            type: 'uav',
-            droneType: 'iris',
-            rarity: 'rare',
-            description: 'Drone Iris - 2 slot per laser o scudi',
-            cost: {
-                uridium: 500
-            },
-            slots: 2,
-            icon: '🚁',
-            color: '#ff6b6b',
-            equippedItems: new Array(2).fill(null) // Inizializza slot vuoti
-        };
-        this.equipment.uav.push(irisDrone);
-        
-        // Rimuovi eventuali droni dall'inventario generale (se presenti)
-        this.cleanupDronesFromInventory();
-    }
     
     // Rimuovi droni dall'inventario generale (dovrebbero essere solo in equipment.uav)
     cleanupDronesFromInventory() {
         this.items = this.items.filter(item => item.type !== 'uav');
     }
     
-    // Controlla se siamo in modalità sviluppo
-    isDevelopmentMode() {
-        // Modalità sviluppo se:
-        // 1. Siamo su localhost
-        // 2. C'è un parametro ?dev=true nell'URL
-        // 3. C'è una variabile di ambiente di sviluppo
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const hasDevParam = new URLSearchParams(window.location.search).get('dev') === 'true';
-        const hasDevEnv = window.location.search.includes('dev=true') || window.location.hash.includes('dev=true');
-        
-        return isLocalhost || hasDevParam || hasDevEnv;
-    }
     
-    // Pulisci oggetti di esempio per giocatori reali
-    cleanupSampleItems() {
-        // Rimuovi droni di esempio dall'equipment.uav
-        this.equipment.uav = this.equipment.uav.filter(drone => 
-            drone.id !== 'flax_drone' && drone.id !== 'iris_drone'
-        );
-        
-        // Rimuovi armi di esempio dall'inventario
-        const sampleWeaponIds = ['laser_1', 'laser_2', 'shield_1', 'shield_2'];
-        this.items = this.items.filter(item => !sampleWeaponIds.includes(item.id));
-        
-        console.log('🧹 Oggetti di esempio rimossi per giocatore reale');
-    }
-    
-    // Aggiungi armi di esempio
-    addSampleWeapons() {
-        const sampleWeapons = [
-            {
-                id: 'laser_1',
-                name: 'Laser Base',
-                type: 'laser',
-                rarity: 'common',
-                description: 'Laser di base per droni',
-                damage: 25,
-                range: 200,
-                icon: '⚡',
-                color: '#ff6b6b'
-            },
-            {
-                id: 'laser_2',
-                name: 'Laser Avanzato',
-                type: 'laser',
-                rarity: 'rare',
-                description: 'Laser potente per droni',
-                damage: 50,
-                range: 300,
-                icon: '⚡',
-                color: '#ff0000'
-            },
-            {
-                id: 'shield_1',
-                name: 'Scudo Base',
-                type: 'shield',
-                rarity: 'common',
-                description: 'Scudo di base per droni',
-                protection: 100,
-                recharge: 10,
-                icon: '🛡️',
-                color: '#4ecdc4'
-            },
-            {
-                id: 'shield_2',
-                name: 'Scudo Avanzato',
-                type: 'shield',
-                rarity: 'rare',
-                description: 'Scudo potente per droni',
-                protection: 200,
-                recharge: 15,
-                icon: '🛡️',
-                color: '#00ffff'
-            }
-        ];
-        
-        // Aggiungi le armi all'inventario
-        sampleWeapons.forEach(weapon => {
-            this.addItem(weapon);
-        });
-    }
     
     // Apri/chiudi inventario
     toggle() {
@@ -404,10 +279,6 @@ export class Inventory {
             // Pulisci eventuali droni dall'inventario generale
             this.cleanupDronesFromInventory();
             
-            // Pulisci oggetti di esempio se non siamo in modalità sviluppo
-            if (!this.isDevelopmentMode()) {
-                this.cleanupSampleItems();
-            }
             
             // Riapplica gli effetti degli item equipaggiati
             if (window.gameInstance && window.gameInstance.ship) {
