@@ -1303,14 +1303,14 @@ export class Inventory {
             borderWidth: ThemeConfig.borders.width.normal,
             radius: ThemeConfig.borders.radius.lg,
             blur: false,
-            glow: ThemeConfig.colors.accent.primary
+            glow: false // Rimuovo il glow per ridurre l'abbagliamento
         });
         
         // Titolo elegante (più in basso)
         ThemeUtils.drawText(ctx, 'INVENTARIO', this.panelX + this.panelWidth / 2, this.panelY + 60, {
-            color: ThemeConfig.colors.text.primary,
-            size: ThemeConfig.typography.sizes['3xl'],
-            weight: ThemeConfig.typography.weights.bold,
+            color: ThemeConfig.colors.text.secondary, // Colore più tenue
+            size: ThemeConfig.typography.sizes['2xl'], // Dimensione leggermente ridotta
+            weight: ThemeConfig.typography.weights.semibold, // Peso ridotto
             align: 'center',
             baseline: 'middle',
             glow: false
@@ -1408,11 +1408,16 @@ export class Inventory {
             const isActive = this.currentTab === tab.id;
             
             // Disegna tab moderna
-            ThemeUtils.drawButton(ctx, tabX, tabY, tabWidth, tabHeight, tab.name, {
+            ThemeUtils.drawButton(ctx, tabX, tabY, tabWidth, tabHeight, {
+                text: tab.name,
                 variant: isActive ? 'primary' : 'secondary',
                 size: 'md',
                 isHovered: false,
-                isActive: isActive
+                isActive: isActive,
+                textColor: isActive ? ThemeConfig.colors.text.primary : ThemeConfig.colors.text.primary, // Testo sempre bianco per contrasto
+                background: isActive ? ThemeConfig.colors.accent.primary : ThemeConfig.colors.background.secondary, // Sfondo più contrastato
+                border: isActive ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary,
+                glow: false // Rimuovo il glow per ridurre l'abbagliamento
             });
         });
     }

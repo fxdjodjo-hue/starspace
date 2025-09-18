@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
+
 // CategorySkillbar - Sistema di skillbar a categorie per MMORPG
 export class CategorySkillbar {
     constructor() {
@@ -99,18 +101,13 @@ export class CategorySkillbar {
     }
     
     drawMainBar(ctx) {
-        const cornerRadius = 8;
-        
-        // Sfondo principale
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.beginPath();
-        ctx.roundRect(this.x, this.y, this.width, this.height, cornerRadius);
-        ctx.fill();
-        
-        // Bordo
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Pannello principale con tema moderno
+        ThemeUtils.drawPanel(ctx, this.x, this.y, this.width, this.height, {
+            background: ThemeConfig.colors.background.panel,
+            border: ThemeConfig.colors.border.primary,
+            blur: true,
+            shadow: true
+        });
         
         // Disegna le categorie
         const categoryWidth = this.width / Object.keys(this.categories).length;
@@ -119,21 +116,19 @@ export class CategorySkillbar {
         for (const [key, category] of Object.entries(this.categories)) {
             const categoryX = this.x + (categoryIndex * categoryWidth);
             const categoryY = this.y;
+            const isActive = this.activeCategory === category.name;
             
-            // Evidenzia la categoria attiva
-            if (this.activeCategory === category.name) {
-                ctx.fillStyle = 'rgba(74, 144, 226, 0.3)';
-                ctx.beginPath();
-                ctx.roundRect(categoryX, categoryY, categoryWidth, this.height, cornerRadius);
-                ctx.fill();
-            }
-            
-            // Nome della categoria (solo uno)
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(category.icon, categoryX + categoryWidth/2, categoryY + this.height/2);
+            // Pulsante categoria con tema moderno
+            ThemeUtils.drawButton(ctx, categoryX, categoryY, categoryWidth, this.height, {
+                text: category.icon,
+                textSize: 16,
+                textWeight: 'bold',
+                textColor: ThemeConfig.colors.text.primary,
+                background: isActive ? ThemeConfig.colors.accent.primary : 'transparent',
+                border: isActive ? ThemeConfig.colors.border.primary : 'transparent',
+                hover: false,
+                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+            });
             
             categoryIndex++;
         }
@@ -152,16 +147,13 @@ export class CategorySkillbar {
         const menuX = this.x;
         const menuY = this.y - totalHeight - 10;
         
-        // Sfondo del menu
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-        ctx.beginPath();
-        ctx.roundRect(menuX, menuY, this.width, totalHeight, 8);
-        ctx.fill();
-        
-        // Bordo del menu
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Pannello menu con tema moderno
+        ThemeUtils.drawPanel(ctx, menuX, menuY, this.width, totalHeight, {
+            background: ThemeConfig.colors.background.panel,
+            border: ThemeConfig.colors.border.primary,
+            blur: true,
+            shadow: true
+        });
         
         // Disegna gli oggetti
         category.items.forEach((item, index) => {
@@ -171,38 +163,35 @@ export class CategorySkillbar {
             const itemX = menuX + (col * (itemSize + itemSpacing)) + itemSpacing;
             const itemY = menuY + (row * (itemSize + itemSpacing)) + itemSpacing;
             
-            // Sfondo dell'oggetto
+            // Pulsante oggetto con tema moderno
             const canUse = item.canUse();
             const isSelected = this.isItemSelected(item);
             
-            // Colore di sfondo basato su selezione e disponibilità
+            let background, border, textColor;
             if (isSelected) {
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.4)'; // Oro per selezionato
+                background = ThemeConfig.colors.accent.warning;
+                border = ThemeConfig.colors.border.warning;
+                textColor = ThemeConfig.colors.text.primary;
             } else if (canUse) {
-                ctx.fillStyle = 'rgba(74, 144, 226, 0.3)'; // Blu per disponibile
+                background = ThemeConfig.colors.accent.primary;
+                border = ThemeConfig.colors.border.primary;
+                textColor = ThemeConfig.colors.text.primary;
             } else {
-                ctx.fillStyle = 'rgba(100, 100, 100, 0.3)'; // Grigio per non disponibile
+                background = ThemeConfig.colors.background.disabled;
+                border = ThemeConfig.colors.border.disabled;
+                textColor = ThemeConfig.colors.text.disabled;
             }
-            ctx.beginPath();
-            ctx.roundRect(itemX, itemY, itemSize, itemSize, 6);
-            ctx.fill();
             
-            // Bordo dell'oggetto
-            if (isSelected) {
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; // Bordo oro per selezionato
-                ctx.lineWidth = 2;
-            } else {
-                ctx.strokeStyle = canUse ? 'rgba(255, 255, 255, 0.5)' : 'rgba(150, 150, 150, 0.5)';
-                ctx.lineWidth = 1;
-            }
-            ctx.stroke();
-            
-            // Nome dell'oggetto (solo uno)
-            ctx.fillStyle = canUse ? '#ffffff' : 'rgba(150, 150, 150, 0.8)';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(item.name, itemX + itemSize/2, itemY + itemSize/2);
+            ThemeUtils.drawButton(ctx, itemX, itemY, itemSize, itemSize, {
+                text: item.name,
+                textSize: 14,
+                textWeight: 'bold',
+                textColor: textColor,
+                background: background,
+                border: border,
+                hover: false,
+                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+            });
             
             // Mostra munizioni per laser e missili
             if (item.id.startsWith('laser_') || item.id.startsWith('missile_')) {

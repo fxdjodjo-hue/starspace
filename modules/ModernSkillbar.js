@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../src/config/ThemeConfig.js';
+
 // ModernSkillbar - Sistema di skillbar moderno con griglia inventario
 export class ModernSkillbar {
     constructor() {
@@ -244,35 +246,33 @@ export class ModernSkillbar {
                 const slotY = startY + row * (this.slotSize + this.slotSpacing);
                 const slotIndex = row * this.gridWidth + col;
                 
-                // Sfondo slot
-                ctx.fillStyle = '#1a1a2e';
-                ctx.fillRect(slotX, slotY, this.slotSize, this.slotSize);
+                // Pannello slot con tema moderno
+                const isSelected = this.selectedSlot === slotIndex;
+                ThemeUtils.drawPanel(ctx, slotX, slotY, this.slotSize, this.slotSize, {
+                    background: ThemeConfig.colors.background.secondary,
+                    border: isSelected ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary,
+                    blur: false,
+                    shadow: false // Rimuovo l'ombra per ridurre l'abbagliamento
+                });
                 
-                // Bordo
-                ctx.strokeStyle = '#16213e';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(slotX, slotY, this.slotSize, this.slotSize);
-                
-                // Bordo giallo se selezionato
-                if (this.selectedSlot === slotIndex) {
-                    ctx.strokeStyle = '#ffd700';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(slotX, slotY, this.slotSize, this.slotSize);
-                }
-                
-                // Numero slot
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'left';
-                ctx.fillText((slotIndex + 1).toString(), slotX + 2, slotY + this.slotSize - 2);
+                // Numero slot con tema moderno
+                ThemeUtils.drawText(ctx, (slotIndex + 1).toString(), slotX + 2, slotY + this.slotSize - 2, {
+                    size: 12,
+                    weight: 'normal',
+                    color: ThemeConfig.colors.text.secondary,
+                    glow: false
+                });
                 
                 // Contenuto slot (se presente)
                 const slotContent = this.inventorySlots[slotIndex];
                 if (slotContent) {
-                    ctx.fillStyle = '#00ff00';
-                    ctx.font = '10px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(slotContent.name, slotX + this.slotSize / 2, slotY + this.slotSize / 2);
+                    ThemeUtils.drawText(ctx, slotContent.name, slotX + this.slotSize / 2, slotY + this.slotSize / 2, {
+                        size: 10,
+                        weight: 'normal',
+                        color: ThemeConfig.colors.text.primary, // Colore più tenue
+                        glow: false, // Rimuovo il glow per ridurre l'abbagliamento
+                        align: 'center'
+                    });
                 }
             }
         }
@@ -283,20 +283,17 @@ export class ModernSkillbar {
         const buttonX = this.x + this.gridWidth * (this.slotSize + this.slotSpacing) - this.slotSpacing + 5;
         const buttonY = this.y;
         
-        // Sfondo pulsante
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(buttonX, buttonY, this.toggleButtonSize, this.toggleButtonSize);
-        
-        // Bordo
-        ctx.strokeStyle = '#16213e';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(buttonX, buttonY, this.toggleButtonSize, this.toggleButtonSize);
-        
-        // Icona freccia
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.isExpanded ? '▼' : '▶', buttonX + this.toggleButtonSize / 2, buttonY + this.toggleButtonSize / 2 + 5);
+        // Pulsante toggle con tema moderno
+        ThemeUtils.drawButton(ctx, buttonX, buttonY, this.toggleButtonSize, this.toggleButtonSize, {
+            text: this.isExpanded ? '▲' : '▼',
+            textSize: 16,
+            textWeight: 'bold',
+            textColor: ThemeConfig.colors.text.primary,
+            background: ThemeConfig.colors.background.secondary,
+            border: ThemeConfig.colors.border.secondary, // Bordo più tenue
+            hover: false,
+            glow: false // Rimuovo il glow per ridurre l'abbagliamento
+        });
     }
     
     // Disegna la riga delle categorie
@@ -311,21 +308,19 @@ export class ModernSkillbar {
         
         categories.forEach((category, index) => {
             const categoryX = startX + index * (categorySize + categorySpacing);
+            const isActive = this.activeCategory === Object.keys(this.categories)[index];
             
-            // Sfondo categoria
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(categoryX, categoryY, categorySize, categorySize);
-            
-            // Bordo
-            ctx.strokeStyle = this.activeCategory === Object.keys(this.categories)[index] ? '#ffd700' : '#16213e';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(categoryX, categoryY, categorySize, categorySize);
-            
-            // Icona categoria
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(category.icon, categoryX + categorySize / 2, categoryY + categorySize / 2 + 5);
+            // Pulsante categoria con tema moderno
+            ThemeUtils.drawButton(ctx, categoryX, categoryY, categorySize, categorySize, {
+                text: category.icon,
+                textSize: 14,
+                textWeight: 'bold',
+                textColor: ThemeConfig.colors.text.primary,
+                background: isActive ? ThemeConfig.colors.accent.primary : ThemeConfig.colors.background.secondary, // Colore più tenue
+                border: isActive ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary, // Bordo più tenue
+                hover: false,
+                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+            });
         });
     }
     
@@ -340,26 +335,19 @@ export class ModernSkillbar {
         
         category.items.forEach((weapon, index) => {
             const weaponX = this.x + index * weaponWidth;
+            const isSelected = this.selectedWeapon === weapon;
             
-            // Sfondo arma
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(weaponX, weaponY, weaponWidth, weaponHeight);
-            
-            // Bordo
-            ctx.strokeStyle = this.selectedWeapon === weapon ? '#ffd700' : '#16213e';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(weaponX, weaponY, weaponWidth, weaponHeight);
-            
-            // Nome arma
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(weapon.name, weaponX + weaponWidth / 2, weaponY + 20);
-            
-            // Quantità
-            ctx.fillStyle = '#00ff00';
-            ctx.font = '12px Arial';
-            ctx.fillText(weapon.quantity.toString(), weaponX + weaponWidth / 2, weaponY + 35);
+            // Pulsante arma con tema moderno
+            ThemeUtils.drawButton(ctx, weaponX, weaponY, weaponWidth, weaponHeight, {
+                text: `${weapon.name}\n${weapon.quantity}`,
+                textSize: 14,
+                textWeight: 'bold',
+                textColor: ThemeConfig.colors.text.primary,
+                background: isSelected ? ThemeConfig.colors.accent.primary : ThemeConfig.colors.background.secondary, // Colore più tenue
+                border: isSelected ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary, // Bordo più tenue
+                hover: false,
+                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+            });
         });
     }
 }

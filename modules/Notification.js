@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../src/config/ThemeConfig.js';
+
 // Modulo Notification per feedback visivo migliorato
 export class Notification {
     constructor() {
@@ -224,8 +226,6 @@ export class Notification {
     
     // Disegna una singola notifica con stile minimalista
     drawSingleNotification(ctx, notification, index) {
-        // Debug rimosso per performance
-        
         // Salva stato del canvas
         ctx.save();
         
@@ -237,18 +237,17 @@ export class Notification {
         ctx.scale(notification.scale, notification.scale);
         ctx.globalAlpha = notification.alpha;
         
-        // Stile minimalista come nell'immagine
-        const style = this.getSimpleNotificationStyle(notification.type);
-        
-        // Testo semplice centrato
-        ctx.font = '16px Arial';
-        ctx.fillStyle = style.textColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
         // Formatta il messaggio in stile semplice
         const formattedMessage = this.formatSimpleMessage(notification.message, notification.type);
-        ctx.fillText(formattedMessage, 0, 0);
+        
+        // Testo con tema moderno
+        ThemeUtils.drawText(ctx, formattedMessage, 0, 0, {
+            size: 16,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: true,
+            align: 'center'
+        });
         
         // Ripristina stato del canvas
         ctx.restore();

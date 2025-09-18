@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
+
 // UIIcon - Sistema unificato per icone UI basato sul QuestTracker
 export class UIIcon {
     constructor(game, config) {
@@ -98,14 +100,13 @@ export class UIIcon {
     draw(ctx) {
         if (!this.visible) return;
         
-        // Sfondo
-        ctx.fillStyle = this.backgroundColor;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
-        // Bordo (colore diverso se attivo)
-        ctx.strokeStyle = this.isActive ? this.activeBorderColor : this.borderColor;
-        ctx.lineWidth = this.isActive ? 3 : 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        // Pannello icona con tema moderno
+        ThemeUtils.drawPanel(ctx, this.x, this.y, this.width, this.height, {
+            background: ThemeConfig.colors.background.secondary,
+            border: this.isActive ? ThemeConfig.colors.accent.success : ThemeConfig.colors.border.primary,
+            blur: false,
+            shadow: true
+        });
         
         // Icona principale
         this.drawIcon(ctx);
@@ -123,22 +124,27 @@ export class UIIcon {
     
     // Disegna l'icona principale
     drawIcon(ctx) {
-        ctx.fillStyle = this.textColor;
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.icon, this.x + this.width/2, this.y + this.height/2);
+        ThemeUtils.drawText(ctx, this.icon, this.x + this.width/2, this.y + this.height/2, {
+            size: 20,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: this.isActive,
+            align: 'center'
+        });
     }
     
     // Disegna il contatore
     drawCount(ctx) {
         const countText = this.count.toString();
-        const countColor = this.count > 0 ? this.countColor : this.inactiveCountColor;
+        const countColor = this.count > 0 ? ThemeConfig.colors.accent.success : ThemeConfig.colors.text.disabled;
         
-        ctx.fillStyle = countColor;
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(countText, this.x + this.width - 8, this.y + 12);
+        ThemeUtils.drawText(ctx, countText, this.x + this.width - 8, this.y + 12, {
+            size: 10,
+            weight: 'bold',
+            color: countColor,
+            glow: this.count > 0,
+            align: 'center'
+        });
     }
     
     // Disegna il tooltip
@@ -156,20 +162,22 @@ export class UIIcon {
         const tooltipX = this.x + (this.width - tooltipWidth) / 2;
         const tooltipY = this.y + this.height + 5;
         
-        // Sfondo tooltip
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
+        // Pannello tooltip con tema moderno
+        ThemeUtils.drawPanel(ctx, tooltipX, tooltipY, tooltipWidth, tooltipHeight, {
+            background: ThemeConfig.colors.background.panel,
+            border: ThemeConfig.colors.border.primary,
+            blur: true,
+            shadow: true
+        });
         
-        // Bordo tooltip
-        ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
-        
-        // Testo tooltip
-        ctx.fillStyle = this.textColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.tooltipText, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2);
+        // Testo tooltip con tema moderno
+        ThemeUtils.drawText(ctx, this.tooltipText, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2, {
+            size: fontSize,
+            weight: 'normal',
+            color: ThemeConfig.colors.text.primary,
+            glow: true,
+            align: 'center'
+        });
     }
     
     // Imposta la posizione

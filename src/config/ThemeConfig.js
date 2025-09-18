@@ -226,9 +226,10 @@ export class ThemeUtils {
         ctx.closePath();
     }
     
-    static drawButton(ctx, x, y, width, height, text, options = {}) {
+    static drawButton(ctx, x, y, width, height, options = {}) {
         const theme = ThemeConfig;
         const {
+            text = '',
             variant = 'primary', // primary, secondary, ghost, danger
             size = 'md', // sm, md, lg
             isHovered = false,
@@ -276,22 +277,24 @@ export class ThemeUtils {
         
         // Disegna pannello moderno
         this.drawPanel(ctx, x, y, width, height, {
-            background: disabled ? theme.colors.background.tertiary : bgColor,
-            border: disabled ? theme.colors.border.primary : borderColor,
+            background: options.background || (disabled ? theme.colors.background.tertiary : bgColor),
+            border: options.border || (disabled ? theme.colors.border.primary : borderColor),
             radius: radius,
             glow: disabled ? null : glow,
             blur: variant === 'ghost'
         });
         
         // Testo moderno
-        const fontSize = theme.typography.sizes[size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'base'];
-        this.drawText(ctx, text, x + width / 2, y + height / 2, {
-            color: disabled ? theme.colors.text.muted : textColor,
-            size: fontSize,
-            weight: theme.typography.weights.semibold,
+        const textOptions = {
+            color: options.textColor || (disabled ? theme.colors.text.muted : textColor),
+            size: options.textSize || theme.typography.sizes[size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'base'],
+            weight: options.textWeight || theme.typography.weights.semibold,
             align: 'center',
-            baseline: 'middle'
-        });
+            baseline: 'middle',
+            glow: options.glow || false
+        };
+        
+        this.drawText(ctx, text, x + width / 2, y + height / 2, textOptions);
     }
     
     static drawText(ctx, text, x, y, options = {}) {
@@ -305,6 +308,15 @@ export class ThemeUtils {
             glow = false,
             gradient = false
         } = options;
+        
+        // Converti l'oggetto in stringa se necessario
+        if (typeof text !== 'string') {
+            if (text && typeof text === 'object') {
+                text = text.toString ? text.toString() : '[Object]';
+            } else {
+                text = String(text || '');
+            }
+        }
         
         ctx.save();
         

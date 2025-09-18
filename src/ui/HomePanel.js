@@ -2,6 +2,7 @@ import { UIComponent } from './UIComponent.js';
 import { ShopTab } from './ShopTab.js';
 import { ShopButton } from './ShopButton.js';
 import { InventoryItem } from '../systems/InventoryItem.js';
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
 
 // Pannello Home - Interfaccia principale del giocatore (Online-Ready)
 export class HomePanel extends UIComponent {
@@ -731,98 +732,102 @@ export class HomePanel extends UIComponent {
         ctx.save();
         ctx.globalAlpha = this.popup.alpha;
         
-        // Sfondo
-        ctx.fillStyle = this.popup.type === 'success' ? '#2E7D32' : '#D32F2F';
-        ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
-        
-        // Bordo
-        ctx.strokeStyle = this.popup.type === 'success' ? '#4CAF50' : '#F44336';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+        // Pannello popup con tema moderno
+        const popupColor = this.popup.type === 'success' ? ThemeConfig.colors.accent.success : ThemeConfig.colors.accent.danger;
+        ThemeUtils.drawPanel(ctx, popupX, popupY, popupWidth, popupHeight, {
+            background: popupColor,
+            border: popupColor,
+            blur: true,
+            shadow: true
+        });
         
         // Icona
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
         const icon = this.popup.type === 'success' ? '✓' : '✗';
-        ctx.fillText(icon, popupX + 40, popupY + 50);
+        ThemeUtils.drawText(ctx, icon, popupX + 40, popupY + 50, {
+            size: 24,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: true
+        });
         
         // Messaggio
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText(this.popup.message, popupX + popupWidth / 2, popupY + 50);
+        ThemeUtils.drawText(ctx, this.popup.message, popupX + popupWidth / 2, popupY + 50, {
+            size: 16,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: true
+        });
         
         ctx.restore();
     }
     
     drawMainPanel(ctx) {
-        // Sfondo del pannello
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(this.x, this.y, this.panelWidth, this.panelHeight);
+        // Sfondo del pannello con tema moderno
+        ThemeUtils.drawPanel(ctx, this.x, this.y, this.panelWidth, this.panelHeight, {
+            background: ThemeConfig.colors.background.panel,
+            border: ThemeConfig.colors.border.primary,
+            blur: true,
+            shadow: true
+        });
         
-        // Bordo
-        ctx.strokeStyle = '#16213e';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.panelWidth, this.panelHeight);
+        // Titolo con tema moderno
+        ThemeUtils.drawText(ctx, 'Pannello di controllo', this.x + 20, this.y + 30, {
+            size: 18,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: true
+        });
         
-        // Titolo
-        ctx.fillStyle = '#e94560';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Pannello di controllo', this.x + 20, this.y + 30);
-        
-        // Pulsante chiudi
-        ctx.fillStyle = '#e94560';
-        ctx.fillRect(this.x + this.panelWidth - 40, this.y + 10, 30, 30);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('X', this.x + this.panelWidth - 25, this.y + 25);
+        // Pulsante chiudi con tema moderno
+        ThemeUtils.drawButton(ctx, this.x + this.panelWidth - 40, this.y + 10, 30, 30, {
+            text: 'X',
+            textSize: 16,
+            textWeight: 'bold',
+            textColor: ThemeConfig.colors.text.primary,
+            background: ThemeConfig.colors.accent.danger,
+            border: ThemeConfig.colors.border.danger,
+            hover: false,
+            glow: true
+        });
     }
     
     drawNavigationPanel(ctx) {
         const navX = this.x;
         const navY = this.y + 60;
         
-        // Sfondo navigazione
-        ctx.fillStyle = '#0f3460';
-        ctx.fillRect(navX, navY, this.navWidth, this.panelHeight - 60);
+        // Sfondo navigazione con tema moderno
+        ThemeUtils.drawPanel(ctx, navX, navY, this.navWidth, this.panelHeight - 60, {
+            background: ThemeConfig.colors.background.secondary,
+            border: ThemeConfig.colors.border.secondary,
+            blur: false,
+            shadow: true
+        });
         
-        // Pattern esagonale rimosso - grafica semplificata
-        
-        // Categorie
+        // Categorie con tema moderno
         this.categories.forEach((category, index) => {
             const itemY = navY + 20 + index * 40;
             const isSelected = this.selectedCategory === category.id;
             
-            // Sfondo selezionato
-            if (isSelected) {
-                ctx.fillStyle = '#e94560';
-                ctx.fillRect(navX + 10, itemY - 5, this.navWidth - 20, 35);
-            }
-            
-            // Icona
-            ctx.fillStyle = isSelected ? '#ffffff' : '#e94560';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(category.icon, navX + 15, itemY + 15);
-            
-            // Nome
-            ctx.fillStyle = isSelected ? '#ffffff' : '#ffffff';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(category.name, navX + 40, itemY + 15);
+            // Pulsante categoria con tema moderno
+            ThemeUtils.drawButton(ctx, navX + 10, itemY - 5, this.navWidth - 20, 35, {
+                text: `${category.icon} ${category.name}`,
+                textSize: 14,
+                textWeight: isSelected ? 'bold' : 'normal',
+                textColor: isSelected ? ThemeConfig.colors.text.primary : ThemeConfig.colors.text.secondary,
+                background: isSelected ? ThemeConfig.colors.accent.primary : 'transparent',
+                border: isSelected ? ThemeConfig.colors.border.primary : 'transparent',
+                hover: false,
+                glow: isSelected
+            });
             
             // Freccia selezionata
             if (isSelected) {
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('→', navX + this.navWidth - 25, itemY + 15);
+                ThemeUtils.drawText(ctx, '→', navX + this.navWidth - 25, itemY + 15, {
+                    size: 16,
+                    weight: 'bold',
+                    color: ThemeConfig.colors.text.primary,
+                    glow: true
+                });
             }
         });
     }
@@ -874,40 +879,54 @@ export class HomePanel extends UIComponent {
         const centerX = x + this.contentWidth / 2;
         const shipY = y + 80;
         
-        // Cerchio nave
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(centerX, shipY, 60, 0, Math.PI * 2);
-        ctx.stroke();
+        // Cerchio nave con tema moderno
+        ThemeUtils.drawPanel(ctx, centerX - 60, shipY - 60, 120, 120, {
+            background: 'transparent',
+            border: ThemeConfig.colors.border.primary,
+            blur: false,
+            shadow: true
+        });
         
         // Disegna nave spaziale (semplificata)
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = ThemeConfig.colors.text.primary;
         ctx.fillRect(centerX - 20, shipY - 10, 40, 20);
         ctx.fillRect(centerX - 10, shipY - 20, 20, 10);
         
-        // ID
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`ID ${this.playerData.id}`, centerX, shipY + 40);
-        ctx.textAlign = 'left';
+        // ID con tema moderno
+        ThemeUtils.drawText(ctx, `ID ${this.playerData.id}`, centerX, shipY + 40, {
+            size: 14,
+            weight: 'normal',
+            color: ThemeConfig.colors.text.primary,
+            glow: true
+        });
         
-        // Livello
-        ctx.fillStyle = '#e94560';
-        ctx.font = '16px Arial';
-        ctx.fillText(`LIVELLO ${this.playerData.level}`, x + 20, shipY - 20);
+        // Livello con tema moderno
+        ThemeUtils.drawText(ctx, `LIVELLO ${this.playerData.level}`, x + 20, shipY - 20, {
+            size: 16,
+            weight: 'bold',
+            color: ThemeConfig.colors.accent.primary,
+            glow: true
+        });
         
-        // Risorse
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '14px Arial';
-        ctx.fillText(`${(this.playerData.credits || 0).toLocaleString()} CREDITS`, x + this.contentWidth - 200, shipY - 40);
-        ctx.fillText(`${(this.playerData.uridium || 0).toLocaleString()} URIDIUM`, x + this.contentWidth - 200, shipY - 20);
-        ctx.fillText(`${(this.playerData.experience || 0).toLocaleString()} ESPERIENZA`, x + this.contentWidth - 200, shipY);
-        ctx.fillText(`${(this.playerData.honor || 0).toLocaleString()} ONORE`, x + this.contentWidth - 200, shipY + 20);
+        // Risorse con tema moderno
+        const resources = [
+            { label: 'CREDITS', value: (this.playerData.credits || 0).toLocaleString() },
+            { label: 'URIDIUM', value: (this.playerData.uridium || 0).toLocaleString() },
+            { label: 'ESPERIENZA', value: (this.playerData.experience || 0).toLocaleString() },
+            { label: 'ONORE', value: (this.playerData.honor || 0).toLocaleString() }
+        ];
         
-        // Divider
-        ctx.strokeStyle = '#e94560';
+        resources.forEach((resource, index) => {
+            ThemeUtils.drawText(ctx, `${resource.value} ${resource.label}`, x + this.contentWidth - 200, shipY - 40 + (index * 20), {
+                size: 14,
+                weight: 'normal',
+                color: ThemeConfig.colors.text.secondary,
+                glow: false
+            });
+        });
+        
+        // Divider con tema moderno
+        ctx.strokeStyle = ThemeConfig.colors.border.primary;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(x + 20, shipY + 80);
@@ -2093,18 +2112,29 @@ export class HomePanel extends UIComponent {
     }
     
     drawShopContent(ctx, x, y) {
-        // Header con titolo e risorse
-        ctx.fillStyle = '#e94560';
-        ctx.font = 'bold 28px Arial';
-        ctx.fillText('Negozio', x + 20, y + 35);
+        // Header con titolo e risorse con tema moderno
+        ThemeUtils.drawText(ctx, 'Negozio', x + 20, y + 35, {
+            size: 28,
+            weight: 'bold',
+            color: ThemeConfig.colors.accent.primary,
+            glow: true
+        });
         
-        // Risorse in alto a destra
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Crediti: ${this.playerData.credits.toLocaleString()}`, x + this.contentWidth - 20, y + 30);
-        ctx.fillText(`Uridium: ${this.playerData.uridium.toLocaleString()}`, x + this.contentWidth - 20, y + 50);
-        ctx.textAlign = 'left';
+        // Risorse in alto a destra con tema moderno
+        ThemeUtils.drawText(ctx, `Crediti: ${this.playerData.credits.toLocaleString()}`, x + this.contentWidth - 20, y + 30, {
+            size: 18,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: true,
+            align: 'right'
+        });
+        ThemeUtils.drawText(ctx, `Uridium: ${this.playerData.uridium.toLocaleString()}`, x + this.contentWidth - 20, y + 50, {
+            size: 18,
+            weight: 'bold',
+            color: ThemeConfig.colors.text.primary,
+            glow: true,
+            align: 'right'
+        });
         
         // Tab orizzontali del negozio
         this.drawShopTabs(ctx, x + 20, y + 70);
@@ -2746,10 +2776,10 @@ export class HomePanel extends UIComponent {
     
     drawShopTabs(ctx, x, y) {
         const tabs = [
-            { id: 'ammunition', name: 'MUNIZIONI', color: '#e94560' },
-            { id: 'laser', name: 'LASER', color: '#4a90e2' },
-            { id: 'generators', name: 'GENERATORI', color: '#50c878' },
-            { id: 'uav', name: 'UAV', color: '#ff6b6b' }
+            { id: 'ammunition', name: 'MUNIZIONI', color: ThemeConfig.colors.accent.primary },
+            { id: 'laser', name: 'LASER', color: ThemeConfig.colors.accent.info },
+            { id: 'generators', name: 'GENERATORI', color: ThemeConfig.colors.accent.success },
+            { id: 'uav', name: 'UAV', color: ThemeConfig.colors.accent.warning }
         ];
         
         const tabWidth = 140;
@@ -2759,29 +2789,17 @@ export class HomePanel extends UIComponent {
             const tabX = x + index * tabWidth;
             const isSelected = this.selectedShopCategory === tab.id;
             
-            // Sfondo tab
-            if (isSelected) {
-                ctx.fillStyle = tab.color;
-                ctx.fillRect(tabX, y, tabWidth, tabHeight);
-                // Bordo evidenziato
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(tabX, y, tabWidth, tabHeight);
-            } else {
-                ctx.fillStyle = '#2a2a2a';
-                ctx.fillRect(tabX, y, tabWidth, tabHeight);
-                ctx.strokeStyle = '#444444';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(tabX, y, tabWidth, tabHeight);
-            }
-            
-            // Testo tab
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(tab.name, tabX + tabWidth/2, y + 20);
-            ctx.textAlign = 'left';
+            // Pulsante tab con tema moderno
+            ThemeUtils.drawButton(ctx, tabX, y, tabWidth, tabHeight, {
+                text: tab.name,
+                textSize: 16,
+                textWeight: 'bold',
+                textColor: ThemeConfig.colors.text.primary,
+                background: isSelected ? tab.color : ThemeConfig.colors.background.secondary,
+                border: isSelected ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary,
+                hover: false,
+                glow: isSelected
+            });
         });
     }
     
@@ -2873,72 +2891,94 @@ export class HomePanel extends UIComponent {
     }
     
     drawShopItem(ctx, x, y, item, key) {
-        // Sfondo item
-        ctx.fillStyle = '#2a2a2a';
-        ctx.fillRect(x, y, this.contentWidth - 40, 50);
-        
-        // Bordo
-        ctx.strokeStyle = '#444444';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, this.contentWidth - 40, 50);
+        // Pannello item con tema moderno
+        ThemeUtils.drawPanel(ctx, x, y, this.contentWidth - 40, 50, {
+            background: ThemeConfig.colors.background.secondary,
+            border: ThemeConfig.colors.border.secondary,
+            blur: false,
+            shadow: true
+        });
         
         // Icona
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '20px Arial';
-        ctx.fillText(item.icon, x + 10, y + 25);
+        ThemeUtils.drawText(ctx, item.icon, x + 10, y + 25, {
+            size: 20,
+            weight: 'normal',
+            color: ThemeConfig.colors.text.primary,
+            glow: false
+        });
         
         // Nome e quantità
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '14px Arial';
-        ctx.fillText(item.name, x + 40, y + 20);
-        ctx.fillText(`x${item.amount}`, x + 40, y + 35);
+        ThemeUtils.drawText(ctx, item.name, x + 40, y + 20, {
+            size: 14,
+            weight: 'normal',
+            color: ThemeConfig.colors.text.primary,
+            glow: false
+        });
+        ThemeUtils.drawText(ctx, `x${item.amount}`, x + 40, y + 35, {
+            size: 14,
+            weight: 'normal',
+            color: ThemeConfig.colors.text.secondary,
+            glow: false
+        });
         
         // Prezzo
         const totalPrice = item.price * item.amount;
-        ctx.fillStyle = '#e94560';
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText(`${totalPrice.toLocaleString()} Credits`, x + 200, y + 25);
+        ThemeUtils.drawText(ctx, `${totalPrice.toLocaleString()} Credits`, x + 200, y + 25, {
+            size: 14,
+            weight: 'bold',
+            color: ThemeConfig.colors.accent.primary,
+            glow: true
+        });
         
-                    // Munizioni attuali (solo per laser e missili)
-            if (item.type === 'cannon') {
-                // Per i cannoni, mostra quanti sono equipaggiati
-                const equipped = this.game.ship.getEquippedCannons(item.key);
-                ctx.fillStyle = '#888888';
-                ctx.font = '12px Arial';
-                ctx.fillText(`Equipaggiati: ${equipped}`, x + 350, y + 25);
-            } else {
-                // Per laser e missili, mostra munizioni
-                const currentAmmo = this.game.ship.getAmmunition(item.type, item.key);
-                const maxAmmo = this.game.ship.maxAmmunition[item.type][item.key];
-                ctx.fillStyle = '#888888';
-                ctx.font = '12px Arial';
-                ctx.fillText(`Possedute: ${currentAmmo}/${maxAmmo}`, x + 350, y + 25);
-            }
+        // Munizioni attuali (solo per laser e missili)
+        if (item.type === 'cannon') {
+            // Per i cannoni, mostra quanti sono equipaggiati
+            const equipped = this.game.ship.getEquippedCannons(item.key);
+            ThemeUtils.drawText(ctx, `Equipaggiati: ${equipped}`, x + 350, y + 25, {
+                size: 12,
+                weight: 'normal',
+                color: ThemeConfig.colors.text.secondary,
+                glow: false
+            });
+        } else {
+            // Per laser e missili, mostra munizioni
+            const currentAmmo = this.game.ship.getAmmunition(item.type, item.key);
+            const maxAmmo = this.game.ship.maxAmmunition[item.type][item.key];
+            ThemeUtils.drawText(ctx, `Possedute: ${currentAmmo}/${maxAmmo}`, x + 350, y + 25, {
+                size: 12,
+                weight: 'normal',
+                color: ThemeConfig.colors.text.secondary,
+                glow: false
+            });
+        }
             
-            // Pulsante acquista
-            const buyButtonX = x + this.contentWidth - 120;
-            const buyButtonY = y + 15;
-            
-            // Controlla se può acquistare
-            const canAfford = this.playerData.credits >= totalPrice;
-            let canBuy = canAfford;
-            
-            // Per laser e missili, controlla anche le munizioni
-            if (item.type !== 'cannon') {
-                const currentAmmo = this.game.ship.getAmmunition(item.type, item.key);
-                const maxAmmo = this.game.ship.maxAmmunition[item.type][item.key];
-                const canFit = currentAmmo + item.amount <= maxAmmo;
-                canBuy = canAfford && canFit;
-            }
-            
-            ctx.fillStyle = canBuy ? '#4CAF50' : '#666666';
-            ctx.fillRect(buyButtonX, buyButtonY, 80, 25);
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(canBuy ? 'ACQUISTA' : 'NON DISP.', buyButtonX + 40, buyButtonY + 16);
-            ctx.textAlign = 'left';
+        // Pulsante acquista
+        const buyButtonX = x + this.contentWidth - 120;
+        const buyButtonY = y + 15;
+        
+        // Controlla se può acquistare
+        const canAfford = this.playerData.credits >= totalPrice;
+        let canBuy = canAfford;
+        
+        // Per laser e missili, controlla anche le munizioni
+        if (item.type !== 'cannon') {
+            const currentAmmo = this.game.ship.getAmmunition(item.type, item.key);
+            const maxAmmo = this.game.ship.maxAmmunition[item.type][item.key];
+            const canFit = currentAmmo + item.amount <= maxAmmo;
+            canBuy = canAfford && canFit;
+        }
+        
+        // Pulsante acquista con tema moderno
+        ThemeUtils.drawButton(ctx, buyButtonX, buyButtonY, 80, 25, {
+            text: canBuy ? 'ACQUISTA' : 'NON DISP.',
+            textSize: 12,
+            textWeight: 'bold',
+            textColor: ThemeConfig.colors.text.primary,
+            background: canBuy ? ThemeConfig.colors.accent.success : ThemeConfig.colors.background.disabled,
+            border: canBuy ? ThemeConfig.colors.border.success : ThemeConfig.colors.border.disabled,
+            hover: false,
+            glow: canBuy
+        });
     }
     
     // Metodo per disegnare il contenuto della categoria Clan
