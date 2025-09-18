@@ -6,7 +6,7 @@ export class Drone {
     constructor(x, y, droneType, parentShip) {
         this.x = x;
         this.y = y;
-        this.droneType = droneType; // 'flax' o 'iris'
+        this.droneType = (droneType || 'flax').toLowerCase(); // 'flax' o 'iris'
         this.parentShip = parentShip;
         
         // Proprietà fisiche
@@ -40,6 +40,24 @@ export class Drone {
         // Posizioni di formazione
         this.formationOffset = { x: 0, y: 0 };
         this.formationAngle = 0;
+
+        // Smooting per ridurre reattività al mouse/rotazione nave
+        this.smoothedAngle = 0; // in radianti (non più usato per calcolo offset)
+        this.smoothedShipX = x;
+        this.smoothedShipY = y;
+        this.angleSmoothing = 0.12; // 0..1 (più basso = più morbido)
+        this.centerSmoothing = 0.12; // 0..1 (più morbido)
+
+        // Heading della formazione: quanto ruota il cerchio dei droni attorno alla nave
+        this.formationHeading = 0; // radianti
+        this.maxRotationRateRad = 0.15; // rad/sec (molto più lento nel seguire la rotazione)
+        this.initializedHeading = false;
+
+        // Carica asset grafici IRIS (una sola volta per l'app)
+        if (this.droneType === 'iris') {
+            this.ensureIrisAssetsLoaded();
+        }
+        this._debugLoggedDraw = false;
     }
     
     // Aggiorna il drone
@@ -49,90 +67,40 @@ export class Drone {
         // Aggiorna effetti visivi
         this.engineGlow += this.engineGlowSpeed * deltaTime;
         
-        // Comportamento basato sullo stato
-        switch (this.behavior) {
-            case 'follow':
-                this.updateFollowBehavior();
-                break;
-            case 'attack':
-                this.updateAttackBehavior();
-                break;
-            case 'defend':
-                this.updateDefendBehavior();
-                break;
-            case 'patrol':
-                this.updatePatrolBehavior();
-                break;
-        }
+        // I droni sono estetici: seguono soltanto la formazione
+        this.updateFollowBehavior(deltaTime);
         
         // Muovi verso il target
         this.moveTowardsTarget();
         
-        // Aggiorna rotazione
-        this.updateRotation();
+        // Aggiorna rotazione estetica (indipendente dalla nave)
+        this.updateRotation(deltaTime);
     }
     
     // Comportamento di follow
-    updateFollowBehavior() {
+    updateFollowBehavior(deltaTime) {
         if (!this.parentShip) return;
         
-        // Posizione statica fissa nel cerchio con calcolo preciso
-        const angle = this.formationAngle + this.parentShip.rotation;
-        const formationDistance = 150; // Raggio fisso del cerchio aumentato
-        
-        // Calcolo preciso della posizione target
-        this.targetX = this.parentShip.x + Math.round(Math.cos(angle) * formationDistance * 100) / 100;
-        this.targetY = this.parentShip.y + Math.round(Math.sin(angle) * formationDistance * 100) / 100;
+        // Interpola solo il centro verso la nave (posizione). La formazione resta orientata al mondo
+        this.smoothedShipX = this.lerp(this.smoothedShipX, this.parentShip.x, this.centerSmoothing);
+        this.smoothedShipY = this.lerp(this.smoothedShipY, this.parentShip.y, this.centerSmoothing);
+
+        // Calcolo della posizione target con offset fisso in world space (nessuna rotazione con la nave)
+        this.targetX = this.smoothedShipX + Math.round(this.formationOffset.x * 100) / 100;
+        this.targetY = this.smoothedShipY + Math.round(this.formationOffset.y * 100) / 100;
         
         // Velocità fissa
-        this.speed = this.droneType === 'flax' ? 3 : 2; // Velocità aumentata per posizionamento più rapido
+        this.speed = this.droneType === 'flax' ? 3 : 2.5; // leggermente più veloce per seguire meglio
     }
     
     // Comportamento di attacco
-    updateAttackBehavior() {
-        if (!this.target) return;
-        
-        // Muovi verso il target
-        this.targetX = this.target.x;
-        this.targetY = this.target.y;
-        
-        // Attacca se abbastanza vicino
-        const distance = Math.sqrt(
-            Math.pow(this.x - this.target.x, 2) + 
-            Math.pow(this.y - this.target.y, 2)
-        );
-        
-        if (distance < 50 && Date.now() - this.lastAttackTime > this.attackCooldown) {
-            this.attack();
-        }
-    }
+    updateAttackBehavior() { /* disabilitato: droni estetici */ }
     
     // Comportamento di difesa
-    updateDefendBehavior() {
-        if (!this.parentShip) return;
-        
-        // Mantieni una distanza di sicurezza dalla nave
-        const distance = Math.sqrt(
-            Math.pow(this.x - this.parentShip.x, 2) + 
-            Math.pow(this.y - this.parentShip.y, 2)
-        );
-        
-        if (distance < 40) {
-            // Allontanati dalla nave
-            const angle = Math.atan2(this.y - this.parentShip.y, this.x - this.parentShip.x);
-            this.targetX = this.parentShip.x + Math.cos(angle) * 50;
-            this.targetY = this.parentShip.y + Math.sin(angle) * 50;
-        } else {
-            // Segui la nave
-            this.updateFollowBehavior();
-        }
-    }
+    updateDefendBehavior() { /* disabilitato: droni estetici */ }
     
     // Comportamento di pattugliamento
-    updatePatrolBehavior() {
-        // Implementazione futura per pattugliamento
-        this.updateFollowBehavior();
-    }
+    updatePatrolBehavior() { /* disabilitato: droni estetici */ }
     
     // Muovi verso il target
     moveTowardsTarget() {
@@ -154,43 +122,18 @@ export class Drone {
         }
     }
     
-    // Aggiorna rotazione
-    updateRotation() {
-        const dx = this.targetX - this.x;
-        const dy = this.targetY - this.y;
-        this.rotation = Math.atan2(dy, dx);
+    // Aggiorna rotazione (estetica): lieve spin costante per non copiare il mouse
+    updateRotation(deltaTime) {
+        const dt = Math.max(0.001, (deltaTime || 16) / 1000);
+        const spinSpeed = 0.4; // rad/s
+        this.rotation += spinSpeed * dt;
     }
     
     // Attacca il target
-    attack() {
-        if (!this.target) return;
-        
-        this.lastAttackTime = Date.now();
-        
-        // Calcola danno basato sull'equipaggiamento
-        let totalDamage = 0;
-        this.equippedItems.forEach(item => {
-            if (item && item.type === 'laser') {
-                totalDamage += item.damage || 0;
-            }
-        });
-        
-        if (totalDamage > 0) {
-            // Applica danno al target
-            if (this.target.takeDamage) {
-                this.target.takeDamage(totalDamage);
-            }
-            
-            // Effetto visivo di attacco
-            this.createAttackEffect();
-        }
-    }
+    attack() { /* disabilitato: droni estetici */ }
     
     // Crea effetto visivo di attacco
-    createAttackEffect() {
-        // Implementazione futura per effetti di attacco
-        console.log(`🚁 Drone ${this.droneType} attacca per ${this.calculateDamage()} danni!`);
-    }
+    createAttackEffect() { /* disabilitato: droni estetici */ }
     
     // Calcola danno totale
     calculateDamage() {
@@ -217,6 +160,10 @@ export class Drone {
     setFormationPosition(offsetX, offsetY, angle) {
         this.formationOffset = { x: offsetX, y: offsetY };
         this.formationAngle = angle;
+        // inizializza heading per evitare scatti iniziali
+        if (!this.initializedHeading && this.parentShip) {
+            this.formationHeading = this.parentShip.rotation || 0;
+        }
     }
     
     // Equipaggia oggetto
@@ -269,43 +216,120 @@ export class Drone {
         // Disegna effetti
         this.drawEffects(ctx);
         
-        // Disegna slot equipaggiati
-        this.drawEquippedItems(ctx);
+        // Non mostra slot/oggetti equipaggiati (droni estetici)
         
         ctx.restore();
     }
     
     // Disegna corpo del drone
     drawDroneBody(ctx) {
+        // Disegno IRIS bypassando l'atlas: uso griglia calcolata dall'immagine
+        if (this.droneType === 'iris' && Drone.irisTexture) {
+            const drawSize = this.size * 3.2;
+            const half = drawSize / 2;
+            if (Drone.irisGrid) {
+                const g = Drone.irisGrid;
+                const total = Math.max(1, g.total || (g.cols * g.rows));
+                const idx = Math.floor((Date.now() / 80) % total);
+                const col = idx % g.cols;
+                const row = Math.floor(idx / g.cols);
+                const sx = g.startX + col * g.step;
+                const sy = g.startY + row * g.step;
+                ctx.drawImage(Drone.irisTexture, sx, sy, g.frameW, g.frameH, -half, -half, drawSize, drawSize);
+            } else {
+                ctx.drawImage(Drone.irisTexture, 2, 2, 51, 51, -half, -half, drawSize, drawSize);
+            }
+            if (!this._debugLoggedDraw) {
+                this._debugLoggedDraw = true;
+                console.log('🟢 IRIS drawn', {
+                    textureLoaded: !!Drone.irisTexture,
+                    grid: Drone.irisGrid,
+                    size: this.size
+                });
+            }
+            return;
+        }
+
+        // Fallback vettoriale (FLAX o se sprite non caricato)
         const width = this.size;
         const height = this.size * 0.6;
-        
-        // Colori basati sul tipo
-        const bodyColor = this.droneType === 'flax' ? '#4a90e2' : '#ff6b6b';
-        const accentColor = this.droneType === 'flax' ? '#2c5aa0' : '#cc4444';
-        
-        // Corpo principale
+        const bodyColor = '#4a90e2';
+        const accentColor = '#2c5aa0';
         ctx.fillStyle = bodyColor;
         ctx.fillRect(-width/2, -height/2, width, height);
-        
-        // Bordo
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         ctx.strokeRect(-width/2, -height/2, width, height);
-        
-        // Sezione superiore
         ctx.fillStyle = accentColor;
         ctx.fillRect(-width/2 + 2, -height/2 + 2, width - 4, height * 0.3);
-        
-        // Ali
         ctx.fillStyle = bodyColor;
         ctx.fillRect(-width/2 - 2, -height/4, 2, height/2);
         ctx.fillRect(width/2, -height/4, 2, height/2);
-        
-        // Motore (con effetto glow)
         const glowIntensity = Math.sin(this.engineGlow) * 0.5 + 0.5;
         ctx.fillStyle = `rgba(0, 255, 255, ${glowIntensity})`;
         ctx.fillRect(-width/2 + 2, height/2 - 3, width - 4, 2);
+    }
+
+    // Utility: linear interpolation
+    lerp(from, to, t) {
+        return from + (to - from) * t;
+    }
+    
+    // Utility: angular interpolation in radianti
+    lerpAngle(from, to, t) {
+        const diff = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+        return from + diff * t;
+    }
+
+    // Carica sprite e atlas IRIS (statico)
+    ensureIrisAssetsLoaded() {
+        if (Drone.irisFrames || Drone.irisLoading) return;
+        Drone.irisLoading = true;
+        
+        // Immagine (bypass atlas: useremo una griglia fissa)
+        const img = new Image();
+        const imgUrl = new URL('uav/ares.png', window.location.href).href;
+        console.log('🟡 Loading IRIS image from', imgUrl);
+        img.src = imgUrl;
+        img.onload = () => {
+            Drone.irisTexture = img;
+            console.log('🟢 IRIS image loaded', { width: img.width, height: img.height });
+            // Calcola griglia: frame 51x51 con step 53 e padding 2 (dalla tua immagine)
+            const frameW = 51, frameH = 51, pad = 2, step = 53;
+            const cols = Math.max(1, Math.floor((img.width - pad) / step));
+            const rows = Math.max(1, Math.floor((img.height - pad) / step));
+            Drone.irisGrid = { startX: pad, startY: pad, frameW, frameH, step, cols, rows, total: cols * rows };
+            console.log('🟢 IRIS grid computed', Drone.irisGrid);
+            Drone.irisFrames = null; // non usiamo l'atlas
+            Drone.irisLoading = false;
+        };
+        img.onerror = (e) => { console.warn('🔴 IRIS image failed to load:', imgUrl, e); Drone.irisLoading = false; };
+    }
+
+    // Parser minimale per ares.atlas (frame IRISHxxxx con xy e size)
+    parseIrisAtlas(text) {
+        const lines = text.split(/\r?\n/);
+        const frames = [];
+        let current = null;
+        for (const raw of lines) {
+            const line = raw.trim();
+            if (!line) continue;
+            if (/^IRISH\d+$/i.test(line)) {
+                if (current && current.w && current.h) frames.push(current);
+                current = { name: line, x: 0, y: 0, w: 0, h: 0 };
+                continue;
+            }
+            if (!current) continue;
+            if (line.startsWith('xy:')) {
+                const m = line.match(/xy:\s*(\d+)\s*,\s*(\d+)/);
+                if (m) { current.x = parseInt(m[1]); current.y = parseInt(m[2]); }
+            } else if (line.startsWith('size:')) {
+                const m = line.match(/size:\s*(\d+)\s*,\s*(\d+)/);
+                if (m) { current.w = parseInt(m[1]); current.h = parseInt(m[2]); }
+            }
+        }
+        if (current && current.w && current.h) frames.push(current);
+        return frames;
     }
     
     // Disegna effetti
@@ -322,21 +346,6 @@ export class Drone {
         }
     }
     
-    // Disegna oggetti equipaggiati
-    drawEquippedItems(ctx) {
-        this.equippedItems.forEach((item, index) => {
-            if (item) {
-                const slotX = (index - 0.5) * 8;
-                const slotY = -this.size/2 - 8;
-                
-                // Slot
-                ctx.fillStyle = '#333333';
-                ctx.fillRect(slotX - 2, slotY - 3, 4, 6);
-                
-                // Oggetto
-                ctx.fillStyle = item.type === 'laser' ? '#ffff00' : '#00ff00';
-                ctx.fillRect(slotX - 1, slotY - 2, 2, 4);
-            }
-        });
-    }
+    // Disegna oggetti equipaggiati (disabilitato per droni estetici)
+    drawEquippedItems(ctx) { /* no-op */ }
 }

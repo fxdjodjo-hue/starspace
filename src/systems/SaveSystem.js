@@ -17,18 +17,31 @@ export class SaveSystem {
     }
     
     /**
+     * Determina la chiave di salvataggio attuale in base all'utente loggato
+     */
+    resolveSlotKey(explicitSlotKey) {
+        if (explicitSlotKey) return explicitSlotKey;
+        const auth = this.game?.authSystem;
+        if (auth && auth.isLoggedIn && typeof auth.getUserSaveKey === 'function') {
+            return auth.getUserSaveKey();
+        }
+        return 'main';
+    }
+    
+    /**
      * Salva tutti i dati del gioco
      */
     save(slotKey = 'main') {
         try {
+            const resolvedKey = this.resolveSlotKey(slotKey);
             const saveData = this.collectSaveData();
             const saveDataString = JSON.stringify(saveData);
             
             // Salva i dati principali
-            localStorage.setItem(`mmorpg_save_${slotKey}`, saveDataString);
+            localStorage.setItem(`mmorpg_save_${resolvedKey}`, saveDataString);
             
             // Crea backup
-            this.createBackup(saveData);
+            this.createBackup(saveData, resolvedKey);
             
             this.lastSaveTime = Date.now();
             console.log('💾 Gioco salvato con successo');
@@ -53,7 +66,8 @@ export class SaveSystem {
      */
     load(slotKey = 'main') {
         try {
-            const saveDataString = localStorage.getItem(`mmorpg_save_${slotKey}`);
+            const resolvedKey = this.resolveSlotKey(slotKey);
+            const saveDataString = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
             if (!saveDataString) {
                 console.log('📁 Nessun salvataggio trovato');
                 return false;
@@ -91,7 +105,8 @@ export class SaveSystem {
      */
     hasSave(slotKey = 'main') {
         try {
-            const saveData = localStorage.getItem(`mmorpg_save_${slotKey}`);
+            const resolvedKey = this.resolveSlotKey(slotKey);
+            const saveData = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
             return saveData !== null;
         } catch (error) {
             console.error('❌ Errore controllo salvataggio:', error);
@@ -104,7 +119,8 @@ export class SaveSystem {
      */
     getSaveData(slotKey = 'main') {
         try {
-            const saveData = localStorage.getItem(`mmorpg_save_${slotKey}`);
+            const resolvedKey = this.resolveSlotKey(slotKey);
+            const saveData = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
             if (saveData) {
                 return JSON.parse(saveData);
             }
@@ -120,8 +136,9 @@ export class SaveSystem {
      */
     deleteSave(slotKey = 'main') {
         try {
-            localStorage.removeItem(`mmorpg_save_${slotKey}`);
-            console.log(`🗑️ Salvataggio ${slotKey} eliminato`);
+            const resolvedKey = this.resolveSlotKey(slotKey);
+            localStorage.removeItem(`mmorpg_save_${resolvedKey}`);
+            console.log(`🗑️ Salvataggio ${resolvedKey} eliminato`);
             return true;
         } catch (error) {
             console.error('❌ Errore eliminazione salvataggio:', error);
@@ -136,11 +153,16 @@ export class SaveSystem {
         const ship = this.game.ship;
         const world = this.game.world;
         const mapManager = this.game.mapManager;
+        const auth = this.game?.authSystem;
+        const currentUser = auth && auth.isLoggedIn ? auth.currentUser : null;
         
         return {
             version: this.saveVersion,
             timestamp: Date.now(),
             player: {
+                // Identità
+                userId: currentUser?.id || null,
+                nickname: currentUser?.nickname || ship.playerName || null,
                 // Dati nave
                 x: ship.x,
                 y: ship.y,
@@ -205,6 +227,18 @@ export class SaveSystem {
         if (saveData.player) {
             const player = saveData.player;
             
+            // Se presente, sincronizza nickname con sistemi correlati
+            if (player.nickname) {
+                if (this.game.playerProfile && typeof this.game.playerProfile.setNickname === 'function') {
+                    this.game.playerProfile.setNickname(player.nickname);
+                }
+                if (this.game.ship && typeof this.game.ship.setPlayerName === 'function') {
+                    this.game.ship.setPlayerName(player.nickname);
+                } else if (this.game.ship) {
+                    this.game.ship.playerName = player.nickname;
+                }
+            }
+
             // Posizione
             ship.x = player.x || ship.x;
             ship.y = player.y || ship.y;
@@ -271,6 +305,17 @@ export class SaveSystem {
             if (saveData.inventory.equipment) {
                 this.game.inventory.equipment = saveData.inventory.equipment;
             }
+            // Assicurati che l'array UAV esista
+            if (!this.game.inventory.equipment.uav) {
+                this.game.inventory.equipment.uav = [];
+            }
+            // Sincronizza i droni runtime con l'inventario ripristinato
+            if (this.game.droneManager && typeof this.game.droneManager.reloadDronesFromInventory === 'function') {
+                this.game.droneManager.reloadDronesFromInventory();
+                if (this.game.droneManager.repositionDrones) {
+                    this.game.droneManager.repositionDrones();
+                }
+            }
         }
         
         // Ripristina fazione
@@ -282,13 +327,14 @@ export class SaveSystem {
     /**
      * Crea un backup del salvataggio
      */
-    createBackup(saveData) {
+    createBackup(saveData, slotKey = 'main') {
         try {
-            const backupKey = `${this.saveKey}_backup_${Date.now()}`;
+            const resolvedKey = this.resolveSlotKey(slotKey);
+            const backupKey = `${this.saveKey}_${resolvedKey}_backup_${Date.now()}`;
             localStorage.setItem(backupKey, JSON.stringify(saveData));
             
             // Pulisci i backup vecchi
-            this.cleanOldBackups();
+            this.cleanOldBackups(resolvedKey);
         } catch (error) {
             console.warn('⚠️ Impossibile creare backup:', error);
         }
@@ -297,11 +343,12 @@ export class SaveSystem {
     /**
      * Pulisce i backup vecchi mantenendo solo gli ultimi N
      */
-    cleanOldBackups() {
+    cleanOldBackups(slotKey = 'main') {
+        const resolvedKey = this.resolveSlotKey(slotKey);
         const backupKeys = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith(`${this.saveKey}_backup_`)) {
+            if (key && key.startsWith(`${this.saveKey}_${resolvedKey}_backup_`)) {
                 backupKeys.push(key);
             }
         }
@@ -325,7 +372,7 @@ export class SaveSystem {
     startAutoSave() {
         if (this.isAutoSaveEnabled) {
             setInterval(() => {
-                this.save();
+                this.save(this.resolveSlotKey());
             }, this.autoSaveInterval);
         }
     }
@@ -335,7 +382,7 @@ export class SaveSystem {
      */
     setupBeforeUnload() {
         window.addEventListener('beforeunload', () => {
-            this.save();
+            this.save(this.resolveSlotKey());
         });
     }
     
@@ -346,36 +393,33 @@ export class SaveSystem {
         this.isAutoSaveEnabled = enabled;
     }
     
-    /**
-     * Verifica se esiste un salvataggio
-     */
-    hasSave() {
-        return localStorage.getItem(this.saveKey) !== null;
-    }
+    
     
     /**
      * Elimina il salvataggio corrente
      */
-    deleteSave() {
-        localStorage.removeItem(this.saveKey);
+    deleteSaveCurrent() {
+        const resolvedKey = this.resolveSlotKey();
+        this.deleteSave(resolvedKey);
         
-        // Elimina anche i backup
+        // Elimina anche i backup per questo slot
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith(`${this.saveKey}_backup_`)) {
+            if (key && key.startsWith(`${this.saveKey}_${resolvedKey}_backup_`)) {
                 localStorage.removeItem(key);
             }
         }
         
-        console.log('🗑️ Salvataggio eliminato');
+        console.log(`🗑️ Salvataggio ${resolvedKey} eliminato`);
         return true;
     }
     
     /**
      * Ottiene informazioni sui salvataggi disponibili
      */
-    getSaveInfo() {
-        const saveDataString = localStorage.getItem(this.saveKey);
+    getSaveInfo(slotKey = 'main') {
+        const resolvedKey = this.resolveSlotKey(slotKey);
+        const saveDataString = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
         if (!saveDataString) return null;
         
         try {
@@ -384,7 +428,7 @@ export class SaveSystem {
                 version: saveData.version,
                 timestamp: saveData.timestamp,
                 playerLevel: saveData.player?.level || 1,
-                playerName: saveData.player?.playerName || 'Unknown',
+                playerName: saveData.player?.nickname || saveData.player?.playerName || 'Unknown',
                 credits: saveData.player?.credits || 0,
                 map: saveData.world?.currentMap || 'x1'
             };

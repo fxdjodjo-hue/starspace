@@ -159,6 +159,7 @@ class Game {
         // Test globale per verificare se gli eventi da tastiera funzionano
         document.addEventListener('keydown', (e) => {
             console.log('🔑 GLOBAL KEYDOWN TEST:', e.code, e.key);
+            
         });
         
         // Quest Tracker (mini pannello per quest attive)
@@ -183,6 +184,7 @@ class Game {
         // Nuovo sistema unificato icone UI
         this.uiManager = new UIManager(this);
         this.initUIManager();
+        
         
         // Il logout è ora gestito dalla HomePanel
         
@@ -561,6 +563,7 @@ class Game {
         
         // Aggiorna il nuovo sistema unificato icone UI
         this.uiManager.update();
+        
         
         // Gestisce mouse move per tooltip
         this.uiManager.handleMouseMove(mousePos.x, mousePos.y);
@@ -1099,6 +1102,11 @@ class Game {
         }
         
         // Controlli per il sistema di salvataggio
+        // Tasto F3 per debug nave
+        if (this.input.isKeyJustPressed('F3')) {
+            this.ship.toggleDebug();
+        }
+        
         // Tasto F5 per salvare
         if (this.input.isKeyJustPressed('F5')) {
             this.saveSystem.save();
@@ -1340,9 +1348,16 @@ class Game {
         // Disegna la nave
         this.renderer.drawShip(this.ship, this.camera);
         
+        // Disegna droni del DroneManager (sprite iris)
+        if (this.droneManager) {
+            this.droneManager.draw(this.ctx, this.camera);
+        }
+        
+
         // Disegna i droni UAV semplici
         if (this.inventory && this.inventory.equipment && this.inventory.equipment.uav && this.inventory.equipment.uav.length > 0) {
-            this.renderer.drawUAVDrones(this.ship, this.camera, this.inventory);
+            // Sostituito dai droni gestiti dal DroneManager (sprite iris)
+            // this.renderer.drawUAVDrones(this.ship, this.camera, this.inventory);
         }
         
         // Sistema droni semplificato - gestito dal Renderer

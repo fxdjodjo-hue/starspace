@@ -68,17 +68,25 @@ export class Camera {
     
     // Converte coordinate mondo in coordinate schermo
     worldToScreen(worldX, worldY) {
+        // Applica lo zoom alle coordinate
+        const zoomedX = (worldX - this.x) * this.zoom;
+        const zoomedY = (worldY - this.y) * this.zoom;
+        
         return {
-            x: worldX - this.x,
-            y: worldY - this.y
+            x: zoomedX,
+            y: zoomedY
         };
     }
     
     // Converte coordinate schermo in coordinate mondo
     screenToWorld(screenX, screenY) {
+        // Applica l'inverso dello zoom alle coordinate
+        const unzoomedX = screenX / this.zoom;
+        const unzoomedY = screenY / this.zoom;
+        
         return {
-            x: screenX + this.x,
-            y: screenY + this.y
+            x: unzoomedX + this.x,
+            y: unzoomedY + this.y
         };
     }
     
@@ -101,9 +109,11 @@ export class Camera {
     // Controlla se un oggetto è visibile sullo schermo
     isVisible(worldX, worldY, margin = 0) {
         const screen = this.worldToScreen(worldX, worldY);
-        return screen.x >= -margin && 
-               screen.x <= this.width + margin && 
-               screen.y >= -margin && 
-               screen.y <= this.height + margin;
+        // Aggiungi margine per lo zoom
+        const zoomMargin = margin * this.zoom;
+        return screen.x >= -zoomMargin && 
+               screen.x <= this.width + zoomMargin && 
+               screen.y >= -zoomMargin && 
+               screen.y <= this.height + zoomMargin;
     }
 }

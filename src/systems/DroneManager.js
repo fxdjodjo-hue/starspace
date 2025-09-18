@@ -11,25 +11,19 @@ export class DroneManager {
         this.drones = [];
         this.maxDrones = 8;
         
-        // Formazioni predefinite
-        this.formations = {
-            follow: this.createFollowFormation(),
-            attack: this.createAttackFormation(),
-            defend: this.createDefendFormation(),
-            patrol: this.createPatrolFormation()
-        };
-        
-        this.currentFormation = 'follow';
+        // Formazione unica circolare
+        this.formation = this.createFormation();
         
         // Carica droni esistenti dall'inventario
         this.loadDronesFromInventory();
+        
         console.log('🚁 DroneManager inizializzato con successo!');
     }
     
-    // Crea formazione di follow
-    createFollowFormation() {
+    // Crea formazione circolare
+    createFormation() {
         // Formazione a cerchio con 8 posizioni ben distinte e precise
-        const radius = 150; // Raggio del cerchio aumentato per maggiore separazione
+        const radius = 200; // Raggio del cerchio aumentato
         const positions = [];
         
         for (let i = 0; i < 8; i++) {
@@ -38,72 +32,6 @@ export class DroneManager {
             const x = Math.round(Math.cos(angle) * radius * 100) / 100; // Arrotondamento per precisione
             const y = Math.round(Math.sin(angle) * radius * 100) / 100;
             const droneAngle = (angle * 180 / Math.PI) + 90; // Angolo del drone
-            
-            positions.push({
-                x: x,
-                y: y,
-                angle: droneAngle
-            });
-        }
-        
-        return positions;
-    }
-    
-    // Crea formazione di attacco
-    createAttackFormation() {
-        // Formazione a cerchio più compatta per l'attacco
-        const radius = 80; // Raggio più piccolo per attacco
-        const positions = [];
-        
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * 360 / 8) * (Math.PI / 180);
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            const droneAngle = (angle * 180 / Math.PI) + 90;
-            
-            positions.push({
-                x: x,
-                y: y,
-                angle: droneAngle
-            });
-        }
-        
-        return positions;
-    }
-    
-    // Crea formazione di difesa
-    createDefendFormation() {
-        // Formazione a cerchio più ampia per la difesa
-        const radius = 150; // Raggio più grande per difesa
-        const positions = [];
-        
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * 360 / 8) * (Math.PI / 180);
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            const droneAngle = (angle * 180 / Math.PI) + 90;
-            
-            positions.push({
-                x: x,
-                y: y,
-                angle: droneAngle
-            });
-        }
-        
-        return positions;
-    }
-    
-    // Crea formazione di pattugliamento
-    createPatrolFormation() {
-        // Formazione a cerchio molto ampia per pattugliamento
-        const radius = 200; // Raggio molto grande per pattugliamento
-        const positions = [];
-        
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * 360 / 8) * (Math.PI / 180);
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            const droneAngle = (angle * 180 / Math.PI) + 90;
             
             positions.push({
                 x: x,
@@ -129,33 +57,22 @@ export class DroneManager {
             return false;
         }
         
-        // Controlla se esiste già un drone con lo stesso ID
-        const existingDrone = this.drones.find(d => d.id === droneData.id);
-        if (existingDrone) {
-            console.log('🚁 Drone già esistente, non aggiungo duplicato:', droneData.id);
-            return false;
-        }
-        
-        // Controlla anche per tipo e posizione per evitare duplicati visivi
-        const similarDrone = this.drones.find(d => 
-            d.droneType === droneData.droneType && 
-            Math.abs(d.x - this.game.ship.x) < 50 && 
-            Math.abs(d.y - this.game.ship.y) < 50
-        );
-        if (similarDrone) {
-            console.log('🚁 Drone simile già presente in posizione vicina:', droneData.droneType);
-            return false;
-        }
+        // Non bloccare più duplicati: gli UAV possono essere multipli dello stesso tipo
         
         const drone = new Drone(
             this.game.ship.x,
             this.game.ship.y,
-            droneData.droneType,
+            'iris',
             this.game.ship
         );
+        // Forza tipo IRIS per rimpiazzare i quadrati e caricare gli sprite
+        drone.droneType = 'iris';
+        if (typeof drone.ensureIrisAssetsLoaded === 'function') {
+            drone.ensureIrisAssetsLoaded();
+        }
         
-        // Assegna un ID univoco
-        drone.id = droneData.id || `drone_${Date.now()}_${Math.random()}`;
+        // Assegna un ID univoco, preservando quello passato da inventario/acquisto
+        drone.id = (droneData && droneData.id) ? droneData.id : `drone_${Date.now()}_${Math.random()}`;
         
         // Imposta equipaggiamento
         if (droneData.equippedItems) {
@@ -164,14 +81,23 @@ export class DroneManager {
         
         // Imposta posizione di formazione
         const formationIndex = this.drones.length;
-        if (formationIndex < this.formations[this.currentFormation].length) {
-            const formation = this.formations[this.currentFormation][formationIndex];
+        if (formationIndex < this.formation.length) {
+            const formation = this.formation[formationIndex];
             drone.setFormationPosition(formation.x, formation.y, formation.angle);
         }
         
         this.drones.push(drone);
+        // Mantieni la formazione aggiornata ad ogni aggiunta
+        this.updateFormations();
         console.log(`🚁 Drone ${droneData.droneType} aggiunto! Totale: ${this.drones.length}/${this.maxDrones}`);
         console.log('🚁 Drones attivi:', this.drones.map(d => `${d.droneType} (${d.id}) at (${d.x}, ${d.y})`));
+        console.log('🚁 Drone appena creato:', {
+            id: drone.id,
+            type: drone.droneType,
+            position: { x: drone.x, y: drone.y },
+            formationOffset: { x: drone.formationOffset.x, y: drone.formationOffset.y },
+            isActive: drone.isActive
+        });
         return true;
     }
     
@@ -195,49 +121,39 @@ export class DroneManager {
         // Aggiorna formazioni se necessario
         this.updateFormations();
         
-        // Sistema di comunicazione tra droni disabilitato per posizioni statiche
-        // this.updateDroneCommunication();
+        // Comunicazione/reattività disabilitata: droni solo estetici
     }
     
     // Aggiorna posizioni di formazione
     updateFormations() {
-        const formation = this.formations[this.currentFormation];
-        
         this.drones.forEach((drone, index) => {
-            if (index < formation.length) {
-                const pos = formation[index];
+            if (index < this.formation.length) {
+                const pos = this.formation[index];
+                // Salva sia l'offset di base (raggio) che l'angolo della formazione
                 drone.setFormationPosition(pos.x, pos.y, pos.angle);
             }
         });
     }
     
-    // Cambia formazione
-    setFormation(formationName) {
-        if (this.formations[formationName]) {
-            this.currentFormation = formationName;
-            this.updateFormations();
-            console.log(`🚁 Formazione cambiata a: ${formationName}`);
-        }
-    }
     
-    // Imposta comportamento per tutti i droni
+    // Imposta comportamento per tutti i droni (droni estetici -> sempre 'follow')
     setBehavior(behavior) {
         this.drones.forEach(drone => {
-            drone.setBehavior(behavior);
+            drone.setBehavior('follow');
         });
     }
     
-    // Imposta target per tutti i droni
+    // Imposta target per tutti i droni (no-op per droni estetici)
     setTarget(target) {
         this.drones.forEach(drone => {
-            drone.setTarget(target);
+            drone.setTarget(null);
         });
     }
     
-    // Attacca target
+    // Attacca target (disabilitato)
     attackTarget(target) {
-        this.setBehavior('attack');
-        this.setTarget(target);
+        this.setBehavior('follow');
+        this.setTarget(null);
     }
     
     // Segui la nave
@@ -246,21 +162,21 @@ export class DroneManager {
         this.setTarget(null);
     }
     
-    // Difendi la nave
+    // Difendi la nave (disabilitato)
     defendShip() {
-        this.setBehavior('defend');
+        this.setBehavior('follow');
         this.setTarget(null);
     }
     
-    // Pattuglia area
+    // Pattuglia area (disabilitato)
     patrolArea() {
-        this.setBehavior('patrol');
+        this.setBehavior('follow');
         this.setTarget(null);
     }
     
     // Disegna tutti i droni
     draw(ctx, camera) {
-        this.drones.forEach((drone, index) => {
+        this.drones.forEach(drone => {
             drone.draw(ctx, camera);
         });
     }
@@ -470,18 +386,18 @@ export class DroneManager {
     // Forza riposizionamento corretto di tutti i droni
     repositionDrones() {
         console.log('🚁 Riposizionando tutti i droni...');
-        const formation = this.formations[this.currentFormation];
         
         this.drones.forEach((drone, index) => {
-            if (index < formation.length) {
-                const pos = formation[index];
+            if (index < this.formation.length) {
+                const pos = this.formation[index];
                 drone.setFormationPosition(pos.x, pos.y, pos.angle);
+                
                 
                 // Forza posizionamento immediato
                 if (this.game && this.game.ship) {
                     const angle = pos.angle + this.game.ship.rotation;
-                    drone.targetX = this.game.ship.x + Math.round(Math.cos(angle * Math.PI / 180) * 150 * 100) / 100;
-                    drone.targetY = this.game.ship.y + Math.round(Math.sin(angle * Math.PI / 180) * 150 * 100) / 100;
+                    drone.targetX = this.game.ship.x + Math.round(Math.cos(angle * Math.PI / 180) * 200 * 100) / 100;
+                    drone.targetY = this.game.ship.y + Math.round(Math.sin(angle * Math.PI / 180) * 200 * 100) / 100;
                     drone.x = drone.targetX;
                     drone.y = drone.targetY;
                 }

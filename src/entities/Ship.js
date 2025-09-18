@@ -9,6 +9,7 @@ import { TrailSystem } from '../systems/TrailSystem.js';
 import { RepairEffect } from '../systems/RepairEffect.js';
 import { ShieldEffect } from '../systems/ShieldEffect.js';
 import { MISSILE_CONFIG } from '../utils/Constants.js';
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
 
 export class Ship {
     constructor(x, y, size = 40, game = null) {
@@ -51,6 +52,9 @@ export class Ship {
         this.floatingOffset = 0;
         this.floatingSpeed = 0.02;
         this.floatingAmplitude = 2; // Ampiezza della fluttuazione in pixel
+        
+        // Sistema debug
+        this.debugMode = false;
 
         
         // Sistema di combattimento con proiettili
@@ -364,6 +368,11 @@ export class Ship {
         this.projectiles.forEach(projectile => {
             projectile.draw(ctx, camera);
         });
+        
+        // Disegna debug info se abilitato
+        if (this.debugMode) {
+            this.drawDebugInfo(ctx, camera);
+        }
     }
     
     // Sistema di combattimento
@@ -928,56 +937,129 @@ export class Ship {
         }
     }
     
-    // Disegna barre HP e Scudo minimali
+    // Disegna barre HP e Scudo con tema unificato
     drawHealthBar(ctx, camera) {
         const barX = this.x - camera.x - 40;
         const barY = this.y - camera.y - this.size/2 - 40;
         const barWidth = 80;
         const barHeight = 8;
-        const barSpacing = 0;
+        const barSpacing = 2;
         
-        // SCUDO - Barra superiore
+        // Usa il tema importato
+        
+        // SCUDO - Barra superiore moderna
         const shieldPercentage = this.shield / this.maxShield;
+        ThemeUtils.drawProgressBar(ctx, barX, barY, barWidth, barHeight, shieldPercentage, {
+            variant: 'info',
+            showText: false
+        });
         
-        // Sfondo scudo
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(barX, barY, barWidth, barHeight);
+        // Testo scudo con effetto glow
+        ThemeUtils.drawText(ctx, `${Math.floor(this.shield)}/${this.maxShield}`, barX + barWidth/2, barY + barHeight/2, {
+            color: ThemeConfig.colors.text.accent,
+            size: ThemeConfig.typography.sizes.xs,
+            weight: ThemeConfig.typography.weights.bold,
+            align: 'center',
+            baseline: 'middle',
+            glow: true
+        });
         
-        // Barra scudo attiva
-        if (shieldPercentage > 0) {
-            ctx.fillStyle = '#4A90E2';
-            ctx.fillRect(barX, barY, barWidth * shieldPercentage, barHeight);
-        }
-        
-        // HP - Barra inferiore
+        // HP - Barra inferiore moderna
         const hpBarY = barY + barHeight + barSpacing;
         const hpPercentage = this.hp / this.maxHP;
+        const hpVariant = hpPercentage > 0.6 ? 'success' : hpPercentage > 0.3 ? 'warning' : 'danger';
         
-        // Sfondo HP
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(barX, hpBarY, barWidth, barHeight);
+        ThemeUtils.drawProgressBar(ctx, barX, hpBarY, barWidth, barHeight, hpPercentage, {
+            variant: hpVariant,
+            showText: false
+        });
         
-        // Barra HP attiva
-        if (hpPercentage > 0) {
-            ctx.fillStyle = hpPercentage > 0.3 ? '#7ED321' : '#F5A623';
-            ctx.fillRect(barX, hpBarY, barWidth * hpPercentage, barHeight);
-        }
+        // Testo HP con effetto glow
+        ThemeUtils.drawText(ctx, `${Math.floor(this.hp)}/${this.maxHP}`, barX + barWidth/2, hpBarY + barHeight/2, {
+            color: hpVariant === 'success' ? ThemeConfig.colors.text.success : 
+                   hpVariant === 'warning' ? ThemeConfig.colors.text.warning : 
+                   ThemeConfig.colors.text.danger,
+            size: ThemeConfig.typography.sizes.xs,
+            weight: ThemeConfig.typography.weights.bold,
+            align: 'center',
+            baseline: 'middle',
+            glow: true
+        });
+    }
+    
+    // Disegna debug info a schermo
+    drawDebugInfo(ctx, camera) {
+        const debugX = 20;
+        const debugY = 100; // Spostato più in basso
+        const lineHeight = 20;
+        const fontSize = 14;
         
-        // Testo dentro le barre
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 9px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        // Sfondo semi-trasparente per il debug
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(debugX - 10, debugY - 10, 300, 200);
         
-        // Testo scudo (dentro la barra)
-        if (barWidth * shieldPercentage > 25) { // Solo se c'è abbastanza spazio
-            ctx.fillText(`${Math.floor(this.shield)}/${this.maxShield}`, barX + barWidth/2, barY + barHeight/2);
-        }
+        // Bordo del debug
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(debugX - 10, debugY - 10, 300, 200);
         
-        // Testo HP (dentro la barra)
-        if (barWidth * hpPercentage > 25) { // Solo se c'è abbastanza spazio
-            ctx.fillText(`${Math.floor(this.hp)}/${this.maxHP}`, barX + barWidth/2, hpBarY + barHeight/2);
-        }
+        // Testo debug
+        ctx.fillStyle = '#00ff00';
+        ctx.font = `bold ${fontSize}px Arial`;
+        ctx.textAlign = 'left';
+        
+        let y = debugY;
+        
+        // Titolo
+        ctx.fillText('🚀 SHIP DEBUG', debugX, y);
+        y += lineHeight;
+        
+        // HP e Scudo
+        ctx.fillText(`HP: ${Math.floor(this.hp)}/${this.maxHP}`, debugX, y);
+        y += lineHeight;
+        ctx.fillText(`Shield: ${Math.floor(this.shield)}/${this.maxShield}`, debugX, y);
+        y += lineHeight;
+        
+        // Velocità
+        ctx.fillText(`Speed: ${this.speed.toFixed(1)}`, debugX, y);
+        y += lineHeight;
+        
+        // Danno totale laser
+        const totalDamage = this.getTotalLaserDamage();
+        ctx.fillText(`Damage: ${totalDamage}`, debugX, y);
+        y += lineHeight;
+        
+        // Laser equipaggiati
+        ctx.fillText('Lasers:', debugX, y);
+        y += lineHeight;
+        Object.entries(this.equippedLasers).forEach(([type, count]) => {
+            if (count > 0) {
+                ctx.fillText(`  ${type}: ${count}`, debugX + 10, y);
+                y += lineHeight;
+            }
+        });
+        
+        // Danno per laser
+        y += 5;
+        ctx.fillText('Laser Damage:', debugX, y);
+        y += lineHeight;
+        Object.entries(this.laserDamage).forEach(([type, damage]) => {
+            const count = this.equippedLasers[type] || 0;
+            if (count > 0) {
+                ctx.fillText(`  ${type}: ${damage} x${count} = ${damage * count}`, debugX + 10, y);
+                y += lineHeight;
+            }
+        });
+        
+        // Moltiplicatore munizioni
+        const multiplier = this.selectedLaser === 'sab' ? 0 : parseInt(this.selectedLaser.slice(1)) || 1;
+        ctx.fillText(`Multiplier: ${this.selectedLaser} (x${multiplier})`, debugX, y);
+        y += lineHeight;
+        
+        // Danno finale
+        const finalDamage = totalDamage * multiplier;
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText(`FINAL DAMAGE: ${finalDamage}`, debugX, y);
     }
     
     // Disegna target selezionato
@@ -1177,6 +1259,11 @@ export class Ship {
         let totalDamage = 0;
         for (const [laserType, count] of Object.entries(this.equippedLasers)) {
             totalDamage += count * this.laserDamage[laserType];
+        }
+        
+        // Aggiungi bonus danno dai droni UAV
+        if (this.droneDamageBonus) {
+            totalDamage += this.droneDamageBonus;
         }
         
         // Moltiplica per il tipo di munizioni selezionato
@@ -1614,5 +1701,24 @@ export class Ship {
             current: this.getResource('starEnergy'),
             max: this.starEnergyConfig.max
         };
+    }
+    
+    // Metodo per attivare/disattivare il debug
+    toggleDebug() {
+        this.debugMode = !this.debugMode;
+        console.log('🔧 Debug mode:', this.debugMode ? 'ON' : 'OFF');
+        return this.debugMode;
+    }
+    
+    // Metodo per abilitare il debug
+    enableDebug() {
+        this.debugMode = true;
+        console.log('🔧 Debug mode: ON');
+    }
+    
+    // Metodo per disabilitare il debug
+    disableDebug() {
+        this.debugMode = false;
+        console.log('🔧 Debug mode: OFF');
     }
 }

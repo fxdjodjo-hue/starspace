@@ -1900,9 +1900,10 @@ export class HomePanel extends UIComponent {
                         equippedItems: new Array(item.slots).fill(null) // Inizializza slot vuoti
                     };
                     
-                    // Aggiungi alla tab UAV dell'inventario
+                    // Aggiungi alla tab UAV dell'inventario (istanze uniche con ID univoco)
                     for (let i = 0; i < quantity; i++) {
-                        this.game.inventory.equipment.uav.push(droneData);
+                        const invDrone = { ...droneData, id: `${droneData.droneType}_${Date.now()}_${i}` };
+                        this.game.inventory.equipment.uav.push(invDrone);
                     }
                     
                     // Crea droni reali nel DroneManager
@@ -1914,6 +1915,16 @@ export class HomePanel extends UIComponent {
                                 id: `${droneData.droneType}_${Date.now()}_${i}`
                             };
                             this.game.droneManager.addDrone(uniqueDroneData);
+                        }
+                        if (this.game.droneManager.updateFormations) {
+                            this.game.droneManager.updateFormations();
+                        }
+                        // Mantieni coerenza e posizionamento
+                        if (this.game.droneManager.removeDuplicates) {
+                            this.game.droneManager.removeDuplicates();
+                        }
+                        if (this.game.droneManager.repositionDrones) {
+                            this.game.droneManager.repositionDrones();
                         }
                     } else {
                         console.log('🚁 DroneManager non disponibile, creando al volo...');
@@ -1929,6 +1940,15 @@ export class HomePanel extends UIComponent {
                                     id: `${droneData.droneType}_${Date.now()}_${i}`
                                 };
                                 this.game.droneManager.addDrone(uniqueDroneData);
+                            }
+                            if (this.game.droneManager.updateFormations) {
+                                this.game.droneManager.updateFormations();
+                            }
+                            if (this.game.droneManager.removeDuplicates) {
+                                this.game.droneManager.removeDuplicates();
+                            }
+                            if (this.game.droneManager.repositionDrones) {
+                                this.game.droneManager.repositionDrones();
                             }
                         }).catch(error => {
                             console.error('🚁 Errore nel caricamento DroneManager:', error);

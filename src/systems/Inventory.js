@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
+
 // Sistema Inventario Semplice
 export class Inventory {
     constructor() {
@@ -47,18 +49,169 @@ export class Inventory {
             { id: 'uav', name: 'UAV', color: '#ff6b6b' }
         ];
 
-        // Oggetto selezionato per equipaggiamento su drone
-        this.selectedItemForDrone = null;
+        // Sistema di equipaggiamento unificato per droni e equipaggiamento principale
         
         // Scroll per droni UAV
         this.uavScrollY = 0;
-        this.uavItemHeight = 80; // Altezza di ogni drone
+        this.uavItemHeight = 120; // Altezza di ogni drone (aumentata per più spazio slot)
+        
+        // Drag scroll per droni UAV
+        this.isDraggingUAV = false;
+        this.dragStartY = 0;
+        this.scrollStartY = 0;
+        this.uavScrollArea = {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0
+        };
         
         // Prevenzione click multipli
         this.lastEquipTime = 0;
         this.equipCooldown = 100; // 100ms di cooldown
+        
+        // Immagini per equipaggiamenti N3
+        this.equipImages = {
+            laser3: null,
+            shield3: null,
+            gen3: null
+        };
+        
+        // Carica le immagini
+        this.loadEquipImages();
+        
+        // DEBUG: Aggiungi listener per test coordinate (disabilitato per performance)
+        this.debugMode = false;
+        
+        // Aggiungi listener per mouse events
+        this.setupMouseEvents();
     }
     
+    // Configura eventi del mouse per drag scroll
+    setupMouseEvents() {
+        // Mouse down
+        document.addEventListener('mousedown', (e) => {
+            if (!this.isOpen || this.currentTab !== 'uav') return;
+            
+            const rect = document.querySelector('canvas').getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (this.isInsideUAVScrollArea(x, y)) {
+                this.startDragScroll(x, y);
+                e.preventDefault();
+            }
+        });
+        
+        // Mouse move
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isOpen || this.currentTab !== 'uav' || !this.isDraggingUAV) return;
+            
+            const rect = document.querySelector('canvas').getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            
+            this.updateDragScroll(y);
+            e.preventDefault();
+        });
+        
+        // Mouse up
+        document.addEventListener('mouseup', (e) => {
+            if (this.isDraggingUAV) {
+                this.endDragScroll();
+            }
+        });
+        
+        // Mouse leave
+        document.addEventListener('mouseleave', (e) => {
+            if (this.isDraggingUAV) {
+                this.endDragScroll();
+            }
+        });
+        
+        // Mouse wheel per scroll
+        document.addEventListener('wheel', (e) => {
+            if (!this.isOpen || this.currentTab !== 'uav') return;
+            
+            const rect = document.querySelector('canvas').getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (this.isInsideUAVScrollArea(x, y)) {
+                const scrollAmount = e.deltaY * 0.5; // Sensibilità scroll
+                const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - this.uavScrollArea.height);
+                this.uavScrollY = Math.max(0, Math.min(this.uavScrollY + scrollAmount, maxScroll));
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Controlla se il click è nell'area di scroll UAV
+    isInsideUAVScrollArea(x, y) {
+        return x >= this.uavScrollArea.x && 
+               x <= this.uavScrollArea.x + this.uavScrollArea.width &&
+               y >= this.uavScrollArea.y && 
+               y <= this.uavScrollArea.y + this.uavScrollArea.height;
+    }
+    
+    // Inizia il drag scroll
+    startDragScroll(x, y) {
+        this.isDraggingUAV = true;
+        this.dragStartY = y;
+        this.scrollStartY = this.uavScrollY;
+    }
+    
+    // Aggiorna il drag scroll
+    updateDragScroll(y) {
+        if (!this.isDraggingUAV) return;
+        
+        const deltaY = y - this.dragStartY;
+        const newScrollY = this.scrollStartY - deltaY;
+        
+        // Calcola i limiti di scroll
+        const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - this.uavScrollArea.height);
+        this.uavScrollY = Math.max(0, Math.min(newScrollY, maxScroll));
+    }
+    
+    // Termina il drag scroll
+    endDragScroll() {
+        this.isDraggingUAV = false;
+    }
+    
+    // Carica le immagini degli equipaggiamenti N3
+    loadEquipImages() {
+        // Carica laser N3
+        const laser3Img = new Image();
+        laser3Img.onload = () => {
+            this.equipImages.laser3 = laser3Img;
+            console.log('✅ Immagine laser N3 caricata');
+        };
+        laser3Img.onerror = () => {
+            console.warn('⚠️ Errore nel caricamento immagine laser N3');
+        };
+        laser3Img.src = 'equip_image/igun3.png';
+        
+        // Carica scudo N3
+        const shield3Img = new Image();
+        shield3Img.onload = () => {
+            this.equipImages.shield3 = shield3Img;
+            console.log('✅ Immagine scudo N3 caricata');
+        };
+        shield3Img.onerror = () => {
+            console.warn('⚠️ Errore nel caricamento immagine scudo N3');
+        };
+        shield3Img.src = 'equip_image/ish3.png';
+        
+        // Carica generatore N3
+        const gen3Img = new Image();
+        gen3Img.onload = () => {
+            this.equipImages.gen3 = gen3Img;
+            console.log('✅ Immagine generatore N3 caricata');
+        };
+        gen3Img.onerror = () => {
+            console.warn('⚠️ Errore nel caricamento immagine generatore N3');
+        };
+        gen3Img.src = 'equip_image/isp3.png';
+    }
     
     // Rimuovi droni dall'inventario generale (dovrebbero essere solo in equipment.uav)
     cleanupDronesFromInventory() {
@@ -156,8 +309,6 @@ export class Inventory {
                     
                     // Applica effetti del drone alla nave
                     this.applyDroneEffects();
-                    
-                    this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
                     return true;
                 }
             }
@@ -215,7 +366,6 @@ export class Inventory {
                 this.applyDroneEffects();
                 
                 this.addItem(item);
-                this.showPopup(`${item.name} rimosso da ${drone.name}`, 'info');
                 return item;
             } else {
                 console.log(`🚁 Nessun oggetto da rimuovere: drone ${droneIndex}, slot ${slotIndex}`);
@@ -228,7 +378,8 @@ export class Inventory {
             
             // Aggiorna la nave quando rimuovi un laser
             if (slotType === 'laser' && window.gameInstance && window.gameInstance.ship) {
-                window.gameInstance.ship.unequipLaser(item.key, 1);
+                const laserKey = item.stats?.key || item.key;
+                window.gameInstance.ship.unequipLaser(laserKey, 1);
             }
             if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
                 const key = item.stats?.key || '';
@@ -349,7 +500,7 @@ export class Inventory {
     
     // Controlla hover per UAV
     checkUAVHover(x, y) {
-        const uavY = this.panelY + 120;
+        const uavY = this.panelY + 200;
         const uavX = this.panelX + 50;
         const droneAreaWidth = 300;
         const droneAreaHeight = 400;
@@ -357,6 +508,12 @@ export class Inventory {
         // Assicurati che equipment.uav sia inizializzato
         if (!this.equipment.uav) {
             this.equipment.uav = [];
+        }
+
+        // Se non ci sono droni, non c'è hover
+        if (this.equipment.uav.length === 0) {
+            this.hoveredDrone = -1;
+            return false;
         }
 
         // Controlla hover sui droni equipaggiati
@@ -448,32 +605,41 @@ export class Inventory {
         this.panelX = (canvasWidth - this.panelWidth) / 2;
         this.panelY = (canvasHeight - this.panelHeight) / 2;
         
+        // DEBUG: Log dettagliato del click (disabilitato per performance)
+        // console.log('🖱️ CLICK DEBUG:', { clickX: x, clickY: y, currentTab: this.currentTab });
+        
         // Controlla se il click è dentro il pannello
         if (x < this.panelX || x > this.panelX + this.panelWidth ||
             y < this.panelY || y > this.panelY + this.panelHeight) {
             return false;
         }
         
-        // Riproduci suono click solo per interfaccia
-        if (window.gameInstance && window.gameInstance.audioManager) {
-            window.gameInstance.audioManager.playClickSound();
-        }
+        // Suono click rimosso per evitare fastidio
         
         // Controlla click su tab
         if (this.handleTabClick(x, y)) {
             return true;
         }
         
-        // Gestisci click sugli slot di equipaggiamento
-        this.handleEquipmentClick(x, y);
-        
-        // Gestisci click sui droni UAV se siamo nella tab UAV
+        // Gestisci click sui droni UAV se siamo nella tab UAV (priorità alta)
         if (this.currentTab === 'uav') {
-            this.handleUAVClick(x, y);
+            const uavHandled = this.handleUAVClick(x, y);
+            if (uavHandled) {
+                return true;
+            }
+        }
+        
+        // Gestisci click sugli slot di equipaggiamento
+        const equipmentHandled = this.handleEquipmentClick(x, y);
+        if (equipmentHandled) {
+            return true;
         }
         
         // Gestisci click sull'inventario
-        this.handleInventoryClick(x, y);
+        const inventoryHandled = this.handleInventoryClick(x, y);
+        if (inventoryHandled) {
+            return true;
+        }
         
         return true;
     }
@@ -481,32 +647,37 @@ export class Inventory {
     // Gestisci click su tab
     handleTabClick(x, y) {
         const tabHeight = 40;
-        const tabY = this.panelY + 60;
+        const tabY = this.panelY + 80; // Aggiornato per corrispondere al drawTabs
         const tabWidth = this.panelWidth / this.tabs.length;
         
         // Controlla se il click è nell'area delle tab
         if (y >= tabY && y <= tabY + tabHeight) {
-            this.tabs.forEach((tab, index) => {
+            for (let index = 0; index < this.tabs.length; index++) {
                 const tabX = this.panelX + index * tabWidth;
                 if (x >= tabX && x <= tabX + tabWidth) {
-                    this.currentTab = tab.id;
-                    return true;
+                    this.currentTab = this.tabs[index].id;
+                    return true; // Restituisce true quando trova una tab cliccata
                 }
-            });
+            }
         }
         return false;
     }
     
     // Gestisci click sui droni UAV
     handleUAVClick(x, y) {
-        const uavY = this.panelY + 120;
+        const uavY = this.panelY + 200;
         const uavX = this.panelX + 50;
-        const droneAreaWidth = 300;
+        const droneAreaWidth = 450; // Aggiornato per corrispondere al drawUAV
         const droneAreaHeight = 400;
 
         // Assicurati che equipment.uav sia inizializzato
         if (!this.equipment.uav) {
             this.equipment.uav = [];
+        }
+
+        // Se non ci sono droni, non c'è click
+        if (this.equipment.uav.length === 0) {
+            return false;
         }
 
         // Controlla click sui droni equipaggiati (layout verticale)
@@ -520,27 +691,42 @@ export class Inventory {
             if (x >= droneX && x <= droneX + droneWidth &&
                 y >= droneY && y <= droneY + droneHeight) {
 
-                // Click sui slot del drone
-                const slotSize = 30;
-                const slotSpacing = 5;
-                const slotStartX = droneX + 10;
-                const slotY = droneY + 35;
+                // Click sui slot del drone (nuovo layout: icona drone a sinistra, slot equipaggiamento a destra)
+                const slotSize = 50;
+                const slotSpacing = 15;
+                const slotStartX = droneX + 20;
+                const slotY = droneY + 35; // Aggiornato per corrispondere al drawDroneVertical
+                const equipSlotsX = droneX + droneWidth - 150; // Posizionato a destra con più spazio
+                const equipSlotsY = slotY; // Aggiunto per corrispondere al drawDroneVertical
 
+                // Click su icona drone (slot 0 - non cliccabile per ora)
+                const droneIconX = slotStartX;
+                const droneIconY = slotY;
+                if (x >= droneIconX && x <= droneIconX + slotSize &&
+                    y >= droneIconY && y <= droneIconY + slotSize) {
+                    // Icona drone non cliccabile per ora
+                    return true;
+                }
+
+                // Click su slot equipaggiamento (slot 0+) - layout orizzontale
                 for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
-                    const slotX = slotStartX + slotIndex * (slotSize + slotSpacing);
+                    const slotX = equipSlotsX + slotIndex * (slotSize + slotSpacing);
+                    const slotY = equipSlotsY;
 
                     if (x >= slotX && x <= slotX + slotSize &&
                         y >= slotY && y <= slotY + slotSize) {
 
+                        // Inizializza equippedItems se non esiste
+                        if (!drone.equippedItems) {
+                            drone.equippedItems = new Array(drone.slots).fill(null);
+                        }
+                        
                         // Se c'è un oggetto equipaggiato, rimuovilo
-                        if (drone.equippedItems && drone.equippedItems[slotIndex]) {
-                            console.log(`🚁 Click su slot equipaggiato: drone ${droneIndex}, slot ${slotIndex}`);
+                        if (drone.equippedItems[slotIndex]) {
                             this.unequipItemFromDrone(droneIndex, slotIndex);
                         }
-                        // Altrimenti mostra messaggio per equipaggiare dall'inventario
+                        // Altrimenti slot vuoto - nessuna azione necessaria
                         else {
-                            console.log(`🚁 Click su slot vuoto: drone ${droneIndex}, slot ${slotIndex}`);
-                            this.showPopup('Click su un oggetto dell\'inventario per equipaggiarlo', 'info');
                         }
                         return true;
                     }
@@ -548,33 +734,21 @@ export class Inventory {
             }
         });
 
-        // Controlla click sui pulsanti di scroll
+        // Controlla click sulla scrollbar moderna
         const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - 400);
         if (maxScroll > 0) {
-            const buttonHeight = 30;
-            const buttonY = uavY + droneAreaHeight + 10;
-            const upButtonX = uavX;
-            const upButtonWidth = 50;
-            const downButtonX = uavX + upButtonWidth + 10;
-            const downButtonWidth = 50;
-
-            // Click su pulsante scroll su
-            if (x >= upButtonX && x <= upButtonX + upButtonWidth &&
-                y >= buttonY && y <= buttonY + buttonHeight) {
-                if (this.uavScrollY > 0) {
-                    this.uavScrollY = Math.max(0, this.uavScrollY - 80);
-                    console.log('🚁 Scroll su, nuovo uavScrollY:', this.uavScrollY);
-                }
-                return true;
-            }
-
-            // Click su pulsante scroll giù
-            if (x >= downButtonX && x <= downButtonX + downButtonWidth &&
-                y >= buttonY && y <= buttonY + buttonHeight) {
-                if (this.uavScrollY < maxScroll) {
-                    this.uavScrollY = Math.min(maxScroll, this.uavScrollY + 80);
-                    console.log('🚁 Scroll giù, nuovo uavScrollY:', this.uavScrollY);
-                }
+            const scrollbarWidth = 8;
+            const scrollbarX = uavX + droneAreaWidth - scrollbarWidth - 5;
+            const scrollbarY = uavY + 5;
+            const scrollbarHeight = droneAreaHeight - 10;
+            
+            // Click sulla scrollbar
+            if (x >= scrollbarX && x <= scrollbarX + scrollbarWidth &&
+                y >= scrollbarY && y <= scrollbarY + scrollbarHeight) {
+                
+                // Calcola nuova posizione scroll basata sul click
+                const clickRatio = (y - scrollbarY) / scrollbarHeight;
+                this.uavScrollY = clickRatio * maxScroll;
                 return true;
             }
         }
@@ -702,9 +876,18 @@ export class Inventory {
                 // Controlla che l'oggetto sia laser o scudo
                 if (item.type === 'laser' || item.type === 'shield') {
                     drone.equippedItems[slotIndex] = item;
-                    this.showPopup(`${item.name} equipaggiato su ${drone.name}!`, 'success');
+                    
+                    // Rimuovi l'oggetto dall'inventario
+                    const itemIndex = this.items.findIndex(invItem => invItem === item);
+                    if (itemIndex !== -1) {
+                        this.items.splice(itemIndex, 1);
+                    }
+                    
+                    // Applica effetti dei droni dopo l'equipaggiamento
+                    this.applyDroneEffects();
+                    
+                    const droneName = drone.name || drone.droneType || 'Drone';
                 } else {
-                    this.showPopup('I droni possono equipaggiare solo laser o scudi', 'error');
                 }
             }
         }
@@ -763,11 +946,14 @@ export class Inventory {
         
         // Applica bonus basato sul tipo di oggetto
         if (item.type === 'laser') {
-            // Bonus danno per laser sui droni
-            const damage = item.damage || item.stats?.damage || 0;
-            ship.droneDamageBonus += damage;
-            
-            console.log(`🚁 Drone ${drone.name}: +${damage} danno da ${item.name}`);
+            // Per i laser, usa il sistema della nave per calcolare il danno
+            const laserKey = item.stats?.key || item.key;
+            if (laserKey && ship.laserDamage[laserKey]) {
+                const damage = ship.laserDamage[laserKey];
+                ship.droneDamageBonus += damage;
+                
+                console.log(`🚁 Drone ${drone.name}: +${damage} danno da ${item.name} (${laserKey})`);
+            }
         } else if (item.type === 'shield') {
             // Bonus protezione per scudi sui droni
             const protection = item.protection || item.stats?.protection || 0;
@@ -779,71 +965,78 @@ export class Inventory {
     
     // Gestisci click sugli slot di equipaggiamento
     handleEquipmentClick(x, y) {
-        const equipmentY = this.panelY + 80;
+        const equipmentY = this.panelY + 200; // Corretto per corrispondere a drawEquipment
         const equipmentX = this.panelX + 50;
         const slotSpacing = 65; // Slot equipaggiamento più compatti
+        
+        // DEBUG: Equipment click debug (disabilitato per performance)
+        // console.log('🔧 EQUIPMENT CLICK DEBUG:', { clickX: x, clickY: y });
         
         // Controlla click su slot laser
         for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
-            if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= equipmentY + 40 && y <= equipmentY + 40 + this.slotSize) {
+            const slotY = equipmentY + 10;
+            const slotRight = slotX + this.slotSize;
+            const slotBottom = slotY + this.slotSize;
                 
+            // DEBUG: Laser slot debug (disabilitato per performance)
+            // console.log(`🔍 Laser slot ${i}:`, { slotX, slotY, isInside: x >= slotX && x <= slotRight && y >= slotY && y <= slotBottom });
+            
+            if (x >= slotX && x <= slotRight && y >= slotY && y <= slotBottom) {
                 if (this.equipment.laser[i]) {
                     const item = this.unequipItem('laser', i);
-                    if (item) {
-                        this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
-                    }
                 }
                 // Non auto-equipaggiare su slot vuoti
-                return;
+                return true;
             }
         }
         
         // Controlla click su slot scudi/generatori (6 slot totali)
-        const shieldGenY = equipmentY + 180; // Allineato con il rendering
+        const shieldGenY = equipmentY + 150; // Corretto per corrispondere a drawEquipment
         
         // Tutti gli slot scudi/generatori
         for (let i = 0; i < 6; i++) {
             const slotX = equipmentX + (i * slotSpacing);
-            if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY && y <= shieldGenY + this.slotSize) {
+            const slotRight = slotX + this.slotSize;
+            const slotBottom = shieldGenY + this.slotSize;
                 
+            // DEBUG: Shield/Gen slot debug (disabilitato per performance)
+            // console.log(`🔍 Shield/Gen slot ${i}:`, { slotX, slotY: shieldGenY, isInside: x >= slotX && x <= slotRight && y >= shieldGenY && y <= slotBottom });
+            
+            if (x >= slotX && x <= slotRight && y >= shieldGenY && y <= slotBottom) {
                 if (this.equipment.shieldGen[i]) {
-                    console.log('🔄 Disequipaggio slot shieldGen:', i);
                     const item = this.unequipItem('shieldGen', i);
-                    if (item) {
-                        console.log('✅ Item disequipaggiato:', item);
-                        this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
-                    }
                 }
                 // Non auto-equipaggiare su slot vuoti
-                return;
+                return true;
             }
         }
         
         // Controlla click su slot extra
-        const extraY = equipmentY + 160;
+        const extraY = equipmentY + 300; // Corretto per corrispondere a drawEquipment
         for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
-            if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= extraY && y <= extraY + this.slotSize) {
+            const slotRight = slotX + this.slotSize;
+            const slotBottom = extraY + this.slotSize;
                 
+            // DEBUG: Extra slot debug (disabilitato per performance)
+            // console.log(`🔍 Extra slot ${i}:`, { slotX, slotY: extraY, isInside: x >= slotX && x <= slotRight && y >= extraY && y <= slotBottom });
+            
+            if (x >= slotX && x <= slotRight && y >= extraY && y <= slotBottom) {
                 if (this.equipment.extra[i]) {
                     const item = this.unequipItem('extra', i);
-                    if (item) {
-                        this.showPopup(`${item.name} rimosso dall'equipaggiamento`, 'info');
-                    }
                 }
                 // Non auto-equipaggiare su slot vuoti
-                return;
+                return true;
             }
         }
+        
+        return false;
     }
     
     // Controlla hover sugli oggetti equipaggiati
     checkEquipmentHover(x, y) {
-        const equipmentY = this.panelY + 80;
+        const equipmentY = this.panelY + 200; // Corretto per corrispondere a drawEquipment
         const equipmentX = this.panelX + 50;
         const slotSpacing = 65; // Slot equipaggiamento più compatti
         
@@ -851,7 +1044,7 @@ export class Inventory {
         for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= equipmentY + 40 && y <= equipmentY + 40 + this.slotSize) {
+                y >= equipmentY + 10 && y <= equipmentY + 10 + this.slotSize) {
                 
                 if (this.equipment.laser[i]) {
                     this.tooltip = {
@@ -866,40 +1059,20 @@ export class Inventory {
             }
         }
         
-                // Controlla hover su slot scudi/generatori (2 righe)
-        const shieldGenY1 = equipmentY + 80;  // Prima riga
-        const shieldGenY2 = equipmentY + 120; // Seconda riga
+                // Controlla hover su slot scudi/generatori (6 slot in una riga)
+        const shieldGenY = equipmentY + 150; // Corretto per corrispondere a drawEquipment
         
-        // Prima riga (slot 0, 1, 2)
-        for (let i = 0; i < 3; i++) {
+        // Tutti gli slot scudi/generatori
+        for (let i = 0; i < 6; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY1 && y <= shieldGenY1 + this.slotSize) {
+                y >= shieldGenY && y <= shieldGenY + this.slotSize) {
                 
                 if (this.equipment.shieldGen[i]) {
                     this.tooltip = {
                         item: this.equipment.shieldGen[i],
                         x: slotX,
-                        y: shieldGenY1
-                    };
-                } else {
-                    this.tooltip = null;
-                }
-                return;
-            }
-        }
-        
-        // Seconda riga (slot 3, 4, 5)
-        for (let i = 3; i < 6; i++) {
-            const slotX = equipmentX + ((i - 3) * slotSpacing);
-            if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY2 && y <= shieldGenY2 + this.slotSize) {
-                
-                if (this.equipment.shieldGen[i]) {
-                    this.tooltip = {
-                        item: this.equipment.shieldGen[i],
-                        x: slotX,
-                        y: shieldGenY2
+                        y: shieldGenY
                     };
                 } else {
                     this.tooltip = null;
@@ -909,7 +1082,7 @@ export class Inventory {
         }
         
         // Controlla hover su slot extra
-        const extraY = equipmentY + 160;
+        const extraY = equipmentY + 300; // Corretto per corrispondere a drawEquipment
         for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             if (x >= slotX && x <= slotX + this.slotSize &&
@@ -976,30 +1149,74 @@ export class Inventory {
     
     // Gestisci click sull'inventario
     handleInventoryClick(x, y) {
-        const inventoryY = this.panelY + 80;
-        const inventoryX = this.panelX + 650; // Posizionato molto più a destra
-        const itemsPerRow = 5;
+        const inventoryY = this.panelY + 160; // Corretto per corrispondere a drawInventory
+        const inventoryX = this.panelX + 600; // Corretto per corrispondere a drawInventory
+        const itemsPerRow = 6; // Corretto per corrispondere a drawInventory
+        const slotSize = 60; // Corretto per corrispondere a drawInventory
+        const slotSpacing = 10; // Corretto per corrispondere a drawInventory
+        
+        // DEBUG: Inventory click debug (disabilitato per performance)
+        // console.log('📦 INVENTORY CLICK DEBUG:', { clickX: x, clickY: y, itemsCount: this.items.length });
         
         for (let i = 0; i < this.items.length; i++) {
-            const itemX = inventoryX + (i % itemsPerRow) * (this.slotSize + this.slotSpacing);
-            const itemY = inventoryY + Math.floor(i / itemsPerRow) * (this.slotSize + this.slotSpacing);
+            const itemX = inventoryX + (i % itemsPerRow) * (slotSize + slotSpacing);
+            const itemY = inventoryY + Math.floor(i / itemsPerRow) * (slotSize + slotSpacing);
+            const itemRight = itemX + slotSize;
+            const itemBottom = itemY + slotSize;
             
-            if (x >= itemX && x <= itemX + this.slotSize &&
-                y >= itemY && y <= itemY + this.slotSize) {
-                
+            // DEBUG: Inventory item debug (disabilitato per performance)
+            // console.log(`🔍 Inventory item ${i}:`, { itemX, itemY, isInside: x >= itemX && x <= itemRight && y >= itemY && y <= itemBottom });
+            
+            if (x >= itemX && x <= itemRight && y >= itemY && y <= itemBottom) {
                 // Equipaggia automaticamente l'oggetto se possibile
                 this.autoEquipItem(i);
-                return;
+                return true;
             }
         }
+        
+        return false;
     }
     
     // Equipaggia automaticamente un oggetto
     autoEquipItem(itemIndex) {
         const item = this.items[itemIndex];
-        if (!item) return;
+        if (!item) {
+            return;
+        }
         
-        // Trova il primo slot vuoto appropriato
+        // DEBUG: Auto equip debug (disabilitato per performance)
+        // console.log('🔧 AUTO EQUIP DEBUG:', { itemIndex, itemType: item.type, itemName: item.name });
+        
+        // Se siamo nella tab UAV, equipaggia sui droni (sistema unificato)
+        if (this.currentTab === 'uav') {
+            // Controlla che l'oggetto sia compatibile con i droni
+            if (item.type === 'laser' || item.type === 'shield') {
+                // Trova il primo drone con slot libero
+                for (let droneIndex = 0; droneIndex < this.equipment.uav.length; droneIndex++) {
+                    const drone = this.equipment.uav[droneIndex];
+                    
+                    // Inizializza equippedItems se non esiste
+                    if (!drone.equippedItems) {
+                        drone.equippedItems = new Array(drone.slots).fill(null);
+                    }
+                    
+                    // Cerca slot libero (slot 0+ per equipaggiamento, slot 0 è per equipaggiamento)
+                    for (let slotIndex = 0; slotIndex < drone.slots; slotIndex++) {
+                        if (!drone.equippedItems[slotIndex]) {
+                            this.equipItemOnDrone(droneIndex, slotIndex, item);
+                            return;
+                        }
+                    }
+                }
+                
+                // Se non ci sono slot liberi - nessuna azione necessaria
+                return;
+            } else {
+                return;
+            }
+        }
+        
+        // Trova il primo slot vuoto appropriato per equipaggiamento principale
         let targetSlotType = null;
         let targetSlotIndex = -1;
         
@@ -1031,15 +1248,6 @@ export class Inventory {
         
         if (targetSlotType !== null && targetSlotIndex !== -1) {
             this.equipItem(itemIndex, targetSlotType, targetSlotIndex);
-            this.showPopup(`${item.name} equipaggiato!`, 'success');
-        } else {
-            // Determina il motivo per cui non può essere equipaggiato
-            let reason = '';
-            if (item.type === 'laser') reason = 'Tutti gli slot laser sono occupati';
-            else if (item.type === 'shield' || item.type === 'generator') reason = 'Tutti gli slot scudi/generatori sono occupati';
-            else if (item.type === 'extra') reason = 'Tutti gli slot extra sono occupati';
-            
-            this.showPopup(`Impossibile equipaggiare ${item.name}: ${reason}`, 'error');
         }
     }
     
@@ -1088,20 +1296,25 @@ export class Inventory {
         this.panelX = (canvasWidth - this.panelWidth) / 2;
         this.panelY = (canvasHeight - this.panelHeight) / 2;
         
-        // Sfondo del pannello
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-        ctx.fillRect(this.panelX, this.panelY, this.panelWidth, this.panelHeight);
+        // Sfondo del pannello moderno (senza blur)
+        ThemeUtils.drawPanel(ctx, this.panelX, this.panelY, this.panelWidth, this.panelHeight, {
+            background: ThemeConfig.colors.background.panel,
+            border: ThemeConfig.colors.border.glass,
+            borderWidth: ThemeConfig.borders.width.normal,
+            radius: ThemeConfig.borders.radius.lg,
+            blur: false,
+            glow: ThemeConfig.colors.accent.primary
+        });
         
-        // Bordo del pannello
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.panelX, this.panelY, this.panelWidth, this.panelHeight);
-        
-        // Titolo
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('INVENTARIO', this.panelX + this.panelWidth / 2, this.panelY + 40);
+        // Titolo elegante (più in basso)
+        ThemeUtils.drawText(ctx, 'INVENTARIO', this.panelX + this.panelWidth / 2, this.panelY + 60, {
+            color: ThemeConfig.colors.text.primary,
+            size: ThemeConfig.typography.sizes['3xl'],
+            weight: ThemeConfig.typography.weights.bold,
+            align: 'center',
+            baseline: 'middle',
+            glow: false
+        });
         
         // Disegna tab
         this.drawTabs(ctx);
@@ -1114,49 +1327,99 @@ export class Inventory {
             this.drawUAV(ctx);
         }
         
-        // Istruzioni
-        ctx.fillStyle = '#cccccc';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Click su oggetti per equipaggiare automaticamente', this.panelX + this.panelWidth / 2, this.panelY + this.panelHeight - 20);
+        // Istruzioni (più in basso)
+        ThemeUtils.drawText(ctx, 'Click su oggetti per equipaggiare automaticamente', this.panelX + this.panelWidth / 2, this.panelY + this.panelHeight - 40, {
+            color: ThemeConfig.colors.text.secondary,
+            size: ThemeConfig.typography.sizes.base,
+            align: 'center',
+            baseline: 'middle'
+        });
         
         // Disegna popup
         this.drawPopup(ctx);
         
         // Disegna tooltip
         this.drawTooltip(ctx);
+        
+        // DEBUG: Disegna coordinate se debug mode è attivo (disabilitato per performance)
+        // if (this.debugMode) {
+        //     this.drawDebugInfo(ctx);
+        // }
+    }
+    
+    // Disegna informazioni di debug
+    drawDebugInfo(ctx) {
+        const equipmentY = this.panelY + 200;
+        const equipmentX = this.panelX + 50;
+        const slotSpacing = 65;
+        
+        // Disegna coordinate slot laser
+        ctx.fillStyle = 'red';
+        ctx.font = '12px Arial';
+        for (let i = 0; i < 3; i++) {
+            const slotX = equipmentX + (i * slotSpacing);
+            const slotY = equipmentY + 10;
+            ctx.fillText(`L${i}: ${slotX},${slotY}`, slotX, slotY - 5);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(slotX, slotY, this.slotSize, this.slotSize);
+        }
+        
+        // Disegna coordinate slot scudi/generatori
+        const shieldGenY = equipmentY + 150;
+        ctx.fillStyle = 'blue';
+        for (let i = 0; i < 6; i++) {
+            const slotX = equipmentX + (i * slotSpacing);
+            ctx.fillText(`S${i}: ${slotX},${shieldGenY}`, slotX, shieldGenY - 5);
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(slotX, shieldGenY, this.slotSize, this.slotSize);
+        }
+        
+        // Disegna coordinate slot extra
+        const extraY = equipmentY + 300;
+        ctx.fillStyle = 'green';
+        for (let i = 0; i < 3; i++) {
+            const slotX = equipmentX + (i * slotSpacing);
+            ctx.fillText(`E${i}: ${slotX},${extraY}`, slotX, extraY - 5);
+            ctx.strokeStyle = 'green';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(slotX, extraY, this.slotSize, this.slotSize);
+        }
+        
+        // Disegna coordinate inventario
+        const inventoryY = this.panelY + 160;
+        const inventoryX = this.panelX + 600;
+        ctx.fillStyle = 'yellow';
+        ctx.fillText(`INV: ${inventoryX},${inventoryY}`, inventoryX, inventoryY - 5);
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(inventoryX, inventoryY, 360, 120); // 6*60 slot
     }
     
     // Disegna le tab
     drawTabs(ctx) {
         const tabHeight = 40;
-        const tabY = this.panelY + 60;
+        const tabY = this.panelY + 80;
         const tabWidth = this.panelWidth / this.tabs.length;
         
         this.tabs.forEach((tab, index) => {
             const tabX = this.panelX + index * tabWidth;
             const isActive = this.currentTab === tab.id;
             
-            // Sfondo tab
-            ctx.fillStyle = isActive ? tab.color : '#333333';
-            ctx.fillRect(tabX, tabY, tabWidth, tabHeight);
-            
-            // Bordo tab
-            ctx.strokeStyle = isActive ? '#ffffff' : '#666666';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(tabX, tabY, tabWidth, tabHeight);
-            
-            // Testo tab
-            ctx.fillStyle = isActive ? '#ffffff' : '#cccccc';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(tab.name, tabX + tabWidth / 2, tabY + 25);
+            // Disegna tab moderna
+            ThemeUtils.drawButton(ctx, tabX, tabY, tabWidth, tabHeight, tab.name, {
+                variant: isActive ? 'primary' : 'secondary',
+                size: 'md',
+                isHovered: false,
+                isActive: isActive
+            });
         });
     }
     
     // Disegna sezione UAV
     drawUAV(ctx) {
-        const uavY = this.panelY + 120;
+        const uavY = this.panelY + 200;
         const uavX = this.panelX + 50;
         
         // Assicurati che equipment.uav sia inizializzato
@@ -1165,23 +1428,35 @@ export class Inventory {
         }
         
         // Titolo UAV con contatore
-        ctx.fillStyle = '#ff6b6b';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`DRONI UAV (${this.equipment.uav.length}/8)`, uavX, uavY - 20);
+        ThemeUtils.drawText(ctx, `DRONI UAV (${this.equipment.uav.length}/8)`, uavX, uavY - 20, {
+            color: ThemeConfig.colors.accent.danger,
+            size: ThemeConfig.typography.sizes.lg,
+            weight: ThemeConfig.typography.weights.bold
+        });
         
-        // Area droni con scroll
-        const droneAreaWidth = 300;
+        // Se non ci sono droni, mostra messaggio
+        if (this.equipment.uav.length === 0) {
+            ThemeUtils.drawText(ctx, 'Non hai UAV', uavX, uavY + 50, {
+                color: ThemeConfig.colors.text.muted,
+                size: ThemeConfig.typography.sizes.base,
+                weight: ThemeConfig.typography.weights.normal
+            });
+            return;
+        }
+        
+        // Area droni senza pannello (allargata)
+        const droneAreaWidth = 450; // Aumentato da 300 a 450
         const droneAreaHeight = 400;
         const droneAreaX = uavX;
         const droneAreaY = uavY;
         
-        // Sfondo area droni
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight);
-        ctx.strokeStyle = '#ff6b6b';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight);
+        // Aggiorna area di scroll per drag
+        this.uavScrollArea = {
+            x: droneAreaX,
+            y: droneAreaY,
+            width: droneAreaWidth,
+            height: droneAreaHeight
+        };
         
         // Calcola scroll
         const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - droneAreaHeight);
@@ -1201,300 +1476,142 @@ export class Inventory {
         
         ctx.restore();
         
-        // Pulsanti di scroll se necessario
+        // Disegna scrollbar moderna se necessario
         if (maxScroll > 0) {
-            this.drawUAVScrollButtons(ctx, droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight, maxScroll);
+            this.drawModernScrollbar(ctx, droneAreaX, droneAreaY, droneAreaWidth, droneAreaHeight, maxScroll);
         }
         
-        // Inventario del player a destra
-        this.drawUAVInventory(ctx, uavX + droneAreaWidth + 20, uavY - 20);
+        // Inventario del player a destra (stesso di equipaggiamento)
+        this.drawInventory(ctx);
         
-        // Informazioni UAV
-        ctx.fillStyle = '#cccccc';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('I droni UAV possono equipaggiare laser o scudi', uavX, uavY + droneAreaHeight + 20);
-        ctx.fillText('Flax: 1 slot | Iris: 2 slot', uavX, uavY + droneAreaHeight + 40);
-        ctx.fillText('Massimo 8 droni totali (Flax + Iris)', uavX, uavY + droneAreaHeight + 60);
-        ctx.fillText('I droni acquistati sono permanenti', uavX, uavY + droneAreaHeight + 80);
-        ctx.fillText('Click su oggetti per equipaggiare automaticamente', uavX, uavY + droneAreaHeight + 100);
+        // Informazioni UAV rimosse per pulizia
     }
 
-    // Disegna drone verticalmente
+    // Disegna drone verticalmente (moderno)
     drawDroneVertical(ctx, x, y, width, height, drone, droneIndex) {
-        // Sfondo drone
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(x, y, width, height);
-        
-        // Bordo drone
-        ctx.strokeStyle = drone.color || '#ff6b6b';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
-        
-        // Nome drone
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(drone.name, x + 10, y + 20);
-        
-        // Icona drone
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '20px Arial';
-        ctx.fillText('🚁', x + width - 30, y + 20);
-        
-        // Slot del drone
-        const slotSize = 30;
-        const slotSpacing = 5;
-        const slotStartX = x + 10;
-        const slotY = y + 35;
-        
-        for (let i = 0; i < drone.slots; i++) {
-            const slotX = slotStartX + i * (slotSize + slotSpacing);
-            
-            // Slot
-            ctx.fillStyle = drone.equippedItems && drone.equippedItems[i] ? '#444444' : '#222222';
-            ctx.fillRect(slotX, slotY, slotSize, slotSize);
-            
-            // Bordo slot
-            ctx.strokeStyle = drone.equippedItems && drone.equippedItems[i] ? '#ffffff' : '#666666';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(slotX, slotY, slotSize, slotSize);
-            
-            // Icona oggetto equipaggiato
-            if (drone.equippedItems && drone.equippedItems[i]) {
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                
-                const item = drone.equippedItems[i];
-                if (item.type === 'laser') {
-                    ctx.fillText('⚡', slotX + slotSize/2, slotY + slotSize/2 + 5);
-                } else if (item.type === 'shield') {
-                    ctx.fillText('🛡️', slotX + slotSize/2, slotY + slotSize/2 + 5);
-                }
-                ctx.textAlign = 'left';
-            }
-        }
-    }
-    
-    // Disegna scrollbar per UAV
-    drawUAVScrollbar(ctx, x, y, width, height, maxScroll) {
-        // Sfondo scrollbar
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(x, y, width, height);
-        
-        // Barra di scroll
-        const scrollbarHeight = Math.max(20, (height * height) / (height + maxScroll));
-        const scrollbarY = y + (this.uavScrollY / maxScroll) * (height - scrollbarHeight);
-        
-        ctx.fillStyle = '#666666';
-        ctx.fillRect(x, scrollbarY, width, scrollbarHeight);
-        
-        // Bordo scrollbar
-        ctx.strokeStyle = '#999999';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, scrollbarY, width, scrollbarHeight);
-    }
-    
-    // Disegna pulsanti di scroll per UAV
-    drawUAVScrollButtons(ctx, x, y, width, height, maxScroll) {
-        if (maxScroll <= 0) return;
-        
-        const buttonHeight = 30;
-        const buttonY = y + height + 10;
-        
-        // Pulsante scroll su
-        const upButtonX = x;
-        const upButtonY = buttonY;
-        const upButtonWidth = 50;
-        
-        // Sfondo pulsante su
-        ctx.fillStyle = this.uavScrollY > 0 ? '#ff6b6b' : '#666666';
-        ctx.fillRect(upButtonX, upButtonY, upButtonWidth, buttonHeight);
-        
-        // Bordo pulsante su
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(upButtonX, upButtonY, upButtonWidth, buttonHeight);
-        
-        // Freccia su
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('↑', upButtonX + upButtonWidth/2, upButtonY + buttonHeight/2 + 5);
-        
-        // Pulsante scroll giù
-        const downButtonX = x + upButtonWidth + 10;
-        const downButtonY = buttonY;
-        const downButtonWidth = 50;
-        
-        // Sfondo pulsante giù
-        ctx.fillStyle = this.uavScrollY < maxScroll ? '#ff6b6b' : '#666666';
-        ctx.fillRect(downButtonX, downButtonY, downButtonWidth, buttonHeight);
-        
-        // Bordo pulsante giù
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(downButtonX, downButtonY, downButtonWidth, buttonHeight);
-        
-        // Freccia giù
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('↓', downButtonX + downButtonWidth/2, downButtonY + buttonHeight/2 + 5);
-        
-        ctx.textAlign = 'left';
-    }
-
-    // Disegna inventario del player per UAV
-    drawUAVInventory(ctx, x, y) {
-        // Titolo inventario
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('INVENTARIO PLAYER', x, y);
-
-        // Filtra solo laser e scudi
-        const availableItems = this.items.filter(item => 
-            item.type === 'laser' || item.type === 'shield'
-        );
-
-        if (availableItems.length === 0) {
-            ctx.fillStyle = '#888888';
-            ctx.font = '14px Arial';
-            ctx.fillText('Nessun laser o scudo disponibile', x, y + 30);
-            return;
-        }
-
-        // Disegna oggetti disponibili
-        const itemSize = 50;
-        const itemsPerRow = 4;
-        let itemX = x;
-        let itemY = y + 30;
-
-        availableItems.forEach((item, index) => {
-            if (index > 0 && index % itemsPerRow === 0) {
-                itemX = x;
-                itemY += itemSize + 10;
-            }
-
-            // Slot oggetto
-            ctx.fillStyle = '#333333';
-            ctx.fillRect(itemX, itemY, itemSize, itemSize);
-
-            // Bordo oggetto (evidenzia se selezionato)
-            const isSelected = this.selectedItemForDrone === item;
-            ctx.strokeStyle = isSelected ? '#ffd700' : (item.type === 'laser' ? '#4a90e2' : '#50c878');
-            ctx.lineWidth = isSelected ? 3 : 2;
-            ctx.strokeRect(itemX, itemY, itemSize, itemSize);
-
-            // Icona oggetto
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(item.type === 'laser' ? '⚡' : '🛡️', itemX + itemSize/2, itemY + itemSize/2 + 7);
-            ctx.textAlign = 'left';
-
-            // Nome oggetto
-            ctx.fillStyle = isSelected ? '#ffd700' : '#ffffff';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(item.name, itemX + itemSize/2, itemY + itemSize + 15);
-            ctx.textAlign = 'left';
-
-            itemX += itemSize + 10;
+        // Pannello drone moderno (grigio neutro)
+        ThemeUtils.drawPanel(ctx, x, y, width, height, {
+            background: ThemeConfig.colors.background.card,
+            border: ThemeConfig.colors.border.primary,
+            borderWidth: ThemeConfig.borders.width.normal,
+            radius: ThemeConfig.borders.radius.md,
+            blur: false
         });
-    }
-    
-    // Disegna drone equipaggiato con i suoi slot
-    drawEquippedDrone(ctx, x, y, drone, droneIndex) {
-        const droneWidth = this.slotSize * 2 + 10; // Larghezza per 2 slot + spazio
-        const droneHeight = this.slotSize + 40; // Altezza slot + spazio per nome
-        
-        // Sfondo drone
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(x, y, droneWidth, droneHeight);
-        
-        // Bordo drone
-        ctx.strokeStyle = drone.color || '#ff6b6b';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, droneWidth, droneHeight);
         
         // Nome drone
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(drone.name, x + droneWidth / 2, y - 5);
+        ThemeUtils.drawText(ctx, drone.name, x + 20, y + 20, {
+            color: ThemeConfig.colors.text.primary,
+            size: ThemeConfig.typography.sizes.base,
+            weight: ThemeConfig.typography.weights.bold
+        });
         
-        // Icona drone
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '20px Arial';
-        ctx.fillText('🚁', x + droneWidth / 2, y + 15);
         
-        // Disegna slot del drone
+        // Slot del drone (layout: 1 icona drone a sinistra, slot equipaggiamento a destra)
+        const slotSize = 50;
+        const slotSpacing = 15;
+        const slotStartX = x + 20;
+        const slotStartY = y + 35; // Spostato più in alto
+        
+        // Layout specifico: icona drone a sinistra, slot equipaggiamento a destra
+        const droneIconX = slotStartX;
+        const droneIconY = slotStartY;
+        const equipSlotsX = x + width - 150; // Posizionato a destra con più spazio
+        const equipSlotsY = slotStartY;
+        
+        // Disegna icona drone (slot 0 - sempre vuoto, per futura immagine)
+        ThemeUtils.drawPanel(ctx, droneIconX, droneIconY, slotSize, slotSize, {
+            background: ThemeConfig.colors.background.tertiary,
+            border: ThemeConfig.colors.border.primary,
+            borderWidth: ThemeConfig.borders.width.thin,
+            radius: ThemeConfig.borders.radius.sm,
+            blur: false
+        });
+        
+        // Disegna slot equipaggiamento (slot 0+) - layout orizzontale usando sistema unificato
         for (let i = 0; i < drone.slots; i++) {
-            const slotX = x + 5 + i * (this.slotSize + 5);
-            const slotY = y + 5;
-            this.drawDroneSlot(ctx, slotX, slotY, drone.equippedItems ? drone.equippedItems[i] : null, droneIndex, i);
+            const slotX = equipSlotsX + i * (slotSize + slotSpacing);
+            const slotY = equipSlotsY;
+            
+            const item = drone.equippedItems && drone.equippedItems[i] ? drone.equippedItems[i] : null;
+            const slotName = `D${i + 1}`; // Nome slot drone (1-based per display)
+            
+            // Usa lo stesso sistema dell'equipaggiamento principale
+            this.drawEquipmentSlot(ctx, slotX, slotY, item, slotName);
         }
     }
     
-    // Disegna singolo slot del drone
-    drawDroneSlot(ctx, x, y, item, droneIndex, slotIndex) {
-        // Slot
-        ctx.fillStyle = item ? '#444444' : '#222222';
-        ctx.fillRect(x, y, this.slotSize, this.slotSize);
+    // Disegna scrollbar moderna per UAV
+    drawModernScrollbar(ctx, x, y, width, height, maxScroll) {
+        const scrollbarWidth = 8;
+        const scrollbarX = x + width - scrollbarWidth - 5;
+        const scrollbarY = y + 5;
+        const scrollbarHeight = height - 10;
         
-        // Bordo slot
-        ctx.strokeStyle = item ? '#ffffff' : '#666666';
+        // Sfondo scrollbar (trasparente)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+        
+        // Calcola dimensioni e posizione della barra di scroll
+        const thumbHeight = Math.max(20, (scrollbarHeight * scrollbarHeight) / (scrollbarHeight + maxScroll));
+        const thumbY = scrollbarY + (this.uavScrollY / maxScroll) * (scrollbarHeight - thumbHeight);
+        
+        // Barra di scroll (thumb)
+        const gradient = ctx.createLinearGradient(scrollbarX, thumbY, scrollbarX, thumbY + thumbHeight);
+        gradient.addColorStop(0, ThemeConfig.colors.accent.primary);
+        gradient.addColorStop(1, ThemeConfig.colors.accent.secondary);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight);
+        
+        // Bordo della barra di scroll
+        ctx.strokeStyle = ThemeConfig.colors.border.glass;
         ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, this.slotSize, this.slotSize);
+        ctx.strokeRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight);
         
-        if (item) {
-            // Icona oggetto
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            
-            if (item.type === 'laser') {
-                ctx.fillText('⚡', x + this.slotSize / 2, y + this.slotSize / 2 + 5);
-            } else if (item.type === 'shield') {
-                ctx.fillText('🛡️', x + this.slotSize / 2, y + this.slotSize / 2 + 5);
-            }
-            
-            ctx.textAlign = 'left';
+        // Effetto glow selezionato
+        if (this.isDraggingUAV) {
+            ctx.shadowColor = ThemeConfig.colors.accent.primary;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = 'rgba(0, 245, 255, 0.3)';
+            ctx.fillRect(scrollbarX - 2, thumbY - 2, scrollbarWidth + 4, thumbHeight + 4);
+            ctx.shadowBlur = 0;
         }
     }
+    
+
+    // Metodo drawUAVInventory rimosso - ora usiamo drawInventory per entrambe le tab
+    
+    // Metodo drawEquippedDrone rimosso - ora usiamo drawDroneVertical
+    
+    // Metodo drawDroneSlot rimosso - ora usiamo ThemeUtils.drawPanel
     
     // Disegna equipaggiamento
     drawEquipment(ctx) {
-        const equipmentY = this.panelY + 80;
+        const equipmentY = this.panelY + 200;
         const equipmentX = this.panelX + 50;
         const slotSpacing = 65; // Slot equipaggiamento più compatti
         
-        // Titolo equipaggiamento
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'left';
-        ctx.fillText('EQUIPAGGIAMENTO', equipmentX, equipmentY - 20);
+        // Titolo equipaggiamento rimosso per pulizia
         
                 // Disegna slot laser
-        ctx.fillStyle = '#ffff00';
-        ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-        ctx.fillText('LASER', equipmentX, equipmentY + 20); // Ancora più spazio dal titolo
+        ThemeUtils.drawText(ctx, 'LASER', equipmentX, equipmentY - 10, {
+            color: ThemeConfig.colors.accent.warning,
+            size: ThemeConfig.typography.sizes.base,
+            weight: ThemeConfig.typography.weights.bold
+        }); // Ancora più spazio dal titolo
         
         for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
-            this.drawEquipmentSlot(ctx, slotX, equipmentY + 40, this.equipment.laser[i], `L${i+1}`); // Allineato con il nuovo titolo
+            this.drawEquipmentSlot(ctx, slotX, equipmentY + 10, this.equipment.laser[i], `L${i+1}`); // Allineato con il nuovo titolo
         }
         
         // Disegna slot scudi/generatori
-        const shieldGenY = equipmentY + 180; // Molto più spazio verticale
-        ctx.fillStyle = '#00ffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('SCUDI/GENERATORI', equipmentX, shieldGenY - 15); // Più spazio dal titolo
+        const shieldGenY = equipmentY + 150; // Spazio ottimizzato
+        ThemeUtils.drawText(ctx, 'SCUDI/GENERATORI', equipmentX, shieldGenY - 15, {
+            color: ThemeConfig.colors.accent.info,
+            size: ThemeConfig.typography.sizes.base,
+            weight: ThemeConfig.typography.weights.bold
+        });
         
         for (let i = 0; i < 6; i++) {
             const slotX = equipmentX + (i * slotSpacing);
@@ -1508,11 +1625,12 @@ export class Inventory {
         }
         
         // Disegna slot extra
-        const extraY = equipmentY + 360; // Molto più spazio verticale
-        ctx.fillStyle = '#00ff00';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('EXTRA', equipmentX, extraY - 15); // Più spazio dal titolo
+        const extraY = equipmentY + 300; // Spazio ottimizzato
+        ThemeUtils.drawText(ctx, 'EXTRA', equipmentX, extraY - 15, {
+            color: ThemeConfig.colors.accent.success,
+            size: ThemeConfig.typography.sizes.base,
+            weight: ThemeConfig.typography.weights.bold
+        });
         
         for (let i = 0; i < 3; i++) {
             const slotX = equipmentX + (i * slotSpacing);
@@ -1523,106 +1641,178 @@ export class Inventory {
         // Disegna singolo slot di equipaggiamento
     drawEquipmentSlot(ctx, x, y, item, slotName) {
         if (item) {
-            // Slot con oggetto
-            ctx.fillStyle = '#333333';
-            ctx.fillRect(x, y, this.slotSize, this.slotSize);
-            
             // Colore bordo basato sul tipo
-            let borderColor = '#ffffff';
-            if (item.type === 'laser') borderColor = '#ff6b6b';
-            else if (item.type === 'shield') borderColor = '#4ecdc4';
-            else if (item.type === 'generator') borderColor = '#45b7d1';
-            else if (item.type === 'extra') borderColor = '#96ceb4';
+            let borderColor = ThemeConfig.colors.border.primary;
+            if (item.type === 'laser') borderColor = ThemeConfig.colors.accent.danger;
+            else if (item.type === 'shield') borderColor = ThemeConfig.colors.accent.info;
+            else if (item.type === 'generator') borderColor = ThemeConfig.colors.accent.success; // Verde per generatori
+            else if (item.type === 'extra') borderColor = ThemeConfig.colors.accent.success;
             
-            ctx.strokeStyle = borderColor;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, this.slotSize, this.slotSize);
+            // Slot con oggetto moderno
+            ThemeUtils.drawPanel(ctx, x, y, this.slotSize, this.slotSize, {
+                background: ThemeConfig.colors.background.card,
+                border: borderColor,
+                borderWidth: ThemeConfig.borders.width.normal,
+                radius: ThemeConfig.borders.radius.md,
+                blur: false,
+                glow: borderColor
+            });
             
+            // Disegna immagine per tipi N3, altrimenti testo
+            if (this.shouldShowImage(item)) {
+                this.drawItemImage(ctx, x, y, item);
+            } else {
             // Nome oggetto DENTRO il quadrato
-        ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-            ctx.fillText(item.name, x + this.slotSize / 2, y + this.slotSize / 2 + 4);
+                ThemeUtils.drawText(ctx, item.name, x + this.slotSize / 2, y + this.slotSize / 2 + 4, {
+                    color: ThemeConfig.colors.text.primary,
+                    size: ThemeConfig.typography.sizes.sm,
+                    weight: ThemeConfig.typography.weights.bold,
+                    align: 'center',
+                    baseline: 'middle'
+                });
+            }
                 } else {
-                    // Slot vuoto
-            ctx.fillStyle = '#222222';
-            ctx.fillRect(x, y, this.slotSize, this.slotSize);
-            ctx.strokeStyle = '#666666';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x, y, this.slotSize, this.slotSize);
+            // Slot vuoto moderno
+            ThemeUtils.drawPanel(ctx, x, y, this.slotSize, this.slotSize, {
+                background: ThemeConfig.colors.background.tertiary,
+                border: ThemeConfig.colors.border.primary,
+                borderWidth: ThemeConfig.borders.width.thin,
+                radius: ThemeConfig.borders.radius.md,
+                blur: false
+            });
             
             // Nome slot DENTRO il quadrato
-            ctx.fillStyle = '#888888';
-            ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-            ctx.fillText(slotName, x + this.slotSize / 2, y + this.slotSize / 2 + 4);
+            ThemeUtils.drawText(ctx, slotName, x + this.slotSize / 2, y + this.slotSize / 2 + 4, {
+                color: ThemeConfig.colors.text.muted,
+                size: ThemeConfig.typography.sizes.sm,
+                weight: ThemeConfig.typography.weights.bold,
+                align: 'center',
+                baseline: 'middle'
+            });
+        }
+    }
+    
+    // Determina se mostrare l'immagine per un oggetto
+    shouldShowImage(item) {
+        if (!item) return false;
+        
+        // Mostra immagine solo per tipi N3
+        const isLaser3 = item.type === 'laser' && item.name && item.name.toLowerCase().includes('3');
+        const isShield3 = item.type === 'shield' && item.name && item.name.toLowerCase().includes('3');
+        const isGen3 = item.type === 'generator' && item.name && item.name.toLowerCase().includes('3');
+        
+        return (isLaser3 && this.equipImages.laser3) || 
+               (isShield3 && this.equipImages.shield3) || 
+               (isGen3 && this.equipImages.gen3);
+    }
+    
+    // Disegna l'immagine dell'oggetto
+    drawItemImage(ctx, x, y, item, slotSize = null) {
+        let image = null;
+        
+        // Determina quale immagine usare
+        if (item.type === 'laser' && item.name && item.name.toLowerCase().includes('3')) {
+            image = this.equipImages.laser3;
+        } else if (item.type === 'shield' && item.name && item.name.toLowerCase().includes('3')) {
+            image = this.equipImages.shield3;
+        } else if (item.type === 'generator' && item.name && item.name.toLowerCase().includes('3')) {
+            image = this.equipImages.gen3;
+        }
+        
+        if (image && image.complete) {
+            // Usa la dimensione dello slot passata o quella di default
+            const currentSlotSize = slotSize || this.slotSize;
+            const padding = 8;
+            const imageSize = currentSlotSize - (padding * 2);
+            const imageX = x + padding;
+            const imageY = y + padding;
+            
+            // Disegna l'immagine
+            ctx.drawImage(image, imageX, imageY, imageSize, imageSize);
+        } else {
+            // Fallback al testo se l'immagine non è caricata
+            const currentSlotSize = slotSize || this.slotSize;
+            ThemeUtils.drawText(ctx, item.name, x + currentSlotSize / 2, y + currentSlotSize / 2 + 4, {
+                color: ThemeConfig.colors.text.primary,
+                size: ThemeConfig.typography.sizes.sm,
+                weight: ThemeConfig.typography.weights.bold,
+                align: 'center',
+                baseline: 'middle'
+            });
         }
     }
     
     // Disegna inventario
     drawInventory(ctx) {
-        const inventoryY = this.panelY + 80;
-        const inventoryX = this.panelX + 650; // Posizionato molto più a destra
-        const itemsPerRow = 5;
+        const inventoryY = this.panelY + 160;
+        const inventoryX = this.panelX + 600; // Posizionato a destra
+        const itemsPerRow = 6; // Più oggetti per riga
+        const slotSize = 60; // Slot più grandi
+        const slotSpacing = 10;
         
-        // Titolo inventario
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`INVENTARIO (${this.items.length}/15)`, inventoryX, inventoryY - 20);
+        // Titolo inventario rimosso per pulizia
         
         // Disegna oggetti
         for (let i = 0; i < this.items.length; i++) {
-            const itemX = inventoryX + (i % itemsPerRow) * (this.slotSize + this.slotSpacing);
-            const itemY = inventoryY + Math.floor(i / itemsPerRow) * (this.slotSize + this.slotSpacing);
+            const itemX = inventoryX + (i % itemsPerRow) * (slotSize + slotSpacing);
+            const itemY = inventoryY + Math.floor(i / itemsPerRow) * (slotSize + slotSpacing);
             
             const item = this.items[i];
             
-            // Colore basato sul tipo
-            let itemColor = '#ffffff';
+            // Colore basato sul tipo usando il tema
+            let itemColor = ThemeConfig.colors.border.primary;
             if (item.type === 'purchase') {
-                // Acquisti reali - colore dorato
-                itemColor = '#ffd700';
-            } else if (item.type === 'laser') itemColor = '#ff6b6b';
-            else if (item.type === 'shield') itemColor = '#4ecdc4';
-            else if (item.type === 'generator') itemColor = '#45b7d1';
-            else if (item.type === 'extra') itemColor = '#96ceb4';
+                itemColor = ThemeConfig.colors.accent.warning; // Oro
+            } else if (item.type === 'laser') itemColor = ThemeConfig.colors.accent.danger;
+            else if (item.type === 'shield') itemColor = ThemeConfig.colors.accent.info;
+            else if (item.type === 'generator') itemColor = ThemeConfig.colors.accent.success; // Verde per generatori
+            else if (item.type === 'extra') itemColor = ThemeConfig.colors.accent.success;
             
-            // Sfondo slot
-            ctx.fillStyle = '#333333';
-            ctx.fillRect(itemX, itemY, this.slotSize, this.slotSize);
+            // Disegna slot moderna (senza blur)
+            ThemeUtils.drawPanel(ctx, itemX, itemY, slotSize, slotSize, {
+                background: ThemeConfig.colors.background.card,
+                border: itemColor,
+                borderWidth: ThemeConfig.borders.width.normal,
+                radius: ThemeConfig.borders.radius.md,
+                blur: false,
+                glow: itemColor === ThemeConfig.colors.accent.warning ? ThemeConfig.colors.accent.warning : null
+            });
             
-            // Bordo
-            ctx.strokeStyle = itemColor;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(itemX, itemY, this.slotSize, this.slotSize);
-            
-                        // Nome oggetto DENTRO il quadrato
-        ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-            
-            // Per acquisti reali, mostra anche la quantità
+            // Disegna immagine per tipi N3, altrimenti testo
+            if (this.shouldShowImage(item)) {
+                this.drawItemImage(ctx, itemX, itemY, item, slotSize);
+            } else {
+                // Nome oggetto
             let displayText = item.name;
             if (item.type === 'purchase' && item.amount > 1) {
                 displayText = `${item.name} x${item.amount}`;
             }
             
-            ctx.fillText(displayText, itemX + this.slotSize / 2, itemY + this.slotSize / 2 + 3);
+                ThemeUtils.drawText(ctx, displayText, itemX + slotSize / 2, itemY + slotSize / 2, {
+                    color: item.type === 'purchase' ? ThemeConfig.colors.text.accent : ThemeConfig.colors.text.primary,
+                    size: ThemeConfig.typography.sizes.sm,
+                    weight: ThemeConfig.typography.weights.semibold,
+                    align: 'center',
+                    baseline: 'middle',
+                    glow: item.type === 'purchase'
+                });
+            }
         }
         
-        // Disegna slot vuoti
-        const totalSlots = Math.min(15, Math.ceil(this.items.length / itemsPerRow) * itemsPerRow);
+        // Disegna slot vuoti per completare la griglia (sempre 15 slot)
+        const totalSlots = 15;
         for (let i = this.items.length; i < totalSlots; i++) {
-            const itemX = inventoryX + (i % itemsPerRow) * (this.slotSize + this.slotSpacing);
-            const itemY = inventoryY + Math.floor(i / itemsPerRow) * (this.slotSize + this.slotSpacing);
+            const itemX = inventoryX + (i % itemsPerRow) * (slotSize + slotSpacing);
+            const itemY = inventoryY + Math.floor(i / itemsPerRow) * (slotSize + slotSpacing);
             
-            // Slot vuoto
-            ctx.fillStyle = '#222222';
-            ctx.fillRect(itemX, itemY, this.slotSize, this.slotSize);
-            ctx.strokeStyle = '#444444';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(itemX, itemY, this.slotSize, this.slotSize);
+            // Slot vuoto moderno
+            ThemeUtils.drawPanel(ctx, itemX, itemY, slotSize, slotSize, {
+                background: ThemeConfig.colors.background.tertiary,
+                border: ThemeConfig.colors.border.primary,
+                borderWidth: ThemeConfig.borders.width.thin,
+                radius: ThemeConfig.borders.radius.md,
+                blur: false
+            });
         }
     }
     
