@@ -720,7 +720,7 @@ export class Inventory {
                         if (!drone.equippedItems) {
                             drone.equippedItems = new Array(drone.slots).fill(null);
                         }
-                        
+
                         // Se c'è un oggetto equipaggiato, rimuovilo
                         if (drone.equippedItems[slotIndex]) {
                             this.unequipItemFromDrone(droneIndex, slotIndex);
@@ -950,8 +950,8 @@ export class Inventory {
             const laserKey = item.stats?.key || item.key;
             if (laserKey && ship.laserDamage[laserKey]) {
                 const damage = ship.laserDamage[laserKey];
-                ship.droneDamageBonus += damage;
-                
+            ship.droneDamageBonus += damage;
+            
                 console.log(`🚁 Drone ${drone.name}: +${damage} danno da ${item.name} (${laserKey})`);
             }
         } else if (item.type === 'shield') {

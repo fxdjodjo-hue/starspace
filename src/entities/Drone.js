@@ -53,6 +53,9 @@ export class Drone {
         this.maxRotationRateRad = 0.15; // rad/sec (molto più lento nel seguire la rotazione)
         this.initializedHeading = false;
 
+        // Smorzamento rotazione per non seguire troppo perfettamente il mouse
+        this.rotationSmoothing = 0.08; // 0..1 per tick (~lag morbido)
+
         // Carica asset grafici IRIS (una sola volta per l'app)
         if (this.droneType === 'iris') {
             this.ensureIrisAssetsLoaded();
@@ -73,8 +76,11 @@ export class Drone {
         // Muovi verso il target
         this.moveTowardsTarget();
         
-        // Aggiorna rotazione estetica (indipendente dalla nave)
-        this.updateRotation(deltaTime);
+        // Allinea la rotazione verso quella della nave con smorzamento (niente snap)
+        if (this.parentShip) {
+            const targetRot = this.parentShip.rotation;
+            this.rotation = this.lerpAngle(this.rotation, targetRot, this.rotationSmoothing);
+        }
     }
     
     // Comportamento di follow
@@ -208,7 +214,6 @@ export class Drone {
         
         ctx.save();
         ctx.translate(screenPos.x, screenPos.y);
-        ctx.rotate(this.rotation);
         
         // Disegna corpo del drone
         this.drawDroneBody(ctx);
@@ -230,7 +235,17 @@ export class Drone {
             if (Drone.irisGrid) {
                 const g = Drone.irisGrid;
                 const total = Math.max(1, g.total || (g.cols * g.rows));
-                const idx = Math.floor((Date.now() / 80) % total);
+                // Mappa la rotazione come fa la nave (ShipSprite.getFrameFromRotation):
+                // inverti la rotazione, normalizza in [0, 2π), poi scala ai frame
+                // Usa la rotazione smussata del drone (che insegue quella della nave)
+                let angle = this.rotation; // radianti
+                let inverted = -angle;
+                let normalized = inverted % (Math.PI * 2);
+                if (normalized < 0) normalized += Math.PI * 2;
+                // Offset opzionale per allineare il frame 0 alla direzione corretta
+                const angleOffset = 0; // rad, aumenta/diminuisci se serve allineamento fine
+                const mapped = ((normalized + angleOffset) / (Math.PI * 2));
+                const idx = Math.floor(mapped * total) % total;
                 const col = idx % g.cols;
                 const row = Math.floor(idx / g.cols);
                 const sx = g.startX + col * g.step;

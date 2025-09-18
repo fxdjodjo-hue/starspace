@@ -550,7 +550,10 @@ class Game {
         // Aggiorna inventario
         this.inventory.update();
         
-        // I droni UAV sono ora gestiti semplicemente dal Renderer
+        // Aggiorna i droni UAV (follow nave, formazione, rotazione)
+        if (this.droneManager) {
+            this.droneManager.update(16); // ~60fps
+        }
         
         // Aggiorna quest tracker
         this.questTracker.update();
