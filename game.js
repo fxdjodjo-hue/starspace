@@ -422,7 +422,16 @@ class Game {
             return; // STOP - Non aggiornare/gestire altro finché la start screen è visibile
         }
         
-        // Il gioco principale inizia SOLO quando la StartScreen non è visibile
+        // Se non siamo online, ferma il gioco
+        if (!this.isOnlineMode) {
+            // Mostra messaggio di errore ogni 5 secondi
+            if (this.frameCount % 300 === 0) {
+                this.notifications.add('❌ Connessione richiesta per giocare', 5000, 'error');
+            }
+            return;
+        }
+        
+        // Il gioco principale inizia SOLO quando la StartScreen non è visibile E siamo online
         
         // Gestisci cambio nave con tasti 1 e 2
         if (this.input.isKey1JustPressed()) {
@@ -550,9 +559,9 @@ class Game {
         // Aggiorna la camera (sempre, ma solo se la nave si è mossa)
         this.camera.update(this.ship);
         
-        // Invia movimento al server multiplayer (ogni 5 frame per ridurre traffico)
-        if (this.isOnlineMode && this.frameCount % 5 === 0) {
-            this.sendPlayerMove();
+        // Invia input al server multiplayer (ogni frame per input responsivo)
+        if (this.isOnlineMode) {
+            this.sendPlayerPosition();
         }
         
         // Aggiorna la ModernSkillbar
@@ -1351,6 +1360,16 @@ class Game {
         if (this.startScreen.isVisible) {
             this.startScreen.draw(this.ctx);
             return; // Non disegnare il gioco se la start screen è visibile
+        }
+        
+        // Se non siamo online, mostra solo messaggio di errore
+        if (!this.isOnlineMode) {
+            this.ctx.fillStyle = '#ff0000';
+            this.ctx.font = 'bold 24px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('❌ CONNESSIONE RICHIESTA', this.width / 2, this.height / 2);
+            this.ctx.fillText('Il gioco funziona solo online', this.width / 2, this.height / 2 + 40);
+            return;
         }
         
         // Il pulsante di logout verrà disegnato alla fine, dopo tutti gli altri elementi UI
@@ -2593,6 +2612,7 @@ class Game {
         eventSystem.on('network:connected', () => {
             console.log('🌐 Connesso al server multiplayer');
             this.isOnlineMode = true;
+            console.log('🌐 isOnlineMode impostato a true');
             this.notifications.add('🌐 Connesso al server multiplayer!', 3000, 'success');
             this.joinGame();
         });
@@ -2633,6 +2653,10 @@ class Game {
         eventSystem.on('sync:player:join:success', (data) => {
             this.handlePlayerJoinSuccess(data);
         });
+        
+        eventSystem.on('sync:game:state:update', (data) => {
+            this.handleGameStateUpdate(data);
+        });
     }
     
     connectToServer(serverUrl = null) {
@@ -2663,13 +2687,23 @@ class Game {
         console.log('👤 Invio richiesta di join:', playerData);
     }
     
-    sendPlayerMove() {
+    sendPlayerPosition() {
         if (!this.isOnlineMode) return;
         
-        this.onlineManager.getNetworkManager().sendAction('player:move', {
+        // SEMPLICE: Invia solo la posizione attuale della nave (come offline)
+        const positionData = {
             x: this.ship.x,
-            y: this.ship.y
-        });
+            y: this.ship.y,
+            rotation: this.ship.rotation,
+            nickname: this.playerProfile.getNickname()
+        };
+        
+        this.onlineManager.getNetworkManager().sendAction('player:position', positionData);
+        
+        // Debug: log posizione inviata ogni 60 frame
+        if (this.frameCount % 60 === 0) {
+            console.log('🎮 Invio posizione:', positionData);
+        }
     }
     
     sendPlayerAttack(targetId, damage) {
@@ -2688,10 +2722,22 @@ class Game {
     }
     
     handlePlayerJoined(data) {
+        // Inizializza currentX e currentY per interpolazione
+        data.currentX = data.x;
+        data.currentY = data.y;
+        data.targetX = data.x;
+        data.targetY = data.y;
+        
         this.onlinePlayers.set(data.id, data);
         console.log('👤 Giocatore connesso:', data.nickname, 'at', data.x, data.y);
         console.log('👤 Online players now:', this.onlinePlayers.size);
-        this.notifications.add(`👤 ${data.nickname} si è unito al gioco`, 2000, 'info');
+        
+        // Notifica diversa per player fake vs reali
+        if (data.isFake) {
+            this.notifications.add(`🤖 ${data.nickname} (BOT) si è unito al gioco`, 2000, 'info');
+        } else {
+            this.notifications.add(`👤 ${data.nickname} si è unito al gioco`, 2000, 'info');
+        }
     }
     
     handlePlayerLeft(data) {
@@ -2706,6 +2752,10 @@ class Game {
             console.log(`🔄 Player ${player.nickname} moved: ${player.x}, ${player.y} -> ${data.x}, ${data.y}`);
             player.x = data.x;
             player.y = data.y;
+            if (data.rotation !== undefined) player.rotation = data.rotation;
+            if (data.size !== undefined) player.size = data.size;
+            if (data.floatingOffset !== undefined) player.floatingOffset = data.floatingOffset;
+            if (data.floatingAmplitude !== undefined) player.floatingAmplitude = data.floatingAmplitude;
         } else {
             console.log(`❌ Player ${data.playerId} not found in onlinePlayers`);
         }
@@ -2731,19 +2781,44 @@ class Game {
         
         // Sincronizza stato del gioco
         if (data.gameState) {
-            this.syncGameState(data.gameState);
+            this.handleGameStateUpdate(data.gameState);
         }
     }
     
-    syncGameState(gameState) {
-        // Sincronizza stato del gioco con quello del server
-        if (gameState.players) {
-            this.onlinePlayers.clear();
-            for (const [playerId, playerData] of Object.entries(gameState.players)) {
+    handleGameStateUpdate(data) {
+        console.log('🔄 Game: Ricevuto game state update', data);
+        
+        // SEMPLICE: Aggiorna solo le posizioni degli altri giocatori
+        if (data.players) {
+            for (const [playerId, playerData] of Object.entries(data.players)) {
                 if (playerId !== this.playerId) {
-                    this.onlinePlayers.set(playerId, playerData);
+                    const existingPlayer = this.onlinePlayers.get(playerId);
+                    if (existingPlayer) {
+                        // Aggiorna posizione esistente
+                        existingPlayer.x = playerData.x;
+                        existingPlayer.y = playerData.y;
+                        existingPlayer.rotation = playerData.rotation;
+                        
+                        // Debug: log aggiornamento ogni 60 frame
+                        if (this.frameCount % 60 === 0 && playerData.isFake) {
+                            console.log(`🔄 ${existingPlayer.nickname} aggiornato: (${playerData.x}, ${playerData.y})`);
+                        }
+                    } else {
+                        // Nuovo giocatore
+                        this.onlinePlayers.set(playerId, {
+                            ...playerData,
+                            currentX: playerData.x,
+                            currentY: playerData.y
+                        });
+                        console.log(`🔄 Nuovo giocatore ${playerData.nickname}: (${playerData.x}, ${playerData.y})`);
+                    }
                 }
             }
+        }
+        
+        // Debug: log aggiornamento stato ogni 60 frame
+        if (this.frameCount % 60 === 0) {
+            console.log('🔄 Game state update:', Object.keys(data.players).length, 'players');
         }
     }
     
@@ -2752,27 +2827,38 @@ class Game {
     }
     
     renderOnlinePlayers() {
-        if (!this.isOnlineMode) return;
+        // Debug: log ogni 60 frame (1 secondo)
+        if (this.frameCount % 60 === 0) {
+            console.log('🎮 renderOnlinePlayers chiamato - isOnlineMode:', this.isOnlineMode, 'onlinePlayers:', this.onlinePlayers.size);
+        }
+        
+        if (!this.isOnlineMode) {
+            if (this.frameCount % 60 === 0) {
+                console.log('❌ renderOnlinePlayers: isOnlineMode è false, esco');
+            }
+            return;
+        }
         
         // Debug: log ogni 60 frame (1 secondo)
         if (this.frameCount % 60 === 0) {
             console.log('🎮 Rendering online players:', this.onlinePlayers.size, 'players');
             this.onlinePlayers.forEach((player, playerId) => {
-                console.log(`  - ${player.nickname} (${playerId}): x=${player.x}, y=${player.y}`);
+                console.log(`  - ${player.nickname} (${playerId}): x=${player.currentX}, y=${player.currentY}`);
             });
         }
         
         this.onlinePlayers.forEach((player, playerId) => {
             if (playerId === this.playerId) return; // Non renderizzare se stesso
             
-            // Calcola posizione relativa alla camera (come fanno gli altri oggetti)
+            // SEMPLICE: Usa direttamente la posizione ricevuta dal server
             const screenX = player.x - this.camera.x;
             const screenY = player.y - this.camera.y;
             
             // Debug: log posizioni ogni 60 frame
             if (this.frameCount % 60 === 0) {
-                console.log(`🎯 Player ${player.nickname}: world(${player.x}, ${player.y}) -> screen(${screenX}, ${screenY})`);
+                console.log(`🎯 Player ${player.nickname}: world(${player.currentX}, ${player.currentY}) -> screen(${screenX}, ${screenY})`);
                 console.log(`🎯 Camera: x=${this.camera.x}, y=${this.camera.y}`);
+                console.log(`🎯 Player data:`, player);
             }
             
             // Renderizza solo se è visibile sullo schermo
@@ -2783,15 +2869,57 @@ class Game {
                 this.ctx.save();
                 this.ctx.translate(screenX, screenY);
                 
-                // Disegna nave semplice per altri giocatori
-                this.ctx.fillStyle = '#00ff00';
-                this.ctx.fillRect(-15, -10, 30, 20);
+                // Disegna nave per altri giocatori usando lo stesso sprite della nave locale
+                if (this.ship && this.ship.sprite && this.ship.sprite.isLoaded) {
+                    // Usa lo stesso sprite della nave locale ma con colore diverso
+                    this.ctx.save();
+                    this.ctx.globalCompositeOperation = 'source-over';
+                    
+                    // Colore diverso per player fake vs reali
+                    if (player.isFake) {
+                        this.ctx.filter = 'hue-rotate(240deg) saturate(1.5)'; // Blu per bot
+                    } else {
+                        this.ctx.filter = 'hue-rotate(120deg) saturate(1.5)'; // Verde per giocatori reali
+                    }
+                    
+                    // Usa i parametri corretti per il metodo draw dello sprite
+                    const floatingY = Math.sin(player.floatingOffset || 0) * (player.floatingAmplitude || 0);
+                    
+                    // Debug: log rendering ogni 60 frame
+                    if (this.frameCount % 60 === 0) {
+                        console.log(`🎨 Rendering ${player.nickname}: rotation=${player.rotation}, size=${player.size}, floatingY=${floatingY}`);
+                    }
+                    
+                    this.ship.sprite.draw(this.ctx, 0, 0, player.rotation || 0, player.size || 1, floatingY);
+                    
+                    this.ctx.filter = 'none';
+                    this.ctx.restore();
+                } else {
+                    // Fallback: rettangolo colorato se lo sprite non è disponibile
+                    this.ctx.fillStyle = player.isFake ? '#0066ff' : '#00ff00';
+                    this.ctx.fillRect(-15, -10, 30, 20);
+                    
+                    // Debug: log fallback
+                    if (this.frameCount % 60 === 0) {
+                        console.log(`🎨 Fallback rendering per ${player.nickname}: sprite non disponibile`);
+                    }
+                }
                 
-                // Disegna nickname
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.font = '12px Arial';
+                // Disegna nickname sopra la nave
+                this.ctx.fillStyle = player.isFake ? '#0066ff' : '#00ff00';
+                this.ctx.font = 'bold 14px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(player.nickname, 0, -20);
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeText(player.nickname, 0, -25);
+                this.ctx.fillText(player.nickname, 0, -25);
+                
+                // Aggiungi indicatore per player fake
+                if (player.isFake) {
+                    this.ctx.fillStyle = '#ff6600';
+                    this.ctx.font = 'bold 10px Arial';
+                    this.ctx.fillText('BOT', 0, -40);
+                }
                 
                 this.ctx.restore();
                 

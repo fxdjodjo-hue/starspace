@@ -90,6 +90,9 @@ export class NetworkManager {
             case 'player:updated':
                 this.handlePlayerUpdated(data);
                 break;
+            case 'game:state:update':
+                this.handleGameStateUpdate(data);
+                break;
             case 'shop:purchase:success':
                 this.handleShopPurchaseSuccess(data);
                 break;
@@ -193,6 +196,12 @@ export class NetworkManager {
     // Gestisce aggiornamento giocatore
     handlePlayerUpdated(data) {
         this.eventSystem.emitSync('player:updated', data);
+    }
+    
+    // Gestisce aggiornamento stato del gioco
+    handleGameStateUpdate(data) {
+        console.log('🔄 NetworkManager: Ricevuto game:state:update', data);
+        this.eventSystem.emit('sync:game:state:update', data);
     }
     
     // Gestisce errore di connessione
