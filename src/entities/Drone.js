@@ -54,7 +54,7 @@ export class Drone {
         this.initializedHeading = false;
 
         // Smorzamento rotazione per non seguire troppo perfettamente il mouse
-        this.rotationSmoothing = 0.08; // 0..1 per tick (~lag morbido)
+        this.rotationSmoothing = 0.05; // 0..1 per tick (più inerzia)
 
         // Carica asset grafici IRIS (una sola volta per l'app)
         if (this.droneType === 'iris') {

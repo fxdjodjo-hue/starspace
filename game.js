@@ -43,6 +43,7 @@ import { SaveSystem } from './src/systems/SaveSystem.js';
 import { SaveLoadPanel } from './src/ui/SaveLoadPanel.js';
 import { FactionSystem } from './src/systems/FactionSystem.js';
 import { AuthSystem } from './src/systems/AuthSystem.js';
+import { OnlineGameManager } from './modules/OnlineGameManager.js';
 
 
 
@@ -122,6 +123,15 @@ class Game {
         // Sistema fazioni
         this.factionSystem = new FactionSystem();
         
+        // Sistema multiplayer
+        this.onlineManager = new OnlineGameManager();
+        this.onlinePlayers = new Map(); // playerId -> playerData
+        this.isOnlineMode = false;
+        this.playerId = null;
+        
+        // Inizializza eventi multiplayer
+        this.initMultiplayerEvents();
+        
         // Sistema visualizzazione mappe (dopo factionSystem)
         this.mapSystem = new MapSystem();
         this.mapSystem.setFactionSystem(this.factionSystem);
@@ -188,6 +198,12 @@ class Game {
         
         // Il logout è ora gestito dalla HomePanel
         
+        // Etichetta build (overlay)
+        this.buildLabel = {
+            text: 'PRE-ALPHA BUILD',
+            color: '#9aa4b2'
+        };
+        
         // Inizializza audio e altri sistemi
         this.initAudio();
         
@@ -205,6 +221,25 @@ class Game {
         };
     }
     
+    // Disegna un semplice badge di build in alto a destra
+    drawBuildBadge() {
+        try {
+            const padding = 14;
+            const labelText = (this.buildLabel && this.buildLabel.text) ? this.buildLabel.text : 'PRE-ALPHA BUILD';
+            const color = (this.buildLabel && this.buildLabel.color) ? this.buildLabel.color : '#9aa4b2';
+            this.ctx.save();
+            this.ctx.font = 'bold 12px Inter, Arial, sans-serif';
+            this.ctx.textAlign = 'right';
+            this.ctx.textBaseline = 'top';
+            this.ctx.fillStyle = color;
+            this.ctx.globalAlpha = 0.9;
+            this.ctx.fillText(labelText, this.canvas.width - padding, padding);
+            this.ctx.restore();
+        } catch (e) {
+            // Evita di bloccare il loop in caso di errori inattesi
+        }
+    }
+
     // Imposta le dimensioni del canvas dinamicamente
     setCanvasSize() {
         const container = this.canvas.parentElement;
@@ -514,6 +549,11 @@ class Game {
         
         // Aggiorna la camera (sempre, ma solo se la nave si è mossa)
         this.camera.update(this.ship);
+        
+        // Invia movimento al server multiplayer (ogni 5 frame per ridurre traffico)
+        if (this.isOnlineMode && this.frameCount % 5 === 0) {
+            this.sendPlayerMove();
+        }
         
         // Aggiorna la ModernSkillbar
         this.categorySkillbar.update();
@@ -892,7 +932,17 @@ class Game {
             const newNickname = prompt('Inserisci il tuo nickname:', this.playerProfile.getNickname());
             if (newNickname && newNickname.trim().length > 0) {
                 this.playerProfile.setNickname(newNickname.trim());
-
+                this.notifications.add(`Nickname cambiato in: ${this.playerProfile.getNickname()}`, 3000, 'success');
+            }
+        }
+        
+        // Comando per connettersi al multiplayer (tasto M)
+        if (this.input.isKeyJustPressed('KeyM')) {
+            if (!this.isOnlineMode) {
+                this.connectToServer();
+                this.notifications.add("Tentativo di connessione al server multiplayer...", 3000, 'info');
+            } else {
+                this.notifications.add("Già connesso al server multiplayer", 3000, 'info');
             }
         }
         
@@ -1351,6 +1401,9 @@ class Game {
         // Disegna la nave
         this.renderer.drawShip(this.ship, this.camera);
         
+        // Disegna altri giocatori online
+        this.renderOnlinePlayers();
+        
         // Disegna droni del DroneManager (sprite iris)
         if (this.droneManager) {
             this.droneManager.draw(this.ctx, this.camera);
@@ -1411,6 +1464,9 @@ class Game {
         
         // Ripristina il contesto (rimuove lo zoom)
         this.ctx.restore();
+        
+        // Badge build (overlay in alto a destra)
+        this.drawBuildBadge();
         
         // Disegna la minimappa (separata dal renderer, non influenzata dallo zoom)
         this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem, this.spaceStation, this.interactiveAsteroids, this.mapManager);
@@ -1483,6 +1539,17 @@ class Game {
         // Disegna pannello quest se aperto
         
         // Il pulsante di logout è ora gestito dal UIManager
+        
+        // Badge build in alto a destra
+        this.ctx.save();
+        this.ctx.font = 'bold 12px Inter, Arial, sans-serif';
+        this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'top';
+        this.ctx.fillStyle = (this.buildLabel && this.buildLabel.color) ? this.buildLabel.color : '#9aa4b2';
+        const labelText = (this.buildLabel && this.buildLabel.text) ? this.buildLabel.text : 'PRE-ALPHA BUILD';
+        this.ctx.globalAlpha = 0.9;
+        this.ctx.fillText(labelText, this.canvas.width - 14, 14);
+        this.ctx.restore();
     }
     
     // Inizializza l'inventario (nessun mock)
@@ -2517,6 +2584,200 @@ class Game {
     /**
      * Resetta il gioco per iniziare una nuova partita
      */
+    // === METODI MULTIPLAYER ===
+    
+    initMultiplayerEvents() {
+        const eventSystem = this.onlineManager.getEventSystem();
+        
+        // Eventi di connessione
+        eventSystem.on('network:connected', () => {
+            console.log('🌐 Connesso al server multiplayer');
+            this.isOnlineMode = true;
+            this.notifications.add('🌐 Connesso al server multiplayer!', 3000, 'success');
+            this.joinGame();
+        });
+        
+        eventSystem.on('network:disconnected', () => {
+            console.log('🔌 Disconnesso dal server multiplayer');
+            this.isOnlineMode = false;
+            this.notifications.add('🔌 Disconnesso dal server multiplayer', 3000, 'warning');
+        });
+        
+        eventSystem.on('network:error', () => {
+            console.log('❌ Errore di connessione multiplayer');
+            this.isOnlineMode = false;
+            this.notifications.add('❌ Errore di connessione multiplayer', 3000, 'error');
+        });
+        
+        // Eventi giocatori
+        eventSystem.on('sync:player:joined', (data) => {
+            this.handlePlayerJoined(data);
+        });
+        
+        eventSystem.on('sync:player:left', (data) => {
+            this.handlePlayerLeft(data);
+        });
+        
+        eventSystem.on('sync:player:moved', (data) => {
+            this.handlePlayerMoved(data);
+        });
+        
+        eventSystem.on('sync:player:attacked', (data) => {
+            this.handlePlayerAttacked(data);
+        });
+        
+        eventSystem.on('sync:player:updated', (data) => {
+            this.handlePlayerUpdated(data);
+        });
+        
+        eventSystem.on('sync:player:join:success', (data) => {
+            this.handlePlayerJoinSuccess(data);
+        });
+    }
+    
+    connectToServer(serverUrl = 'ws://localhost:8080/ws') {
+        console.log('🔌 Tentativo di connessione al server:', serverUrl);
+        this.onlineManager.connectToServer(serverUrl);
+    }
+    
+    joinGame() {
+        if (!this.isOnlineMode) return;
+        
+        const playerData = {
+            playerId: this.playerId || this.generatePlayerId(),
+            nickname: this.playerProfile.getNickname(),
+            x: this.ship.x,
+            y: this.ship.y,
+            credits: this.ship.credits,
+            uridium: this.ship.uridium,
+            honor: this.ship.honor,
+            level: this.ship.level,
+            faction: this.factionSystem.getCurrentFaction()
+        };
+        
+        this.playerId = playerData.playerId;
+        
+        this.onlineManager.getNetworkManager().sendAction('player:join', playerData);
+        console.log('👤 Invio richiesta di join:', playerData);
+    }
+    
+    sendPlayerMove() {
+        if (!this.isOnlineMode) return;
+        
+        this.onlineManager.getNetworkManager().sendAction('player:move', {
+            x: this.ship.x,
+            y: this.ship.y
+        });
+    }
+    
+    sendPlayerAttack(targetId, damage) {
+        if (!this.isOnlineMode) return;
+        
+        this.onlineManager.getNetworkManager().sendAction('player:attack', {
+            targetId: targetId,
+            damage: damage
+        });
+    }
+    
+    sendPlayerUpdate(data) {
+        if (!this.isOnlineMode) return;
+        
+        this.onlineManager.getNetworkManager().sendAction('player:update', data);
+    }
+    
+    handlePlayerJoined(data) {
+        this.onlinePlayers.set(data.id, data);
+        console.log('👤 Giocatore connesso:', data.nickname);
+        this.notifications.add(`👤 ${data.nickname} si è unito al gioco`, 2000, 'info');
+    }
+    
+    handlePlayerLeft(data) {
+        this.onlinePlayers.delete(data.playerId);
+        console.log('👋 Giocatore disconnesso:', data.playerId);
+        this.notifications.add('👋 Un giocatore si è disconnesso', 2000, 'info');
+    }
+    
+    handlePlayerMoved(data) {
+        const player = this.onlinePlayers.get(data.playerId);
+        if (player) {
+            player.x = data.x;
+            player.y = data.y;
+        }
+    }
+    
+    handlePlayerAttacked(data) {
+        // Mostra effetto di attacco per altri giocatori
+        if (data.playerId !== this.playerId) {
+            console.log('⚔️ Giocatore attacca:', data);
+        }
+    }
+    
+    handlePlayerUpdated(data) {
+        const player = this.onlinePlayers.get(data.playerId);
+        if (player) {
+            Object.assign(player, data);
+        }
+    }
+    
+    handlePlayerJoinSuccess(data) {
+        this.playerId = data.playerId;
+        console.log('✅ Join riuscito! Player ID:', this.playerId);
+        
+        // Sincronizza stato del gioco
+        if (data.gameState) {
+            this.syncGameState(data.gameState);
+        }
+    }
+    
+    syncGameState(gameState) {
+        // Sincronizza stato del gioco con quello del server
+        if (gameState.players) {
+            this.onlinePlayers.clear();
+            for (const [playerId, playerData] of Object.entries(gameState.players)) {
+                if (playerId !== this.playerId) {
+                    this.onlinePlayers.set(playerId, playerData);
+                }
+            }
+        }
+    }
+    
+    generatePlayerId() {
+        return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    renderOnlinePlayers() {
+        if (!this.isOnlineMode) return;
+        
+        this.onlinePlayers.forEach((player, playerId) => {
+            if (playerId === this.playerId) return; // Non renderizzare se stesso
+            
+            // Calcola posizione relativa alla camera
+            const screenX = player.x - this.camera.x;
+            const screenY = player.y - this.camera.y;
+            
+            // Renderizza solo se è visibile sullo schermo
+            if (screenX > -50 && screenX < this.width + 50 && 
+                screenY > -50 && screenY < this.height + 50) {
+                
+                // Disegna nave giocatore online
+                this.ctx.save();
+                this.ctx.translate(screenX, screenY);
+                
+                // Disegna nave semplice per altri giocatori
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.fillRect(-15, -10, 30, 20);
+                
+                // Disegna nickname
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(player.nickname, 0, -20);
+                
+                this.ctx.restore();
+            }
+        });
+    }
+
     resetGame() {
         // Reset della nave
         this.ship.x = 8000;
