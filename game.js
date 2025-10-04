@@ -184,6 +184,11 @@ class Game {
         // Sistema di gestione mappe e portali
         this.mapManager = new MapManager(this);
         
+        // Connessione automatica al multiplayer dopo l'inizializzazione
+        setTimeout(() => {
+            this.connectToServer();
+        }, 2000); // Aspetta 2 secondi per permettere il caricamento completo
+        
         // Sistema visualizzazione mappe (inizializzato dopo factionSystem)
         // this.mapSystem sarà inizializzato dopo factionSystem
         

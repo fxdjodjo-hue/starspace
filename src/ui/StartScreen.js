@@ -748,6 +748,12 @@ export class StartScreen {
         // Avvia l'audio del gioco
         this.game.startGameAudio();
         
+        // Connessione automatica al multiplayer dopo 1 secondo
+        setTimeout(() => {
+            this.game.connectToServer();
+            console.log('🌐 Connessione automatica al multiplayer avviata');
+        }, 1000);
+        
         // Salva automaticamente il gioco per l'utente
         if (this.game.saveSystem) {
             this.game.saveSystem.save(this.game.authSystem.getUserSaveKey());
@@ -790,6 +796,12 @@ export class StartScreen {
         
         // Avvia l'audio del gioco
         this.game.startGameAudio();
+        
+        // Connessione automatica al multiplayer dopo 1 secondo
+        setTimeout(() => {
+            this.game.connectToServer();
+            console.log('🌐 Connessione automatica al multiplayer avviata');
+        }, 1000);
         
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
