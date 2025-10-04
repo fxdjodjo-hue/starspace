@@ -308,6 +308,16 @@ export class AuthSystem {
     }
     
     /**
+     * Logout utente
+     */
+    logout() {
+        this.clearSession();
+        this.currentUser = null;
+        this.isLoggedIn = false;
+        console.log('👋 Utente disconnesso');
+    }
+    
+    /**
      * Ottiene chiave salvataggio per utente corrente
      */
     getUserSaveKey() {
