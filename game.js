@@ -184,11 +184,6 @@ class Game {
         // Sistema di gestione mappe e portali
         this.mapManager = new MapManager(this);
         
-        // Connessione automatica al multiplayer dopo l'inizializzazione
-        setTimeout(() => {
-            this.connectToServer();
-        }, 2000); // Aspetta 2 secondi per permettere il caricamento completo
-        
         // Sistema visualizzazione mappe (inizializzato dopo factionSystem)
         // this.mapSystem sarà inizializzato dopo factionSystem
         
@@ -2694,7 +2689,8 @@ class Game {
     
     handlePlayerJoined(data) {
         this.onlinePlayers.set(data.id, data);
-        console.log('👤 Giocatore connesso:', data.nickname);
+        console.log('👤 Giocatore connesso:', data.nickname, 'at', data.x, data.y);
+        console.log('👤 Online players now:', this.onlinePlayers.size);
         this.notifications.add(`👤 ${data.nickname} si è unito al gioco`, 2000, 'info');
     }
     
@@ -2707,8 +2703,11 @@ class Game {
     handlePlayerMoved(data) {
         const player = this.onlinePlayers.get(data.playerId);
         if (player) {
+            console.log(`🔄 Player ${player.nickname} moved: ${player.x}, ${player.y} -> ${data.x}, ${data.y}`);
             player.x = data.x;
             player.y = data.y;
+        } else {
+            console.log(`❌ Player ${data.playerId} not found in onlinePlayers`);
         }
     }
     
@@ -2755,12 +2754,26 @@ class Game {
     renderOnlinePlayers() {
         if (!this.isOnlineMode) return;
         
+        // Debug: log ogni 60 frame (1 secondo)
+        if (this.frameCount % 60 === 0) {
+            console.log('🎮 Rendering online players:', this.onlinePlayers.size, 'players');
+            this.onlinePlayers.forEach((player, playerId) => {
+                console.log(`  - ${player.nickname} (${playerId}): x=${player.x}, y=${player.y}`);
+            });
+        }
+        
         this.onlinePlayers.forEach((player, playerId) => {
             if (playerId === this.playerId) return; // Non renderizzare se stesso
             
-            // Calcola posizione relativa alla camera
+            // Calcola posizione relativa alla camera (come fanno gli altri oggetti)
             const screenX = player.x - this.camera.x;
             const screenY = player.y - this.camera.y;
+            
+            // Debug: log posizioni ogni 60 frame
+            if (this.frameCount % 60 === 0) {
+                console.log(`🎯 Player ${player.nickname}: world(${player.x}, ${player.y}) -> screen(${screenX}, ${screenY})`);
+                console.log(`🎯 Camera: x=${this.camera.x}, y=${this.camera.y}`);
+            }
             
             // Renderizza solo se è visibile sullo schermo
             if (screenX > -50 && screenX < this.width + 50 && 
@@ -2781,6 +2794,16 @@ class Game {
                 this.ctx.fillText(player.nickname, 0, -20);
                 
                 this.ctx.restore();
+                
+                // Debug: conferma rendering
+                if (this.frameCount % 60 === 0) {
+                    console.log(`✅ Rendered player ${player.nickname} at screen(${screenX}, ${screenY})`);
+                }
+            } else {
+                // Debug: player fuori schermo
+                if (this.frameCount % 60 === 0) {
+                    console.log(`❌ Player ${player.nickname} outside screen: screen(${screenX}, ${screenY})`);
+                }
             }
         });
     }
