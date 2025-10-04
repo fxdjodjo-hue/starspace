@@ -702,6 +702,13 @@ export class StartScreen {
                 }
                 
                 this.hide();
+                
+                // Connessione automatica al multiplayer dopo 1 secondo
+                setTimeout(() => {
+                    this.game.connectToServer();
+                    console.log('🌐 Connessione automatica al multiplayer avviata (load game)');
+                }, 1000);
+                
                 this.game.notifications.add('Gioco caricato!', 'success');
             } else {
                 this.showError('Errore nel caricamento del salvataggio');
@@ -714,6 +721,13 @@ export class StartScreen {
                     this.game.saveSystem.load(key);
                     this.game.mapManager.loadCurrentMapInstance();
                     this.hide();
+                    
+                    // Connessione automatica al multiplayer dopo 1 secondo
+                    setTimeout(() => {
+                        this.game.connectToServer();
+                        console.log('🌐 Connessione automatica al multiplayer avviata (traditional load)');
+                    }, 1000);
+                    
                     this.game.notifications.add('Gioco caricato!', 'success');
                     return;
                 }
