@@ -48,11 +48,6 @@ export class OnlineGameManager {
         this.networkManager.connect(serverUrl);
     }
     
-    // Alias per compatibilità
-    connectToServer(serverUrl) {
-        this.connect(serverUrl);
-    }
-    
     // Disconnessione
     disconnect() {
         this.networkManager.disconnect();

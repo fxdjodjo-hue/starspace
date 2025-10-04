@@ -12,7 +12,7 @@ export class NetworkManager {
     }
     
     // Connessione al server
-    connect(serverUrl = this.getDefaultServerUrl()) {
+    connect(serverUrl) {
         this.serverUrl = serverUrl;
         
         try {
@@ -22,17 +22,6 @@ export class NetworkManager {
             console.error('Failed to connect to server:', error);
             this.handleConnectionError();
         }
-    }
-    
-    // Ottiene URL server predefinito
-    getDefaultServerUrl() {
-        // In produzione, usa l'URL del server deployato
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            return `${protocol}//${window.location.host}/ws`;
-        }
-        // In sviluppo locale
-        return 'ws://localhost:8080/ws';
     }
     
     // Setup event handlers per WebSocket
@@ -72,27 +61,6 @@ export class NetworkManager {
         const { action, data, timestamp } = message;
         
         switch (action) {
-            case 'player:join:success':
-                this.handlePlayerJoinSuccess(data);
-                break;
-            case 'player:joined':
-                this.handlePlayerJoined(data);
-                break;
-            case 'player:left':
-                this.handlePlayerLeft(data);
-                break;
-            case 'player:moved':
-                this.handlePlayerMoved(data);
-                break;
-            case 'player:attacked':
-                this.handlePlayerAttacked(data);
-                break;
-            case 'player:updated':
-                this.handlePlayerUpdated(data);
-                break;
-            case 'game:state:update':
-                this.handleGameStateUpdate(data);
-                break;
             case 'shop:purchase:success':
                 this.handleShopPurchaseSuccess(data);
                 break;
@@ -166,42 +134,6 @@ export class NetworkManager {
     // Gestisce ping
     handlePing(data) {
         this.sendAction('pong', { timestamp: Date.now() });
-    }
-    
-    // Gestisce successo join giocatore
-    handlePlayerJoinSuccess(data) {
-        this.eventSystem.emitSync('player:join:success', data);
-    }
-    
-    // Gestisce nuovo giocatore connesso
-    handlePlayerJoined(data) {
-        this.eventSystem.emitSync('player:joined', data);
-    }
-    
-    // Gestisce giocatore disconnesso
-    handlePlayerLeft(data) {
-        this.eventSystem.emitSync('player:left', data);
-    }
-    
-    // Gestisce movimento giocatore
-    handlePlayerMoved(data) {
-        this.eventSystem.emitSync('player:moved', data);
-    }
-    
-    // Gestisce attacco giocatore
-    handlePlayerAttacked(data) {
-        this.eventSystem.emitSync('player:attacked', data);
-    }
-    
-    // Gestisce aggiornamento giocatore
-    handlePlayerUpdated(data) {
-        this.eventSystem.emitSync('player:updated', data);
-    }
-    
-    // Gestisce aggiornamento stato del gioco
-    handleGameStateUpdate(data) {
-        console.log('🔄 NetworkManager: Ricevuto game:state:update', data);
-        this.eventSystem.emit('sync:game:state:update', data);
     }
     
     // Gestisce errore di connessione

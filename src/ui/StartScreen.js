@@ -393,9 +393,6 @@ export class StartScreen {
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             // Pulsante inizia gioco
             this.drawButton(ctx, this.startGameButton, false);
-            
-            // Pulsante logout
-            this.drawButton(ctx, this.logoutButton, false);
         }
     }
     
@@ -596,13 +593,6 @@ export class StartScreen {
                 this.handleLoadGame();
                 return true;
             }
-            
-            // Click su pulsante logout
-            if (this.isMouseOverButton(this.logoutButton)) {
-                console.log('✅ Click su pulsante logout');
-                this.handleLogout();
-                return true;
-            }
         }
         
         // Click fuori dagli input - stop typing
@@ -712,13 +702,6 @@ export class StartScreen {
                 }
                 
                 this.hide();
-                
-                // Connessione automatica al multiplayer dopo 1 secondo
-                setTimeout(() => {
-                    this.game.connectToServer();
-                    console.log('🌐 Connessione automatica al multiplayer avviata (load game)');
-                }, 1000);
-                
                 this.game.notifications.add('Gioco caricato!', 'success');
             } else {
                 this.showError('Errore nel caricamento del salvataggio');
@@ -731,13 +714,6 @@ export class StartScreen {
                     this.game.saveSystem.load(key);
                     this.game.mapManager.loadCurrentMapInstance();
                     this.hide();
-                    
-                    // Connessione automatica al multiplayer dopo 1 secondo
-                    setTimeout(() => {
-                        this.game.connectToServer();
-                        console.log('🌐 Connessione automatica al multiplayer avviata (traditional load)');
-                    }, 1000);
-                    
                     this.game.notifications.add('Gioco caricato!', 'success');
                     return;
                 }
@@ -771,12 +747,6 @@ export class StartScreen {
         
         // Avvia l'audio del gioco
         this.game.startGameAudio();
-        
-        // Connessione automatica al multiplayer dopo 1 secondo
-        setTimeout(() => {
-            this.game.connectToServer();
-            console.log('🌐 Connessione automatica al multiplayer avviata');
-        }, 1000);
         
         // Salva automaticamente il gioco per l'utente
         if (this.game.saveSystem) {
@@ -820,12 +790,6 @@ export class StartScreen {
         
         // Avvia l'audio del gioco
         this.game.startGameAudio();
-        
-        // Connessione automatica al multiplayer dopo 1 secondo
-        setTimeout(() => {
-            this.game.connectToServer();
-            console.log('🌐 Connessione automatica al multiplayer avviata');
-        }, 1000);
         
         // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
