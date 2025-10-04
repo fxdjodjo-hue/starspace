@@ -19,14 +19,14 @@ Il server sarà disponibile su:
 
 1. **Apri il gioco**: Vai su http://localhost:3000
 2. **Completa la StartScreen**: Inserisci nickname e seleziona fazione
-3. **Connettiti al multiplayer**: Premi il tasto **M**
+3. **Connessione automatica**: Il gioco si connette automaticamente al multiplayer dopo 1 secondo
 4. **Gioca insieme**: Vedi altri giocatori come navi verdi con nickname
 
 ### **Controlli Multiplayer**
 
 | Tasto | Funzione |
 |-------|----------|
-| **M** | Connettiti/Disconnettiti dal server multiplayer |
+| **M** | Connettiti/Disconnettiti manualmente dal server multiplayer (opzionale) |
 | **N** | Cambia nickname |
 | **Click Sinistro** | Muovi la nave (sincronizzato con altri giocatori) |
 | **Click Destro** | Seleziona nemici |
@@ -35,12 +35,13 @@ Il server sarà disponibile su:
 ### **Funzionalità Multiplayer**
 
 ✅ **Già Implementate:**
-- Connessione/disconnessione automatica
+- Connessione automatica al multiplayer dopo StartScreen
 - Sincronizzazione movimento in tempo reale
 - Visualizzazione altri giocatori (navi verdi)
 - Sistema nickname
 - Notifiche di connessione/disconnessione
 - Heartbeat per mantenere connessioni vive
+- Fallback offline automatico
 
 🔄 **In Sviluppo:**
 - Combattimento PvP
@@ -63,7 +64,13 @@ Il server sarà disponibile su:
 
 ### **Test della Connessione**
 
-Per testare solo la connessione WebSocket:
+**Test automatico:**
+1. Apri il gioco: http://localhost:3000
+2. Completa la StartScreen (nickname + fazione)
+3. Il gioco si connette automaticamente al multiplayer
+4. Apri altre finestre per testare con più giocatori
+
+**Test manuale WebSocket:**
 ```bash
 # Apri il file di test
 start test-websocket.html
