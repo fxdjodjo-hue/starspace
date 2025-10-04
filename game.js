@@ -2635,9 +2635,11 @@ class Game {
         });
     }
     
-    connectToServer(serverUrl = 'ws://localhost:8080/ws') {
-        console.log('🔌 Tentativo di connessione al server:', serverUrl);
-        this.onlineManager.connectToServer(serverUrl);
+    connectToServer(serverUrl = null) {
+        const defaultUrl = this.onlineManager.getNetworkManager().getDefaultServerUrl();
+        const url = serverUrl || defaultUrl;
+        console.log('🔌 Tentativo di connessione al server:', url);
+        this.onlineManager.connectToServer(url);
     }
     
     joinGame() {

@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 class MMORPGGameServer {
-    constructor(port = 8080) {
+    constructor(port = process.env.PORT || 8080) {
         this.port = port;
         this.clients = new Map(); // playerId -> WebSocket
         this.players = new Map(); // playerId -> playerData
@@ -273,8 +273,10 @@ class MMORPGGameServer {
     }
     
     start() {
-        this.app.listen(3000, () => {
-            console.log('🚀 Server HTTP avviato su http://localhost:3000');
+        const httpPort = process.env.HTTP_PORT || 3000;
+        
+        this.app.listen(httpPort, () => {
+            console.log('🚀 Server HTTP avviato su http://localhost:' + httpPort);
         });
         
         console.log(`🎮 Server WebSocket MMORPG avviato su ws://localhost:${this.port}/ws`);

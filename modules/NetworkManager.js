@@ -12,7 +12,7 @@ export class NetworkManager {
     }
     
     // Connessione al server
-    connect(serverUrl = 'ws://localhost:8080/ws') {
+    connect(serverUrl = this.getDefaultServerUrl()) {
         this.serverUrl = serverUrl;
         
         try {
@@ -22,6 +22,17 @@ export class NetworkManager {
             console.error('Failed to connect to server:', error);
             this.handleConnectionError();
         }
+    }
+    
+    // Ottiene URL server predefinito
+    getDefaultServerUrl() {
+        // In produzione, usa l'URL del server deployato
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${window.location.host}/ws`;
+        }
+        // In sviluppo locale
+        return 'ws://localhost:8080/ws';
     }
     
     // Setup event handlers per WebSocket
