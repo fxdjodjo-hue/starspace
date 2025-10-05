@@ -3496,10 +3496,10 @@ export class HomePanel extends UIComponent {
         const allFactions = this.game.factionSystem.getAllFactions();
         
         // Calcola le dimensioni e posizioni per centrare tutto
-        const panelWidth = 800; // Aumentato per un layout più spazioso
-        const panelHeight = 180;
+        const panelWidth = Math.min(800, this.contentWidth - 40); // Adattivo alla larghezza disponibile
+        const panelHeight = 120; // Ridotto per lasciare più spazio alle carte
         const panelX = x + (this.contentWidth - panelWidth) / 2; // Centrato orizzontalmente
-        const panelY = y + 30;
+        const panelY = y + 20; // Spostato più in alto
         
         // Titolo centrato
         ctx.fillStyle = '#ffffff';
@@ -3516,12 +3516,13 @@ export class HomePanel extends UIComponent {
         }
         
         // Lista fazioni disponibili - centrata e spaziata uniformemente
-        const cardWidth = 260; // Ridotto per un layout più compatto
-        const cardHeight = 320; // Aumentato per il contenuto
-        const totalCards = allFactions.length;
-        const totalWidth = (cardWidth * totalCards) + (20 * (totalCards - 1)); // Larghezza totale con spaziatura
-        const cardsStartX = panelX + (panelWidth - totalWidth) / 2; // Centrato orizzontalmente
-        const cardsStartY = panelY + panelHeight + 40; // Aumentato spazio verticale
+        const cardSpacing = 20;
+        const availableWidth = this.contentWidth - 40; // Spazio disponibile con margini
+        const cardWidth = Math.min(260, (availableWidth - (cardSpacing * (allFactions.length - 1))) / allFactions.length);
+        const cardHeight = 300; // Altezza fissa per le carte
+        const totalWidth = (cardWidth * allFactions.length) + (cardSpacing * (allFactions.length - 1));
+        const cardsStartX = x + (this.contentWidth - totalWidth) / 2; // Centrato orizzontalmente
+        const cardsStartY = panelY + panelHeight + 30;
         
         this.drawFactionList(ctx, cardsStartX, cardsStartY, allFactions, currentFaction, cardWidth, cardHeight, cardSpacing);
     }
@@ -3621,53 +3622,59 @@ export class HomePanel extends UIComponent {
     drawFactionCard(ctx, x, y, width, height, faction, currentFaction) {
         const isCurrentFaction = currentFaction && currentFaction.id === faction.id;
         
-        // Sfondo
-        ctx.fillStyle = isCurrentFaction ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 0, 0.8)';
+        // Sfondo con gradiente
+        const gradient = ctx.createLinearGradient(x, y, x, y + height);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+        gradient.addColorStop(1, 'rgba(20, 20, 20, 0.9)');
+        ctx.fillStyle = gradient;
         ctx.fillRect(x, y, width, height);
         
-        // Bordo
+        // Bordo con glow per la fazione attiva
+        if (isCurrentFaction) {
+            ctx.shadowColor = faction.color;
+            ctx.shadowBlur = 10;
+        }
         ctx.strokeStyle = isCurrentFaction ? '#00ff00' : faction.color;
-        ctx.lineWidth = isCurrentFaction ? 3 : 2;
+        ctx.lineWidth = isCurrentFaction ? 2 : 1;
         ctx.strokeRect(x, y, width, height);
+        ctx.shadowBlur = 0;
         
-        // Icona fazione (più grande)
+        // Icona fazione
         ctx.fillStyle = faction.color;
-        ctx.font = '32px Arial';
+        ctx.font = '28px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(faction.icon, x + width/2, y + 40);
+        ctx.fillText(faction.icon, x + width/2, y + 35);
         
-        // Nome fazione (più grande)
+        // Nome fazione
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Arial';
-        ctx.fillText(faction.name, x + width/2, y + 75);
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText(faction.name, x + width/2, y + 65);
         
         // Nome completo
-        ctx.font = '14px Arial';
+        ctx.font = '13px Arial';
         ctx.fillStyle = '#cccccc';
-        ctx.fillText(faction.fullName, x + width/2, y + 100);
+        ctx.fillText(faction.fullName, x + width/2, y + 85);
         
-        // Descrizione (con wrap text per evitare sovrapposizioni)
+        // Descrizione
         ctx.font = '12px Arial';
         ctx.fillStyle = '#aaaaaa';
-        const description = this.wrapText(ctx, faction.description, width - 30);
-        let textY = y + 130;
+        const description = this.wrapText(ctx, faction.description, width - 20);
+        let textY = y + 110;
         description.forEach(line => {
             ctx.fillText(line, x + width/2, textY);
-            textY += 16;
+            textY += 15;
         });
         
-        // Stato fazione (più in basso)
-        const statusY = y + height - 25;
+        // Stato fazione
+        const statusY = y + height - 20;
         
         if (isCurrentFaction) {
             ctx.fillStyle = '#00ff00';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
+            ctx.font = 'bold 13px Arial';
             ctx.fillText('✓ Fazione Attiva', x + width/2, statusY);
         } else {
             ctx.fillStyle = '#cccccc';
-            ctx.font = '13px Arial';
-            ctx.textAlign = 'center';
+            ctx.font = '12px Arial';
             ctx.fillText('Clicca per selezionare', x + width/2, statusY);
         }
         
