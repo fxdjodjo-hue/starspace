@@ -15,10 +15,14 @@ export class StartScreen {
         this.cursorVisible = true;
         this.cursorBlinkTime = 0;
         
+        // Sistema account
+        this.currentAccount = null;
+        this.accountExists = false;
+        
         // Animazioni
         this.animationTime = 0;
         this.stars = this.generateStars(80);
-        
+
         // Stato salvataggi
         this.hasExistingSave = false;
         this.availableSaves = [];
@@ -50,6 +54,56 @@ export class StartScreen {
     checkExistingFaction() {
         const savedFaction = localStorage.getItem('mmorpg_player_faction');
         return savedFaction && ['venus', 'mars', 'eic'].includes(savedFaction);
+    }
+    
+    // Controlla se un account esiste
+    checkAccountExists(accountName) {
+        const accountKey = `mmorpg_account_${accountName}`;
+        const accountData = localStorage.getItem(accountKey);
+        return accountData !== null;
+    }
+    
+    // Carica i dati di un account esistente
+    loadAccountData(accountName) {
+        const accountKey = `mmorpg_account_${accountName}`;
+        const accountData = localStorage.getItem(accountKey);
+        
+        if (accountData) {
+            try {
+                const data = JSON.parse(accountData);
+                
+                // Carica fazione
+                if (data.faction) {
+                    this.game.factionSystem.joinFaction(data.faction);
+                }
+                
+                // Carica mappa
+                if (data.currentMap) {
+                    this.game.mapManager.currentMap = data.currentMap;
+                    this.game.mapManager.loadCurrentMapInstance();
+                }
+                
+                // Carica dati nave
+                if (data.ship) {
+                    Object.assign(this.game.ship, data.ship);
+                }
+                
+                // Carica inventario
+                if (data.inventory) {
+                    Object.assign(this.game.inventory, data.inventory);
+                }
+                
+                // Carica risorse
+                if (data.resources) {
+                    Object.assign(this.game.ship.resources, data.resources);
+                }
+                
+                console.log(`✅ Account ${accountName} caricato con successo`);
+            } catch (error) {
+                console.error('❌ Errore nel caricamento account:', error);
+                this.showError('Errore nel caricamento account');
+            }
+        }
     }
     
     
@@ -312,7 +366,7 @@ export class StartScreen {
         // Testo
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
+            ctx.textAlign = 'center';
         ctx.fillText(this.startGameButton.text, this.startGameButton.x + this.startGameButton.width / 2, this.startGameButton.y + this.startGameButton.height / 2 + 5);
     }
     
@@ -336,21 +390,21 @@ export class StartScreen {
             if (isHovered) {
                 buttonGradient.addColorStop(0, this.lightenColor(button.gradient[0], 20));
                 buttonGradient.addColorStop(1, this.lightenColor(button.gradient[1], 20));
-            } else {
+        } else {
                 buttonGradient.addColorStop(0, button.gradient[0]);
                 buttonGradient.addColorStop(1, button.gradient[1]);
-            }
-            
+        }
+        
             ctx.fillStyle = buttonGradient;
-            ctx.fillRect(button.x, button.y, button.width, button.height);
-            
-            // Bordo
+        ctx.fillRect(button.x, button.y, button.width, button.height);
+        
+        // Bordo
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1;
-            ctx.strokeRect(button.x, button.y, button.width, button.height);
-            
-            // Testo
-            ctx.fillStyle = '#ffffff';
+        ctx.strokeRect(button.x, button.y, button.width, button.height);
+        
+        // Testo
+        ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
             ctx.fillText(button.text, button.x + button.width / 2, button.y + button.height / 2 + 4);
@@ -455,27 +509,17 @@ export class StartScreen {
     handleStartGame() {
         const playerName = this.playerName.trim() || 'Player';
         
-        // Imposta nome giocatore
+        // Imposta nome account
+        this.currentAccount = playerName;
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
         
-        // Controlla se il giocatore ha già scelto una fazione
-        const hasChosenFaction = this.checkExistingFaction();
+        // Controlla se l'account esiste già
+        this.accountExists = this.checkAccountExists(playerName);
         
-        if (hasChosenFaction) {
-            // Giocatore esistente - vai direttamente al gioco
-            const savedFaction = localStorage.getItem('mmorpg_player_faction');
-            this.game.factionSystem.joinFaction(savedFaction);
-            
-            // Imposta mappa iniziale
-            const startingMaps = {
-                'venus': 'v1',
-                'mars': 'm1',
-                'eic': 'e1'
-            };
-            
-            this.game.mapManager.currentMap = startingMaps[savedFaction] || 'v1';
-            this.game.mapManager.loadCurrentMapInstance();
+        if (this.accountExists) {
+            // Account esistente - carica tutto dal salvataggio
+            this.loadAccountData(playerName);
             
             // Nasconde la StartScreen
             this.hide();
@@ -483,14 +527,9 @@ export class StartScreen {
             // Avvia audio
             this.game.startGameAudio();
             
-            // Salva automaticamente
-            if (this.game.saveSystem) {
-                this.game.saveSystem.save('main');
-            }
-            
             this.game.notifications.add(`Bentornato ${playerName}!`, 'success');
         } else {
-            // Nuovo giocatore - vai alla selezione fazione
+            // Nuovo account - vai alla selezione fazione
             this.hide();
             this.game.factionSelectionScreen.show();
         }

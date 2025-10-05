@@ -170,8 +170,12 @@ export class FactionSelectionScreen {
             return;
         }
         
-        // Salva la scelta fazione nel localStorage
-        localStorage.setItem('mmorpg_player_faction', this.selectedFaction);
+        // Ottieni il nome account dalla StartScreen
+        const accountName = this.game.startScreen.currentAccount;
+        if (!accountName) {
+            this.showError('Errore: Account non trovato');
+            return;
+        }
         
         // Imposta fazione nel gioco
         this.game.factionSystem.joinFaction(this.selectedFaction);
@@ -186,19 +190,56 @@ export class FactionSelectionScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
+        // Salva tutto nell'account
+        this.saveAccountData(accountName);
+        
         // Nasconde la schermata
         this.hide();
         
         // Avvia il gioco
         this.game.startGameAudio();
         
-        // Salva automaticamente
-        if (this.game.saveSystem) {
-            this.game.saveSystem.save('main');
-        }
-        
         const faction = this.factions.find(f => f.id === this.selectedFaction);
         this.game.notifications.add(`Benvenuto nella fazione ${faction.fullName}!`, 'success');
+    }
+    
+    // Salva tutti i dati dell'account
+    saveAccountData(accountName) {
+        const accountKey = `mmorpg_account_${accountName}`;
+        
+        const accountData = {
+            accountName: accountName,
+            faction: this.selectedFaction,
+            currentMap: this.game.mapManager.currentMap,
+            ship: {
+                x: this.game.ship.x,
+                y: this.game.ship.y,
+                hp: this.game.ship.hp,
+                maxHP: this.game.ship.maxHP,
+                shield: this.game.ship.shield,
+                maxShield: this.game.ship.maxShield,
+                level: this.game.ship.currentLevel,
+                experience: this.game.ship.resources.experience,
+                equippedLasers: this.game.ship.equippedLasers,
+                ammunition: this.game.ship.ammunition,
+                selectedLaser: this.game.ship.selectedLaser,
+                selectedMissile: this.game.ship.selectedMissile
+            },
+            resources: {
+                credits: this.game.ship.resources.credits,
+                uridium: this.game.ship.resources.uridium,
+                honor: this.game.ship.resources.honor,
+                starEnergy: this.game.ship.resources.starEnergy
+            },
+            inventory: {
+                items: this.game.inventory.items,
+                equipment: this.game.inventory.equipment
+            },
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem(accountKey, JSON.stringify(accountData));
+        console.log(`✅ Account ${accountName} salvato con successo`);
     }
     
     // Controlla se il mouse è sopra un pulsante
