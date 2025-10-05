@@ -5,8 +5,8 @@ export class CategorySkillbar {
     constructor() {
         this.x = 0;
         this.y = 0;
-        this.width = 600;
-        this.height = 60;
+        this.width = 450; // Ridotta da 600 a 450
+        this.height = 45; // Ridotta da 60 a 45
         this.activeCategory = null;
         this.game = null;
         
@@ -122,7 +122,7 @@ export class CategorySkillbar {
             // Pulsante categoria con tema moderno
             ThemeUtils.drawButton(ctx, categoryX, categoryY, categoryWidth, this.height, {
                 text: category.icon,
-                textSize: 16,
+                textSize: 14, // Ridotto da 16 a 14
                 textWeight: 'bold',
                 textColor: '#ffffff',
                 background: isActive ? 'rgba(40,40,44,0.95)' : 'transparent',
@@ -289,8 +289,8 @@ export class CategorySkillbar {
             if (category) {
                 const itemsPerRow = 4;
                 const rows = Math.ceil(category.items.length / itemsPerRow);
-                const itemSize = 50;
-                const itemSpacing = 10;
+                const itemSize = 40; // Ridotto da 50 a 40
+                const itemSpacing = 8; // Ridotto da 10 a 8
                 const totalHeight = rows * (itemSize + itemSpacing) + itemSpacing;
                 
                 const menuX = this.x;
