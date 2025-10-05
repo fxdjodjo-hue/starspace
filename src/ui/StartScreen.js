@@ -392,11 +392,7 @@ export class StartScreen {
             ctx.drawImage(this.logoImage, logoX - imgW / 2, logoY - imgH - 10, imgW, imgH);
         }
         
-        // Titolo principale
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 36px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('STARSPACE', logoX, logoY);
+        // Nessun titolo testuale: il logo è il titolo
         
         // (Nessun sottotitolo)
 
