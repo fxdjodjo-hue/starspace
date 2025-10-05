@@ -89,11 +89,11 @@ export class StartScreen {
         items.sort((a,b) => (b.lastPlayed||0) - (a.lastPlayed||0));
 
         // Layout centrato sotto l'input
-        const w = 300;
+        const w = this.nameInput ? this.nameInput.width : 300;
         const x = Math.round(this.x + (this.width - w) / 2);
-        const startY = Math.round(this.nameInput ? (this.nameInput.y + this.nameInput.height + 30) : (this.y + 260));
+        const startY = Math.round(this.nameInput ? (this.nameInput.y + this.nameInput.height + 24) : (this.y + 260));
         const h = 36;
-        const gap = 10;
+        const gap = 12;
         this.accountButtons = items.slice(0, 8).map((acc, i) => ({
             x, y: startY + i * (h + gap), width: w, height: h, accountId: acc.id, label: acc.nickname
         }));
@@ -230,6 +230,17 @@ export class StartScreen {
         // Pulsanti salvataggi (rimossi)
         this.loadButtons = [];
         
+        // Aggiorna lista account con nuovo layout e armonizza pulsante start
+        this.refreshAccountButtons();
+        if (this.accountButtons && this.accountButtons.length > 0) {
+            const lastBtn = this.accountButtons[this.accountButtons.length - 1];
+            const spacingBelow = 28;
+            this.startGameButton.y = lastBtn.y + lastBtn.height + spacingBelow;
+        } else {
+            // Se non ci sono account, posiziona sotto l'input
+            this.startGameButton.y = this.nameInput.y + this.nameInput.height + 36;
+        }
+
         // Rigenera stelle per le nuove dimensioni
         this.stars = this.generateStars(80);
     }
