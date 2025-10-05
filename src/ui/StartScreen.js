@@ -69,13 +69,27 @@ export class StartScreen {
     refreshAccountButtons() {
         const idx = this.loadAccountsIndex();
         const listIds = Array.isArray(idx.list) ? idx.list : [];
-        const items = listIds.map(id => ({ id, nickname: (idx.byId?.[id]?.nickname) || (Object.keys(idx.byName || {}).find(n => idx.byName[n] === id) || id), lastPlayed: idx.byId?.[id]?.lastPlayed || 0 }));
+        const items = listIds.map(id => {
+            // Prova a leggere il nickname dal salvataggio per coerenza
+            let nickname = (idx.byId?.[id]?.nickname) || '';
+            try {
+                const raw = localStorage.getItem(`mmorpg_account_${id}`);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    nickname = data?.player?.nickname || data?.nickname || nickname || id;
+                }
+            } catch (_) {}
+            if (!nickname) {
+                nickname = Object.keys(idx.byName || {}).find(n => idx.byName[n] === id) || id;
+            }
+            return { id, nickname, lastPlayed: idx.byId?.[id]?.lastPlayed || 0 };
+        });
         // Ordina per lastPlayed desc
         items.sort((a,b) => (b.lastPlayed||0) - (a.lastPlayed||0));
 
-        // Layout semplice: colonna a sinistra
+        // Layout: colonna sinistra sotto l'input per evitare sovrapposizioni
         const x = Math.round(this.x + 40);
-        const startY = Math.round(this.y + 120);
+        const startY = Math.round(this.y + 340);
         const w = 220;
         const h = 36;
         const gap = 10;
@@ -603,6 +617,10 @@ export class StartScreen {
             this.currentAccountId = accountId;
             this.game.currentAccountId = accountId;
             this.loadAccountDataById(accountId);
+            // Aggiorna lastPlayed
+            index.byId[accountId] = index.byId[accountId] || { nickname: playerName, createdAt: Date.now() };
+            index.byId[accountId].lastPlayed = Date.now();
+            this.saveAccountsIndex(index);
             
             // Nasconde la StartScreen
             this.hide();
