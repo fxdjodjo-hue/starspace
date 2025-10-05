@@ -55,7 +55,7 @@ export class SaveSystem {
         if (auth && auth.isLoggedIn && typeof auth.getUserSaveKey === 'function') {
             return auth.getUserSaveKey();
         }
-        return 'main';
+        return null;
     }
     
     /**
@@ -66,6 +66,7 @@ export class SaveSystem {
         
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
+            if (!resolvedKey) return false;
             const saveData = this.collectSaveData();
             const saveDataString = JSON.stringify(saveData);
             
@@ -108,6 +109,7 @@ export class SaveSystem {
     load(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
+            if (!resolvedKey) return false;
             // Leggi solo dal contenitore per-account
             const saveDataString = localStorage.getItem(`mmorpg_account_${resolvedKey}`);
             if (!saveDataString) {
@@ -162,6 +164,7 @@ export class SaveSystem {
     getSaveData(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
+            if (!resolvedKey) return null;
             const saveData = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
             if (saveData) {
                 return JSON.parse(saveData);
@@ -415,8 +418,9 @@ export class SaveSystem {
         if (this.isAutoSaveEnabled) {
             // Salvataggio automatico principale
             setInterval(() => {
-                // Salva sempre nello slot dell'account corrente
-                this.save(this.resolveSlotKey());
+                const k = this.resolveSlotKey();
+                if (!k) return;
+                this.save(k);
             }, this.autoSaveInterval);
             
             // Backup automatico separato
@@ -437,7 +441,9 @@ export class SaveSystem {
      */
     setupBeforeUnload() {
         window.addEventListener('beforeunload', () => {
-            this.save(this.resolveSlotKey());
+            const k = this.resolveSlotKey();
+            if (!k) return;
+            this.save(k);
         });
     }
     
