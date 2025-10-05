@@ -146,7 +146,6 @@ export class FactionSelectionScreen {
             this.lastCanvasHeight = this.game.canvas.height;
         }
     }
-    }
     
     // Gestisce input da tastiera
     handleKeyPress(key) {
