@@ -96,9 +96,9 @@ export class FactionSelectionScreen {
             height: 50,
             text: 'CONFERMA SCELTA'
         };
-        // Posiziona il pulsante conferma sotto le carte
+        // Posiziona il pulsante conferma più in basso
         this.confirmButton.x = Math.round(this.x + (this.width - this.confirmButton.width) / 2);
-        this.confirmButton.y = Math.round(this.y + 180 + 120 + 40); // startY + cardHeight + spacing
+        this.confirmButton.y = Math.round(this.y + 480); // Spostato più in basso
         
         // Rigenera stelle
         this.stars = this.generateStars(80);
@@ -344,8 +344,8 @@ export class FactionSelectionScreen {
         const faction = this.factions.find(f => f.id === this.selectedFaction);
         if (!faction) return;
         
-        // Posiziona la descrizione tra le carte e il pulsante conferma
-        const descY = this.confirmButton.y - 100;
+        // Posiziona la descrizione più in basso rispetto alle carte
+        const descY = Math.round(this.y + 350); // Aumentato lo spazio dalle carte
         const lineHeight = 22;
         
         // Sfondo semi-trasparente per la descrizione
