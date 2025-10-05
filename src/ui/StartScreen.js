@@ -214,7 +214,7 @@ export class StartScreen {
             y: Math.round(this.y + 200),
             width: inputWidth,
             height: 50,
-            placeholder: 'Inserisci il tuo nome...'
+            placeholder: 'Nickname...'
         };
         
         // Pulsante login
@@ -398,7 +398,7 @@ export class StartScreen {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Inserisci il tuo nome:', this.x + this.width / 2, this.nameInput.y - 15);
+        ctx.fillText('Nickname', this.x + this.width / 2, this.nameInput.y - 15);
         ctx.shadowBlur = 0;
         ctx.shadowColor = 'transparent';
         
