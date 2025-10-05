@@ -2,7 +2,7 @@
 export class SaveSystem {
     constructor(game) {
         this.game = game;
-        this.saveKey = 'mmorpg_save_data'; // ripristino chiave di default (non usata per account)
+        this.saveKey = 'mmorpg_account'; // prefisso per backup per-account
         this.autoSaveInterval = 30000; // Salvataggio automatico ogni 30 secondi
         this.backupInterval = 300000; // Backup ogni 5 minuti
         this.lastSaveTime = 0;
@@ -30,7 +30,17 @@ export class SaveSystem {
         // Salva prima che la pagina venga chiusa
         this.setupBeforeUnload();
         
-        console.log('💾 SaveSystem initialized with best practices');
+        // Pulizia chiavi legacy (mmorpg_save_*) per tenere lo storage pulito
+        try {
+            const legacy = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('mmorpg_save_')) legacy.push(key);
+            }
+            legacy.forEach(k => localStorage.removeItem(k));
+        } catch (_) {}
+        
+        console.log('💾 SaveSystem initialized with best practices (per-account only)');
     }
     
     /**
@@ -59,12 +69,8 @@ export class SaveSystem {
             const saveData = this.collectSaveData();
             const saveDataString = JSON.stringify(saveData);
             
-            // Salva i dati principali (slot legacy)
-            localStorage.setItem(`mmorpg_save_${resolvedKey}`, saveDataString);
-            // Salva anche nel contenitore per-account se stiamo usando accountId
-            try {
-                localStorage.setItem(`mmorpg_account_${resolvedKey}`, saveDataString);
-            } catch (_) {}
+            // Salva nel contenitore per-account (chiave unica per account)
+            localStorage.setItem(`mmorpg_account_${resolvedKey}`, saveDataString);
             
             // Crea backup solo se necessario
             if (this.shouldCreateBackup()) {
@@ -102,11 +108,8 @@ export class SaveSystem {
     load(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
-            // Preferisci il contenitore per-account
-            let saveDataString = localStorage.getItem(`mmorpg_account_${resolvedKey}`);
-            if (!saveDataString) {
-                saveDataString = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
-            }
+            // Leggi solo dal contenitore per-account
+            const saveDataString = localStorage.getItem(`mmorpg_account_${resolvedKey}`);
             if (!saveDataString) {
                 console.log('📁 Nessun salvataggio trovato');
                 return false;
@@ -145,7 +148,7 @@ export class SaveSystem {
     hasSave(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
-            const saveData = localStorage.getItem(`mmorpg_account_${resolvedKey}`) || localStorage.getItem(`mmorpg_save_${resolvedKey}`);
+            const saveData = localStorage.getItem(`mmorpg_account_${resolvedKey}`);
             return saveData !== null;
         } catch (error) {
             console.error('❌ Errore controllo salvataggio:', error);
@@ -176,7 +179,6 @@ export class SaveSystem {
     deleteSave(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
-            localStorage.removeItem(`mmorpg_save_${resolvedKey}`);
             localStorage.removeItem(`mmorpg_account_${resolvedKey}`);
             console.log(`🗑️ Salvataggio ${resolvedKey} eliminato`);
             return true;
