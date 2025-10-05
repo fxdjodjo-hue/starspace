@@ -38,6 +38,12 @@ export class StartScreen {
 
         // Prepara lista account
         this.refreshAccountButtons();
+
+        // Logo immagine opzionale
+        this.logoImage = new Image();
+        this.logoReady = false;
+        this.logoImage.onload = () => { this.logoReady = true; };
+        this.logoImage.src = 'starspacelogo.png';
     }
     // === Gestione indice account (nickname -> accountId) ===
     loadAccountsIndex() {
@@ -378,6 +384,13 @@ export class StartScreen {
     drawLogo(ctx) {
         const logoX = this.x + this.width / 2;
         const logoY = this.y + 80;
+
+        // Disegna immagine logo sopra il titolo, se caricata
+        if (this.logoReady) {
+            const imgW = 84; // dimensioni compatte
+            const imgH = 84;
+            ctx.drawImage(this.logoImage, logoX - imgW / 2, logoY - imgH - 10, imgW, imgH);
+        }
         
         // Titolo principale
         ctx.fillStyle = '#ffffff';
