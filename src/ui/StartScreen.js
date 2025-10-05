@@ -217,13 +217,13 @@ export class StartScreen {
             placeholder: 'Inserisci il tuo nome...'
         };
         
-        // Pulsante inizia gioco
+        // Pulsante login
         this.startGameButton = {
             x: Math.round(this.x + this.width / 2 - 100),
             y: Math.round(this.y + 450),
             width: 200,
             height: 55,
-            text: 'INIZIA GIOCO',
+            text: 'LOGIN',
             gradient: ['#e74c3c', '#c0392b']
         };
         
@@ -305,11 +305,11 @@ export class StartScreen {
     
     // Disegna sfondo animato
     drawAnimatedBackground(ctx) {
-        // Sfondo gradiente
+        // Sfondo gradiente (nero → grigio scuro)
         const gradient = ctx.createLinearGradient(0, 0, 0, this.game.canvas.height);
-        gradient.addColorStop(0, '#0a0a0a');
-        gradient.addColorStop(0.5, '#1a1a2e');
-        gradient.addColorStop(1, '#16213e');
+        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(0.5, '#0d0d0f');
+        gradient.addColorStop(1, '#111112');
         
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
@@ -385,10 +385,7 @@ export class StartScreen {
         ctx.textAlign = 'center';
         ctx.fillText('STARSPACE', logoX, logoY);
         
-        // Sottotitolo
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#4a90e2';
-        ctx.fillText('MMORPG Spaziale', logoX, logoY + 25);
+        // (Nessun sottotitolo)
 
         // Assicurati che i testi successivi non ereditino ombre
         ctx.shadowBlur = 0;
