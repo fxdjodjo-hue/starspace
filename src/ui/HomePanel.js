@@ -3522,7 +3522,7 @@ export class HomePanel extends UIComponent {
         const cardHeight = 300; // Altezza fissa per le carte
         const totalWidth = (cardWidth * allFactions.length) + (cardSpacing * (allFactions.length - 1));
         const cardsStartX = x + (this.contentWidth - totalWidth) / 2; // Centrato orizzontalmente
-        const cardsStartY = panelY + panelHeight + 30;
+        const cardsStartY = panelY + panelHeight + 80; // Aumentato lo spazio verticale da 30 a 80
         
         this.drawFactionList(ctx, cardsStartX, cardsStartY, allFactions, currentFaction, cardWidth, cardHeight, cardSpacing);
     }
@@ -3604,7 +3604,7 @@ export class HomePanel extends UIComponent {
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         const totalWidth = (cardWidth * factions.length) + (cardSpacing * (factions.length - 1));
-        ctx.fillText('Fazioni Disponibili', x + totalWidth/2, y - 20);
+        ctx.fillText('Fazioni Disponibili', x + totalWidth/2, y - 35); // Spostato il titolo più in alto
         ctx.textAlign = 'left';
         
         const startX = x;
