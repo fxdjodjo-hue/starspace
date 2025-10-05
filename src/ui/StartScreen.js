@@ -323,30 +323,59 @@ export class StartScreen {
         ctx.globalAlpha = 1;
     }
     
-    // Disegna pannello principale
+    // Disegna pannello principale (look moderno, solo grafica)
     drawMainPanel(ctx) {
-        // Ombra del pannello
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 20;
+        const radius = 14;
+
+        // Ombra soft esterna
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+        ctx.shadowBlur = 18;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 10;
-        
-        // Sfondo del pannello
-        ctx.fillStyle = 'rgba(26, 26, 26, 0.95)';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
-        // Bordo
-            ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#4a90e2';
+
+        // Corpo pannello (glass-like scuro)
+        ctx.fillStyle = 'rgba(20, 20, 24, 0.88)';
+        this.roundRectPath(ctx, this.x, this.y, this.width, this.height, radius);
+        ctx.fill();
+        ctx.restore();
+
+        // Bordo sfumato sottile
+        const borderGrad = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+        borderGrad.addColorStop(0, 'rgba(74, 144, 226, 0.9)');
+        borderGrad.addColorStop(1, 'rgba(41, 128, 185, 0.9)');
+        ctx.strokeStyle = borderGrad;
         ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
-        
-        // Reset completo delle ombre per evitare ghost sui testi
+        this.roundRectPath(ctx, this.x, this.y, this.width, this.height, radius);
+        ctx.stroke();
+
+        // Sottile inner highlight
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.lineWidth = 1;
+        this.roundRectPath(ctx, this.x + 2, this.y + 2, this.width - 4, this.height - 4, radius - 2);
+        ctx.stroke();
+
+        // Reset ombre per testi
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         ctx.shadowColor = 'transparent';
-        }
+    }
+
+    // Path helper per rettangoli arrotondati
+    roundRectPath(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
     
     // Disegna logo
     drawLogo(ctx) {
@@ -380,12 +409,15 @@ export class StartScreen {
         ctx.shadowColor = 'transparent';
         
         // Input field
-        ctx.fillStyle = 'rgba(42, 42, 42, 0.8)';
+        ctx.fillStyle = 'rgba(35, 38, 45, 0.88)';
         ctx.fillRect(this.nameInput.x, this.nameInput.y, this.nameInput.width, this.nameInput.height);
         
         // Bordo
-        ctx.strokeStyle = '#4a90e2';
-        ctx.lineWidth = 2;
+        const inputGrad = ctx.createLinearGradient(this.nameInput.x, this.nameInput.y, this.nameInput.x, this.nameInput.y + this.nameInput.height);
+        inputGrad.addColorStop(0, 'rgba(74, 144, 226, 0.9)');
+        inputGrad.addColorStop(1, 'rgba(52, 152, 219, 0.9)');
+        ctx.strokeStyle = inputGrad;
+        ctx.lineWidth = 1.8;
         ctx.strokeRect(this.nameInput.x, this.nameInput.y, this.nameInput.width, this.nameInput.height);
         
         // Testo
@@ -420,18 +452,18 @@ export class StartScreen {
         );
         
         if (isHovered) {
-            buttonGradient.addColorStop(0, this.lightenColor(this.startGameButton.gradient[0], 20));
-            buttonGradient.addColorStop(1, this.lightenColor(this.startGameButton.gradient[1], 20));
+            buttonGradient.addColorStop(0, this.lightenColor('#e74c3c', 10));
+            buttonGradient.addColorStop(1, this.lightenColor('#c0392b', 10));
         } else {
-            buttonGradient.addColorStop(0, this.startGameButton.gradient[0]);
-            buttonGradient.addColorStop(1, this.startGameButton.gradient[1]);
+            buttonGradient.addColorStop(0, '#e74c3c');
+            buttonGradient.addColorStop(1, '#c0392b');
         }
         
         ctx.fillStyle = buttonGradient;
         ctx.fillRect(this.startGameButton.x, this.startGameButton.y, this.startGameButton.width, this.startGameButton.height);
         
         // Bordo
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
         ctx.lineWidth = 2;
         ctx.strokeRect(this.startGameButton.x, this.startGameButton.y, this.startGameButton.width, this.startGameButton.height);
         
@@ -641,12 +673,16 @@ export class StartScreen {
         const mouse = this.game.input?.mouse || { x: -1, y: -1 };
         this.accountButtons.forEach(btn => {
             const hover = mouse.x >= btn.x && mouse.x <= btn.x + btn.width && mouse.y >= btn.y && mouse.y <= btn.y + btn.height;
-            ctx.fillStyle = hover ? 'rgba(74,144,226,0.8)' : 'rgba(42,42,42,0.8)';
-            ctx.fillRect(btn.x, btn.y, btn.width, btn.height);
-            ctx.strokeStyle = hover ? '#4a90e2' : '#666666';
+            // background
+            ctx.fillStyle = hover ? 'rgba(55, 60, 68, 0.95)' : 'rgba(35, 38, 45, 0.92)';
+            this.roundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, 8);
+            ctx.fill();
+            // border
+            ctx.strokeStyle = hover ? 'rgba(74, 144, 226, 0.95)' : 'rgba(120, 120, 120, 0.6)';
             ctx.lineWidth = 2;
-            ctx.strokeRect(btn.x, btn.y, btn.width, btn.height);
-
+            this.roundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, 8);
+            ctx.stroke();
+            // text
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'center';
