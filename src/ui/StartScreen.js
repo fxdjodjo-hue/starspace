@@ -76,6 +76,7 @@ export class StartScreen {
                 const raw = localStorage.getItem(`mmorpg_account_${id}`);
                 if (raw) {
                     const data = JSON.parse(raw);
+                    // Preferisci nickname salvato nel player
                     nickname = data?.player?.nickname || data?.nickname || nickname || id;
                 }
             } catch (_) {}
@@ -89,7 +90,7 @@ export class StartScreen {
 
         // Layout: colonna sinistra sotto l'input per evitare sovrapposizioni
         const x = Math.round(this.x + 40);
-        const startY = Math.round(this.y + 340);
+        const startY = Math.round(this.y + 260);
         const w = 220;
         const h = 36;
         const gap = 10;
@@ -173,6 +174,20 @@ export class StartScreen {
                 // Carica risorse
                 if (data.resources) {
                     Object.assign(this.game.ship.resources, data.resources);
+                }
+
+                // Forza nickname dall'indice account per allineamento (evita "TestPlayer")
+                const idx = this.loadAccountsIndex();
+                const forcedName = idx?.byId?.[accountId]?.nickname;
+                if (forcedName) {
+                    if (this.game.playerProfile && typeof this.game.playerProfile.setNickname === 'function') {
+                        this.game.playerProfile.setNickname(forcedName);
+                    }
+                    if (this.game.ship && typeof this.game.ship.setPlayerName === 'function') {
+                        this.game.ship.setPlayerName(forcedName);
+                    } else if (this.game.ship) {
+                        this.game.ship.playerName = forcedName;
+                    }
                 }
                 
                 console.log(`✅ Account ${accountId} caricato con successo`);
