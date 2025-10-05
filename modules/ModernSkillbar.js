@@ -249,17 +249,17 @@ export class ModernSkillbar {
                 // Pannello slot con tema moderno
                 const isSelected = this.selectedSlot === slotIndex;
                 ThemeUtils.drawPanel(ctx, slotX, slotY, this.slotSize, this.slotSize, {
-                    background: ThemeConfig.colors.background.secondary,
-                    border: isSelected ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary,
+                    background: 'rgba(18,18,20,0.9)',
+                    border: isSelected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
                     blur: false,
-                    shadow: false // Rimuovo l'ombra per ridurre l'abbagliamento
+                    shadow: false
                 });
                 
                 // Numero slot con tema moderno
                 ThemeUtils.drawText(ctx, (slotIndex + 1).toString(), slotX + 2, slotY + this.slotSize - 2, {
                     size: 12,
                     weight: 'normal',
-                    color: ThemeConfig.colors.text.secondary,
+                    color: '#cccccc',
                     glow: false
                 });
                 
@@ -288,11 +288,11 @@ export class ModernSkillbar {
             text: this.isExpanded ? '▲' : '▼',
             textSize: 16,
             textWeight: 'bold',
-            textColor: ThemeConfig.colors.text.primary,
-            background: ThemeConfig.colors.background.secondary,
-            border: ThemeConfig.colors.border.secondary, // Bordo più tenue
+            textColor: '#ffffff',
+            background: 'rgba(28,28,32,0.95)',
+            border: 'rgba(255,255,255,0.12)',
             hover: false,
-            glow: false // Rimuovo il glow per ridurre l'abbagliamento
+            glow: false
         });
     }
     
@@ -315,11 +315,11 @@ export class ModernSkillbar {
                 text: category.icon,
                 textSize: 14,
                 textWeight: 'bold',
-                textColor: ThemeConfig.colors.text.primary,
-                background: isActive ? ThemeConfig.colors.accent.primary : ThemeConfig.colors.background.secondary, // Colore più tenue
-                border: isActive ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary, // Bordo più tenue
+                textColor: '#ffffff',
+                background: isActive ? 'rgba(40,40,44,0.95)' : 'rgba(28,28,32,0.95)',
+                border: isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
                 hover: false,
-                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+                glow: false
             });
         });
     }
@@ -342,11 +342,11 @@ export class ModernSkillbar {
                 text: `${weapon.name}\n${weapon.quantity}`,
                 textSize: 14,
                 textWeight: 'bold',
-                textColor: ThemeConfig.colors.text.primary,
-                background: isSelected ? ThemeConfig.colors.accent.primary : ThemeConfig.colors.background.secondary, // Colore più tenue
-                border: isSelected ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary, // Bordo più tenue
+                textColor: '#ffffff',
+                background: isSelected ? 'rgba(60,60,66,0.95)' : 'rgba(28,28,32,0.95)',
+                border: isSelected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
                 hover: false,
-                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+                glow: false
             });
         });
     }

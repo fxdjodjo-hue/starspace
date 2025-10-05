@@ -103,10 +103,10 @@ export class CategorySkillbar {
     drawMainBar(ctx) {
         // Pannello principale con tema moderno
         ThemeUtils.drawPanel(ctx, this.x, this.y, this.width, this.height, {
-            background: ThemeConfig.colors.background.panel,
-            border: ThemeConfig.colors.border.primary,
-            blur: true,
-            shadow: true
+            background: 'rgba(18,18,20,0.9)',
+            border: 'rgba(255,255,255,0.12)',
+            blur: false,
+            shadow: false
         });
         
         // Disegna le categorie
@@ -123,11 +123,11 @@ export class CategorySkillbar {
                 text: category.icon,
                 textSize: 16,
                 textWeight: 'bold',
-                textColor: ThemeConfig.colors.text.primary,
-                background: isActive ? ThemeConfig.colors.accent.primary : 'transparent',
-                border: isActive ? ThemeConfig.colors.border.primary : 'transparent',
+                textColor: '#ffffff',
+                background: isActive ? 'rgba(40,40,44,0.95)' : 'transparent',
+                border: isActive ? 'rgba(255,255,255,0.18)' : 'transparent',
                 hover: false,
-                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+                glow: false
             });
             
             categoryIndex++;
@@ -149,10 +149,10 @@ export class CategorySkillbar {
         
         // Pannello menu con tema moderno
         ThemeUtils.drawPanel(ctx, menuX, menuY, this.width, totalHeight, {
-            background: ThemeConfig.colors.background.panel,
-            border: ThemeConfig.colors.border.primary,
-            blur: true,
-            shadow: true
+            background: 'rgba(18,18,20,0.94)',
+            border: 'rgba(255,255,255,0.12)',
+            blur: false,
+            shadow: false
         });
         
         // Disegna gli oggetti
@@ -169,17 +169,17 @@ export class CategorySkillbar {
             
             let background, border, textColor;
             if (isSelected) {
-                background = ThemeConfig.colors.accent.warning;
-                border = ThemeConfig.colors.border.warning;
-                textColor = ThemeConfig.colors.text.primary;
+                background = 'rgba(60,60,66,0.95)';
+                border = 'rgba(255,255,255,0.18)';
+                textColor = '#ffffff';
             } else if (canUse) {
-                background = ThemeConfig.colors.accent.primary;
-                border = ThemeConfig.colors.border.primary;
-                textColor = ThemeConfig.colors.text.primary;
+                background = 'rgba(28,28,32,0.95)';
+                border = 'rgba(255,255,255,0.12)';
+                textColor = '#ffffff';
             } else {
-                background = ThemeConfig.colors.background.disabled;
-                border = ThemeConfig.colors.border.disabled;
-                textColor = ThemeConfig.colors.text.disabled;
+                background = 'rgba(20,20,24,0.6)';
+                border = 'rgba(255,255,255,0.08)';
+                textColor = '#888888';
             }
             
             ThemeUtils.drawButton(ctx, itemX, itemY, itemSize, itemSize, {
@@ -214,7 +214,7 @@ export class CategorySkillbar {
                 const cooldownProgress = Math.min(item.cooldown / 10000, 1); // Assumendo 10s max cooldown
                 const cooldownHeight = itemSize * cooldownProgress;
                 
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
                 ctx.beginPath();
                 ctx.roundRect(itemX, itemY + itemSize - cooldownHeight, itemSize, cooldownHeight, 6);
                 ctx.fill();

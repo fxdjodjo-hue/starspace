@@ -1427,8 +1427,8 @@ class Game {
         // Disegna l'effetto di radiazione intorno alla nave (dentro la sezione zoom)
         this.radiationSystem.drawRadiationEffect(this.ctx, this.camera, this.ship);
         
-        // Disegna i confini della mappa
-        this.world.drawMapRectangle(this.ctx, this.camera);
+         // Disegna i confini della mappa (disabilitato per evitare barre verticali ai lati)
+         // this.world.drawMapRectangle(this.ctx, this.camera);
         
         // Disegna il nickname sotto la nave
         this.drawPlayerNickname();
@@ -1471,8 +1471,8 @@ class Game {
         // Ripristina il contesto (rimuove lo zoom)
         this.ctx.restore();
         
-        // Badge build (overlay in alto a destra)
-        this.drawBuildBadge();
+         // Badge build (overlay in alto a destra) - no glow
+         this.drawBuildBadge();
         
         // Disegna la minimappa (separata dal renderer, non influenzata dallo zoom)
         this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem, this.spaceStation, this.interactiveAsteroids, this.mapManager);

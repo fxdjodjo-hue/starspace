@@ -33,6 +33,60 @@ export class HomePanel extends UIComponent {
         };
         document.addEventListener('wheel', this.handleWheel);
         
+        // Stato per scroll fluido della barra preview shop
+        this.thumbnailScrollX = 0;
+        this.thumbnailScrollTargetX = 0;
+        this.thumbnailVelocityX = 0;
+        this.thumbnailIsDragging = false;
+        this.thumbnailDragStartX = 0;
+        this.thumbnailLastPointerX = 0;
+        this.thumbnailMaxScroll = 0;
+        this.previewBounds = { x: 0, y: 0, width: 0, height: 0 };
+        
+        // Eventi per wheel/drag nella barra preview
+        this.handlePreviewWheel = (e) => {
+            if (this.selectedCategory !== 'shop') return;
+            const rect = this.game.canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const { x, y, width, height } = this.previewBounds;
+            if (mx < x || mx > x + width || my < y || my > y + height) return;
+            const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) || 0;
+            this.thumbnailScrollTargetX = Math.max(-this.thumbnailMaxScroll, Math.min(0, this.thumbnailScrollTargetX - delta * 0.6));
+            e.preventDefault();
+        };
+        this.handlePreviewDown = (e) => {
+            if (this.selectedCategory !== 'shop') return;
+            const rect = this.game.canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const { x, y, width, height } = this.previewBounds;
+            if (mx < x || mx > x + width || my < y || my > y + height) return;
+            this.thumbnailIsDragging = true;
+            this.thumbnailDragStartX = mx - this.thumbnailScrollX;
+            this.thumbnailLastPointerX = mx;
+            this.thumbnailVelocityX = 0;
+        };
+        this.handlePreviewMove = (e) => {
+            if (!this.thumbnailIsDragging) return;
+            const rect = this.game.canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const delta = mx - this.thumbnailLastPointerX;
+            this.thumbnailLastPointerX = mx;
+            this.thumbnailScrollX = Math.max(-this.thumbnailMaxScroll, Math.min(0, mx - this.thumbnailDragStartX));
+            this.thumbnailScrollTargetX = this.thumbnailScrollX;
+            this.thumbnailVelocityX = delta;
+        };
+        this.handlePreviewUp = () => {
+            if (!this.thumbnailIsDragging) return;
+            this.thumbnailIsDragging = false;
+            this.thumbnailScrollTargetX = Math.max(-this.thumbnailMaxScroll, Math.min(0, this.thumbnailScrollX + this.thumbnailVelocityX * 10));
+        };
+        document.addEventListener('wheel', this.handlePreviewWheel, { passive: false });
+        document.addEventListener('mousedown', this.handlePreviewDown);
+        document.addEventListener('mousemove', this.handlePreviewMove);
+        document.addEventListener('mouseup', this.handlePreviewUp);
+        
         // Dati del giocatore (verranno aggiornati dinamicamente)
         this.playerData = {
             id: '883098',
@@ -81,8 +135,8 @@ export class HomePanel extends UIComponent {
         this.shopItems = {
             ammunition: {
                 // Laser
-                laser_x1: { name: 'Munizioni Laser (x1 danno)', price: 10, amount: 100, max: 10000, icon: '🔴', type: 'laser', key: 'x1' },
-                laser_x2: { name: 'Munizioni Laser (x2 danno)', price: 25, amount: 50, max: 5000, icon: '🟠', type: 'laser', key: 'x2' },
+                laser_x1: { name: 'Munizioni Laser', price: 10, amount: 100, max: 10000, icon: '🔴', type: 'laser', key: 'x1' },
+                laser_x2: { name: 'Munizioni Laser', price: 25, amount: 50, max: 5000, icon: '🟠', type: 'laser', key: 'x2' },
                 laser_x3: { name: 'Munizioni Laser (x3 danno)', price: 50, amount: 20, max: 2000, icon: '🟡', type: 'laser', key: 'x3' },
                 // Missili
                 missile_r1: { name: 'Missili R1', price: 100, amount: 10, max: 500, icon: '🟢', type: 'missile', key: 'r1' },
@@ -762,20 +816,20 @@ export class HomePanel extends UIComponent {
     }
     
     drawMainPanel(ctx) {
-        // Sfondo del pannello con tema moderno
+        // Sfondo del pannello con stile uniforme scuro, senza blur/glow
         ThemeUtils.drawPanel(ctx, this.x, this.y, this.panelWidth, this.panelHeight, {
-            background: ThemeConfig.colors.background.panel,
-            border: ThemeConfig.colors.border.primary,
-            blur: true,
-            shadow: true
+            background: 'rgba(18,18,20,0.94)',
+            border: 'rgba(255,255,255,0.12)',
+            blur: false,
+            shadow: false
         });
         
         // Titolo con tema moderno
         ThemeUtils.drawText(ctx, 'Pannello di controllo', this.x + 20, this.y + 30, {
             size: 18,
             weight: 'bold',
-            color: ThemeConfig.colors.text.primary,
-            glow: true
+            color: '#ffffff',
+            glow: false
         });
         
         // Pulsante chiudi con tema moderno
@@ -783,11 +837,11 @@ export class HomePanel extends UIComponent {
             text: 'X',
             textSize: 16,
             textWeight: 'bold',
-            textColor: ThemeConfig.colors.text.primary,
-            background: ThemeConfig.colors.accent.danger,
-            border: ThemeConfig.colors.border.danger,
+            textColor: '#ffffff',
+            background: 'rgba(28,28,32,0.95)',
+            border: 'rgba(255,255,255,0.18)',
             hover: false,
-            glow: true
+            glow: false
         });
     }
     
@@ -795,12 +849,12 @@ export class HomePanel extends UIComponent {
         const navX = this.x;
         const navY = this.y + 60;
         
-        // Sfondo navigazione con tema moderno
+        // Sfondo navigazione uniforme scuro
         ThemeUtils.drawPanel(ctx, navX, navY, this.navWidth, this.panelHeight - 60, {
-            background: ThemeConfig.colors.background.secondary,
-            border: ThemeConfig.colors.border.secondary,
+            background: 'rgba(18,18,20,0.94)',
+            border: 'rgba(255,255,255,0.12)',
             blur: false,
-            shadow: true
+            shadow: false
         });
         
         // Categorie con tema moderno
@@ -808,16 +862,16 @@ export class HomePanel extends UIComponent {
             const itemY = navY + 20 + index * 40;
             const isSelected = this.selectedCategory === category.id;
             
-            // Pulsante categoria con tema moderno
+            // Pulsante categoria stile neutro
             ThemeUtils.drawButton(ctx, navX + 10, itemY - 5, this.navWidth - 20, 35, {
                 text: `${category.icon} ${category.name}`,
                 textSize: 14,
                 textWeight: isSelected ? 'bold' : 'normal',
-                textColor: isSelected ? ThemeConfig.colors.text.primary : ThemeConfig.colors.text.secondary,
-                background: isSelected ? ThemeConfig.colors.accent.primary : 'transparent',
-                border: isSelected ? ThemeConfig.colors.border.primary : 'transparent',
+                textColor: isSelected ? '#ffffff' : '#cfcfcf',
+                background: isSelected ? 'rgba(40,40,44,0.95)' : 'transparent',
+                border: isSelected ? 'rgba(255,255,255,0.18)' : 'transparent',
                 hover: false,
-                glow: isSelected
+                glow: false
             });
             
             // Freccia selezionata
@@ -825,8 +879,8 @@ export class HomePanel extends UIComponent {
                 ThemeUtils.drawText(ctx, '→', navX + this.navWidth - 25, itemY + 15, {
                     size: 16,
                     weight: 'bold',
-                    color: ThemeConfig.colors.text.primary,
-                    glow: true
+                    color: '#ffffff',
+                    glow: false
                 });
             }
         });
@@ -836,8 +890,8 @@ export class HomePanel extends UIComponent {
         const contentX = this.x + this.navWidth;
         const contentY = this.y + 60;
         
-        // Sfondo contenuto
-        ctx.fillStyle = '#16213e';
+        // Sfondo contenuto neutro scuro
+        ctx.fillStyle = 'rgba(12,12,14,0.95)';
         ctx.fillRect(contentX, contentY, this.contentWidth, this.panelHeight - 60);
         
         switch (this.selectedCategory) {
@@ -882,9 +936,9 @@ export class HomePanel extends UIComponent {
         // Cerchio nave con tema moderno
         ThemeUtils.drawPanel(ctx, centerX - 60, shipY - 60, 120, 120, {
             background: 'transparent',
-            border: ThemeConfig.colors.border.primary,
+            border: 'rgba(255,255,255,0.18)',
             blur: false,
-            shadow: true
+            shadow: false
         });
         
         // Disegna nave spaziale (semplificata)
@@ -896,16 +950,16 @@ export class HomePanel extends UIComponent {
         ThemeUtils.drawText(ctx, `ID ${this.playerData.id}`, centerX, shipY + 40, {
             size: 14,
             weight: 'normal',
-            color: ThemeConfig.colors.text.primary,
-            glow: true
+            color: '#ffffff',
+            glow: false
         });
         
         // Livello con tema moderno
         ThemeUtils.drawText(ctx, `LIVELLO ${this.playerData.level}`, x + 20, shipY - 20, {
             size: 16,
             weight: 'bold',
-            color: ThemeConfig.colors.accent.primary,
-            glow: true
+            color: '#ffffff',
+            glow: false
         });
         
         // Risorse con tema moderno
@@ -926,7 +980,7 @@ export class HomePanel extends UIComponent {
         });
         
         // Divider con tema moderno
-        ctx.strokeStyle = ThemeConfig.colors.border.primary;
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(x + 20, shipY + 80);
@@ -941,7 +995,7 @@ export class HomePanel extends UIComponent {
     
     
     drawActiveEvents(ctx, x, y, width) {
-        ctx.fillStyle = '#e94560';
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
         ctx.fillText('Eventi attivi', x, y);
         
@@ -953,7 +1007,7 @@ export class HomePanel extends UIComponent {
     
     drawQuestContent(ctx, x, y) {
         // Titolo sezione
-        ctx.fillStyle = '#e94560';
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Quest', x + this.contentWidth/2, y + 40);
@@ -986,11 +1040,11 @@ export class HomePanel extends UIComponent {
             const isSelected = this.selectedQuestTab === tab;
             
             // Sfondo tab
-            ctx.fillStyle = isSelected ? '#e94560' : '#2a2a3e';
+            ctx.fillStyle = isSelected ? 'rgba(40,40,44,0.95)' : 'rgba(28,28,32,0.95)';
             ctx.fillRect(tabX, y, tabWidth, tabHeight);
             
             // Bordo tab
-            ctx.strokeStyle = isSelected ? '#ffffff' : '#666666';
+            ctx.strokeStyle = isSelected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)';
             ctx.lineWidth = isSelected ? 2 : 1;
             ctx.strokeRect(tabX, y, tabWidth, tabHeight);
             
@@ -1051,7 +1105,7 @@ export class HomePanel extends UIComponent {
                         const isSelected = this.selectedQuest && this.selectedQuest.id === quest.id;
                         
                         // Sfondo quest
-                        ctx.fillStyle = isSelected ? '#4a90e2' : 'transparent';
+                    ctx.fillStyle = isSelected ? 'rgba(40,40,44,0.95)' : 'transparent';
                         ctx.fillRect(x, currentY - 5, width - 10, 20);
                         
                         // Nome quest
@@ -2116,23 +2170,23 @@ export class HomePanel extends UIComponent {
         ThemeUtils.drawText(ctx, 'Negozio', x + 20, y + 35, {
             size: 28,
             weight: 'bold',
-            color: ThemeConfig.colors.accent.primary,
-            glow: true
+            color: '#ffffff',
+            glow: false
         });
         
         // Risorse in alto a destra con tema moderno
         ThemeUtils.drawText(ctx, `Crediti: ${this.playerData.credits.toLocaleString()}`, x + this.contentWidth - 20, y + 30, {
             size: 18,
             weight: 'bold',
-            color: ThemeConfig.colors.text.primary,
-            glow: true,
+            color: '#ffffff',
+            glow: false,
             align: 'right'
         });
         ThemeUtils.drawText(ctx, `Uridium: ${this.playerData.uridium.toLocaleString()}`, x + this.contentWidth - 20, y + 50, {
             size: 18,
             weight: 'bold',
-            color: ThemeConfig.colors.text.primary,
-            glow: true,
+            color: '#ffffff',
+            glow: false,
             align: 'right'
         });
         
@@ -2160,10 +2214,10 @@ export class HomePanel extends UIComponent {
         const detailsAreaWidth = this.contentWidth - imageAreaWidth - 60;
         const areaHeight = 450; // Ridotto da 480 a 450
         
-        // Sfondo area principale
-        ctx.fillStyle = '#1a1a2e';
+        // Sfondo area principale neutro
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(x, y, this.contentWidth - 40, areaHeight);
-        ctx.strokeStyle = '#4a90e2';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, this.contentWidth - 40, areaHeight);
         
@@ -2192,16 +2246,16 @@ export class HomePanel extends UIComponent {
         const imageSize = 380;
         
         // Sfondo immagine
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(imageX, imageY, imageSize, imageSize);
-        ctx.strokeStyle = '#4a90e2';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(imageX, imageY, imageSize, imageSize);
         
         // Titolo item selezionato
         const selectedItem = items[this.selectedAmmoItem];
         if (selectedItem) {
-            ctx.fillStyle = '#e94560';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(selectedItem.name, imageX + imageSize/2, imageY + 40);
@@ -2212,7 +2266,7 @@ export class HomePanel extends UIComponent {
         }
         
         // Icona grande centrata
-        ctx.fillStyle = selectedItem && selectedItem.type === 'laser' ? '#4a90e2' : '#50c878';
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 100px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(selectedItem ? selectedItem.icon : '⚡', imageX + imageSize/2, imageY + imageSize/2 + 40);
@@ -2238,7 +2292,7 @@ export class HomePanel extends UIComponent {
         const spacing = 12; // Ridotto da 15 a 12
         
         // Titolo sezione
-        ctx.fillStyle = '#e94560';
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 20px Arial'; // Ridotto da 22 a 20
         ctx.fillText('OPZIONI ACQUISTO', x, y);
         
@@ -2390,9 +2444,9 @@ export class HomePanel extends UIComponent {
         const imageSize = 380;
         
         // Sfondo area immagine
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(imageX, imageY, imageSize, imageSize);
-        ctx.strokeStyle = '#4a90e2';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(imageX, imageY, imageSize, imageSize);
         
@@ -2400,7 +2454,7 @@ export class HomePanel extends UIComponent {
         const selectedItem = items[this.selectedLaserItem];
         if (selectedItem) {
             // Nome item
-            ctx.fillStyle = '#e94560';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(selectedItem.name, imageX + imageSize/2, imageY + 40);
@@ -2411,7 +2465,7 @@ export class HomePanel extends UIComponent {
             ctx.fillText('LASER', imageX + imageSize/2, imageY + 70);
             
             // Icona grande
-            ctx.fillStyle = '#4a90e2';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 100px Arial';
             ctx.fillText(selectedItem.icon, imageX + imageSize/2, imageY + imageSize/2 + 40);
             
@@ -2445,9 +2499,9 @@ export class HomePanel extends UIComponent {
         const imageSize = 380;
         
         // Sfondo area immagine
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(imageX, imageY, imageSize, imageSize);
-        ctx.strokeStyle = '#50c878';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(imageX, imageY, imageSize, imageSize);
         
@@ -2455,7 +2509,7 @@ export class HomePanel extends UIComponent {
         const selectedItem = items[this.selectedGeneratorItem];
         if (selectedItem) {
             // Nome item
-            ctx.fillStyle = '#e94560';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(selectedItem.name, imageX + imageSize/2, imageY + 40);
@@ -2466,7 +2520,7 @@ export class HomePanel extends UIComponent {
             ctx.fillText('GENERATORE', imageX + imageSize/2, imageY + 70);
             
             // Icona grande
-            ctx.fillStyle = '#50c878';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 100px Arial';
             ctx.fillText(selectedItem.icon, imageX + imageSize/2, imageY + imageSize/2 + 40);
             
@@ -2508,16 +2562,16 @@ export class HomePanel extends UIComponent {
         const imageSize = 380;
         
         // Sfondo immagine
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(imageX, imageY, imageSize, imageSize);
-        ctx.strokeStyle = '#ff6b6b';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(imageX, imageY, imageSize, imageSize);
         
         // Titolo drone selezionato
         const selectedItem = items[this.selectedUAVItem];
         if (selectedItem) {
-            ctx.fillStyle = '#ff6b6b';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(selectedItem.name, imageX + imageSize/2, imageY + 40);
@@ -2679,15 +2733,16 @@ export class HomePanel extends UIComponent {
     drawItemPreview(ctx, x, y, width) {
         const previewHeight = 110;
         
-        // Sfondo preview
-        ctx.fillStyle = '#1a1a2e';
+        // Sfondo preview neutro
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(x, y, width, previewHeight);
-        ctx.strokeStyle = '#4a90e2';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, width, previewHeight);
         
-        // Clip area per scroll orizzontale
+        // Salva bounds per interazioni e clip area per scroll orizzontale
         ctx.save();
+        this.previewBounds = { x, y, width, height: previewHeight };
         ctx.rect(x, y, width, previewHeight);
         ctx.clip();
         
@@ -2715,7 +2770,7 @@ export class HomePanel extends UIComponent {
             
             // Bordo evidenziato per item selezionato
             if (isSelected) {
-                ctx.fillStyle = '#4a90e2';
+                ctx.fillStyle = 'rgba(40,40,44,0.95)';
                 ctx.fillRect(thumbX - 3, thumbY - 3, thumbSize + 6, thumbSize + 6);
             }
             
@@ -2726,9 +2781,7 @@ export class HomePanel extends UIComponent {
             ctx.strokeRect(thumbX, thumbY, thumbSize, thumbSize);
             
             // Icona thumbnail
-            ctx.fillStyle = item.type === 'laser' ? '#4a90e2' : 
-                           item.type === 'generator' ? '#50c878' : 
-                           item.type === 'uav' ? '#ff6b6b' : '#e94560';
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 32px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(item.icon, thumbX + thumbSize/2, thumbY + thumbSize/2 + 12);
@@ -2746,40 +2799,31 @@ export class HomePanel extends UIComponent {
         
         ctx.restore();
         
-        // Indicatori di scroll cliccabili
+        // Aggiorna max scroll per inerzia
         const totalWidth = allItems.length * thumbSpacing;
         const visibleWidth = width - 40;
         const maxScroll = Math.max(0, totalWidth - visibleWidth);
-        
-        // Freccia sinistra (più piccola per non interferire)
-        if (this.thumbnailScrollX < 0) {
-            ctx.fillStyle = '#4a90e2';
-            ctx.fillRect(x + 8, y + 8, 30, previewHeight - 16);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('◀', x + 23, y + previewHeight/2 + 6);
-            ctx.textAlign = 'left';
+        this.thumbnailMaxScroll = maxScroll;
+        // Aggiorna easing verso il target
+        if (!this.thumbnailIsDragging) {
+            const k = 0.15;
+            const delta = this.thumbnailScrollTargetX - this.thumbnailScrollX;
+            if (Math.abs(delta) > 0.1) {
+                this.thumbnailScrollX += delta * k;
+            } else {
+                this.thumbnailScrollX = this.thumbnailScrollTargetX;
+            }
         }
         
-        // Freccia destra (più piccola per non interferire)
-        if (this.thumbnailScrollX > -maxScroll) {
-            ctx.fillStyle = '#4a90e2';
-            ctx.fillRect(x + width - 38, y + 8, 30, previewHeight - 16);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('▶', x + width - 23, y + previewHeight/2 + 6);
-            ctx.textAlign = 'left';
-        }
+        // Nessuna freccia: scroll con wheel/drag + inerzia
     }
     
     drawShopTabs(ctx, x, y) {
         const tabs = [
-            { id: 'ammunition', name: 'MUNIZIONI', color: ThemeConfig.colors.accent.primary },
-            { id: 'laser', name: 'LASER', color: ThemeConfig.colors.accent.info },
-            { id: 'generators', name: 'GENERATORI', color: ThemeConfig.colors.accent.success },
-            { id: 'uav', name: 'UAV', color: ThemeConfig.colors.accent.warning }
+            { id: 'ammunition', name: 'MUNIZIONI' },
+            { id: 'laser', name: 'LASER' },
+            { id: 'generators', name: 'GENERATORI' },
+            { id: 'uav', name: 'UAV' }
         ];
         
         const tabWidth = 140;
@@ -2794,11 +2838,11 @@ export class HomePanel extends UIComponent {
                 text: tab.name,
                 textSize: 16,
                 textWeight: 'bold',
-                textColor: ThemeConfig.colors.text.primary,
-                background: isSelected ? tab.color : ThemeConfig.colors.background.secondary,
-                border: isSelected ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary,
+                textColor: '#ffffff',
+                background: isSelected ? 'rgba(40,40,44,0.95)' : 'rgba(28,28,32,0.95)',
+                border: isSelected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
                 hover: false,
-                glow: isSelected
+                glow: false
             });
         });
     }
@@ -3072,24 +3116,19 @@ export class HomePanel extends UIComponent {
             document.addEventListener('click', this.starEnergyClickHandler);
         }
 
-        // Sfondo pannello principale
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        // Sfondo pannello principale (uniforme scuro)
+        ctx.fillStyle = 'rgba(18,18,20,0.94)';
         ctx.fillRect(centerX, centerY, panelWidth, panelHeight);
         
-        // Bordo blu luminoso
-        const gradient = ctx.createLinearGradient(centerX, centerY, centerX + panelWidth, centerY);
-        gradient.addColorStop(0, '#1a3f5c');
-        gradient.addColorStop(0.5, '#4a90e2');
-        gradient.addColorStop(1, '#1a3f5c');
-        
-        ctx.strokeStyle = gradient;
+        // Bordo tenue uniforme
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 2;
         ctx.strokeRect(centerX, centerY, panelWidth, panelHeight);
 
-        // Titolo con effetto glow
-        ctx.fillStyle = '#4a90e2';
-        ctx.shadowColor = '#4a90e2';
-        ctx.shadowBlur = 10;
+        // Titolo senza glow
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('STAR ENERGY', centerX + panelWidth/2, centerY + 40);

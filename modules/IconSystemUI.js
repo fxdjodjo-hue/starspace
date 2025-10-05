@@ -9,8 +9,8 @@ export class IconSystemUI {
         this.text = options.text || '';
         this.subText = options.subText || '';
         this.color = options.color || '#ffffff';
-        this.backgroundColor = options.backgroundColor || '#000000';
-        this.borderColor = options.borderColor || '#ffffff';
+        this.backgroundColor = options.backgroundColor || 'rgba(18,18,20,0.9)';
+        this.borderColor = options.borderColor || 'rgba(255,255,255,0.12)';
         this.borderWidth = options.borderWidth || 2;
         this.fontSize = options.fontSize || 20;
         this.subFontSize = options.subFontSize || 12;
@@ -121,7 +121,7 @@ export class IconSystemUI {
         ctx.fill();
         
         // Bordo del tooltip
-        ctx.strokeStyle = '#ffff00';
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
         ctx.lineWidth = 1;
         ctx.stroke();
         

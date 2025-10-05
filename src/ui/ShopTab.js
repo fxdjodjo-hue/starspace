@@ -24,16 +24,15 @@ export class ShopTab extends UIComponent {
         
         // Sfondo tab
         if (isSelected) {
-            ctx.fillStyle = color;
+            ctx.fillStyle = 'rgba(40,40,44,0.95)';
             ctx.fillRect(x, y, width, height);
-            // Bordo evidenziato
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, width, height);
         } else {
-            ctx.fillStyle = '#2a2a2a';
+            ctx.fillStyle = 'rgba(28,28,32,0.95)';
             ctx.fillRect(x, y, width, height);
-            ctx.strokeStyle = '#444444';
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
             ctx.lineWidth = 1;
             ctx.strokeRect(x, y, width, height);
         }

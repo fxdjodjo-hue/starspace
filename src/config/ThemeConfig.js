@@ -174,20 +174,12 @@ export class ThemeUtils {
             ctx.filter = theme.effects.backdrop.light;
         }
         
-        // Ombra moderna
+        // Ombra moderna (ammorbidita) e niente glow
         if (shadow) {
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+            ctx.shadowBlur = 14;
             ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 8;
-        }
-        
-        // Bagliore neon
-        if (glow) {
-            ctx.shadowColor = glow;
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            ctx.shadowOffsetY = 6;
         }
         
         // Sfondo con glassmorphism
@@ -320,13 +312,7 @@ export class ThemeUtils {
         
         ctx.save();
         
-        // Effetto bagliore per testi importanti
-        if (glow) {
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-        }
+        // Effetto bagliore per testi importanti (disattivato)
         
         // Gradiente per testi speciali
         if (gradient) {

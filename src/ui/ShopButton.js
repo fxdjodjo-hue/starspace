@@ -17,19 +17,19 @@ export class ShopButton extends UIComponent {
         if (!this.visible) return;
         
         const { x, y, width, height } = this.bounds;
-        const { text, enabled, color, disabledColor, textColor } = this.config;
+        const { text, enabled } = this.config;
         
-        // Sfondo pulsante
-        ctx.fillStyle = enabled ? color : disabledColor;
+        // Sfondo pulsante (neutro)
+        ctx.fillStyle = enabled ? 'rgba(40,40,44,0.95)' : 'rgba(28,28,32,0.7)';
         ctx.fillRect(x, y, width, height);
         
-        // Bordo
-        ctx.strokeStyle = enabled ? '#2E7D32' : '#444444';
+        // Bordo neutro
+        ctx.strokeStyle = enabled ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, width, height);
         
         // Testo
-        ctx.fillStyle = textColor;
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

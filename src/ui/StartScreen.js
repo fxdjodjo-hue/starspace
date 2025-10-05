@@ -217,7 +217,7 @@ export class StartScreen {
         const inputWidth = 400;
         this.nameInput = {
             x: Math.round(this.x + (this.width - inputWidth) / 2),
-            y: Math.round(this.y + 200),
+            y: Math.round(this.y + 188),
             width: inputWidth,
             height: 50,
             placeholder: 'Nickname...'
@@ -389,7 +389,7 @@ export class StartScreen {
         if (this.logoReady) {
             const imgW = 220; // ancora più grande
             const imgH = 220;
-            const top = this.y - 10; // ancora più su
+            const top = this.y - 25; // ulteriormente più su
             ctx.drawImage(this.logoImage, logoX - imgW / 2, top, imgW, imgH);
         }
         
@@ -417,8 +417,8 @@ export class StartScreen {
         ctx.fillRect(this.nameInput.x, this.nameInput.y, this.nameInput.width, this.nameInput.height);
         
         // Bordo
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+        ctx.lineWidth = 2.0;
         ctx.strokeRect(this.nameInput.x, this.nameInput.y, this.nameInput.width, this.nameInput.height);
         
         // Testo
@@ -675,7 +675,7 @@ export class StartScreen {
         this.accountButtons.forEach(btn => {
             const hover = mouse.x >= btn.x && mouse.x <= btn.x + btn.width && mouse.y >= btn.y && mouse.y <= btn.y + btn.height;
             // background
-            ctx.fillStyle = hover ? 'rgba(36, 36, 40, 0.96)' : 'rgba(24, 24, 26, 0.94)';
+            ctx.fillStyle = hover ? 'rgba(40, 40, 44, 0.98)' : 'rgba(24, 24, 26, 0.94)';
             this.roundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, 8);
             ctx.fill();
             // border

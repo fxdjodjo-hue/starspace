@@ -1296,14 +1296,14 @@ export class Inventory {
         this.panelX = (canvasWidth - this.panelWidth) / 2;
         this.panelY = (canvasHeight - this.panelHeight) / 2;
         
-        // Sfondo del pannello moderno (senza blur)
+        // Sfondo del pannello uniforme scuro (senza blur/glow)
         ThemeUtils.drawPanel(ctx, this.panelX, this.panelY, this.panelWidth, this.panelHeight, {
-            background: ThemeConfig.colors.background.panel,
-            border: ThemeConfig.colors.border.glass,
+            background: 'rgba(18,18,20,0.94)',
+            border: 'rgba(255,255,255,0.12)',
             borderWidth: ThemeConfig.borders.width.normal,
             radius: ThemeConfig.borders.radius.lg,
             blur: false,
-            glow: false // Rimuovo il glow per ridurre l'abbagliamento
+            glow: false
         });
         
         // Titolo elegante (più in basso)
@@ -1410,14 +1410,13 @@ export class Inventory {
             // Disegna tab moderna
             ThemeUtils.drawButton(ctx, tabX, tabY, tabWidth, tabHeight, {
                 text: tab.name,
-                variant: isActive ? 'primary' : 'secondary',
                 size: 'md',
                 isHovered: false,
                 isActive: isActive,
-                textColor: isActive ? ThemeConfig.colors.text.primary : ThemeConfig.colors.text.primary, // Testo sempre bianco per contrasto
-                background: isActive ? ThemeConfig.colors.accent.primary : ThemeConfig.colors.background.secondary, // Sfondo più contrastato
-                border: isActive ? ThemeConfig.colors.border.primary : ThemeConfig.colors.border.secondary,
-                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+                textColor: '#ffffff',
+                background: isActive ? 'rgba(40,40,44,0.95)' : 'rgba(28,28,32,0.95)',
+                border: isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
+                glow: false
             });
         });
     }

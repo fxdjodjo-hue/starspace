@@ -383,8 +383,9 @@ export class Notification {
     drawBorder(ctx, x, y, width, height, color, intensity) {
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 5 * intensity;
+        // Glow disattivato per HUD
+        // ctx.shadowColor = color;
+        // ctx.shadowBlur = 5 * intensity;
         this.roundRect(ctx, x, y, width, height, 8);
         ctx.stroke();
         ctx.shadowBlur = 0;
@@ -393,7 +394,8 @@ export class Notification {
     // Disegna testo con ombra
     drawTextWithShadow(ctx, text, x, y, textColor, shadowColor) {
         // Ombra
-        ctx.fillStyle = shadowColor;
+        // Ombra testo attenuata
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, x + 2, y + 2);
