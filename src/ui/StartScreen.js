@@ -49,6 +49,12 @@ export class StartScreen {
         
         this.selectedFaction = null;
         
+        // Controlla se il giocatore ha già scelto una fazione
+        this.hasChosenFaction = this.checkExistingFaction();
+        if (this.hasChosenFaction) {
+            this.selectedFaction = localStorage.getItem('mmorpg_player_faction');
+        }
+
         // Stato salvataggi
         this.hasExistingSave = false;
         this.availableSaves = [];
@@ -74,6 +80,12 @@ export class StartScreen {
             });
         }
         return stars;
+    }
+    
+    // Controlla se il giocatore ha già scelto una fazione
+    checkExistingFaction() {
+        const savedFaction = localStorage.getItem('mmorpg_player_faction');
+        return savedFaction && ['venus', 'mars', 'eic'].includes(savedFaction);
     }
     
     // Aggiorna le posizioni degli elementi
@@ -140,7 +152,7 @@ export class StartScreen {
             this.cursorVisible = !this.cursorVisible;
             this.cursorBlinkTime = 0;
         }
-        
+
         // Aggiorna stelle
         this.stars.forEach(star => {
             star.opacity += Math.sin(this.animationTime * star.twinkleSpeed) * 0.1;
@@ -248,11 +260,11 @@ export class StartScreen {
         ctx.fillRect(this.x, this.y, this.width, this.height);
         
         // Bordo
-        ctx.shadowBlur = 0;
+            ctx.shadowBlur = 0;
         ctx.strokeStyle = '#4a90e2';
         ctx.lineWidth = 2;
         ctx.strokeRect(this.x, this.y, this.width, this.height);
-    }
+        }
     
     // Disegna logo
     drawLogo(ctx) {
@@ -308,11 +320,12 @@ export class StartScreen {
     
     // Disegna selezione fazione
     drawFactionSelection(ctx) {
-        // Label
+        // Label dinamica
+        const labelText = this.hasChosenFaction ? 'La tua fazione:' : 'Seleziona fazione:';
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('Seleziona fazione:', this.x + 60, this.y + 280);
+        ctx.fillText(labelText, this.x + 60, this.y + 280);
         
         const cardWidth = 180;
         const cardHeight = 100;
@@ -324,31 +337,51 @@ export class StartScreen {
             const cardX = startX + index * (cardWidth + cardSpacing);
             const cardY = startY;
             const isSelected = this.selectedFaction === faction.id;
+            const isLocked = this.hasChosenFaction && !isSelected;
             
             // Sfondo carta
-            ctx.fillStyle = isSelected ? `rgba(${this.hexToRgb(faction.color)}, 0.3)` : 'rgba(42, 42, 42, 0.8)';
+            if (isLocked) {
+                ctx.fillStyle = 'rgba(30, 30, 30, 0.5)';
+            } else {
+                ctx.fillStyle = isSelected ? `rgba(${this.hexToRgb(faction.color)}, 0.3)` : 'rgba(42, 42, 42, 0.8)';
+            }
             ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
             
             // Bordo
-            ctx.strokeStyle = isSelected ? faction.color : '#666666';
-            ctx.lineWidth = isSelected ? 3 : 2;
+            if (isLocked) {
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 1;
+            } else {
+                ctx.strokeStyle = isSelected ? faction.color : '#666666';
+                ctx.lineWidth = isSelected ? 3 : 2;
+            }
             ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
             
             // Icona
-            ctx.fillStyle = faction.color;
+            ctx.fillStyle = isLocked ? '#555555' : faction.color;
             ctx.font = '24px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(faction.icon, cardX + cardWidth / 2, cardY + 35);
             
             // Nome fazione
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = isLocked ? '#666666' : '#ffffff';
             ctx.font = 'bold 14px Arial';
             ctx.fillText(faction.name, cardX + cardWidth / 2, cardY + 55);
             
             // Descrizione
-            ctx.fillStyle = '#cccccc';
+            ctx.fillStyle = isLocked ? '#444444' : '#cccccc';
             ctx.font = '11px Arial';
             ctx.fillText(faction.description, cardX + cardWidth / 2, cardY + 75);
+            
+            // Overlay "bloccato" se la fazione è già stata scelta
+            if (isLocked) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+                
+                ctx.fillStyle = '#999999';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText('GIÀ SCELTA', cardX + cardWidth / 2, cardY + cardHeight / 2);
+            }
         });
     }
     
@@ -421,7 +454,7 @@ export class StartScreen {
             // Testo
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
+        ctx.textAlign = 'center';
             ctx.fillText(button.text, button.x + button.width / 2, button.y + button.height / 2 + 4);
         });
     }
@@ -508,6 +541,12 @@ export class StartScreen {
             const cardY = startY;
             
             if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
+                // Se la fazione è già stata scelta e non è quella selezionata, non permettere il cambio
+                if (this.hasChosenFaction && this.selectedFaction !== faction.id) {
+                    this.showError('Non puoi cambiare fazione! È una scelta permanente.');
+                    return true;
+                }
+                
                 this.selectedFaction = faction.id;
                 return true;
             }
@@ -537,7 +576,8 @@ export class StartScreen {
     
     // Gestisce avvio nuovo gioco
     handleStartGame() {
-        if (!this.selectedFaction) {
+        // Se è la prima volta, richiedi selezione fazione
+        if (!this.hasChosenFaction && !this.selectedFaction) {
             this.showError('Seleziona una fazione');
             return;
         }
@@ -548,8 +588,18 @@ export class StartScreen {
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
         
-        // Imposta fazione
-        this.game.factionSystem.joinFaction(this.selectedFaction);
+        // Usa fazione esistente o quella appena selezionata
+        const factionToUse = this.hasChosenFaction ? 
+            localStorage.getItem('mmorpg_player_faction') : 
+            this.selectedFaction;
+        
+        // Imposta fazione (scelta permanente)
+        this.game.factionSystem.joinFaction(factionToUse);
+        
+        // Salva la scelta fazione nel localStorage solo se è la prima volta
+        if (!this.hasChosenFaction) {
+            localStorage.setItem('mmorpg_player_faction', this.selectedFaction);
+        }
         
         // Imposta mappa iniziale
         const startingMaps = {
@@ -558,7 +608,7 @@ export class StartScreen {
             'eic': 'e1'
         };
         
-        this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
+        this.game.mapManager.currentMap = startingMaps[factionToUse] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
         // Nasconde la StartScreen
@@ -572,8 +622,11 @@ export class StartScreen {
             this.game.saveSystem.save('main');
         }
         
-        const faction = this.factions.find(f => f.id === this.selectedFaction);
-        this.game.notifications.add(`Benvenuto ${playerName} nella fazione ${faction.fullName}!`, 'success');
+        const faction = this.factions.find(f => f.id === factionToUse);
+        const message = this.hasChosenFaction ? 
+            `Bentornato ${playerName} nella fazione ${faction.fullName}!` :
+            `Benvenuto ${playerName} nella fazione ${faction.fullName}!`;
+        this.game.notifications.add(message, 'success');
     }
     
     // Gestisce caricamento salvataggio
@@ -585,7 +638,7 @@ export class StartScreen {
         
         if (this.game.saveSystem.load(saveKey)) {
             this.game.mapManager.loadCurrentMapInstance();
-            this.hide();
+        this.hide();
             this.game.notifications.add('Gioco caricato!', 'success');
         } else {
             this.showError('Errore nel caricamento del salvataggio');
