@@ -111,6 +111,12 @@ export class UIManager {
                 icon: '🏠',
                 tooltipText: 'Home Dashboard',
                 showCount: false
+            },
+            starenergy: {
+                type: 'starenergy',
+                icon: '⚡',
+                tooltipText: 'Star Energy',
+                showCount: true
             }
         };
     }
