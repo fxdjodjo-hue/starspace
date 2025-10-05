@@ -207,11 +207,12 @@ export class StartScreen {
         this.x = Math.round((this.game.canvas.width - this.width) / 2);
         this.y = Math.round((this.game.canvas.height - this.height) / 2);
         
-        // Input nome utente
+        // Input nome utente (centrato)
+        const inputWidth = 480;
         this.nameInput = {
-            x: Math.round(this.x + 60),
+            x: Math.round(this.x + (this.width - inputWidth) / 2),
             y: Math.round(this.y + 200),
-            width: 400,
+            width: inputWidth,
             height: 50,
             placeholder: 'Inserisci il tuo nome...'
         };
@@ -287,7 +288,7 @@ export class StartScreen {
         // Messaggi
         this.drawMessages(ctx);
 
-        // Lista account esistenti (colonna sinistra)
+        // Lista account esistenti centrata sotto l'input
         this.drawAccountsList(ctx);
     }
     
@@ -352,8 +353,8 @@ export class StartScreen {
         // Label
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Inserisci il tuo nome:', this.nameInput.x, this.nameInput.y - 15);
+        ctx.textAlign = 'center';
+        ctx.fillText('Inserisci il tuo nome:', this.x + this.width / 2, this.nameInput.y - 15);
         
         // Input field
         ctx.fillStyle = 'rgba(42, 42, 42, 0.8)';
