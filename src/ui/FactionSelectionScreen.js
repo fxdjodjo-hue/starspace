@@ -12,6 +12,13 @@ export class FactionSelectionScreen {
         this.animationTime = 0;
         this.stars = this.generateStars(80);
         
+        // Effetto typewriter
+        this.typewriterText = '';
+        this.typewriterIndex = 0;
+        this.typewriterSpeed = 30; // ms per carattere
+        this.typewriterLastUpdate = 0;
+        this.currentTypewriterLines = [];
+        
         // Fazioni
         this.factions = [
             {
@@ -342,10 +349,20 @@ export class FactionSelectionScreen {
     // Disegna descrizione dettagliata della fazione selezionata
     drawSelectedFactionDescription(ctx) {
         const faction = this.factions.find(f => f.id === this.selectedFaction);
-        if (!faction) return;
+        if (!faction) {
+            this.currentTypewriterLines = [];
+            this.typewriterIndex = 0;
+            return;
+        }
+        
+        // Se è cambiata la fazione, resetta l'effetto typewriter
+        if (this.currentTypewriterLines !== faction.longDescription) {
+            this.currentTypewriterLines = faction.longDescription;
+            this.typewriterIndex = 0;
+        }
         
         // Posiziona la descrizione più in basso rispetto alle carte
-        const descY = Math.round(this.y + 350); // Aumentato lo spazio dalle carte
+        const descY = Math.round(this.y + 350);
         const lineHeight = 22;
         
         // Sfondo semi-trasparente per la descrizione
@@ -380,20 +397,36 @@ export class FactionSelectionScreen {
         ctx.lineWidth = 1;
         ctx.stroke();
         
+        // Aggiorna effetto typewriter
+        const now = performance.now();
+        if (now - this.typewriterLastUpdate > this.typewriterSpeed) {
+            this.typewriterIndex++;
+            this.typewriterLastUpdate = now;
+        }
+        
         // Testo descrizione
-        ctx.textAlign = 'left';
+        ctx.textAlign = 'center';
+        const centerX = descriptionBg.x + descriptionBg.width / 2;
+        
         faction.longDescription.forEach((line, index) => {
             const y = descY + (index * lineHeight);
             
-            // Ombra testo
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.font = '14px Arial';
-            ctx.fillText(line, descriptionBg.x + padding + 1, y + 1);
+            // Calcola quanti caratteri mostrare per questa linea
+            const totalChars = faction.longDescription.slice(0, index).join('').length;
+            const visibleChars = Math.max(0, this.typewriterIndex - totalChars);
+            const visibleText = line.slice(0, visibleChars);
             
-            // Testo principale
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '14px Arial';
-            ctx.fillText(line, descriptionBg.x + padding, y);
+            if (visibleText.length > 0) {
+                // Ombra testo
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.font = '14px Arial';
+                ctx.fillText(visibleText, centerX + 1, y + 1);
+                
+                // Testo principale
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '14px Arial';
+                ctx.fillText(visibleText, centerX, y);
+            }
         });
     }
     
