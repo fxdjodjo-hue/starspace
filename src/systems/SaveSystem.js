@@ -4,16 +4,33 @@ export class SaveSystem {
         this.game = game;
         this.saveKey = 'mmorpg_save_data';
         this.autoSaveInterval = 30000; // Salvataggio automatico ogni 30 secondi
+        this.backupInterval = 300000; // Backup ogni 5 minuti
         this.lastSaveTime = 0;
+        this.lastBackupTime = 0;
         this.isAutoSaveEnabled = true;
-        this.maxBackups = 5; // Massimo 5 backup
+        this.maxBackups = 10; // Più backup per sicurezza
         this.saveVersion = '1.0.0';
+        
+        // Statistiche salvataggio
+        this.saveStats = {
+            totalSaves: 0,
+            totalBackups: 0,
+            lastSaveDuration: 0,
+            averageSaveTime: 0,
+            saveErrors: 0,
+            lastError: null
+        };
+        
+        // Carica statistiche esistenti
+        this.loadSaveStats();
         
         // Avvia il salvataggio automatico
         this.startAutoSave();
         
         // Salva prima che la pagina venga chiusa
         this.setupBeforeUnload();
+        
+        console.log('💾 SaveSystem initialized with best practices');
     }
     
     /**
@@ -29,9 +46,11 @@ export class SaveSystem {
     }
     
     /**
-     * Salva tutti i dati del gioco
+     * Salva tutti i dati del gioco con statistiche avanzate
      */
     save(slotKey = 'main') {
+        const startTime = performance.now();
+        
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
             const saveData = this.collectSaveData();
@@ -40,19 +59,28 @@ export class SaveSystem {
             // Salva i dati principali
             localStorage.setItem(`mmorpg_save_${resolvedKey}`, saveDataString);
             
-            // Crea backup
-            this.createBackup(saveData, resolvedKey);
+            // Crea backup solo se necessario
+            if (this.shouldCreateBackup()) {
+                this.createBackup(saveData, resolvedKey);
+            }
+            
+            // Aggiorna statistiche
+            const saveDuration = performance.now() - startTime;
+            this.updateSaveStats(true, saveDuration);
             
             this.lastSaveTime = Date.now();
-            console.log('💾 Gioco salvato con successo');
+            console.log(`💾 Gioco salvato con successo in ${saveDuration.toFixed(2)}ms`);
             
-            // Notifica il giocatore
-            if (this.game.notifications) {
+            // Notifica il giocatore solo per salvataggi manuali
+            if (this.game.notifications && slotKey !== 'auto') {
                 this.game.notifications.add('💾 Gioco salvato', 2000, 'success');
             }
             
             return true;
         } catch (error) {
+            const saveDuration = performance.now() - startTime;
+            this.updateSaveStats(false, saveDuration, error.message);
+            
             console.error('❌ Errore durante il salvataggio:', error);
             if (this.game.notifications) {
                 this.game.notifications.add('❌ Errore salvataggio', 3000, 'error');
@@ -367,13 +395,25 @@ export class SaveSystem {
     }
     
     /**
-     * Avvia il salvataggio automatico
+     * Avvia il salvataggio automatico intelligente
      */
     startAutoSave() {
         if (this.isAutoSaveEnabled) {
+            // Salvataggio automatico principale
             setInterval(() => {
-                this.save(this.resolveSlotKey());
+                this.save('auto');
             }, this.autoSaveInterval);
+            
+            // Backup automatico separato
+            setInterval(() => {
+                if (this.shouldCreateBackup()) {
+                    const resolvedKey = this.resolveSlotKey();
+                    const saveData = this.collectSaveData();
+                    this.createBackup(saveData, resolvedKey);
+                }
+            }, this.backupInterval);
+            
+            console.log('🔄 Salvataggio automatico avviato');
         }
     }
     
@@ -434,6 +474,240 @@ export class SaveSystem {
             };
         } catch (error) {
             return null;
+        }
+    }
+    
+    // ==================== BEST PRACTICES METHODS ====================
+    
+    /**
+     * Carica statistiche di salvataggio
+     */
+    loadSaveStats() {
+        try {
+            const stats = localStorage.getItem('mmorpg_save_stats');
+            if (stats) {
+                this.saveStats = { ...this.saveStats, ...JSON.parse(stats) };
+            }
+        } catch (error) {
+            console.warn('⚠️ Errore nel caricamento statistiche salvataggio:', error);
+        }
+    }
+    
+    /**
+     * Salva statistiche di salvataggio
+     */
+    saveSaveStats() {
+        try {
+            localStorage.setItem('mmorpg_save_stats', JSON.stringify(this.saveStats));
+        } catch (error) {
+            console.warn('⚠️ Errore nel salvataggio statistiche:', error);
+        }
+    }
+    
+    /**
+     * Aggiorna statistiche di salvataggio
+     */
+    updateSaveStats(success, duration, error = null) {
+        if (success) {
+            this.saveStats.totalSaves++;
+            this.saveStats.lastSaveDuration = duration;
+            
+            // Calcola media mobile
+            const totalTime = this.saveStats.averageSaveTime * (this.saveStats.totalSaves - 1) + duration;
+            this.saveStats.averageSaveTime = totalTime / this.saveStats.totalSaves;
+        } else {
+            this.saveStats.saveErrors++;
+            this.saveStats.lastError = error;
+        }
+        
+        // Salva statistiche
+        this.saveSaveStats();
+    }
+    
+    /**
+     * Determina se creare un backup
+     */
+    shouldCreateBackup() {
+        const now = Date.now();
+        return (now - this.lastBackupTime) >= this.backupInterval;
+    }
+    
+    /**
+     * Crea backup migliorato con rotazione
+     */
+    createBackup(saveData, slotKey) {
+        try {
+            const timestamp = Date.now();
+            const backupKey = `${this.saveKey}_${slotKey}_backup_${timestamp}`;
+            
+            // Salva backup
+            localStorage.setItem(backupKey, JSON.stringify(saveData));
+            
+            // Gestisci rotazione backup
+            this.rotateBackups(slotKey);
+            
+            this.lastBackupTime = timestamp;
+            this.saveStats.totalBackups++;
+            
+            console.log(`💾 Backup creato: ${backupKey}`);
+            return true;
+        } catch (error) {
+            console.error('❌ Errore nella creazione backup:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Gestisce la rotazione dei backup (mantiene solo gli ultimi N)
+     */
+    rotateBackups(slotKey) {
+        const backupKeys = [];
+        
+        // Trova tutti i backup per questo slot
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`${this.saveKey}_${slotKey}_backup_`)) {
+                backupKeys.push(key);
+            }
+        }
+        
+        // Ordina per timestamp (più recenti prima)
+        backupKeys.sort((a, b) => {
+            const timestampA = parseInt(a.split('_').pop());
+            const timestampB = parseInt(b.split('_').pop());
+            return timestampB - timestampA;
+        });
+        
+        // Rimuovi backup vecchi se superano il limite
+        if (backupKeys.length > this.maxBackups) {
+            const toRemove = backupKeys.slice(this.maxBackups);
+            toRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🗑️ Backup rimosso: ${key}`);
+            });
+        }
+    }
+    
+    /**
+     * Esporta salvataggio come JSON
+     */
+    exportSave(slotKey = 'main') {
+        try {
+            const resolvedKey = this.resolveSlotKey(slotKey);
+            const saveDataString = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
+            
+            if (!saveDataString) {
+                throw new Error('Nessun salvataggio trovato');
+            }
+            
+            const saveData = JSON.parse(saveDataString);
+            const exportData = {
+                ...saveData,
+                exportTimestamp: Date.now(),
+                exportVersion: this.saveVersion,
+                playerName: saveData.player?.nickname || saveData.player?.playerName || 'Unknown'
+            };
+            
+            // Crea e scarica file
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `starspace_save_${resolvedKey}_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log(`📤 Salvataggio esportato: ${resolvedKey}`);
+            return true;
+        } catch (error) {
+            console.error('❌ Errore nell\'esportazione:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Importa salvataggio da JSON
+     */
+    importSave(file, slotKey = 'main') {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    // Validazione base
+                    if (!importData.player || !importData.world) {
+                        throw new Error('File di salvataggio non valido');
+                    }
+                    
+                    // Salva nel localStorage
+                    const resolvedKey = this.resolveSlotKey(slotKey);
+                    localStorage.setItem(`mmorpg_save_${resolvedKey}`, JSON.stringify(importData));
+                    
+                    console.log(`📥 Salvataggio importato: ${resolvedKey}`);
+                    resolve(true);
+                } catch (error) {
+                    console.error('❌ Errore nell\'importazione:', error);
+                    reject(error);
+                }
+            };
+            
+            reader.onerror = () => reject(new Error('Errore nella lettura del file'));
+            reader.readAsText(file);
+        });
+    }
+    
+    /**
+     * Ottiene statistiche complete del sistema di salvataggio
+     */
+    getSaveStats() {
+        return {
+            ...this.saveStats,
+            autoSaveEnabled: this.isAutoSaveEnabled,
+            autoSaveInterval: this.autoSaveInterval,
+            backupInterval: this.backupInterval,
+            maxBackups: this.maxBackups,
+            lastSaveTime: this.lastSaveTime,
+            lastBackupTime: this.lastBackupTime,
+            saveVersion: this.saveVersion
+        };
+    }
+    
+    /**
+     * Reset completo del sistema di salvataggio
+     */
+    resetAllSaves() {
+        try {
+            // Rimuovi tutti i salvataggi
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('mmorpg_save_') || key.startsWith('mmorpg_map_persistence'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            
+            // Reset statistiche
+            this.saveStats = {
+                totalSaves: 0,
+                totalBackups: 0,
+                lastSaveDuration: 0,
+                averageSaveTime: 0,
+                saveErrors: 0,
+                lastError: null
+            };
+            this.saveSaveStats();
+            
+            console.log('🗑️ Tutti i salvataggi sono stati eliminati');
+            return true;
+        } catch (error) {
+            console.error('❌ Errore nel reset:', error);
+            return false;
         }
     }
 }
