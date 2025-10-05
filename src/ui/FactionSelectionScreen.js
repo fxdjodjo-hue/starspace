@@ -137,22 +137,23 @@ export class FactionSelectionScreen {
     handleClick(x, y) {
         if (!this.isVisible) return false;
         
-        // Click su fazioni
-        this.factions.forEach((faction, index) => {
-            const cardWidth = 180;
-            const cardHeight = 100;
-            const cardSpacing = 20;
-            const startX = this.x + 60;
-            const startY = this.y + 200;
+        // Click su fazioni (solo selezione, niente conferma automatica)
+        const cardWidth = 180;
+        const cardHeight = 100;
+        const cardSpacing = 20;
+        const startX = this.x + 60;
+        const startY = this.y + 200;
+
+        for (let index = 0; index < this.factions.length; index++) {
+            const faction = this.factions[index];
             const cardX = startX + index * (cardWidth + cardSpacing);
             const cardY = startY;
-            
             if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
                 this.selectedFaction = faction.id;
                 this.errorMessage = '';
-                return true;
+                return true; // esci subito: niente altro click processing
             }
-        });
+        }
         
         // Click su pulsante conferma
         if (this.isMouseOverButton(this.confirmButton, x, y)) {
