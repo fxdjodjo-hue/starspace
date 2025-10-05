@@ -190,8 +190,8 @@ export class FactionSelectionScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
-        // Salva tutto nel salvataggio globale
-        this.saveGlobalAccount();
+        // Salva tutto nell'account per-nickname
+        this.saveAccountData(accountName);
         
         // Nasconde la schermata
         this.hide();
@@ -203,12 +203,12 @@ export class FactionSelectionScreen {
         this.game.notifications.add(`Benvenuto nella fazione ${faction.fullName}!`, 'success');
     }
     
-    // Salva tutti i dati nel salvataggio globale unico
-    saveGlobalAccount() {
-        const accountKey = 'mmorpg_account';
+    // Salva tutti i dati per l'account specifico
+    saveAccountData(accountName) {
+        const accountKey = `mmorpg_account_${accountName}`;
         
         const accountData = {
-            accountName: this.game.playerProfile?.getNickname?.() || '',
+            accountName: accountName,
             faction: this.selectedFaction,
             currentMap: this.game.mapManager.currentMap,
             ship: {
@@ -239,7 +239,7 @@ export class FactionSelectionScreen {
         };
         
         localStorage.setItem(accountKey, JSON.stringify(accountData));
-        console.log(`✅ Salvataggio globale aggiornato con successo`);
+        console.log(`✅ Account ${accountName} salvato con successo`);
     }
     
     // Controlla se il mouse è sopra un pulsante

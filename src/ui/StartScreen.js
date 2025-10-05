@@ -15,8 +15,8 @@ export class StartScreen {
         this.cursorVisible = true;
         this.cursorBlinkTime = 0;
         
-        // Sistema salvataggio globale (unico)
-        this.currentAccount = null; // compatibilità, non più usato per la chiave
+        // Sistema account per-nickname (chiavi isolate)
+        this.currentAccount = null;
         this.accountExists = false;
         
         // Animazioni
@@ -56,15 +56,17 @@ export class StartScreen {
         return savedFaction && ['venus', 'mars', 'eic'].includes(savedFaction);
     }
     
-    // Controlla se esiste il salvataggio globale
-    checkAccountExists() {
-        const accountData = localStorage.getItem('mmorpg_account');
+    // Controlla se esiste l'account (per-nickname)
+    checkAccountExists(accountName) {
+        const accountKey = `mmorpg_account_${accountName}`;
+        const accountData = localStorage.getItem(accountKey);
         return accountData !== null;
     }
     
-    // Carica i dati dal salvataggio globale
-    loadAccountData() {
-        const accountData = localStorage.getItem('mmorpg_account');
+    // Carica i dati dell'account specifico
+    loadAccountData(accountName) {
+        const accountKey = `mmorpg_account_${accountName}`;
+        const accountData = localStorage.getItem(accountKey);
         
         if (accountData) {
             try {
@@ -96,7 +98,7 @@ export class StartScreen {
                     Object.assign(this.game.ship.resources, data.resources);
                 }
                 
-                console.log(`✅ Salvataggio globale caricato con successo`);
+                console.log(`✅ Account ${accountName} caricato con successo`);
             } catch (error) {
                 console.error('❌ Errore nel caricamento account:', error);
                 this.showError('Errore nel caricamento account');
@@ -512,12 +514,12 @@ export class StartScreen {
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
         
-        // Controlla se esiste già il salvataggio globale
-        this.accountExists = this.checkAccountExists();
+        // Controlla se esiste già l'account per-nickname
+        this.accountExists = this.checkAccountExists(playerName);
         
         if (this.accountExists) {
-            // Salvataggio esistente - carica tutto
-            this.loadAccountData();
+            // Account esistente - carica tutto
+            this.loadAccountData(playerName);
             
             // Nasconde la StartScreen
             this.hide();
