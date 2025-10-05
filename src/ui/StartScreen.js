@@ -89,7 +89,7 @@ export class StartScreen {
         items.sort((a,b) => (b.lastPlayed||0) - (a.lastPlayed||0));
 
         // Layout centrato sotto l'input
-        const w = this.nameInput ? this.nameInput.width : 300;
+        const w = 300; // larghezza come prima per i bottoni
         const x = Math.round(this.x + (this.width - w) / 2);
         const startY = Math.round(this.nameInput ? (this.nameInput.y + this.nameInput.height + 24) : (this.y + 260));
         const h = 36;
@@ -208,7 +208,7 @@ export class StartScreen {
         this.y = Math.round((this.game.canvas.height - this.height) / 2);
         
         // Input nome utente (centrato)
-        const inputWidth = 480;
+        const inputWidth = 400;
         this.nameInput = {
             x: Math.round(this.x + (this.width - inputWidth) / 2),
             y: Math.round(this.y + 200),
