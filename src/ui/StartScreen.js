@@ -518,18 +518,21 @@ export class StartScreen {
     
     // Disegna messaggi
     drawMessages(ctx) {
+        // Posiziona i messaggi sotto il bottone LOGIN
+        const messageY = this.startGameButton.y + this.startGameButton.height + 25;
+        
         if (this.errorMessage) {
             ctx.fillStyle = '#e74c3c';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.errorMessage, this.x + this.width / 2, this.y + 140);
+            ctx.fillText(this.errorMessage, this.x + this.width / 2, messageY);
         }
         
         if (this.successMessage) {
             ctx.fillStyle = '#27ae60';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.successMessage, this.x + this.width / 2, this.y + 140);
+            ctx.fillText(this.successMessage, this.x + this.width / 2, messageY);
         }
     }
     
@@ -619,7 +622,13 @@ export class StartScreen {
     
     // Gestisce avvio nuovo gioco
     handleStartGame() {
-        const playerName = this.playerName.trim() || 'Player';
+        const playerName = this.playerName.trim();
+        
+        // Verifica che il nickname non sia vuoto
+        if (!playerName) {
+            this.showError('Inserisci un nickname per continuare');
+            return;
+        }
         
         // Imposta nickname visuale
         this.currentAccount = playerName;
