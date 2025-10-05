@@ -190,6 +190,26 @@ export class FactionSelectionScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
+        // Reset inventario e stato iniziale per nuovo account
+        if (this.game.inventory) {
+            this.game.inventory.items = [];
+            this.game.inventory.equipment = {
+                laser: new Array(3).fill(null),
+                shieldGen: new Array(6).fill(null),
+                extra: new Array(3).fill(null)
+            };
+        }
+
+        // Reset risorse base della nave per nuovo profilo
+        if (this.game.ship) {
+            this.game.ship.resources.credits = 100000;
+            this.game.ship.resources.uridium = 5000;
+            this.game.ship.resources.honor = 0;
+            this.game.ship.resources.starEnergy = 100;
+            this.game.ship.ammunition = { laser: { x1: 1000, x2: 500, x3: 200, sab: 100 }, missile: { r1: 50, r2: 25, r3: 10 } };
+            this.game.ship.equippedLasers = { lf1: 0, lf2: 0, lf3: 0, lf4: 0 };
+        }
+
         // Salva tutto nell'account per-id
         this.saveAccountData(accountId);
         

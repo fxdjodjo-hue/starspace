@@ -348,10 +348,7 @@ class Game {
         // Aggiungi oggetti di esempio all'inventario (prima di caricare)
         this.initializeInventory();
         
-        // Carica l'inventario (solo se non è stato inizializzato)
-        if (this.inventory.items.length === 0) {
-            this.inventory.load();
-        }
+        // Non caricare inventario da storage globale: l'inventario è gestito per-account
         
         // Rendi l'istanza del gioco disponibile globalmente per il ridimensionamento
         window.gameInstance = this;
