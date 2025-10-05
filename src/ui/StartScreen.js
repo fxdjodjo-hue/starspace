@@ -1,16 +1,13 @@
-// Schermata di Selezione Iniziale - Login/Registrazione e Fazione
+// Schermata di Selezione Iniziale - Design Moderno e Accattivante
 export class StartScreen {
     constructor(game) {
-        console.log('🏗️ StartScreen constructor - creating StartScreen');
+        console.log('🏗️ StartScreen constructor - creating modern StartScreen');
         this.game = game;
         this.isVisible = true;
-        this.isTyping = true; // Inizia automaticamente in modalità typing
+        this.isTyping = true;
         
-        // Posizioni e dimensioni
-        this.width = 800;
-        this.height = 600;
-        this.x = (game.canvas.width - this.width) / 2;
-        this.y = (game.canvas.height - this.height) / 2;
+        // Inizializza posizioni
+        this.updatePositions();
         
         // Modalità: 'login' o 'register'
         this.mode = 'login';
@@ -22,104 +19,52 @@ export class StartScreen {
         this.maxPasswordLength = 30;
         this.cursorVisible = true;
         this.cursorBlinkTime = 0;
-        this.currentInput = 'nickname'; // 'nickname' o 'password'
+        this.currentInput = 'nickname';
         
-        // Input fields
-        this.nicknameInput = {
-            x: this.x + 100,
-            y: this.y + 200,
-            width: 300,
-            height: 40,
-            placeholder: 'Inserisci il tuo nickname...'
-        };
+        // Animazioni
+        this.animationTime = 0;
+        this.stars = this.generateStars(100);
+        this.particleSystem = [];
+        this.logoScale = 1;
+        this.logoRotation = 0;
         
-        this.passwordInput = {
-            x: this.x + 100,
-            y: this.y + 260,
-            width: 300,
-            height: 40,
-            placeholder: 'Inserisci la tua password...'
-        };
         
-        // Fazioni disponibili
+        // Fazioni con design migliorato
         this.factions = [
             {
                 id: 'venus',
                 name: 'VENUS',
                 fullName: 'Venus Research Union',
-                description: 'Fazione scientifica avanzata con tecnologie all\'avanguardia',
+                description: 'Scienziati all\'avanguardia con tecnologie avanzate',
                 color: '#9b59b6',
-                icon: '🔬'
+                gradient: ['#9b59b6', '#8e44ad'],
+                icon: '🔬',
+                bgPattern: 'scientific'
             },
             {
                 id: 'mars',
                 name: 'MARS',
                 fullName: 'Mars Mining Organization',
-                description: 'Fazione mineraria con focus su estrazione e produzione',
+                description: 'Minatori esperti con equipaggiamenti robusti',
                 color: '#e74c3c',
-                icon: '⛏️'
+                gradient: ['#e74c3c', '#c0392b'],
+                icon: '⛏️',
+                bgPattern: 'mining'
             },
             {
                 id: 'eic',
                 name: 'EIC',
                 fullName: 'Earth Industries Corporation',
-                description: 'Fazione commerciale con vasta rete di scambi',
+                description: 'Commercianti con vasta rete di scambi',
                 color: '#4a90e2',
-                icon: '🏢'
+                gradient: ['#4a90e2', '#2980b9'],
+                icon: '🏢',
+                bgPattern: 'corporate'
             }
         ];
         
-        // Fazione selezionata
         this.selectedFaction = null;
         
-        // Pulsanti
-        this.loginButton = {
-            x: this.x + 100,
-            y: this.y + 500,
-            width: 150,
-            height: 50,
-            text: 'LOGIN'
-        };
-        
-        this.registerButton = {
-            x: this.x + 270,
-            y: this.y + 500,
-            width: 150,
-            height: 50,
-            text: 'REGISTRATI'
-        };
-        
-        this.modeToggleButton = {
-            x: this.x + 440,
-            y: this.y + 500,
-            width: 150,
-            height: 50,
-            text: 'NUOVO ACCOUNT'
-        };
-        
-        this.loadButton = {
-            x: this.x + 100,
-            y: this.y + 570,
-            width: 200,
-            height: 50,
-            text: 'CARICA SALVATAGGIO'
-        };
-        
-        this.logoutButton = {
-            x: this.x + 320,
-            y: this.y + 570,
-            width: 150,
-            height: 50,
-            text: 'LOGOUT'
-        };
-        
-        this.startGameButton = {
-            x: this.x + 300,
-            y: this.y + 500,
-            width: 200,
-            height: 50,
-            text: 'INIZIA GIOCO'
-        };
 
         // Stato salvataggi
         this.hasExistingSave = false;
@@ -127,10 +72,114 @@ export class StartScreen {
         this.preferredSaveKey = 'main';
         this.errorMessage = '';
         this.successMessage = '';
+        
+        // Effetti visivi
+        this.glowIntensity = 0;
+        this.pulseScale = 1;
+        
+        // Tracking dimensioni canvas
+        this.lastCanvasWidth = this.game.canvas.width;
+        this.lastCanvasHeight = this.game.canvas.height;
+    }
+    
+    // Genera stelle per lo sfondo
+    generateStars(count) {
+        const stars = [];
+        for (let i = 0; i < count; i++) {
+            stars.push({
+                x: Math.random() * this.game.canvas.width,
+                y: Math.random() * this.game.canvas.height,
+                size: Math.random() * 2 + 0.5,
+                opacity: Math.random() * 0.8 + 0.2,
+                twinkleSpeed: Math.random() * 0.02 + 0.01
+            });
+        }
+        return stars;
+    }
+    
+    // Aggiorna le posizioni degli elementi
+    updatePositions() {
+        // Dimensioni responsive
+        this.width = Math.min(900, this.game.canvas.width * 0.8);
+        this.height = Math.min(700, this.game.canvas.height * 0.8);
+        this.x = (this.game.canvas.width - this.width) / 2;
+        this.y = (this.game.canvas.height - this.height) / 2;
+        
+        // Input fields
+        this.nicknameInput = {
+            x: this.x + 80,
+            y: this.y + 280,
+            width: 400,
+            height: 50,
+            placeholder: 'Inserisci il tuo nickname...'
+        };
+        
+        this.passwordInput = {
+            x: this.x + 80,
+            y: this.y + 350,
+            width: 400,
+            height: 50,
+            placeholder: 'Inserisci la tua password...'
+        };
+        
+        // Pulsanti
+        this.loginButton = {
+            x: this.x + 80,
+            y: this.y + 450,
+            width: 180,
+            height: 55,
+            text: 'LOGIN',
+            gradient: ['#4a90e2', '#2980b9']
+        };
+        
+        this.registerButton = {
+            x: this.x + 280,
+            y: this.y + 450,
+            width: 180,
+            height: 55,
+            text: 'REGISTRATI',
+            gradient: ['#27ae60', '#229954']
+        };
+        
+        this.modeToggleButton = {
+            x: this.x + 480,
+            y: this.y + 450,
+            width: 180,
+            height: 55,
+            text: 'NUOVO ACCOUNT',
+            gradient: ['#f39c12', '#e67e22']
+        };
+        
+        this.loadButton = {
+            x: this.x + 80,
+            y: this.y + 520,
+            width: 200,
+            height: 50,
+            text: 'CARICA SALVATAGGIO',
+            gradient: ['#8e44ad', '#9b59b6']
+        };
+        
+        this.startGameButton = {
+            x: this.x + 300,
+            y: this.y + 450,
+            width: 200,
+            height: 55,
+            text: 'INIZIA GIOCO',
+            gradient: ['#e74c3c', '#c0392b']
+        };
+        
+        // Rigenera stelle per le nuove dimensioni
+        this.stars = this.generateStars(100);
     }
     
     // Aggiorna la schermata
     update(deltaTime) {
+        // Aggiorna posizioni se le dimensioni del canvas sono cambiate
+        if (this.game.canvas.width !== this.lastCanvasWidth || this.game.canvas.height !== this.lastCanvasHeight) {
+            this.updatePositions();
+            this.lastCanvasWidth = this.game.canvas.width;
+            this.lastCanvasHeight = this.game.canvas.height;
+        }
         
         // Blink del cursore
         this.cursorBlinkTime += deltaTime;
@@ -138,7 +187,18 @@ export class StartScreen {
             this.cursorVisible = !this.cursorVisible;
             this.cursorBlinkTime = 0;
         }
-
+        
+        // Animazioni
+        this.logoScale = 1 + Math.sin(this.animationTime * 0.001) * 0.05;
+        this.logoRotation = Math.sin(this.animationTime * 0.0005) * 0.1;
+        this.glowIntensity = Math.sin(this.animationTime * 0.002) * 0.5 + 0.5;
+        this.pulseScale = 1 + Math.sin(this.animationTime * 0.003) * 0.1;
+        
+        // Aggiorna stelle
+        this.stars.forEach(star => {
+            star.opacity += Math.sin(this.animationTime * star.twinkleSpeed) * 0.1;
+        });
+        
         // Aggiorna stato salvataggio esistente
         try {
             if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
@@ -162,206 +222,275 @@ export class StartScreen {
     draw(ctx) {
         if (!this.isVisible) return;
         
-        // Sfondo semi-trasparente
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, 0, this.game.width, this.game.height);
+        // Sfondo con stelle animate
+        this.drawAnimatedBackground(ctx);
         
-        // Pannello principale
-        ctx.fillStyle = '#1a1a1a';
-        ctx.strokeStyle = '#4a90e2';
-        ctx.lineWidth = 2;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        // Pannello principale con design moderno
+        this.drawModernPanel(ctx);
         
-        // Titolo
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 32px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('STARSPACE', this.x + this.width / 2, this.y + 50);
+        // Logo animato
+        this.drawAnimatedLogo(ctx);
         
-        // Sottotitolo
-        ctx.font = '18px Arial';
-        ctx.fillStyle = '#cccccc';
-        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            ctx.fillText(`Benvenuto ${this.game.authSystem.currentUser.nickname}!`, this.x + this.width / 2, this.y + 80);
-        } else {
-            ctx.fillText('Accedi o registrati per iniziare', this.x + this.width / 2, this.y + 80);
-        }
-        
-        // Input nickname (solo se non loggato)
+        // Input fields moderni
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
-        this.drawNicknameInput(ctx);
-            
-            // Input password
-            this.drawPasswordInput(ctx);
+            this.drawModernInputs(ctx);
         }
         
-        // Selezione fazione (solo per selezione fazione)
+        // Selezione fazione
         if (this.mode === 'faction_selection') {
-        this.drawFactionSelection(ctx);
+            this.drawModernFactionSelection(ctx);
         } else if (this.mode === 'register') {
-            // Messaggio per registrazione
-            ctx.fillStyle = '#4a90e2';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('La fazione verrà selezionata dopo la registrazione', this.x + this.width / 2, this.y + 350);
+            this.drawInfoMessage(ctx, 'La fazione verrà selezionata dopo la registrazione', '#4a90e2');
         } else {
-            // Messaggio informativo per login
-            ctx.fillStyle = '#4a90e2';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('La tua fazione sarà caricata automaticamente', this.x + this.width / 2, this.y + 350);
+            this.drawInfoMessage(ctx, 'La tua fazione sarà caricata automaticamente', '#4a90e2');
         }
         
-        // Pulsanti
-        this.drawButtons(ctx);
+        // Pulsanti moderni
+        this.drawModernButtons(ctx);
         
-        // Messaggi di errore/successo
+        // Messaggi
         this.drawMessages(ctx);
     }
     
-    // Disegna input nickname
-    drawNicknameInput(ctx) {
-        const input = this.nicknameInput;
+    // Disegna sfondo animato con stelle
+    drawAnimatedBackground(ctx) {
+        // Sfondo gradiente
+        const gradient = ctx.createLinearGradient(0, 0, 0, this.game.canvas.height);
+        gradient.addColorStop(0, '#0a0a0a');
+        gradient.addColorStop(0.5, '#1a1a2e');
+        gradient.addColorStop(1, '#16213e');
         
-        // Label
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+        
+        // Stelle animate
         ctx.fillStyle = '#ffffff';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Nickname:', input.x, input.y - 10);
+        this.stars.forEach(star => {
+            ctx.globalAlpha = star.opacity;
+            ctx.fillRect(star.x, star.y, star.size, star.size);
+        });
+        ctx.globalAlpha = 1;
         
-        // Input field
-        ctx.fillStyle = '#2a2a2a';
-        ctx.strokeStyle = this.currentInput === 'nickname' ? '#4a90e2' : '#666666';
-        ctx.lineWidth = this.currentInput === 'nickname' ? 3 : 2;
-        ctx.fillRect(input.x, input.y, input.width, input.height);
-        ctx.strokeRect(input.x, input.y, input.width, input.height);
+        // Nebulosa di sfondo
+        const nebulaGradient = ctx.createRadialGradient(
+            this.game.canvas.width * 0.3, this.game.canvas.height * 0.2, 0,
+            this.game.canvas.width * 0.3, this.game.canvas.height * 0.2, 300
+        );
+        nebulaGradient.addColorStop(0, 'rgba(74, 144, 226, 0.1)');
+        nebulaGradient.addColorStop(1, 'rgba(74, 144, 226, 0)');
         
-        // Glow effect quando attivo
-        if (this.currentInput === 'nickname') {
-            ctx.shadowColor = '#4a90e2';
-            ctx.shadowBlur = 10;
-            ctx.strokeRect(input.x, input.y, input.width, input.height);
-            ctx.shadowBlur = 0;
-        }
-        
-        // Testo inserito
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'left';
-        let displayText = this.nickname;
-        if (displayText === '' && this.currentInput !== 'nickname') {
-            displayText = input.placeholder;
-            ctx.fillStyle = '#666666';
-        }
-        
-        // Cursore
-        if (this.currentInput === 'nickname' && this.cursorVisible) {
-            displayText += '|';
-        }
-        
-        ctx.fillText(displayText, input.x + 10, input.y + 25);
+        ctx.fillStyle = nebulaGradient;
+        ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
     }
     
-    // Disegna input password
-    drawPasswordInput(ctx) {
-        const input = this.passwordInput;
+    // Disegna pannello principale moderno
+    drawModernPanel(ctx) {
+        // Ombra del pannello
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 10;
         
-        // Label
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Password:', input.x, input.y - 10);
+        // Sfondo del pannello con gradiente
+        const panelGradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+        panelGradient.addColorStop(0, 'rgba(26, 26, 26, 0.95)');
+        panelGradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
         
-        // Input field
-        ctx.fillStyle = '#2a2a2a';
-        ctx.strokeStyle = this.currentInput === 'password' ? '#4a90e2' : '#666666';
-        ctx.lineWidth = this.currentInput === 'password' ? 3 : 2;
-        ctx.fillRect(input.x, input.y, input.width, input.height);
-        ctx.strokeRect(input.x, input.y, input.width, input.height);
+        ctx.fillStyle = panelGradient;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
         
-        // Glow effect quando attivo
-        if (this.currentInput === 'password') {
-            ctx.shadowColor = '#4a90e2';
-            ctx.shadowBlur = 10;
-            ctx.strokeRect(input.x, input.y, input.width, input.height);
-            ctx.shadowBlur = 0;
+        // Bordo con glow
+        ctx.shadowColor = '#4a90e2';
+        ctx.shadowBlur = 15;
+        ctx.strokeStyle = '#4a90e2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Pattern di sfondo sottile
+        ctx.strokeStyle = 'rgba(74, 144, 226, 0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < this.width; i += 20) {
+            ctx.beginPath();
+            ctx.moveTo(this.x + i, this.y);
+            ctx.lineTo(this.x + i, this.y + this.height);
+            ctx.stroke();
         }
-        
-        // Testo inserito (mascherare con asterischi)
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'left';
-        let displayText = this.password.replace(/./g, '*');
-        if (displayText === '' && this.currentInput !== 'password') {
-            displayText = input.placeholder;
-            ctx.fillStyle = '#666666';
+        for (let i = 0; i < this.height; i += 20) {
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y + i);
+            ctx.lineTo(this.x + this.width, this.y + i);
+            ctx.stroke();
         }
-        
-        // Cursore
-        if (this.currentInput === 'password' && this.cursorVisible) {
-            displayText += '|';
-        }
-        
-        ctx.fillText(displayText, input.x + 10, input.y + 25);
     }
     
-    // Disegna selezione fazione
-    drawFactionSelection(ctx) {
+    // Disegna logo animato
+    drawAnimatedLogo(ctx) {
+        ctx.save();
+        
+        // Posizione del logo
+        const logoX = this.x + this.width / 2;
+        const logoY = this.y + 80;
+        
+        // Trasformazioni per animazione
+        ctx.translate(logoX, logoY);
+        ctx.scale(this.logoScale, this.logoScale);
+        ctx.rotate(this.logoRotation);
+        
+        // Glow effect
+        ctx.shadowColor = '#4a90e2';
+        ctx.shadowBlur = 20 * this.glowIntensity;
+        
+        // Titolo principale
         ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('STARSPACE', 0, 0);
+        
+        // Sottotitolo
         ctx.font = '18px Arial';
-        ctx.textAlign = 'left';
+        ctx.fillStyle = '#4a90e2';
+        ctx.fillText('MMORPG Spaziale', 0, 30);
         
-        if (this.mode === 'faction_selection') {
-            ctx.fillText('Seleziona la tua fazione:', this.x + 100, this.y + 350);
+        // Icona spaziale
+        ctx.font = '32px Arial';
+        ctx.fillText('🚀', 0, -40);
+        
+        ctx.restore();
+        
+        // Messaggio di benvenuto
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
+            ctx.fillText(`Benvenuto ${this.game.authSystem.currentUser.nickname}!`, logoX, logoY + 60);
         } else {
-            ctx.fillText('Fazione:', this.x + 100, this.y + 350);
+            ctx.fillText('Accedi o registrati per iniziare la tua avventura spaziale', logoX, logoY + 60);
+        }
+    }
+    
+    // Disegna input fields moderni
+    drawModernInputs(ctx) {
+        this.drawModernInput(ctx, this.nicknameInput, 'Nickname:', this.nickname, this.currentInput === 'nickname');
+        this.drawModernInput(ctx, this.passwordInput, 'Password:', this.password.replace(/./g, '*'), this.currentInput === 'password');
+    }
+    
+    // Disegna singolo input moderno
+    drawModernInput(ctx, input, label, value, isActive) {
+        // Label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, input.x, input.y - 15);
+        
+        // Glow effect quando attivo
+        if (isActive) {
+            ctx.shadowColor = '#4a90e2';
+            ctx.shadowBlur = 15;
         }
         
-        const cardWidth = 180;
-        const cardHeight = 100;
+        // Input field con gradiente
+        const inputGradient = ctx.createLinearGradient(input.x, input.y, input.x, input.y + input.height);
+        inputGradient.addColorStop(0, isActive ? 'rgba(74, 144, 226, 0.2)' : 'rgba(42, 42, 42, 0.8)');
+        inputGradient.addColorStop(1, isActive ? 'rgba(74, 144, 226, 0.1)' : 'rgba(30, 30, 30, 0.8)');
+        
+        ctx.fillStyle = inputGradient;
+        ctx.fillRect(input.x, input.y, input.width, input.height);
+        
+        // Bordo
+        ctx.strokeStyle = isActive ? '#4a90e2' : '#666666';
+        ctx.lineWidth = isActive ? 3 : 2;
+        ctx.strokeRect(input.x, input.y, input.width, input.height);
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
+        
+        // Testo
+        ctx.fillStyle = value === '' ? '#666666' : '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        
+        let displayText = value;
+        if (displayText === '' && !isActive) {
+            displayText = input.placeholder;
+        }
+        
+        // Cursore
+        if (isActive && this.cursorVisible) {
+            displayText += '|';
+        }
+        
+        ctx.fillText(displayText, input.x + 15, input.y + 30);
+    }
+    
+    // Disegna selezione fazione moderna
+    drawModernFactionSelection(ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Seleziona la tua fazione:', this.x + 80, this.y + 320);
+        
+        const cardWidth = 200;
+        const cardHeight = 120;
         const cardSpacing = 20;
-        const startX = this.x + 100;
-        const startY = this.y + 370;
+        const startX = this.x + 80;
+        const startY = this.y + 350;
         
         this.factions.forEach((faction, index) => {
             const cardX = startX + index * (cardWidth + cardSpacing);
             const cardY = startY;
-            
-            // Colore bordo basato su selezione
             const isSelected = this.selectedFaction === faction.id;
+            
+            // Glow effect per selezione
+            if (isSelected) {
+                ctx.shadowColor = faction.color;
+                ctx.shadowBlur = 20;
+            }
+            
+            // Gradiente della carta
+            const cardGradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardHeight);
+            cardGradient.addColorStop(0, isSelected ? `rgba(${this.hexToRgb(faction.color)}, 0.3)` : 'rgba(42, 42, 42, 0.8)');
+            cardGradient.addColorStop(1, isSelected ? `rgba(${this.hexToRgb(faction.color)}, 0.1)` : 'rgba(30, 30, 30, 0.8)');
+            
+            ctx.fillStyle = cardGradient;
+            ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+            
+            // Bordo
             ctx.strokeStyle = isSelected ? faction.color : '#666666';
             ctx.lineWidth = isSelected ? 3 : 2;
-            
-            // Sfondo carta
-            ctx.fillStyle = isSelected ? 'rgba(74, 144, 226, 0.1)' : '#2a2a2a';
-            ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
             ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
             
             // Icona
             ctx.fillStyle = faction.color;
-            ctx.font = '24px Arial';
+            ctx.font = '32px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(faction.icon, cardX + cardWidth / 2, cardY + 30);
+            ctx.fillText(faction.icon, cardX + cardWidth / 2, cardY + 40);
             
             // Nome fazione
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText(faction.name, cardX + cardWidth / 2, cardY + 50);
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(faction.name, cardX + cardWidth / 2, cardY + 65);
             
             // Descrizione
             ctx.fillStyle = '#cccccc';
-            ctx.font = '10px Arial';
+            ctx.font = '12px Arial';
             const words = faction.description.split(' ');
             let line = '';
-            let y = cardY + 70;
+            let y = cardY + 85;
             words.forEach(word => {
                 const testLine = line + word + ' ';
                 const metrics = ctx.measureText(testLine);
-                if (metrics.width > cardWidth - 10) {
+                if (metrics.width > cardWidth - 20) {
                     ctx.fillText(line, cardX + cardWidth / 2, y);
                     line = word + ' ';
-                    y += 12;
+                    y += 14;
                 } else {
                     line = testLine;
                 }
@@ -370,46 +499,47 @@ export class StartScreen {
         });
     }
     
-    // Disegna pulsanti
-    drawButtons(ctx) {
-        // Pulsanti di login/registrazione (solo se non loggato)
+    // Disegna pulsanti moderni
+    drawModernButtons(ctx) {
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
-            // Pulsante Login
-            this.drawButton(ctx, this.loginButton, this.mode === 'login');
-            
-            // Pulsante Registrati
-            this.drawButton(ctx, this.registerButton, this.mode === 'register');
-            
-            // Pulsante toggle modalità
-            this.drawButton(ctx, this.modeToggleButton, false);
+            this.drawModernButton(ctx, this.loginButton, this.mode === 'login');
+            this.drawModernButton(ctx, this.registerButton, this.mode === 'register');
+            this.drawModernButton(ctx, this.modeToggleButton, false);
         }
         
-        // Pulsante carica salvataggio (solo se c'è un salvataggio)
         if (this.hasExistingSave) {
-            this.drawButton(ctx, this.loadButton, false);
+            this.drawModernButton(ctx, this.loadButton, false);
         }
         
-        // Pulsanti per utente loggato
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            // Pulsante inizia gioco
-            this.drawButton(ctx, this.startGameButton, false);
+            this.drawModernButton(ctx, this.startGameButton, false);
         }
     }
     
-    // Disegna singolo pulsante
-    drawButton(ctx, button, isActive) {
+    // Disegna singolo pulsante moderno
+    drawModernButton(ctx, button, isActive) {
         const isHovered = this.isMouseOverButton(button);
         
-        // Colore sfondo
-        if (isActive) {
-            ctx.fillStyle = '#4a90e2';
-        } else if (isHovered) {
-            ctx.fillStyle = '#5ba0f2';
-        } else {
-            ctx.fillStyle = '#666666';
+        // Glow effect
+        if (isActive || isHovered) {
+            ctx.shadowColor = button.gradient[0];
+            ctx.shadowBlur = 15;
         }
         
-        // Disegna pulsante
+        // Gradiente del pulsante
+        const buttonGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
+        if (isActive) {
+            buttonGradient.addColorStop(0, button.gradient[0]);
+            buttonGradient.addColorStop(1, button.gradient[1]);
+        } else if (isHovered) {
+            buttonGradient.addColorStop(0, this.lightenColor(button.gradient[0], 20));
+            buttonGradient.addColorStop(1, this.lightenColor(button.gradient[1], 20));
+        } else {
+            buttonGradient.addColorStop(0, '#666666');
+            buttonGradient.addColorStop(1, '#555555');
+        }
+        
+        ctx.fillStyle = buttonGradient;
         ctx.fillRect(button.x, button.y, button.width, button.height);
         
         // Bordo
@@ -417,30 +547,61 @@ export class StartScreen {
         ctx.lineWidth = 2;
         ctx.strokeRect(button.x, button.y, button.width, button.height);
         
+        // Reset shadow
+        ctx.shadowBlur = 0;
+        
         // Testo
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(button.text, button.x + button.width / 2, button.y + 30);
+        ctx.fillText(button.text, button.x + button.width / 2, button.y + button.height / 2 + 5);
+    }
+    
+    // Disegna messaggio informativo
+    drawInfoMessage(ctx, message, color) {
+        ctx.fillStyle = color;
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(message, this.x + this.width / 2, this.y + 420);
     }
     
     // Disegna messaggi di errore/successo
     drawMessages(ctx) {
         if (this.errorMessage) {
             ctx.fillStyle = '#e74c3c';
-            ctx.font = '14px Arial';
+            ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.errorMessage, this.x + this.width / 2, this.y + 120);
+            ctx.fillText(this.errorMessage, this.x + this.width / 2, this.y + 140);
         }
         
         if (this.successMessage) {
             ctx.fillStyle = '#27ae60';
-            ctx.font = '14px Arial';
+            ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.successMessage, this.x + this.width / 2, this.y + 120);
+            ctx.fillText(this.successMessage, this.x + this.width / 2, this.y + 140);
         }
     }
     
+    // Utility functions
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? 
+            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+            '74, 144, 226';
+    }
+    
+    lightenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = (num >> 8 & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+    
+    // ... (mantieni tutti gli altri metodi esistenti per la funzionalità)
     // Gestisce input da tastiera
     handleKeyPress(key) {
         if (!this.isVisible || !this.isTyping) return false;
@@ -453,10 +614,9 @@ export class StartScreen {
             return true;
         }
         
-        // Enter per confermare (solo se non siamo in modalità login automatica)
+        // Enter per confermare
         if (key === 'Enter') {
             if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
-                // Se già loggato, non fare nulla con Enter
                 return true;
             }
             
@@ -484,9 +644,8 @@ export class StartScreen {
             return true;
         }
         
-        // Caratteri alfanumerici e spazio (solo se non siamo in modalità login automatica)
+        // Caratteri alfanumerici e spazio
         if (key.startsWith('Key') || key.startsWith('Digit') || key === 'Space') {
-            // Se siamo già loggati, non permettere input
             if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
                 return true;
             }
@@ -515,11 +674,10 @@ export class StartScreen {
     handleClick(x, y) {
         if (!this.isVisible) return false;
         
-        
-        // Click su input nickname (solo se non loggato)
+        // Click su input nickname
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
             if (this.isMouseOverInput(this.nicknameInput, x, y)) {
-            console.log('✅ Click su input nickname');
+                console.log('✅ Click su input nickname');
                 this.currentInput = 'nickname';
                 this.isTyping = true;
                 return true;
@@ -529,37 +687,36 @@ export class StartScreen {
             if (this.isMouseOverInput(this.passwordInput, x, y)) {
                 console.log('✅ Click su input password');
                 this.currentInput = 'password';
-            this.isTyping = true;
-            return true;
+                this.isTyping = true;
+                return true;
             }
         }
         
-        // Click su fazioni (solo per selezione fazione)
+        // Click su fazioni
         if (this.mode === 'faction_selection') {
             let factionClicked = false;
-        this.factions.forEach((faction, index) => {
-            const cardWidth = 180;
-                const cardHeight = 100;
+            this.factions.forEach((faction, index) => {
+                const cardWidth = 200;
+                const cardHeight = 120;
                 const cardSpacing = 20;
-                const startX = this.x + 100;
-                const startY = this.y + 370;
+                const startX = this.x + 80;
+                const startY = this.y + 350;
                 const cardX = startX + index * (cardWidth + cardSpacing);
                 const cardY = startY;
                 
                 if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
-                console.log('✅ Click su fazione:', faction.name);
-                this.selectedFaction = faction.id;
+                    console.log('✅ Click su fazione:', faction.name);
+                    this.selectedFaction = faction.id;
                     factionClicked = true;
                 }
             });
             if (factionClicked) {
-                // Conferma la scelta della fazione
                 this.handleFactionSelection();
                 return true;
             }
         }
         
-        // Click su pulsanti (solo se non loggato)
+        // Click su pulsanti
         if (!this.game.authSystem || !this.game.authSystem.isLoggedIn) {
             if (this.isMouseOverButton(this.loginButton)) {
                 console.log('✅ Click su pulsante login');
@@ -577,7 +734,7 @@ export class StartScreen {
                 console.log('✅ Click su toggle modalità');
                 this.mode = this.mode === 'login' ? 'register' : 'login';
                 this.clearMessages();
-            return true;
+                return true;
             }
         }
         
@@ -604,7 +761,7 @@ export class StartScreen {
         return false;
     }
     
-    // Gestisce login
+    // Mantieni tutti gli altri metodi esistenti...
     handleLogin() {
         if (!this.nickname.trim() || !this.password.trim()) {
             this.showError('Inserisci nickname e password');
@@ -628,7 +785,6 @@ export class StartScreen {
         }
     }
     
-    // Gestisce registrazione
     handleRegister() {
         if (!this.nickname.trim() || !this.password.trim()) {
             this.showError('Inserisci nickname e password');
@@ -640,12 +796,10 @@ export class StartScreen {
             return;
         }
         
-        // Registra senza fazione
         const result = this.game.authSystem.register(this.nickname.trim(), this.password, null);
         
         if (result.success) {
             this.showSuccess('Registrazione completata! Ora seleziona la tua fazione.');
-            // Passa alla selezione fazione
             this.mode = 'faction_selection';
             this.clearMessages();
         } else {
@@ -653,7 +807,6 @@ export class StartScreen {
         }
     }
     
-    // Gestisce selezione fazione dopo registrazione
     handleFactionSelection() {
         if (!this.selectedFaction) {
             this.showError('Seleziona una fazione');
@@ -665,7 +818,6 @@ export class StartScreen {
             return;
         }
         
-        // Aggiorna la fazione dell'utente
         console.log('🎮 Updating user faction to:', this.selectedFaction);
         const result = this.game.authSystem.updateUserFaction(this.selectedFaction);
         
@@ -673,7 +825,6 @@ export class StartScreen {
             console.log('🎮 Faction updated successfully, user data:', this.game.authSystem.currentUser);
             this.showSuccess('Fazione selezionata! Avvio del gioco...');
             setTimeout(() => {
-                // Usa startGameFromLogin per usare i dati dell'utente loggato
                 this.startGameFromLogin(this.game.authSystem.currentUser);
             }, 1000);
         } else {
@@ -681,15 +832,12 @@ export class StartScreen {
         }
     }
     
-    // Gestisce caricamento gioco
     handleLoadGame() {
         console.log('🎮 handleLoadGame called - isLoggedIn:', this.game.authSystem ? this.game.authSystem.isLoggedIn : false);
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
-            // Carica salvataggio utente
             if (this.game.authSystem.loadUserGame()) {
                 console.log('🎮 User game loaded, hiding StartScreen');
                 
-                // Aggiorna nickname e fazione della nave con i dati dell'utente
                 const user = this.game.authSystem.currentUser;
                 if (user) {
                     console.log('🎮 Loading user data:', user.nickname, user.faction);
@@ -697,7 +845,6 @@ export class StartScreen {
                     this.game.ship.setPlayerName(user.nickname);
                     this.game.factionSystem.joinFaction(user.faction);
                     
-                    // Verifica che la fazione sia stata impostata correttamente
                     console.log('🎮 Current faction after load:', this.game.factionSystem.currentFaction);
                 }
                 
@@ -707,7 +854,6 @@ export class StartScreen {
                 this.showError('Errore nel caricamento del salvataggio');
             }
         } else if (this.game.saveSystem) {
-            // Carica salvataggio tradizionale
             const keysToCheck = ['main', 'slot_1', 'slot_2', 'slot_3'];
             for (const key of keysToCheck) {
                 if (this.game.saveSystem.hasSave(key)) {
@@ -722,17 +868,13 @@ export class StartScreen {
         }
     }
     
-    // Avvia il gioco da login (usa fazione esistente)
     startGameFromLogin(user) {
-        // Chiudi tutti i pannelli aperti
         this.closeAllPanels();
         
-        // Imposta nickname e fazione dall'utente loggato
         this.game.playerProfile.setNickname(user.nickname);
-        this.game.ship.setPlayerName(user.nickname); // Aggiorna anche il nome della nave
+        this.game.ship.setPlayerName(user.nickname);
         this.game.factionSystem.joinFaction(user.faction);
         
-        // Imposta mappa di partenza basata sulla fazione dell'utente
         const startingMaps = {
             'venus': 'v1',
             'mars': 'm1',
@@ -742,33 +884,24 @@ export class StartScreen {
         this.game.mapManager.currentMap = startingMaps[user.faction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
-        // Nascondi la schermata
         this.hide();
-        
-        // Avvia l'audio del gioco
         this.game.startGameAudio();
         
-        // Salva automaticamente il gioco per l'utente
         if (this.game.saveSystem) {
             this.game.saveSystem.save(this.game.authSystem.getUserSaveKey());
         }
         
-        // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === user.faction);
         this.game.notifications.add(`Bentornato ${user.nickname} nella fazione ${faction.fullName}!`, 'success');
     }
     
-    // Avvia il gioco da registrazione (usa fazione selezionata)
     startGame() {
-        // Chiudi tutti i pannelli aperti
         this.closeAllPanels();
         
-        // Imposta nickname e fazione
         this.game.playerProfile.setNickname(this.nickname.trim());
-        this.game.ship.setPlayerName(this.nickname.trim()); // Aggiorna anche il nome della nave
+        this.game.ship.setPlayerName(this.nickname.trim());
         this.game.factionSystem.joinFaction(this.selectedFaction);
         
-        // Imposta mappa di partenza basata sulla fazione
         const startingMaps = {
             'venus': 'v1',
             'mars': 'm1',
@@ -778,25 +911,19 @@ export class StartScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
-        // Salva il gioco se l'utente è loggato
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             this.game.authSystem.saveUserGame();
         } else if (this.game.saveSystem) {
             this.game.saveSystem.save('main');
         }
         
-        // Nascondi la schermata
         this.hide();
-        
-        // Avvia l'audio del gioco
         this.game.startGameAudio();
         
-        // Notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
         this.game.notifications.add(`Benvenuto ${this.nickname} nella fazione ${faction.fullName}!`, 'success');
     }
     
-    // Mostra messaggio di errore
     showError(message) {
         this.errorMessage = message;
         this.successMessage = '';
@@ -805,7 +932,6 @@ export class StartScreen {
         }, 5000);
     }
     
-    // Mostra messaggio di successo
     showSuccess(message) {
         this.successMessage = message;
         this.errorMessage = '';
@@ -814,10 +940,8 @@ export class StartScreen {
         }, 3000);
     }
     
-    // Gestisce logout
     handleLogout() {
         if (this.game.authSystem) {
-            // Salva il gioco prima del logout
             if (this.game.saveSystem) {
                 this.game.saveSystem.save(this.game.authSystem.getUserSaveKey());
             }
@@ -825,7 +949,6 @@ export class StartScreen {
             this.game.authSystem.logout();
             this.clearMessages();
             this.showSuccess('Logout effettuato');
-            // Reset dei campi
             this.nickname = '';
             this.password = '';
             this.selectedFaction = null;
@@ -833,41 +956,33 @@ export class StartScreen {
         }
     }
     
-    // Chiude tutti i pannelli aperti
     closeAllPanels() {
         console.log('🚪 Chiudendo tutti i pannelli aperti...');
         
-        // HomePanel
         if (this.game.homePanel) {
             this.game.homePanel.hide();
         }
         
-        // ProfilePanel
         if (this.game.profilePanel) {
             this.game.profilePanel.close();
         }
         
-        // SettingsPanel
         if (this.game.settingsPanel) {
             this.game.settingsPanel.isOpen = false;
         }
         
-        // FactionPanel
         if (this.game.factionPanel) {
             this.game.factionPanel.close();
         }
         
-        // SaveLoadPanel
         if (this.game.saveLoadPanel) {
             this.game.saveLoadPanel.isOpen = false;
         }
         
-        // SpaceStationPanel
         if (this.game.spaceStationPanel) {
             this.game.spaceStationPanel.isOpen = false;
         }
         
-        // MapSystem
         if (this.game.mapSystem) {
             this.game.mapSystem.isOpen = false;
         }
@@ -875,35 +990,29 @@ export class StartScreen {
         console.log('✅ Tutti i pannelli chiusi');
     }
     
-    // Pulisce i messaggi
     clearMessages() {
         this.errorMessage = '';
         this.successMessage = '';
     }
     
-    // Controlla se il mouse è sopra un input
     isMouseOverInput(input, x, y) {
         return x >= input.x && x <= input.x + input.width && 
                y >= input.y && y <= input.y + input.height;
     }
     
-    // Controlla se il mouse è sopra un pulsante
     isMouseOverButton(button) {
         const mousePos = this.game.input.getMousePosition();
         return mousePos.x >= button.x && mousePos.x <= button.x + button.width && 
                mousePos.y >= button.y && mousePos.y <= button.y + button.height;
     }
     
-    // Mostra la schermata
     show() {
         this.isVisible = true;
         this.isTyping = true;
         
-        // Controlla se c'è già una sessione attiva
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             console.log('🎮 Utente già loggato, mostrando StartScreen con opzioni...');
             
-            // Se l'utente non ha una fazione, passa alla selezione fazione
             if (!this.game.authSystem.currentUser.faction) {
                 this.mode = 'faction_selection';
                 this.showSuccess('Seleziona la tua fazione per continuare');
@@ -915,7 +1024,6 @@ export class StartScreen {
         console.log('🎮 StartScreen shown - typing enabled');
     }
     
-    // Nasconde la schermata
     hide() {
         this.isVisible = false;
         this.isTyping = false;
