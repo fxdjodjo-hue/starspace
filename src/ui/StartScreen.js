@@ -226,21 +226,8 @@ export class StartScreen {
             gradient: ['#e74c3c', '#c0392b']
         };
         
-        // Pulsanti salvataggi
+        // Pulsanti salvataggi (rimossi)
         this.loadButtons = [];
-        if (this.hasExistingSave) {
-            this.availableSaves.forEach((save, index) => {
-                this.loadButtons.push({
-                    x: Math.round(this.x + 60 + (index * 120)),
-                    y: Math.round(this.y + 500),
-                    width: 100,
-                    height: 40,
-                    text: `Slot ${index + 1}`,
-                    saveKey: save,
-                    gradient: ['#8e44ad', '#9b59b6']
-                });
-            });
-        }
         
         // Rigenera stelle per le nuove dimensioni
         this.stars = this.generateStars(80);
@@ -269,43 +256,10 @@ export class StartScreen {
             star.opacity += Math.sin(this.animationTime * star.twinkleSpeed) * 0.1;
         });
         
-        // Aggiorna stato salvataggi
-        this.updateSaveState();
+        // (Rimosso) Aggiorna stato salvataggi
     }
     
-    // Aggiorna stato salvataggi
-    updateSaveState() {
-        try {
-            if (this.game.saveSystem) {
-                const keysToCheck = ['main', 'slot_1', 'slot_2', 'slot_3'];
-                this.availableSaves = keysToCheck.filter(k => this.game.saveSystem.hasSave(k));
-                this.hasExistingSave = this.availableSaves.length > 0;
-                this.preferredSaveKey = this.availableSaves.includes('main') ? 'main' : (this.availableSaves[0] || 'main');
-                
-                // Aggiorna pulsanti salvataggi
-                this.loadButtons = [];
-                this.availableSaves.forEach((save, index) => {
-                    this.loadButtons.push({
-                        x: Math.round(this.x + 60 + (index * 120)),
-                        y: Math.round(this.y + 500),
-                        width: 100,
-                        height: 40,
-                        text: `Slot ${index + 1}`,
-                        saveKey: save,
-                        gradient: ['#8e44ad', '#9b59b6']
-                    });
-                });
-            } else {
-                this.hasExistingSave = false;
-                this.availableSaves = [];
-                this.loadButtons = [];
-            }
-        } catch (e) {
-            this.hasExistingSave = false;
-            this.availableSaves = [];
-            this.loadButtons = [];
-        }
-    }
+    // (Rimosso) updateSaveState
     
     // Disegna la schermata
     draw(ctx) {
@@ -328,10 +282,7 @@ export class StartScreen {
         // Pulsante inizia gioco
         this.drawStartButton(ctx);
         
-        // Salvataggi esistenti
-        if (this.hasExistingSave) {
-            this.drawLoadButtons(ctx);
-        }
+        // (Rimosso) Salvataggi esistenti
         
         // Messaggi
         this.drawMessages(ctx);
@@ -597,13 +548,7 @@ export class StartScreen {
             return true;
         }
         
-        // Click su pulsanti salvataggi
-        this.loadButtons.forEach(button => {
-            if (this.isMouseOverButton(button)) {
-                this.handleLoadGame(button.saveKey);
-                return true;
-            }
-        });
+        // (Rimosso) Click su pulsanti salvataggi
         
         // Click fuori dall'input - stop typing
         if (this.isTyping) {
