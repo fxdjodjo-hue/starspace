@@ -561,13 +561,10 @@ export class QuestTracker {
             });
         }
         
-        // Sfondo e bordo neutri
-        ThemeUtils.drawPanel(ctx, this.x, this.y, currentWidth, currentHeight, {
-            background: 'rgba(28,28,32,0.95)',
-            border: this.isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
-            blur: false,
-            shadow: false
-        });
+        // Solo bordo neutro (senza sfondo)
+        ctx.strokeStyle = this.isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
         
         // Icona di drag (clipboard con checkmark) - centrata
         this.drawDragIcon(ctx, this.x + (currentWidth - 24) / 2, this.y + (currentHeight - 24) / 2);
@@ -812,46 +809,17 @@ export class QuestTracker {
         }
     }
     
-    // Disegna l'icona di drag (clipboard con checkmark)
+    // Disegna l'icona
     drawDragIcon(ctx, x, y) {
         const iconSize = 24;
         
-        // Sfondo e bordo dell'icona neutri
-        const bgColor = this.isDragging ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)';
-        ctx.fillStyle = bgColor;
-        ctx.beginPath();
-        ctx.arc(x + iconSize/2, y + iconSize/2, iconSize/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Bordo dell'icona
-        ctx.strokeStyle = this.isDragging ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x + iconSize/2, y + iconSize/2, iconSize/2, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Clipboard (rettangolo con clip)
-        ctx.fillStyle = this.textColor;
-        ctx.fillRect(x + 6, y + 4, 12, 16);
-        
-        // Clip del clipboard
-        ctx.fillRect(x + 4, y + 2, 16, 3);
-        
-        // Checkmark (neutro)
-        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + 8, y + 10);
-        ctx.lineTo(x + 10, y + 12);
-        ctx.lineTo(x + 16, y + 6);
-        ctx.stroke();
-        
-        // Punti di grip per indicare che è trascinabile (neutri)
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 2; j++) {
-                ctx.fillRect(x + 18 + i * 2, y + 18 + j * 2, 1, 1);
-            }
-        }
+        // Usa l'icona dal UIManager
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⭐', x + iconSize/2, y + iconSize/2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
     }
 }

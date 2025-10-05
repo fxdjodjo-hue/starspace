@@ -722,12 +722,16 @@ export class HomePanel extends UIComponent {
         const navX = panelX;
         const navY = panelY + 60; // Inizia dopo il titolo
         const itemHeight = 40;
+        const itemPadding = 10; // Padding per l'area cliccabile effettiva
         
         for (let i = 0; i < this.categories.length; i++) {
             const itemY = navY + i * itemHeight;
-            if (x >= navX && x <= navX + this.navWidth && 
-                y >= itemY && y <= itemY + itemHeight) {
-                return this.categories[i];
+            const category = this.categories[i];
+            
+            // Controlla se il click è nell'area effettiva dell'elemento (con padding)
+            if (x >= navX + itemPadding && x <= navX + this.navWidth - itemPadding && 
+                y >= itemY + itemPadding && y <= itemY + itemHeight - itemPadding) {
+                return category;
             }
         }
         return null;

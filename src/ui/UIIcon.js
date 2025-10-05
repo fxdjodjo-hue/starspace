@@ -21,11 +21,23 @@ export class UIIcon {
         this.showTooltip = false;
         this.tooltipText = config.tooltipText || this.type;
         
-        // Stile neutro uniforme
+        // Sistema di animazione avanzato
         this.hoverScale = 1.0;
         this.targetScale = 1.0;
         this.currentScale = 1.0;
+        this.currentY = this.y;
+        this.targetY = this.y;
+        this.hoverGlow = 0;
+        this.targetGlow = 0;
         this.lastFrameTime = performance.now();
+        
+        // Configurazione animazioni
+        this.hoverConfig = {
+            scale: 1.1,      // Scala massima in hover
+            lift: -3,        // Movimento verso l'alto in hover (pixel)
+            glow: 0.15,      // Intensità massima del glow
+            speed: 8         // Velocità dell'animazione (più alto = più veloce)
+        };
         
         // Posizione
         this.x = this.position.x;
@@ -51,9 +63,19 @@ export class UIIcon {
         const dt = (now - this.lastFrameTime) / 1000;
         this.lastFrameTime = now;
         
-        // Smooth scale animation
-        const targetScale = this.isMouseOver(this.game.input.mouse.x, this.game.input.mouse.y) ? 1.1 : 1.0;
-        this.currentScale += (targetScale - this.currentScale) * Math.min(1, dt * 8);
+        // Determina lo stato di hover
+        const isHovered = this.isMouseOver(this.game.input.mouse.x, this.game.input.mouse.y);
+        
+        // Aggiorna i target in base all'hover
+        this.targetScale = isHovered ? this.hoverConfig.scale : 1.0;
+        this.targetY = this.y + (isHovered ? this.hoverConfig.lift : 0);
+        this.targetGlow = isHovered ? this.hoverConfig.glow : 0;
+        
+        // Applica easing per animazioni fluide
+        const speed = this.hoverConfig.speed;
+        this.currentScale += (this.targetScale - this.currentScale) * Math.min(1, dt * speed);
+        this.currentY += (this.targetY - this.currentY) * Math.min(1, dt * speed);
+        this.hoverGlow += (this.targetGlow - this.hoverGlow) * Math.min(1, dt * speed);
     }
     
     // Controlla se il pannello associato è aperto
@@ -119,13 +141,20 @@ export class UIIcon {
         ctx.scale(this.currentScale, this.currentScale);
         ctx.translate(-centerX, -centerY);
         
-        // Pannello icona neutro
-        ThemeUtils.drawPanel(ctx, this.x, this.y, this.width, this.height, {
-            background: 'rgba(28,28,32,0.95)',
-            border: this.isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
-            blur: false,
-            shadow: false
-        });
+        // Effetto glow in hover
+        if (this.hoverGlow > 0) {
+            ctx.shadowColor = 'rgba(255,255,255,0.5)';
+            ctx.shadowBlur = 10 * this.hoverGlow;
+        }
+        
+        // Solo bordo neutro (senza sfondo)
+        ctx.strokeStyle = this.isActive ? 'rgba(255,255,255,0.18)' : `rgba(255,255,255,${0.12 + this.hoverGlow})`;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.x, this.currentY, this.width, this.height);
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
         
         // Icona principale
         this.drawIcon(ctx);
@@ -145,13 +174,13 @@ export class UIIcon {
     
     // Disegna l'icona principale
     drawIcon(ctx) {
-        ThemeUtils.drawText(ctx, this.icon, this.x + this.width/2, this.y + this.height/2, {
-            size: 18,
-            weight: 'bold',
-            color: '#ffffff',
-            glow: false,
-            align: 'center'
-        });
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.icon, this.x + this.width/2, this.y + this.height/2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
     }
     
     // Disegna il contatore

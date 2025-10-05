@@ -195,6 +195,9 @@ export class Game {
         this.gameCore.registerSystem('profilePanel', this.profilePanel);
         this.gameCore.registerSystem('spaceStationPanel', this.spaceStationPanel);
         this.gameCore.registerSystem('categorySkillbar', this.categorySkillbar);
+
+        // Inizializza UI Manager con le icone
+        this.initUIManager();
     }
 
     /**
@@ -236,10 +239,6 @@ export class Game {
         
         // Sistema icone UI legacy
         this.iconSystemUI = [];
-        this.initIconSystemUI();
-        
-        // Inizializza UI Manager
-        this.initUIManager();
         
         // Inizializza audio
         this.initAudio();
