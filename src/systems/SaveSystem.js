@@ -85,10 +85,7 @@ export class SaveSystem {
             this.lastSaveTime = Date.now();
             console.log(`💾 Gioco salvato con successo in ${saveDuration.toFixed(2)}ms`);
             
-            // Notifica il giocatore solo per salvataggi manuali
-            if (this.game.notifications && slotKey !== 'auto') {
-                this.game.notifications.add('💾 Gioco salvato', 2000, 'success');
-            }
+            // Non notificare il giocatore per i salvataggi (rumore visivo inutile)
             
             return true;
         } catch (error) {

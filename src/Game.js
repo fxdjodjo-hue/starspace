@@ -59,7 +59,7 @@ import { FastRepair } from '../modules/FastRepair.js';
 import { EMP } from '../modules/EMP.js';
 import { Leech } from '../modules/Leech.js';
 import { InventoryItem } from '../modules/InventoryItem.js';
-import { IconSystemUI } from '../modules/IconSystemUI.js';
+// import { IconSystemUI } from '../modules/IconSystemUI.js'; // legacy rimosso
 import { MapInstance } from '../modules/MapInstance.js';
 import { MapPersistence } from '../modules/MapPersistence.js';
 import { Portal } from '../modules/Portal.js';
@@ -155,7 +155,6 @@ export class Game {
         // Sistemi di gioco
         this.audioManager = new AudioManager();
         this.inventory = new Inventory();
-        this.questTracker = new QuestTracker(this);
         this.rankSystem = new RankSystem();
         this.rewardManager = new RewardManager();
         this.radiationSystem = new RadiationSystem();
@@ -166,7 +165,6 @@ export class Game {
         // Registra sistemi nel core
         this.gameCore.registerSystem('audio', this.audioManager);
         this.gameCore.registerSystem('inventory', this.inventory);
-        this.gameCore.registerSystem('questTracker', this.questTracker);
         this.gameCore.registerSystem('rankSystem', this.rankSystem);
         this.gameCore.registerSystem('rewardManager', this.rewardManager);
         this.gameCore.registerSystem('radiationSystem', this.radiationSystem);
@@ -265,36 +263,7 @@ export class Game {
         ];
     }
 
-    /**
-     * Inizializza il sistema icone UI legacy
-     */
-    initIconSystemUI() {
-        const iconSize = GameConfig.UI.ICON_SIZE;
-        const spacing = GameConfig.UI.ICON_SPACING;
-        const startX = GameConfig.UI.ICON_START_X;
-        const startY = GameConfig.UI.ICON_START_Y;
-        
-        // Icone UI
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 1, startY, 'profile', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 2, startY, 'inventory', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 3, startY, 'home', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 4, startY, 'settings', {
-            size: iconSize,
-            visible: true
-        }));
-    }
+    // initIconSystemUI legacy rimosso (UIManager in uso)
 
     /**
      * Inizializza il nuovo sistema unificato icone UI
@@ -303,6 +272,7 @@ export class Game {
         const configs = UIManager.getDefaultConfigs();
         
         // Registra le icone con i pannelli associati
+        this.questTracker = new QuestTracker(this);
         this.uiManager.registerIcon({
             ...configs.quest,
             panel: this.questTracker

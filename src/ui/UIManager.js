@@ -84,45 +84,31 @@ export class UIManager {
         return {
             quest: {
                 type: 'quest',
-                icon: '📋',
+                icon: '⭐',
                 tooltipText: 'Quest Tracker',
-                showCount: true,
-                updateCount: function() {
-                    // Quest attive dal QuestTracker
-                    if (this.game && this.game.questTracker && this.game.questTracker.activeQuests) {
-                        return this.game.questTracker.activeQuests.length;
-                    }
-                    return 0;
-                }
+                showCount: false
             },
             profile: {
                 type: 'profile',
-                icon: 'S',
+                icon: '🚀',
                 tooltipText: 'Ship',
                 showCount: false
             },
             inventory: {
                 type: 'inventory',
-                icon: 'I',
+                icon: '📦',
                 tooltipText: 'Inventory',
-                showCount: true,
-                updateCount: function() {
-                    // Items nell'inventario
-                    if (this.game && this.game.inventory && this.game.inventory.items) {
-                        return this.game.inventory.items.length;
-                    }
-                    return 0;
-                }
+                showCount: false
             },
             settings: {
                 type: 'settings',
-                icon: '⚙',
+                icon: '⚙️',
                 tooltipText: 'Settings',
                 showCount: false
             },
             home: {
                 type: 'home',
-                icon: 'H',
+                icon: '🏠',
                 tooltipText: 'Home Dashboard',
                 showCount: false
             }

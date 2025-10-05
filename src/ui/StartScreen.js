@@ -359,7 +359,7 @@ export class StartScreen {
         ctx.stroke();
 
         // Reset ombre per testi
-        ctx.shadowBlur = 0;
+            ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         ctx.shadowColor = 'transparent';
@@ -471,7 +471,7 @@ export class StartScreen {
         // Testo
         ctx.fillStyle = '#0a0a0a';
         ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
+            ctx.textAlign = 'center';
         ctx.fillText(this.startGameButton.text, this.startGameButton.x + this.startGameButton.width / 2, this.startGameButton.y + this.startGameButton.height / 2 + 5);
     }
     

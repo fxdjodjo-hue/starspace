@@ -21,13 +21,11 @@ export class UIIcon {
         this.showTooltip = false;
         this.tooltipText = config.tooltipText || this.type;
         
-        // Stile (basato sul QuestTracker)
-        this.backgroundColor = '#1a1a2e';
-        this.borderColor = '#4a90e2';
-        this.activeBorderColor = '#00ff00';
-        this.textColor = '#ffffff';
-        this.countColor = '#00ff00';
-        this.inactiveCountColor = '#888888';
+        // Stile neutro uniforme
+        this.hoverScale = 1.0;
+        this.targetScale = 1.0;
+        this.currentScale = 1.0;
+        this.lastFrameTime = performance.now();
         
         // Posizione
         this.x = this.position.x;
@@ -46,6 +44,16 @@ export class UIIcon {
             // Chiama la funzione con il contesto corretto
             this.count = this.config.updateCount.call(this);
         }
+    }
+
+    // Aggiorna animazioni
+    updateAnimations(now) {
+        const dt = (now - this.lastFrameTime) / 1000;
+        this.lastFrameTime = now;
+        
+        // Smooth scale animation
+        const targetScale = this.isMouseOver(this.game.input.mouse.x, this.game.input.mouse.y) ? 1.1 : 1.0;
+        this.currentScale += (targetScale - this.currentScale) * Math.min(1, dt * 8);
     }
     
     // Controlla se il pannello associato è aperto
@@ -100,12 +108,23 @@ export class UIIcon {
     draw(ctx) {
         if (!this.visible) return;
         
-        // Pannello icona con tema moderno
+        // Aggiorna animazioni
+        this.updateAnimations(performance.now());
+        
+        // Applica scala
+        ctx.save();
+        const centerX = this.x + this.width/2;
+        const centerY = this.y + this.height/2;
+        ctx.translate(centerX, centerY);
+        ctx.scale(this.currentScale, this.currentScale);
+        ctx.translate(-centerX, -centerY);
+        
+        // Pannello icona neutro
         ThemeUtils.drawPanel(ctx, this.x, this.y, this.width, this.height, {
-            background: ThemeConfig.colors.background.secondary,
-            border: this.isActive ? ThemeConfig.colors.accent.success : ThemeConfig.colors.border.primary,
+            background: 'rgba(28,28,32,0.95)',
+            border: this.isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
             blur: false,
-            shadow: true
+            shadow: false
         });
         
         // Icona principale
@@ -120,15 +139,17 @@ export class UIIcon {
         if (this.showTooltip) {
             this.drawTooltip(ctx);
         }
+
+        ctx.restore();
     }
     
     // Disegna l'icona principale
     drawIcon(ctx) {
         ThemeUtils.drawText(ctx, this.icon, this.x + this.width/2, this.y + this.height/2, {
-            size: 20,
+            size: 18,
             weight: 'bold',
-            color: ThemeConfig.colors.text.primary,
-            glow: this.isActive,
+            color: '#ffffff',
+            glow: false,
             align: 'center'
         });
     }
@@ -136,13 +157,13 @@ export class UIIcon {
     // Disegna il contatore
     drawCount(ctx) {
         const countText = this.count.toString();
-        const countColor = this.count > 0 ? ThemeConfig.colors.accent.success : ThemeConfig.colors.text.disabled;
+        const countColor = this.count > 0 ? '#ffffff' : '#888888';
         
         ThemeUtils.drawText(ctx, countText, this.x + this.width - 8, this.y + 12, {
             size: 10,
             weight: 'bold',
             color: countColor,
-            glow: this.count > 0,
+            glow: false,
             align: 'center'
         });
     }
@@ -162,20 +183,20 @@ export class UIIcon {
         const tooltipX = this.x + (this.width - tooltipWidth) / 2;
         const tooltipY = this.y + this.height + 5;
         
-        // Pannello tooltip con tema moderno
+        // Pannello tooltip neutro
         ThemeUtils.drawPanel(ctx, tooltipX, tooltipY, tooltipWidth, tooltipHeight, {
-            background: ThemeConfig.colors.background.panel,
-            border: ThemeConfig.colors.border.primary,
-            blur: true,
-            shadow: true
+            background: 'rgba(28,28,32,0.95)',
+            border: 'rgba(255,255,255,0.12)',
+            blur: false,
+            shadow: false
         });
         
         // Testo tooltip con tema moderno
         ThemeUtils.drawText(ctx, this.tooltipText, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2, {
             size: fontSize,
             weight: 'normal',
-            color: ThemeConfig.colors.text.primary,
-            glow: true,
+            color: '#ffffff',
+            glow: false,
             align: 'center'
         });
     }

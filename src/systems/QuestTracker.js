@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
+
 // Quest Tracker - Mini pannello per mostrare le quest attive
 export class QuestTracker {
     constructor(game) {
@@ -57,12 +59,12 @@ export class QuestTracker {
         this.activeQuests = [];
         
         
-        // Stile
-        this.backgroundColor = '#1a1a2e';
-        this.borderColor = '#4a90e2';
+        // Stile neutro
+        this.backgroundColor = 'rgba(28,28,32,0.95)';
+        this.borderColor = 'rgba(255,255,255,0.12)';
         this.textColor = '#ffffff';
-        this.titleColor = '#FFD700';
-        this.progressColor = '#00ff00';
+        this.titleColor = '#ffffff';
+        this.progressColor = '#ffffff';
     }
     
     
@@ -559,14 +561,13 @@ export class QuestTracker {
             });
         }
         
-        // Sfondo
-        ctx.fillStyle = this.backgroundColor;
-        ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
-        
-        // Bordo
-        ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
+        // Sfondo e bordo neutri
+        ThemeUtils.drawPanel(ctx, this.x, this.y, currentWidth, currentHeight, {
+            background: 'rgba(28,28,32,0.95)',
+            border: this.isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
+            blur: false,
+            shadow: false
+        });
         
         // Icona di drag (clipboard con checkmark) - centrata
         this.drawDragIcon(ctx, this.x + (currentWidth - 24) / 2, this.y + (currentHeight - 24) / 2);
@@ -574,21 +575,21 @@ export class QuestTracker {
         // Indicatore del numero di quest attive (sempre visibile)
         const questCount = this.activeQuests ? this.activeQuests.length : 0;
         if (questCount > 0) {
-            // Sfondo per il contatore
-            ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+            // Sfondo per il contatore (neutro)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
             ctx.beginPath();
             ctx.arc(this.x + currentWidth - 12, this.y + 12, 8, 0, Math.PI * 2);
             ctx.fill();
             
-            // Bordo per il contatore
-            ctx.strokeStyle = '#00ff00';
+            // Bordo per il contatore (neutro)
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.arc(this.x + currentWidth - 12, this.y + 12, 8, 0, Math.PI * 2);
             ctx.stroke();
             
-            // Numero
-            ctx.fillStyle = '#00ff00';
+            // Numero (neutro)
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(questCount.toString(), this.x + currentWidth - 12, this.y + 16);
@@ -600,18 +601,17 @@ export class QuestTracker {
         const currentWidth = this.currentWidth || this.width;
         const currentHeight = this.currentHeight || this.height;
         
-        // Sfondo
-        ctx.fillStyle = this.backgroundColor;
-        ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
+        // Sfondo e bordo neutri
+        ThemeUtils.drawPanel(ctx, this.x, this.y, currentWidth, currentHeight, {
+            background: this.backgroundColor,
+            border: this.isDragging ? 'rgba(255,255,255,0.18)' : this.borderColor,
+            blur: false,
+            shadow: false
+        });
         
-        // Bordo (più spesso se in drag)
-        ctx.strokeStyle = this.isDragging ? '#00ff00' : this.borderColor;
-        ctx.lineWidth = this.isDragging ? 3 : 2;
-        ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
-        
-        // Effetto trasparenza se in drag
+        // Effetto hover se in drag
         if (this.isDragging) {
-            ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
             ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
         }
         
@@ -626,22 +626,21 @@ export class QuestTracker {
             ctx.textAlign = 'left';
             ctx.fillText('Quest Attive', this.x + 40, this.y + 20);
             
-            // Pulsante chiudi
+            // Pulsante chiudi (neutro)
             const closeButtonSize = 20;
             const closeButtonX = this.x + currentWidth - closeButtonSize - 10;
             const closeButtonY = this.y + 10;
             
-            // Sfondo pulsante chiudi
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-            ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+            // Sfondo e bordo pulsante chiudi
+            ThemeUtils.drawPanel(ctx, closeButtonX, closeButtonY, closeButtonSize, closeButtonSize, {
+                background: 'rgba(28,28,32,0.95)',
+                border: 'rgba(255,255,255,0.12)',
+                blur: false,
+                shadow: false
+            });
             
-            // Bordo pulsante chiudi
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
-            
-            // X del pulsante chiudi
-            ctx.fillStyle = '#ff0000';
+            // X del pulsante chiudi (neutro)
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -659,14 +658,13 @@ export class QuestTracker {
                 const questStartY = this.y + 50;
                 const questHeight = this.currentHeight - 100; // Usa tutto lo spazio disponibile
                 
-                // Sfondo quest
-                ctx.fillStyle = 'rgba(74, 144, 226, 0.1)';
-                ctx.fillRect(this.x + 5, questStartY, currentWidth - 10, questHeight);
-                
-                // Bordo per quest
-                ctx.strokeStyle = this.borderColor;
-                ctx.lineWidth = 1;
-                ctx.strokeRect(this.x + 5, questStartY, currentWidth - 10, questHeight);
+                // Sfondo e bordo quest neutri
+                ThemeUtils.drawPanel(ctx, this.x + 5, questStartY, currentWidth - 10, questHeight, {
+                    background: 'rgba(28,28,32,0.95)',
+                    border: 'rgba(255,255,255,0.12)',
+                    blur: false,
+                    shadow: false
+                });
                 
                 // Nome quest
                 ctx.fillStyle = this.titleColor;
@@ -746,20 +744,21 @@ export class QuestTracker {
             
             // Sfondo del cerchietto
             if (isCurrentPage) {
-                ctx.fillStyle = this.borderColor;
+                // Cerchietto pieno per la pagina corrente (neutro)
+                ctx.fillStyle = 'rgba(255,255,255,0.18)';
                 ctx.beginPath();
                 ctx.arc(dotX, dotsY, dotSize/2, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Bordo per la pagina corrente
-                ctx.strokeStyle = '#ffffff';
+                // Bordo per la pagina corrente (neutro)
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(dotX, dotsY, dotSize/2, 0, Math.PI * 2);
                 ctx.stroke();
             } else {
-                // Cerchietto vuoto per le altre pagine
-                ctx.strokeStyle = this.borderColor;
+                // Cerchietto vuoto per le altre pagine (neutro)
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.arc(dotX, dotsY, dotSize/2, 0, Math.PI * 2);
@@ -817,16 +816,16 @@ export class QuestTracker {
     drawDragIcon(ctx, x, y) {
         const iconSize = 24;
         
-        // Sfondo dell'icona (cerchio con bordo)
-        const bgColor = this.isDragging ? 'rgba(0, 255, 0, 0.3)' : 'rgba(74, 144, 226, 0.2)';
+        // Sfondo e bordo dell'icona neutri
+        const bgColor = this.isDragging ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)';
         ctx.fillStyle = bgColor;
         ctx.beginPath();
         ctx.arc(x + iconSize/2, y + iconSize/2, iconSize/2, 0, Math.PI * 2);
         ctx.fill();
         
         // Bordo dell'icona
-        ctx.strokeStyle = this.isDragging ? '#00ff00' : this.borderColor;
-        ctx.lineWidth = this.isDragging ? 3 : 2;
+        ctx.strokeStyle = this.isDragging ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(x + iconSize/2, y + iconSize/2, iconSize/2, 0, Math.PI * 2);
         ctx.stroke();
@@ -838,8 +837,8 @@ export class QuestTracker {
         // Clip del clipboard
         ctx.fillRect(x + 4, y + 2, 16, 3);
         
-        // Checkmark
-        ctx.strokeStyle = this.progressColor;
+        // Checkmark (neutro)
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(x + 8, y + 10);
@@ -847,8 +846,8 @@ export class QuestTracker {
         ctx.lineTo(x + 16, y + 6);
         ctx.stroke();
         
-        // Punti di grip per indicare che è trascinabile
-        ctx.fillStyle = this.borderColor;
+        // Punti di grip per indicare che è trascinabile (neutri)
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 2; j++) {
                 ctx.fillRect(x + 18 + i * 2, y + 18 + j * 2, 1, 1);

@@ -1,3 +1,5 @@
+import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
+
 // Profile Panel - Pannello profilo giocatore con statistiche
 export class ProfilePanel {
     constructor(game) {
@@ -15,9 +17,9 @@ export class ProfilePanel {
         this.currentWidth = 0;
         this.currentHeight = 0;
         
-        // Posizione e dimensioni
-        this.width = 280;
-        this.height = 180;
+        // Posizione e dimensioni (compatte)
+        this.width = 240;
+        this.height = 120;
         
         // Posizioni (centrato di default)
         this.x = 0;
@@ -27,13 +29,13 @@ export class ProfilePanel {
         this.savedX = null; // Posizione X salvata quando chiuso
         this.savedY = null; // Posizione Y salvata quando chiuso
         
-        // Stile (basato sul QuestTracker)
-        this.backgroundColor = '#1a1a2e';
-        this.borderColor = '#4a90e2';
+        // Stile neutro uniforme
+        this.backgroundColor = 'rgba(28,28,32,0.95)';
+        this.borderColor = 'rgba(255,255,255,0.12)';
         this.textColor = '#ffffff';
-        this.titleColor = '#FFD700';
-        this.valueColor = '#00ff00';
-        this.labelColor = '#cccccc';
+        this.titleColor = '#ffffff';
+        this.valueColor = '#ffffff';
+        this.labelColor = 'rgba(255,255,255,0.7)';
         
         // Dati del profilo
         this.profileData = {
@@ -263,26 +265,25 @@ export class ProfilePanel {
         // Non disegnare se il pannello è chiuso e l'animazione è completata
         if (!this.visible && !this.animating) return;
         
-        // Sfondo
-        ctx.fillStyle = this.backgroundColor;
-        ctx.fillRect(this.x, this.y, currentWidth, currentHeight);
+        // Sfondo e bordo neutri
+        ThemeUtils.drawPanel(ctx, this.x, this.y, currentWidth, currentHeight, {
+            background: this.backgroundColor,
+            border: this.borderColor,
+            blur: false,
+            shadow: false
+        });
         
-        // Bordo
-        ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
-        
-        // Barra del titolo
-        ctx.fillStyle = this.borderColor;
-        ctx.fillRect(this.x, this.y, currentWidth, 30);
+        // Barra del titolo neutra (più compatta)
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        ctx.fillRect(this.x, this.y, currentWidth, 25);
         
         // Titolo (solo se il pannello è visibile e l'animazione è abbastanza avanzata)
         if (this.visible && this.animationProgress > 0.5) {
             ctx.fillStyle = this.titleColor;
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Ship', this.x + 10, this.y + 15);
+            ctx.fillText('Ship', this.x + 10, this.y + 13);
         }
         
         // Contenuto del pannello (solo se l'animazione è abbastanza avanzata)
@@ -295,12 +296,12 @@ export class ProfilePanel {
     
     // Disegna il contenuto del pannello
     drawContent(ctx) {
-        const startY = this.y + 45;
-        const lineHeight = 35;
-        const leftX = this.x + 20;
-        const rightX = this.x + this.width / 2 + 10;
-        const leftValueX = this.x + this.width / 2 - 10; // Fine della colonna sinistra
-        const rightValueX = this.x + this.width - 20; // Fine della colonna destra
+        const startY = this.y + 40;
+        const lineHeight = 25;
+        const leftX = this.x + 15;
+        const rightX = this.x + this.width / 2 + 5;
+        const leftValueX = this.x + this.width / 2 - 8; // Fine della colonna sinistra
+        const rightValueX = this.x + this.width - 15; // Fine della colonna destra
         
         // Prima riga: Experience e Credits
         this.drawStatLine(ctx, 'Experience:', this.profileData.experience.toLocaleString(), leftX, startY, leftValueX);
@@ -315,14 +316,14 @@ export class ProfilePanel {
     drawStatLine(ctx, label, value, labelX, y, valueX) {
         // Label
         ctx.fillStyle = this.labelColor;
-        ctx.font = '13px Arial';
+        ctx.font = '12px Arial';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, labelX, y);
         
         // Value
         ctx.fillStyle = this.valueColor;
-        ctx.font = 'bold 13px Arial';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'right';
         ctx.fillText(value, valueX, y);
     }

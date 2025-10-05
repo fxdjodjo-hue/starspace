@@ -1675,9 +1675,9 @@ export class Ship {
             return true;
         }
         
-        // Notifica energia insufficiente
+        // Notifica energia insufficiente (durata coerente con le altre)
         if (this.game && this.game.notifications) {
-            this.game.notifications.add("⚡ StarEnergy insufficiente!", "warning");
+            this.game.notifications.add("⚡ StarEnergy insufficiente!", 600, 'warning');
         }
         return false;
     }

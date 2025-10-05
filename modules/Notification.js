@@ -349,17 +349,9 @@ export class Notification {
         return styles[type] || styles['info'];
     }
     
-    // Disegna effetto glow
+    // Disegna effetto glow (disattivato per stile neutro)
     drawGlowEffect(ctx, x, y, width, height, color, intensity) {
-        const gradient = ctx.createRadialGradient(
-            x + width/2, y + height/2, 0,
-            x + width/2, y + height/2, width/2 + 20
-        );
-        gradient.addColorStop(0, color.replace('0.2', (0.2 * intensity).toFixed(2)));
-        gradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x - 20, y - 20, width + 40, height + 40);
+        // Intenzionalmente vuoto: niente glow dietro le notifiche
     }
     
     // Disegna sfondo con gradiente
@@ -384,8 +376,6 @@ export class Notification {
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         // Glow disattivato per HUD
-        // ctx.shadowColor = color;
-        // ctx.shadowBlur = 5 * intensity;
         this.roundRect(ctx, x, y, width, height, 8);
         ctx.stroke();
         ctx.shadowBlur = 0;

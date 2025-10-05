@@ -135,9 +135,9 @@ export class HomePanel extends UIComponent {
         this.shopItems = {
             ammunition: {
                 // Laser
-                laser_x1: { name: 'Munizioni Laser', price: 10, amount: 100, max: 10000, icon: '🔴', type: 'laser', key: 'x1' },
-                laser_x2: { name: 'Munizioni Laser', price: 25, amount: 50, max: 5000, icon: '🟠', type: 'laser', key: 'x2' },
-                laser_x3: { name: 'Munizioni Laser (x3 danno)', price: 50, amount: 20, max: 2000, icon: '🟡', type: 'laser', key: 'x3' },
+                laser_x1: { name: 'Munizioni Laser x1', price: 10, amount: 100, max: 10000, icon: '🔴', type: 'laser', key: 'x1' },
+                laser_x2: { name: 'Munizioni Laser x2', price: 25, amount: 50, max: 5000, icon: '🟠', type: 'laser', key: 'x2' },
+                laser_x3: { name: 'Munizioni Laser x3', price: 50, amount: 20, max: 2000, icon: '🟡', type: 'laser', key: 'x3' },
                 // Missili
                 missile_r1: { name: 'Missili R1', price: 100, amount: 10, max: 500, icon: '🟢', type: 'missile', key: 'r1' },
                 missile_r2: { name: 'Missili R2', price: 250, amount: 5, max: 250, icon: '🔵', type: 'missile', key: 'r2' },
@@ -777,39 +777,44 @@ export class HomePanel extends UIComponent {
     drawPopup(ctx) {
         if (!this.popup.visible || this.popup.alpha <= 0) return;
         
-        const popupWidth = 400;
-        const popupHeight = 80;
+        const popupWidth = 360;
+        const popupHeight = 64;
         const popupX = (this.game.canvas.width - popupWidth) / 2;
-        const popupY = 100;
+        const popupY = 90;
         
         // Sfondo popup con trasparenza
         ctx.save();
         ctx.globalAlpha = this.popup.alpha;
         
-        // Pannello popup con tema moderno
-        const popupColor = this.popup.type === 'success' ? ThemeConfig.colors.accent.success : ThemeConfig.colors.accent.danger;
+        // Pannello popup neutro
+        const bg = 'rgba(28,28,32,0.96)';
+        const border = 'rgba(255,255,255,0.18)';
         ThemeUtils.drawPanel(ctx, popupX, popupY, popupWidth, popupHeight, {
-            background: popupColor,
-            border: popupColor,
-            blur: true,
-            shadow: true
+            background: bg,
+            border: border,
+            blur: false,
+            shadow: false
         });
         
         // Icona
         const icon = this.popup.type === 'success' ? '✓' : '✗';
-        ThemeUtils.drawText(ctx, icon, popupX + 40, popupY + 50, {
-            size: 24,
+        ThemeUtils.drawText(ctx, icon, popupX + 24, popupY + popupHeight / 2, {
+            size: 20,
             weight: 'bold',
-            color: ThemeConfig.colors.text.primary,
-            glow: true
+            color: '#ffffff',
+            glow: false,
+            align: 'center',
+            baseline: 'middle'
         });
         
         // Messaggio
-        ThemeUtils.drawText(ctx, this.popup.message, popupX + popupWidth / 2, popupY + 50, {
-            size: 16,
+        ThemeUtils.drawText(ctx, this.popup.message, popupX + 48, popupY + popupHeight / 2, {
+            size: 14,
             weight: 'bold',
-            color: ThemeConfig.colors.text.primary,
-            glow: true
+            color: '#ffffff',
+            glow: false,
+            align: 'left',
+            baseline: 'middle'
         });
         
         ctx.restore();
@@ -2347,33 +2352,38 @@ export class HomePanel extends UIComponent {
         const totalPrice = pricePerUnit * quantity;
         const canBuy = this.playerData.credits >= totalPrice;
         
-        // Sfondo opzione (più grande come nell'immagine)
-        ctx.fillStyle = '#2a2a2a';
-        ctx.fillRect(x, y, width, 80);
-        ctx.strokeStyle = '#666666';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, width, 80);
+        // Metrics uniformi
+        const h = 76;
+        const padX = 20;
+        const centerY = y + h / 2;
         
-        // Quantità (in alto a sinistra)
+        // Sfondo opzione allineato
+        ctx.fillStyle = 'rgba(28,28,32,0.95)';
+        ctx.fillRect(x, y, width, h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, width, h);
+        
+        // Quantità (sinistra, uniforme con prezzo)
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`Quantità: ${quantity.toLocaleString()}`, x + 20, y + 25);
+        ctx.fillText(`Quantità: ${quantity.toLocaleString()}`, x + padX, centerY);
         
-        // Prezzo (in alto a destra)
-        ctx.fillStyle = '#e94560';
-        ctx.font = 'bold 20px Arial';
+        // Prezzo (destra, stessa baseline)
+        ctx.fillStyle = canBuy ? '#d0d0d0' : '#8a8a8a';
+        ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${totalPrice.toLocaleString()} x Credits`, x + width - 20, y + 25);
+        ctx.fillText(`${totalPrice.toLocaleString()} x Credits`, x + width - padX, centerY);
         ctx.textAlign = 'left';
         
-        // Pulsante acquista (centrato in basso)
-        const buttonWidth = 120; // Aumentato per essere coerente
-        const buttonHeight = 50; // Aumentato per essere coerente
-        const buttonX = x + (width - buttonWidth) / 2;
-        const buttonY = y + 25; // Ridotto per centrare meglio
+        // Pulsante acquista (centrato verticalmente)
+        const buttonWidth = 120;
+        const buttonHeight = 42;
+        const buttonX = x + Math.round((width - buttonWidth) / 2);
+        const buttonY = Math.round(centerY - buttonHeight / 2);
         
         ctx.fillStyle = canBuy ? '#4CAF50' : '#666666';
         ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
@@ -2382,10 +2392,10 @@ export class HomePanel extends UIComponent {
         ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 13px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('COMPRA', buttonX + buttonWidth/2, buttonY + 25); // Centrato nel pulsante più grande
+        ctx.fillText('COMPRA', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2);
         ctx.textAlign = 'left';
     }
     
@@ -3027,18 +3037,11 @@ export class HomePanel extends UIComponent {
     
     // Metodo per disegnare il contenuto della categoria Clan
     useStarEnergy() {
-        // Controlla se abbiamo abbastanza energia
-        const starEnergyInfo = this.game.ship.getStarEnergyInfo();
-        if (starEnergyInfo.current < 1) {
+        // Consuma 1 StarEnergy (lascia che Ship gestisca la notifica insufficienza)
+        if (!this.game.ship.useStarEnergy(1)) {
             this.lastConversionResult = "Non hai abbastanza Star Energy!";
-            if (this.game.notifications) {
-                this.game.notifications.add("⚡ Non hai abbastanza Star Energy!", "warning");
-            }
             return;
         }
-
-        // Consuma 1 StarEnergy
-        this.game.ship.useStarEnergy(1);
 
         // Decidi se dare missili (40%) o laser (60%)
         if (Math.random() < 0.40) {

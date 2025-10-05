@@ -33,7 +33,7 @@ import { StartScreen } from './src/ui/StartScreen.js';
 import { FactionSelectionScreen } from './src/ui/FactionSelectionScreen.js';
 import { QuestTracker } from './src/systems/QuestTracker.js';
 import { CategorySkillbar } from './src/ui/CategorySkillbar.js';
-import { IconSystemUI } from './modules/IconSystemUI.js';
+// import { IconSystemUI } from './modules/IconSystemUI.js'; // legacy rimosso
 import { UIManager } from './src/ui/UIManager.js';
 import { ProfilePanel } from './src/ui/ProfilePanel.js';
 import { MapManager } from './src/world/MapManager.js';
@@ -182,11 +182,7 @@ class Game {
         // Sistema visualizzazione mappe (inizializzato dopo factionSystem)
         // this.mapSystem sarà inizializzato dopo factionSystem
         
-        // Sistema icone UI (in alto a sinistra)
-        this.iconSystemUI = [];
-        this.initIconSystemUI();
-        
-        // Nuovo sistema unificato icone UI
+        // Sistema icone UI unificato
         this.uiManager = new UIManager(this);
         this.initUIManager();
         
@@ -248,40 +244,7 @@ class Game {
         console.log('📐 Canvas size set to:', containerWidth, 'x', containerHeight);
     }
     
-    // Inizializza il sistema icone UI
-    initIconSystemUI() {
-        const iconSize = 40;
-        const spacing = 10;
-        const startX = 20;
-        const startY = 20;
-        
-        // Icona Quest (già gestita dal QuestTracker)
-        // Posizione 0: Quest Tracker (gestito separatamente)
-        
-        // Posizione 1: Profilo
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 1, startY, 'profile', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        // Posizione 2: Inventario
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 2, startY, 'inventory', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        // Posizione 3: Home Dashboard
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 3, startY, 'home', {
-            size: iconSize,
-            visible: true
-        }));
-        
-        // Posizione 4: Impostazioni
-        this.iconSystemUI.push(new IconSystemUI(startX + (iconSize + spacing) * 4, startY, 'settings', {
-            size: iconSize,
-            visible: true
-        }));
-    }
+    // initIconSystemUI legacy rimosso (UIManager in uso)
     
     // Inizializza il nuovo sistema unificato icone UI
     initUIManager() {
@@ -467,12 +430,7 @@ class Game {
             mouseOverUIIcon = true;
         }
         
-        // Controlla se il mouse è sopra un'icona UI del vecchio sistema
-        this.iconSystemUI.forEach(icon => {
-            if (icon.isMouseOver(mousePos.x, mousePos.y)) {
-                mouseOverUIIcon = true;
-            }
-        });
+        // Legacy iconSystemUI rimosso
         
         // Controlla se il mouse è sopra il quest tracker
         if (this.questTracker.isMouseOverTracker(mousePos.x, mousePos.y)) {
@@ -2363,22 +2321,13 @@ class Game {
     }
     
     
-    // Disegna il sistema icone UI
+    // Legacy IconSystemUI rimosso
     drawIconSystemUI() {
-        this.iconSystemUI.forEach(icon => {
-            icon.draw(this.ctx);
-        });
+        // Niente da disegnare (usa UIManager)
     }
     
     updateIconSystemUI() {
-        // Gestisce i tooltip per le icone UI
-        this.iconSystemUI.forEach(icon => {
-            if (icon.isMouseOver(this.input.mouse.x, this.input.mouse.y)) {
-                icon.setTooltipVisible(true);
-            } else {
-                icon.setTooltipVisible(false);
-            }
-        });
+        // Niente da aggiornare (usa UIManager)
     }
     
     // Gestisce tutti gli eventi UI con priorità alta
@@ -2396,26 +2345,7 @@ class Game {
             }
         }
         
-        // Gestisci click sulle icone UI vecchie (per compatibilità)
-        if (this.input.isLeftClickJustReleased()) {
-            const movementDistance = this.input.mouse.movementDistance || 0;
-            
-            if (movementDistance <= 5) {
-                // Controlla se il click è su un'icona UI
-                let iconClicked = false;
-                this.iconSystemUI.forEach(icon => {
-                    if (icon.isMouseOver(mousePos.x, mousePos.y)) {
-                        iconClicked = true;
-                    }
-                });
-                
-                if (iconClicked) {
-                    this.handleIconSystemUIClick(mousePos.x, mousePos.y);
-                    this.input.resetLeftClickReleased();
-                    return true; // Evento UI gestito
-                }
-            }
-        }
+        // Legacy IconSystemUI rimosso
         
         // Gestisci click sull'inventario
         if (this.input.isLeftClickJustReleased() && this.inventory.isOpen) {
