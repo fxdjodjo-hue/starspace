@@ -101,12 +101,13 @@ export class CategorySkillbar {
     }
     
     drawMainBar(ctx) {
-        // Pannello principale con tema moderno
+        // Pannello principale con tema moderno e bordi arrotondati
         ThemeUtils.drawPanel(ctx, this.x, this.y, this.width, this.height, {
             background: 'rgba(18,18,20,0.9)',
             border: 'rgba(255,255,255,0.12)',
             blur: false,
-            shadow: false
+            shadow: false,
+            radius: 8 // Aggiungiamo bordi arrotondati
         });
         
         // Disegna le categorie
@@ -127,7 +128,8 @@ export class CategorySkillbar {
                 background: isActive ? 'rgba(40,40,44,0.95)' : 'transparent',
                 border: isActive ? 'rgba(255,255,255,0.18)' : 'transparent',
                 hover: false,
-                glow: false
+                glow: false,
+                radius: 8 // Aggiungiamo bordi arrotondati
             });
             
             categoryIndex++;
@@ -147,12 +149,13 @@ export class CategorySkillbar {
         const menuX = this.x;
         const menuY = this.y - totalHeight - 10;
         
-        // Pannello menu con tema moderno
+        // Pannello menu con tema moderno e bordi arrotondati
         ThemeUtils.drawPanel(ctx, menuX, menuY, this.width, totalHeight, {
             background: 'rgba(18,18,20,0.94)',
             border: 'rgba(255,255,255,0.12)',
             blur: false,
-            shadow: false
+            shadow: false,
+            radius: 8 // Aggiungiamo bordi arrotondati
         });
         
         // Disegna gli oggetti
@@ -190,7 +193,8 @@ export class CategorySkillbar {
                 background: background,
                 border: border,
                 hover: false,
-                glow: false // Rimuovo il glow per ridurre l'abbagliamento
+                glow: false, // Rimuovo il glow per ridurre l'abbagliamento
+                radius: 6 // Bordi arrotondati più piccoli per gli item
             });
             
             // Mostra munizioni per laser e missili
