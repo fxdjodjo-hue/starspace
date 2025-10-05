@@ -358,14 +358,26 @@ export class FactionSelectionScreen {
             height: totalHeight
         };
         
+        // Disegna sfondo con angoli arrotondati
+        ctx.beginPath();
+        ctx.moveTo(descriptionBg.x + 8, descriptionBg.y);
+        ctx.lineTo(descriptionBg.x + descriptionBg.width - 8, descriptionBg.y);
+        ctx.quadraticCurveTo(descriptionBg.x + descriptionBg.width, descriptionBg.y, descriptionBg.x + descriptionBg.width, descriptionBg.y + 8);
+        ctx.lineTo(descriptionBg.x + descriptionBg.width, descriptionBg.y + descriptionBg.height - 8);
+        ctx.quadraticCurveTo(descriptionBg.x + descriptionBg.width, descriptionBg.y + descriptionBg.height, descriptionBg.x + descriptionBg.width - 8, descriptionBg.y + descriptionBg.height);
+        ctx.lineTo(descriptionBg.x + 8, descriptionBg.y + descriptionBg.height);
+        ctx.quadraticCurveTo(descriptionBg.x, descriptionBg.y + descriptionBg.height, descriptionBg.x, descriptionBg.y + descriptionBg.height - 8);
+        ctx.lineTo(descriptionBg.x, descriptionBg.y + 8);
+        ctx.quadraticCurveTo(descriptionBg.x, descriptionBg.y, descriptionBg.x + 8, descriptionBg.y);
+        ctx.closePath();
+        
+        // Riempi con colore semi-trasparente
         ctx.fillStyle = `rgba(${this.hexToRgb(faction.color)}, 0.1)`;
-        this.roundRectPath(ctx, descriptionBg.x, descriptionBg.y, descriptionBg.width, descriptionBg.height, 8);
         ctx.fill();
         
         // Bordo sottile
         ctx.strokeStyle = `rgba(${this.hexToRgb(faction.color)}, 0.3)`;
         ctx.lineWidth = 1;
-        this.roundRectPath(ctx, descriptionBg.x, descriptionBg.y, descriptionBg.width, descriptionBg.height, 8);
         ctx.stroke();
         
         // Testo descrizione
