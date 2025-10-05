@@ -244,6 +244,14 @@ export class FactionSelectionScreen {
         this.saveAccountData(accountId);
         
         // Avvia la transizione tramite TransitionManager
+        if (!this.game.transitionManager) {
+            console.error('TransitionManager non trovato!');
+            // Fallback: avvia il gioco direttamente
+            this.hide();
+            this.game.startGameAudio();
+            return;
+        }
+
         this.game.transitionManager.startGameZoomOut(() => {
             this.hide();
             this.game.startGameAudio();
