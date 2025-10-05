@@ -88,10 +88,10 @@ export class StartScreen {
         // Ordina per lastPlayed desc
         items.sort((a,b) => (b.lastPlayed||0) - (a.lastPlayed||0));
 
-        // Layout: colonna sinistra sotto l'input per evitare sovrapposizioni
-        const x = Math.round(this.x + 40);
-        const startY = Math.round(this.y + 260);
-        const w = 220;
+        // Layout centrato sotto l'input
+        const w = 300;
+        const x = Math.round(this.x + (this.width - w) / 2);
+        const startY = Math.round(this.nameInput ? (this.nameInput.y + this.nameInput.height + 30) : (this.y + 260));
         const h = 36;
         const gap = 10;
         this.accountButtons = items.slice(0, 8).map((acc, i) => ({
@@ -609,11 +609,7 @@ export class StartScreen {
     // Disegna lista degli account salvati
     drawAccountsList(ctx) {
         if (!this.accountButtons || this.accountButtons.length === 0) return;
-        // Titolo
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Account salvati', this.x + 40, this.y + 100);
+        // (Rimosso) Titolo lista account
 
         // Bottoni
         const mouse = this.game.input?.mouse || { x: -1, y: -1 };
@@ -627,8 +623,8 @@ export class StartScreen {
 
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 13px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(btn.label, btn.x + 12, btn.y + 24);
+            ctx.textAlign = 'center';
+            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + 24);
         });
     }
     
