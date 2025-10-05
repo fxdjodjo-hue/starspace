@@ -35,7 +35,7 @@ export class SaveSystem {
             const legacy = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && key.startsWith('mmorpg_save_')) legacy.push(key);
+                if (key && (key.startsWith('mmorpg_save_') || key === 'inventory')) legacy.push(key);
             }
             legacy.forEach(k => localStorage.removeItem(k));
         } catch (_) {}
@@ -415,7 +415,8 @@ export class SaveSystem {
         if (this.isAutoSaveEnabled) {
             // Salvataggio automatico principale
             setInterval(() => {
-                this.save('auto');
+                // Salva sempre nello slot dell'account corrente
+                this.save(this.resolveSlotKey());
             }, this.autoSaveInterval);
             
             // Backup automatico separato
