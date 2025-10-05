@@ -251,7 +251,7 @@ export class SaveSystem {
                 items: this.game.inventory ? this.game.inventory.items : [],
                 equipment: this.game.inventory ? this.game.inventory.equipment : null
             },
-            faction: this.game.factionSystem ? this.game.factionSystem.exportData() : null
+            faction: this.game.factionSystem ? (typeof this.game.factionSystem.exportData === 'function' ? this.game.factionSystem.exportData() : (this.game.factionSystem.currentFaction || null)) : null
         };
     }
     

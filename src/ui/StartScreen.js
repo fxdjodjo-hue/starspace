@@ -101,9 +101,20 @@ export class StartScreen {
             try {
                 const data = JSON.parse(accountData);
                 
-                // Carica fazione
+                // Carica fazione (supporto sia a string id che a oggetto exportato)
                 if (data.faction) {
-                    this.game.factionSystem.joinFaction(data.faction);
+                    try {
+                        if (typeof data.faction === 'string') {
+                            this.game.factionSystem.joinFaction(data.faction);
+                        } else {
+                            // Oggetto exportato dal SaveSystem
+                            if (typeof this.game.factionSystem.importData === 'function') {
+                                this.game.factionSystem.importData(data.faction);
+                            } else if (data.faction.currentFaction) {
+                                this.game.factionSystem.joinFaction(data.faction.currentFaction);
+                            }
+                        }
+                    } catch (_) {}
                 }
                 
                 // Carica mappa
