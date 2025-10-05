@@ -12,6 +12,8 @@ export class FactionSelectionScreen {
         this.animationTime = 0;
         this.stars = this.generateStars(80);
         
+        // Nessuna animazione qui - gestita dal TransitionManager
+        
         // Effetto typewriter
         this.typewriterText = '';
         this.typewriterIndex = 0;
@@ -144,6 +146,7 @@ export class FactionSelectionScreen {
             this.lastCanvasHeight = this.game.canvas.height;
         }
     }
+    }
     
     // Gestisce input da tastiera
     handleKeyPress(key) {
@@ -241,11 +244,11 @@ export class FactionSelectionScreen {
         // Salva tutto nell'account per-id
         this.saveAccountData(accountId);
         
-        // Nasconde la schermata
-        this.hide();
-        
-        // Avvia il gioco
-        this.game.startGameAudio();
+        // Avvia la transizione tramite TransitionManager
+        this.game.transitionManager.startGameZoomOut(() => {
+            this.hide();
+            this.game.startGameAudio();
+        });
         
         const faction = this.factions.find(f => f.id === this.selectedFaction);
         this.game.notifications.add(`Benvenuto nella fazione ${faction.fullName}!`, 'success');

@@ -1,6 +1,7 @@
 // Gioco Spaziale - File Principale
 import { Ship } from './src/entities/Ship.js';
 import { Camera } from './src/core/Camera.js';
+import { TransitionManager } from './src/systems/TransitionManager.js';
 import { Input } from './src/core/Input.js';
 import { World } from './src/world/World.js';
 import { Renderer } from './src/core/Renderer.js';
@@ -185,6 +186,9 @@ class Game {
         // Sistema icone UI unificato
         this.uiManager = new UIManager(this);
         this.initUIManager();
+        
+        // Sistema transizioni
+        this.transitionManager = new TransitionManager(this);
         
         
         // Il logout è ora gestito dalla HomePanel
@@ -577,6 +581,9 @@ class Game {
         
         // Aggiorna il nuovo sistema unificato icone UI
         this.uiManager.update();
+        
+        // Aggiorna il sistema di transizioni
+        this.transitionManager.update();
         
         
         // Gestisce mouse move per tooltip
