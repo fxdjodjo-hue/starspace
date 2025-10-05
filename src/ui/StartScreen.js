@@ -17,6 +17,7 @@ export class StartScreen {
         
         // Sistema account per-nickname (chiavi isolate)
         this.currentAccount = null;
+        this.currentAccountId = null;
         this.accountExists = false;
         
         // Animazioni
@@ -34,6 +35,32 @@ export class StartScreen {
         this.lastCanvasWidth = this.game.canvas.width;
         this.lastCanvasHeight = this.game.canvas.height;
     }
+    // === Gestione indice account (nickname -> accountId) ===
+    loadAccountsIndex() {
+        try {
+            const raw = localStorage.getItem('mmorpg_accounts_index');
+            if (!raw) return { byName: {}, byId: {}, list: [] };
+            const idx = JSON.parse(raw);
+            idx.byName = idx.byName || {};
+            idx.byId = idx.byId || {};
+            idx.list = Array.isArray(idx.list) ? idx.list : [];
+            return idx;
+        } catch (_) {
+            return { byName: {}, byId: {}, list: [] };
+        }
+    }
+
+    saveAccountsIndex(index) {
+        try {
+            localStorage.setItem('mmorpg_accounts_index', JSON.stringify(index));
+        } catch (_) {}
+    }
+
+    generateAccountId() {
+        const rand = Math.random().toString(36).slice(2, 10);
+        return `acc_${Date.now()}_${rand}`;
+    }
+
     
     // Genera stelle per lo sfondo
     generateStars(count) {
@@ -58,14 +85,16 @@ export class StartScreen {
     
     // Controlla se esiste l'account (per-nickname)
     checkAccountExists(accountName) {
-        const accountKey = `mmorpg_account_${accountName}`;
-        const accountData = localStorage.getItem(accountKey);
-        return accountData !== null;
+        const index = this.loadAccountsIndex();
+        const accountId = index.byName[accountName] || null;
+        if (!accountId) return false;
+        const accountKey = `mmorpg_account_${accountId}`;
+        return localStorage.getItem(accountKey) !== null;
     }
     
     // Carica i dati dell'account specifico
-    loadAccountData(accountName) {
-        const accountKey = `mmorpg_account_${accountName}`;
+    loadAccountDataById(accountId) {
+        const accountKey = `mmorpg_account_${accountId}`;
         const accountData = localStorage.getItem(accountKey);
         
         if (accountData) {
@@ -98,7 +127,7 @@ export class StartScreen {
                     Object.assign(this.game.ship.resources, data.resources);
                 }
                 
-                console.log(`✅ Account ${accountName} caricato con successo`);
+                console.log(`✅ Account ${accountId} caricato con successo`);
             } catch (error) {
                 console.error('❌ Errore nel caricamento account:', error);
                 this.showError('Errore nel caricamento account');
@@ -509,7 +538,7 @@ export class StartScreen {
     handleStartGame() {
         const playerName = this.playerName.trim() || 'Player';
         
-        // Imposta nome account (solo per nickname visuale)
+        // Imposta nickname visuale
         this.currentAccount = playerName;
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
@@ -518,8 +547,12 @@ export class StartScreen {
         this.accountExists = this.checkAccountExists(playerName);
         
         if (this.accountExists) {
-            // Account esistente - carica tutto
-            this.loadAccountData(playerName);
+            // Account esistente: risolvi accountId da indice e carica
+            const index = this.loadAccountsIndex();
+            const accountId = index.byName[playerName];
+            this.currentAccountId = accountId;
+            this.game.currentAccountId = accountId;
+            this.loadAccountDataById(accountId);
             
             // Nasconde la StartScreen
             this.hide();
@@ -529,7 +562,17 @@ export class StartScreen {
             
             this.game.notifications.add(`Bentornato ${playerName}!`, 'success');
         } else {
-            // Nuovo account - vai alla selezione fazione
+            // Nuovo account: genera accountId, aggiorna indice e vai a selezione fazione
+            const index = this.loadAccountsIndex();
+            const newId = this.generateAccountId();
+            index.byName[playerName] = newId;
+            index.byId[newId] = { nickname: playerName, createdAt: Date.now(), lastPlayed: Date.now() };
+            index.list.push(newId);
+            this.saveAccountsIndex(index);
+
+            this.currentAccountId = newId;
+            this.game.currentAccountId = newId;
+
             this.hide();
             this.game.factionSelectionScreen.show();
         }
@@ -544,11 +587,11 @@ export class StartScreen {
         
         if (this.game.saveSystem.load(saveKey)) {
             this.game.mapManager.loadCurrentMapInstance();
-        this.hide();
-            this.game.notifications.add('Gioco caricato!', 'success');
-        } else {
-            this.showError('Errore nel caricamento del salvataggio');
-        }
+                this.hide();
+                this.game.notifications.add('Gioco caricato!', 'success');
+            } else {
+                this.showError('Errore nel caricamento del salvataggio');
+            }
     }
     
     // Mostra messaggio di errore

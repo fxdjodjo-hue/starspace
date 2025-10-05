@@ -170,9 +170,9 @@ export class FactionSelectionScreen {
             return;
         }
         
-        // Ottieni il nome account dalla StartScreen
-        const accountName = this.game.startScreen.currentAccount;
-        if (!accountName) {
+        // Ottieni l'accountId corrente
+        const accountId = this.game.currentAccountId || this.game.startScreen.currentAccountId;
+        if (!accountId) {
             this.showError('Errore: Account non trovato');
             return;
         }
@@ -190,8 +190,8 @@ export class FactionSelectionScreen {
         this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
         this.game.mapManager.loadCurrentMapInstance();
         
-        // Salva tutto nell'account per-nickname
-        this.saveAccountData(accountName);
+        // Salva tutto nell'account per-id
+        this.saveAccountData(accountId);
         
         // Nasconde la schermata
         this.hide();
@@ -204,11 +204,12 @@ export class FactionSelectionScreen {
     }
     
     // Salva tutti i dati per l'account specifico
-    saveAccountData(accountName) {
-        const accountKey = `mmorpg_account_${accountName}`;
+    saveAccountData(accountId) {
+        const accountKey = `mmorpg_account_${accountId}`;
         
         const accountData = {
-            accountName: accountName,
+            accountId: accountId,
+            nickname: this.game.playerProfile?.getNickname?.() || '',
             faction: this.selectedFaction,
             currentMap: this.game.mapManager.currentMap,
             ship: {
@@ -239,7 +240,7 @@ export class FactionSelectionScreen {
         };
         
         localStorage.setItem(accountKey, JSON.stringify(accountData));
-        console.log(`✅ Account ${accountName} salvato con successo`);
+        console.log(`✅ Account ${accountId} salvato con successo`);
     }
     
     // Controlla se il mouse è sopra un pulsante
