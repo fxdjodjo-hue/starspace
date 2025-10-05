@@ -20,7 +20,13 @@ export class FactionSelectionScreen {
                 fullName: 'Venus Research Union',
                 description: 'Scienziati all\'avanguardia',
                 color: '#9b59b6',
-                icon: '🔬'
+                icon: '🔬',
+                longDescription: [
+                    'La Venus Research Union è all\'avanguardia nella ricerca scientifica e tecnologica.',
+                    'Specializzati in tecnologie avanzate di propulsione e scudi energetici.',
+                    'Bonus: +15% efficienza scudi, accesso a tecnologie sperimentali.',
+                    'Ideali per giocatori che preferiscono un approccio tecnico e strategico.'
+                ]
             },
             {
                 id: 'mars',
@@ -28,7 +34,13 @@ export class FactionSelectionScreen {
                 fullName: 'Mars Mining Organization',
                 description: 'Minatori esperti',
                 color: '#e74c3c',
-                icon: '⛏️'
+                icon: '⛏️',
+                longDescription: [
+                    'La Mars Mining Organization domina l\'estrazione e la lavorazione delle risorse.',
+                    'Esperti nell\'uso di laser pesanti e tecnologie minerarie avanzate.',
+                    'Bonus: +20% danni laser, raccolta risorse potenziata.',
+                    'Perfetti per giocatori aggressivi che amano il combattimento diretto.'
+                ]
             },
             {
                 id: 'eic',
@@ -36,7 +48,13 @@ export class FactionSelectionScreen {
                 fullName: 'Earth Industries Corporation',
                 description: 'Commercianti esperti',
                 color: '#4a90e2',
-                icon: '🏢'
+                icon: '🏢',
+                longDescription: [
+                    'La Earth Industries Corporation controlla le rotte commerciali della Terra.',
+                    'Maestri nel commercio e nella diplomazia interplanetaria.',
+                    'Bonus: +25% guadagni commerciali, prezzi migliori nei negozi.',
+                    'Ottimi per giocatori che puntano sull\'economia e il commercio.'
+                ]
             }
         ];
         
@@ -309,11 +327,62 @@ export class FactionSelectionScreen {
         // Selezione fazione
         this.drawFactionSelection(ctx);
         
+        // Descrizione fazione selezionata
+        if (this.selectedFaction) {
+            this.drawSelectedFactionDescription(ctx);
+        }
+        
         // Pulsante conferma
         this.drawConfirmButton(ctx);
         
         // Messaggi
         this.drawMessages(ctx);
+    }
+    
+    // Disegna descrizione dettagliata della fazione selezionata
+    drawSelectedFactionDescription(ctx) {
+        const faction = this.factions.find(f => f.id === this.selectedFaction);
+        if (!faction) return;
+        
+        // Posiziona la descrizione tra le carte e il pulsante conferma
+        const descY = this.confirmButton.y - 100;
+        const lineHeight = 22;
+        
+        // Sfondo semi-trasparente per la descrizione
+        const padding = 15;
+        const totalHeight = (faction.longDescription.length * lineHeight) + (padding * 2);
+        const descriptionBg = {
+            x: Math.round(this.x + 60),
+            y: Math.round(descY - padding),
+            width: Math.round(this.width - 120),
+            height: totalHeight
+        };
+        
+        ctx.fillStyle = `rgba(${this.hexToRgb(faction.color)}, 0.1)`;
+        this.roundRectPath(ctx, descriptionBg.x, descriptionBg.y, descriptionBg.width, descriptionBg.height, 8);
+        ctx.fill();
+        
+        // Bordo sottile
+        ctx.strokeStyle = `rgba(${this.hexToRgb(faction.color)}, 0.3)`;
+        ctx.lineWidth = 1;
+        this.roundRectPath(ctx, descriptionBg.x, descriptionBg.y, descriptionBg.width, descriptionBg.height, 8);
+        ctx.stroke();
+        
+        // Testo descrizione
+        ctx.textAlign = 'left';
+        faction.longDescription.forEach((line, index) => {
+            const y = descY + (index * lineHeight);
+            
+            // Ombra testo
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.font = '14px Arial';
+            ctx.fillText(line, descriptionBg.x + padding + 1, y + 1);
+            
+            // Testo principale
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '14px Arial';
+            ctx.fillText(line, descriptionBg.x + padding, y);
+        });
     }
     
     // Disegna stelle
