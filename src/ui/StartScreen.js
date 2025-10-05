@@ -334,17 +334,14 @@ export class StartScreen {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 10;
 
-        // Corpo pannello (glass-like scuro)
-        ctx.fillStyle = 'rgba(20, 20, 24, 0.88)';
+        // Corpo pannello (nero soft)
+        ctx.fillStyle = 'rgba(12, 12, 14, 0.90)';
         this.roundRectPath(ctx, this.x, this.y, this.width, this.height, radius);
         ctx.fill();
         ctx.restore();
 
-        // Bordo sfumato sottile
-        const borderGrad = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
-        borderGrad.addColorStop(0, 'rgba(74, 144, 226, 0.9)');
-        borderGrad.addColorStop(1, 'rgba(41, 128, 185, 0.9)');
-        ctx.strokeStyle = borderGrad;
+        // Bordo bianco tenue
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx.lineWidth = 2;
         this.roundRectPath(ctx, this.x, this.y, this.width, this.height, radius);
         ctx.stroke();
@@ -409,15 +406,12 @@ export class StartScreen {
         ctx.shadowColor = 'transparent';
         
         // Input field
-        ctx.fillStyle = 'rgba(35, 38, 45, 0.88)';
+        ctx.fillStyle = 'rgba(20, 20, 22, 0.95)';
         ctx.fillRect(this.nameInput.x, this.nameInput.y, this.nameInput.width, this.nameInput.height);
         
         // Bordo
-        const inputGrad = ctx.createLinearGradient(this.nameInput.x, this.nameInput.y, this.nameInput.x, this.nameInput.y + this.nameInput.height);
-        inputGrad.addColorStop(0, 'rgba(74, 144, 226, 0.9)');
-        inputGrad.addColorStop(1, 'rgba(52, 152, 219, 0.9)');
-        ctx.strokeStyle = inputGrad;
-        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+        ctx.lineWidth = 1.5;
         ctx.strokeRect(this.nameInput.x, this.nameInput.y, this.nameInput.width, this.nameInput.height);
         
         // Testo
@@ -452,25 +446,25 @@ export class StartScreen {
         );
         
         if (isHovered) {
-            buttonGradient.addColorStop(0, this.lightenColor('#e74c3c', 10));
-            buttonGradient.addColorStop(1, this.lightenColor('#c0392b', 10));
+            buttonGradient.addColorStop(0, '#ffffff');
+            buttonGradient.addColorStop(1, '#e6e6e6');
         } else {
-            buttonGradient.addColorStop(0, '#e74c3c');
-            buttonGradient.addColorStop(1, '#c0392b');
+            buttonGradient.addColorStop(0, '#f2f2f2');
+            buttonGradient.addColorStop(1, '#e0e0e0');
         }
         
         ctx.fillStyle = buttonGradient;
         ctx.fillRect(this.startGameButton.x, this.startGameButton.y, this.startGameButton.width, this.startGameButton.height);
         
         // Bordo
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
         ctx.lineWidth = 2;
         ctx.strokeRect(this.startGameButton.x, this.startGameButton.y, this.startGameButton.width, this.startGameButton.height);
         
         // Testo
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#0a0a0a';
         ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
+        ctx.textAlign = 'center';
         ctx.fillText(this.startGameButton.text, this.startGameButton.x + this.startGameButton.width / 2, this.startGameButton.y + this.startGameButton.height / 2 + 5);
     }
     
@@ -674,11 +668,11 @@ export class StartScreen {
         this.accountButtons.forEach(btn => {
             const hover = mouse.x >= btn.x && mouse.x <= btn.x + btn.width && mouse.y >= btn.y && mouse.y <= btn.y + btn.height;
             // background
-            ctx.fillStyle = hover ? 'rgba(55, 60, 68, 0.95)' : 'rgba(35, 38, 45, 0.92)';
+            ctx.fillStyle = hover ? 'rgba(36, 36, 40, 0.96)' : 'rgba(24, 24, 26, 0.94)';
             this.roundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, 8);
             ctx.fill();
             // border
-            ctx.strokeStyle = hover ? 'rgba(74, 144, 226, 0.95)' : 'rgba(120, 120, 120, 0.6)';
+            ctx.strokeStyle = hover ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.26)';
             ctx.lineWidth = 2;
             this.roundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, 8);
             ctx.stroke();
