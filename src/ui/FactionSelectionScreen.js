@@ -74,12 +74,13 @@ export class FactionSelectionScreen {
         
         // Pulsante conferma
         this.confirmButton = {
-            x: Math.round(this.x + this.width / 2 - 100),
-            y: Math.round(this.y + this.height - 80),
             width: 200,
             height: 50,
             text: 'CONFERMA SCELTA'
         };
+        // Posiziona il pulsante conferma sotto le carte
+        this.confirmButton.x = Math.round(this.x + (this.width - this.confirmButton.width) / 2);
+        this.confirmButton.y = Math.round(this.y + 180 + 120 + 40); // startY + cardHeight + spacing
         
         // Rigenera stelle
         this.stars = this.generateStars(80);
@@ -141,8 +142,9 @@ export class FactionSelectionScreen {
         const cardWidth = 180;
         const cardHeight = 100;
         const cardSpacing = 20;
-        const startX = this.x + 60;
-        const startY = this.y + 200;
+        const totalWidth = (cardWidth * this.factions.length) + (cardSpacing * (this.factions.length - 1));
+        const startX = Math.round(this.x + (this.width - totalWidth) / 2);
+        const startY = Math.round(this.y + 180);
 
         for (let index = 0; index < this.factions.length; index++) {
             const faction = this.factions[index];
@@ -357,8 +359,9 @@ export class FactionSelectionScreen {
         const cardWidth = 180;
         const cardHeight = 120;
         const cardSpacing = 20;
-        const startX = this.x + 60;
-        const startY = this.y + 200;
+        const totalWidth = (cardWidth * this.factions.length) + (cardSpacing * (this.factions.length - 1));
+        const startX = Math.round(this.x + (this.width - totalWidth) / 2);
+        const startY = Math.round(this.y + 180);
         
         this.factions.forEach((faction, index) => {
             const cardX = startX + index * (cardWidth + cardSpacing);
@@ -421,18 +424,21 @@ export class FactionSelectionScreen {
     
     // Disegna messaggi
     drawMessages(ctx) {
+        // Posiziona i messaggi sotto il pulsante conferma
+        const messageY = this.confirmButton.y + this.confirmButton.height + 25;
+        
         if (this.errorMessage) {
             ctx.fillStyle = '#e74c3c';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.errorMessage, this.x + this.width / 2, this.y + this.height - 20);
+            ctx.fillText(this.errorMessage, this.x + this.width / 2, messageY);
         }
         
         if (this.successMessage) {
             ctx.fillStyle = '#27ae60';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.successMessage, this.x + this.width / 2, this.y + this.height - 20);
+            ctx.fillText(this.successMessage, this.x + this.width / 2, messageY);
         }
     }
 }
