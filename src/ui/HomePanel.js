@@ -394,6 +394,12 @@ export class HomePanel extends UIComponent {
     
     hide() {
         this.visible = false;
+        
+        // Rimuovi gli event listener quando il pannello viene nascosto
+        if (this.starEnergyClickHandler && this.game.canvas) {
+            this.game.canvas.removeEventListener('click', this.starEnergyClickHandler);
+            this.starEnergyClickHandler = null;
+        }
         this.isOpen = false; // Sincronizza isOpen con visible
     }
     
@@ -3100,26 +3106,35 @@ export class HomePanel extends UIComponent {
         if (!this.starEnergyClickHandler) {
             this.starEnergyClickHandler = (e) => {
                 if (this.selectedCategory !== 'starenergy') return;
+                if (!this.game.canvas) return;
 
-                const rect = e.target.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const clickY = e.clientY - rect.top;
+                // Ottieni le coordinate reali del canvas
+                const canvasRect = this.game.canvas.getBoundingClientRect();
                 
-                // Coordinate del bottone
-                const buttonX = centerX + panelWidth/2 - 100;
-                const buttonY = centerY + 150;
-                const buttonWidth = 200;
-                const buttonHeight = 40;
+                // Calcola le coordinate del click relative al canvas
+                const canvasX = e.clientX - canvasRect.left;
+                const canvasY = e.clientY - canvasRect.top;
+                
+                // Coordinate del bottone nel canvas
+                const buttonX = centerX + panelWidth/2 - 150; // Aggiornato con le nuove dimensioni
+                const buttonY = centerY + 180;
+                const buttonWidth = 300;
+                const buttonHeight = 50;
 
-                // Controlla se il click è sul bottone
-                if (clickX >= buttonX && clickX <= buttonX + buttonWidth &&
-                    clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+                // Controlla se il click è sul bottone con un piccolo padding per maggiore tolleranza
+                const padding = 2;
+                if (canvasX >= buttonX - padding && 
+                    canvasX <= buttonX + buttonWidth + padding &&
+                    canvasY >= buttonY - padding && 
+                    canvasY <= buttonY + buttonHeight + padding) {
                     this.useStarEnergy();
                 }
             };
             
-            // Aggiungi l'event listener
-            document.addEventListener('click', this.starEnergyClickHandler);
+            // Aggiungi l'event listener al canvas invece che al document
+            if (this.game.canvas) {
+                this.game.canvas.addEventListener('click', this.starEnergyClickHandler);
+            }
         }
 
         // Sfondo pannello principale (uniforme scuro)
