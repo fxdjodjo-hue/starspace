@@ -19,6 +19,7 @@ export class StartScreen {
         this.currentAccount = null;
         this.currentAccountId = null;
         this.accountExists = false;
+        this.accountButtons = [];
         
         // Animazioni
         this.animationTime = 0;
@@ -34,6 +35,9 @@ export class StartScreen {
         // Tracking dimensioni canvas
         this.lastCanvasWidth = this.game.canvas.width;
         this.lastCanvasHeight = this.game.canvas.height;
+
+        // Prepara lista account
+        this.refreshAccountButtons();
     }
     // === Gestione indice account (nickname -> accountId) ===
     loadAccountsIndex() {
@@ -59,6 +63,25 @@ export class StartScreen {
     generateAccountId() {
         const rand = Math.random().toString(36).slice(2, 10);
         return `acc_${Date.now()}_${rand}`;
+    }
+
+    // Crea bottoni per gli account esistenti
+    refreshAccountButtons() {
+        const idx = this.loadAccountsIndex();
+        const listIds = Array.isArray(idx.list) ? idx.list : [];
+        const items = listIds.map(id => ({ id, nickname: (idx.byId?.[id]?.nickname) || (Object.keys(idx.byName || {}).find(n => idx.byName[n] === id) || id), lastPlayed: idx.byId?.[id]?.lastPlayed || 0 }));
+        // Ordina per lastPlayed desc
+        items.sort((a,b) => (b.lastPlayed||0) - (a.lastPlayed||0));
+
+        // Layout semplice: colonna a sinistra
+        const x = Math.round(this.x + 40);
+        const startY = Math.round(this.y + 120);
+        const w = 220;
+        const h = 36;
+        const gap = 10;
+        this.accountButtons = items.slice(0, 8).map((acc, i) => ({
+            x, y: startY + i * (h + gap), width: w, height: h, accountId: acc.id, label: acc.nickname
+        }));
     }
 
     
@@ -283,6 +306,9 @@ export class StartScreen {
         
         // Messaggi
         this.drawMessages(ctx);
+
+        // Lista account esistenti (colonna sinistra)
+        this.drawAccountsList(ctx);
     }
     
     // Disegna sfondo animato
@@ -522,6 +548,19 @@ export class StartScreen {
             return true;
         }
         
+        // Click su un account salvato
+        for (const btn of this.accountButtons) {
+            if (x >= btn.x && x <= btn.x + btn.width && y >= btn.y && y <= btn.y + btn.height) {
+                // Imposta accountId corrente e carica
+                this.currentAccountId = btn.accountId;
+                this.game.currentAccountId = btn.accountId;
+                this.loadAccountDataById(btn.accountId);
+                this.hide();
+                this.game.startGameAudio();
+                return true;
+            }
+        }
+        
         
         // Click su pulsante inizia gioco
         if (this.isMouseOverButton(this.startGameButton)) {
@@ -587,6 +626,32 @@ export class StartScreen {
             this.hide();
             this.game.factionSelectionScreen.show();
         }
+    }
+
+    // Disegna lista degli account salvati
+    drawAccountsList(ctx) {
+        if (!this.accountButtons || this.accountButtons.length === 0) return;
+        // Titolo
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Account salvati', this.x + 40, this.y + 100);
+
+        // Bottoni
+        const mouse = this.game.input?.mouse || { x: -1, y: -1 };
+        this.accountButtons.forEach(btn => {
+            const hover = mouse.x >= btn.x && mouse.x <= btn.x + btn.width && mouse.y >= btn.y && mouse.y <= btn.y + btn.height;
+            ctx.fillStyle = hover ? 'rgba(74,144,226,0.8)' : 'rgba(42,42,42,0.8)';
+            ctx.fillRect(btn.x, btn.y, btn.width, btn.height);
+            ctx.strokeStyle = hover ? '#4a90e2' : '#666666';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(btn.x, btn.y, btn.width, btn.height);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(btn.label, btn.x + 12, btn.y + 24);
+        });
     }
     
     // Gestisce caricamento salvataggio
