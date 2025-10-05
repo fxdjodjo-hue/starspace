@@ -3495,16 +3495,18 @@ export class HomePanel extends UIComponent {
         const currentFaction = this.game.factionSystem.getCurrentFaction();
         const allFactions = this.game.factionSystem.getAllFactions();
         
-        // Calcola le dimensioni e posizioni dinamicamente - sfruttiamo tutto lo spazio
-        const panelWidth = 600;
+        // Calcola le dimensioni e posizioni per centrare tutto
+        const panelWidth = 800; // Aumentato per un layout più spazioso
         const panelHeight = 180;
-        const panelX = x + 20;
+        const panelX = x + (this.contentWidth - panelWidth) / 2; // Centrato orizzontalmente
         const panelY = y + 30;
         
-        // Titolo
+        // Titolo centrato
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText('Sistema Fazioni', panelX, panelY - 10);
+        ctx.textAlign = 'center';
+        ctx.fillText('Sistema Fazioni', panelX + panelWidth/2, panelY - 10);
+        ctx.textAlign = 'left';
         
         // Informazioni fazione corrente
         if (currentFaction) {
@@ -3513,12 +3515,13 @@ export class HomePanel extends UIComponent {
             this.drawNoFactionInfo(ctx, panelX, panelY, panelWidth, panelHeight);
         }
         
-        // Lista fazioni disponibili - sfruttiamo tutto lo spazio
-        const cardWidth = 280;
-        const cardHeight = 300;
-        const cardSpacing = 20;
-        const cardsStartX = panelX;
-        const cardsStartY = panelY + panelHeight + 30;
+        // Lista fazioni disponibili - centrata e spaziata uniformemente
+        const cardWidth = 260; // Ridotto per un layout più compatto
+        const cardHeight = 320; // Aumentato per il contenuto
+        const totalCards = allFactions.length;
+        const totalWidth = (cardWidth * totalCards) + (20 * (totalCards - 1)); // Larghezza totale con spaziatura
+        const cardsStartX = panelX + (panelWidth - totalWidth) / 2; // Centrato orizzontalmente
+        const cardsStartY = panelY + panelHeight + 40; // Aumentato spazio verticale
         
         this.drawFactionList(ctx, cardsStartX, cardsStartY, allFactions, currentFaction, cardWidth, cardHeight, cardSpacing);
     }
@@ -3595,9 +3598,13 @@ export class HomePanel extends UIComponent {
     
     // Disegna lista delle fazioni
     drawFactionList(ctx, x, y, factions, currentFaction, cardWidth = 280, cardHeight = 300, cardSpacing = 20) {
+        // Titolo centrato
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 18px Arial';
-        ctx.fillText('Fazioni Disponibili', x, y - 20);
+        ctx.textAlign = 'center';
+        const totalWidth = (cardWidth * factions.length) + (cardSpacing * (factions.length - 1));
+        ctx.fillText('Fazioni Disponibili', x + totalWidth/2, y - 20);
+        ctx.textAlign = 'left';
         
         const startX = x;
         const startY = y;
