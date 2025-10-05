@@ -243,22 +243,15 @@ export class FactionSelectionScreen {
         // Salva tutto nell'account per-id
         this.saveAccountData(accountId);
         
-        // Avvia la transizione tramite TransitionManager
-        if (!this.game.transitionManager) {
-            console.error('TransitionManager non trovato!');
-            // Fallback: avvia il gioco direttamente
-            this.hide();
-            this.game.startGameAudio();
-            return;
-        }
-
-        this.game.transitionManager.startGameZoomOut(() => {
-            this.hide();
-            this.game.startGameAudio();
-        });
+        // Nascondi subito la schermata per evitare click multipli
+        this.isVisible = false;
         
+        // Mostra notifica di benvenuto
         const faction = this.factions.find(f => f.id === this.selectedFaction);
         this.game.notifications.add(`Benvenuto nella fazione ${faction.fullName}!`, 'success');
+        
+        // Avvia il gioco
+        this.game.startGameAudio();
     }
     
     // Salva tutti i dati per l'account specifico
