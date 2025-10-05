@@ -15,8 +15,8 @@ export class StartScreen {
         this.cursorVisible = true;
         this.cursorBlinkTime = 0;
         
-        // Sistema account
-        this.currentAccount = null;
+        // Sistema salvataggio globale (unico)
+        this.currentAccount = null; // compatibilità, non più usato per la chiave
         this.accountExists = false;
         
         // Animazioni
@@ -50,23 +50,21 @@ export class StartScreen {
         return stars;
     }
     
-    // Controlla se il giocatore ha già scelto una fazione
+    // Controlla se il giocatore ha già scelto una fazione (legacy)
     checkExistingFaction() {
         const savedFaction = localStorage.getItem('mmorpg_player_faction');
         return savedFaction && ['venus', 'mars', 'eic'].includes(savedFaction);
     }
     
-    // Controlla se un account esiste
-    checkAccountExists(accountName) {
-        const accountKey = `mmorpg_account_${accountName}`;
-        const accountData = localStorage.getItem(accountKey);
+    // Controlla se esiste il salvataggio globale
+    checkAccountExists() {
+        const accountData = localStorage.getItem('mmorpg_account');
         return accountData !== null;
     }
     
-    // Carica i dati di un account esistente
-    loadAccountData(accountName) {
-        const accountKey = `mmorpg_account_${accountName}`;
-        const accountData = localStorage.getItem(accountKey);
+    // Carica i dati dal salvataggio globale
+    loadAccountData() {
+        const accountData = localStorage.getItem('mmorpg_account');
         
         if (accountData) {
             try {
@@ -98,7 +96,7 @@ export class StartScreen {
                     Object.assign(this.game.ship.resources, data.resources);
                 }
                 
-                console.log(`✅ Account ${accountName} caricato con successo`);
+                console.log(`✅ Salvataggio globale caricato con successo`);
             } catch (error) {
                 console.error('❌ Errore nel caricamento account:', error);
                 this.showError('Errore nel caricamento account');
@@ -509,17 +507,17 @@ export class StartScreen {
     handleStartGame() {
         const playerName = this.playerName.trim() || 'Player';
         
-        // Imposta nome account
+        // Imposta nome account (solo per nickname visuale)
         this.currentAccount = playerName;
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
         
-        // Controlla se l'account esiste già
-        this.accountExists = this.checkAccountExists(playerName);
+        // Controlla se esiste già il salvataggio globale
+        this.accountExists = this.checkAccountExists();
         
         if (this.accountExists) {
-            // Account esistente - carica tutto dal salvataggio
-            this.loadAccountData(playerName);
+            // Salvataggio esistente - carica tutto
+            this.loadAccountData();
             
             // Nasconde la StartScreen
             this.hide();

@@ -2,7 +2,7 @@
 export class SaveSystem {
     constructor(game) {
         this.game = game;
-        this.saveKey = 'mmorpg_save_data';
+        this.saveKey = 'mmorpg_account'; // unico salvataggio globale
         this.autoSaveInterval = 30000; // Salvataggio automatico ogni 30 secondi
         this.backupInterval = 300000; // Backup ogni 5 minuti
         this.lastSaveTime = 0;
@@ -30,7 +30,23 @@ export class SaveSystem {
         // Salva prima che la pagina venga chiusa
         this.setupBeforeUnload();
         
-        console.log('💾 SaveSystem initialized with best practices');
+        // Pulizia chiavi legacy per evitare conflitti
+        try {
+            const legacyPrefixes = ['mmorpg_account_', 'mmorpg_save_', 'inventory'];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key) continue;
+                if (legacyPrefixes.some(p => key.startsWith(p))) {
+                    // Non rimuovere mmorpg_account (nuovo globale)
+                    if (key === 'mmorpg_account') continue;
+                    localStorage.removeItem(key);
+                }
+            }
+        } catch (e) {
+            // best effort
+        }
+        
+        console.log('💾 SaveSystem initialized with best practices (global save)');
     }
     
     /**
