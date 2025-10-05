@@ -102,21 +102,21 @@ export class StartScreen {
         // Dimensioni responsive
         this.width = Math.min(900, this.game.canvas.width * 0.8);
         this.height = Math.min(700, this.game.canvas.height * 0.8);
-        this.x = (this.game.canvas.width - this.width) / 2;
-        this.y = (this.game.canvas.height - this.height) / 2;
+        this.x = Math.round((this.game.canvas.width - this.width) / 2);
+        this.y = Math.round((this.game.canvas.height - this.height) / 2);
         
         // Input fields
         this.nicknameInput = {
-            x: this.x + 80,
-            y: this.y + 280,
+            x: Math.round(this.x + 80),
+            y: Math.round(this.y + 280),
             width: 400,
             height: 50,
             placeholder: 'Inserisci il tuo nickname...'
         };
         
         this.passwordInput = {
-            x: this.x + 80,
-            y: this.y + 350,
+            x: Math.round(this.x + 80),
+            y: Math.round(this.y + 350),
             width: 400,
             height: 50,
             placeholder: 'Inserisci la tua password...'
@@ -124,8 +124,8 @@ export class StartScreen {
         
         // Pulsanti
         this.loginButton = {
-            x: this.x + 80,
-            y: this.y + 450,
+            x: Math.round(this.x + 80),
+            y: Math.round(this.y + 450),
             width: 180,
             height: 55,
             text: 'LOGIN',
@@ -133,8 +133,8 @@ export class StartScreen {
         };
         
         this.registerButton = {
-            x: this.x + 280,
-            y: this.y + 450,
+            x: Math.round(this.x + 280),
+            y: Math.round(this.y + 450),
             width: 180,
             height: 55,
             text: 'REGISTRATI',
@@ -142,26 +142,18 @@ export class StartScreen {
         };
         
         this.modeToggleButton = {
-            x: this.x + 480,
-            y: this.y + 450,
+            x: Math.round(this.x + 480),
+            y: Math.round(this.y + 450),
             width: 180,
             height: 55,
             text: 'NUOVO ACCOUNT',
             gradient: ['#f39c12', '#e67e22']
         };
         
-        this.loadButton = {
-            x: this.x + 80,
-            y: this.y + 520,
-            width: 200,
-            height: 50,
-            text: 'CARICA SALVATAGGIO',
-            gradient: ['#8e44ad', '#9b59b6']
-        };
         
         this.startGameButton = {
-            x: this.x + 300,
-            y: this.y + 450,
+            x: Math.round(this.x + 300),
+            y: Math.round(this.y + 450),
             width: 200,
             height: 55,
             text: 'INIZIA GIOCO',
@@ -507,10 +499,6 @@ export class StartScreen {
             this.drawModernButton(ctx, this.modeToggleButton, false);
         }
         
-        if (this.hasExistingSave) {
-            this.drawModernButton(ctx, this.loadButton, false);
-        }
-        
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
             this.drawModernButton(ctx, this.startGameButton, false);
         }
@@ -736,12 +724,6 @@ export class StartScreen {
                 this.clearMessages();
                 return true;
             }
-        }
-        
-        if (this.hasExistingSave && this.isMouseOverButton(this.loadButton)) {
-            console.log('✅ Click su pulsante carica salvataggio');
-            this.handleLoadGame();
-            return true;
         }
         
         if (this.game.authSystem && this.game.authSystem.isLoggedIn) {
