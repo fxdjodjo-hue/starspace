@@ -340,6 +340,12 @@ export class StartScreen {
         ctx.strokeStyle = '#4a90e2';
         ctx.lineWidth = 2;
         ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
+        // Reset completo delle ombre per evitare ghost sui testi
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowColor = 'transparent';
         }
     
     // Disegna logo
@@ -357,6 +363,10 @@ export class StartScreen {
         ctx.font = '16px Arial';
         ctx.fillStyle = '#4a90e2';
         ctx.fillText('MMORPG Spaziale', logoX, logoY + 25);
+
+        // Assicurati che i testi successivi non ereditino ombre
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
     }
     
     // Disegna input nome utente
@@ -366,6 +376,8 @@ export class StartScreen {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Inserisci il tuo nome:', this.x + this.width / 2, this.nameInput.y - 15);
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
         
         // Input field
         ctx.fillStyle = 'rgba(42, 42, 42, 0.8)';
@@ -392,6 +404,8 @@ export class StartScreen {
         }
         
         ctx.fillText(displayText, this.nameInput.x + 15, this.nameInput.y + 30);
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
     }
     
     
