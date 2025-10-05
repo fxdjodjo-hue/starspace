@@ -3090,11 +3090,11 @@ export class HomePanel extends UIComponent {
     drawStarEnergyContent(ctx, x, y) {
         const starEnergyInfo = this.game.ship.getStarEnergyInfo();
         
-        // Pannello principale centrale
-        const centerX = x + this.contentWidth / 2 - 200;
-        const centerY = y + 50;
-        const panelWidth = 400;
-        const panelHeight = 500;
+        // Pannello principale centrale - più largo e alto
+        const centerX = x + this.contentWidth / 2 - 300; // Aumentato offset per pannello più largo
+        const centerY = y + 30; // Spostato più in alto
+        const panelWidth = 600; // Aumentato larghezza
+        const panelHeight = 600; // Aumentato altezza
 
         // Aggiungi handler per il click se non esiste
         if (!this.starEnergyClickHandler) {
@@ -3140,19 +3140,19 @@ export class HomePanel extends UIComponent {
         ctx.fillText('STAR ENERGY', centerX + panelWidth/2, centerY + 40);
         ctx.shadowBlur = 0;
 
-        // Energia disponibile con effetto glow
+        // Energia disponibile con effetto glow - più grande e centrata
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#4a90e2';
         ctx.shadowBlur = 15;
-        ctx.font = 'bold 48px Arial';
-        ctx.fillText(`${Math.floor(starEnergyInfo.current)}`, centerX + panelWidth/2, centerY + 100);
+        ctx.font = 'bold 72px Arial'; // Font più grande
+        ctx.fillText(`${Math.floor(starEnergyInfo.current)}`, centerX + panelWidth/2, centerY + 120); // Spostato più in basso
         ctx.shadowBlur = 0;
         
-        // Bottone di conversione con effetto hover
-        const buttonX = centerX + panelWidth/2 - 100;
-        const buttonY = centerY + 150;
-        const buttonWidth = 200;
-        const buttonHeight = 40;
+        // Bottone di conversione con effetto hover - più grande e spostato
+        const buttonX = centerX + panelWidth/2 - 150; // Centrato
+        const buttonY = centerY + 180; // Spostato più in basso
+        const buttonWidth = 300; // Più largo
+        const buttonHeight = 50; // Più alto
 
         // Sfondo bottone con gradiente
         const buttonGradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
@@ -3168,10 +3168,10 @@ export class HomePanel extends UIComponent {
         ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
         ctx.shadowBlur = 0;
 
-        // Testo bottone
+        // Testo bottone - più grande
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('CONVERT (1 ENERGY)', centerX + panelWidth/2, buttonY + 25);
+        ctx.font = 'bold 20px Arial'; // Font più grande
+        ctx.fillText('CONVERT (1 ENERGY)', centerX + panelWidth/2, buttonY + 32); // Centrato verticalmente
 
         // Info conversione
         ctx.fillStyle = '#aaaaaa';
@@ -3194,10 +3194,10 @@ export class HomePanel extends UIComponent {
         ctx.font = 'bold 16px Arial';
         ctx.fillText('CONVERSION HISTORY', centerX + panelWidth/2, historyY);
 
-        // Area di clip per la cronologia
+        // Area di clip per la cronologia - più alta
         ctx.save();
         ctx.beginPath();
-        ctx.rect(centerX + 10, historyY + 20, panelWidth - 20, 200);
+        ctx.rect(centerX + 20, historyY + 20, panelWidth - 40, 280); // Area più alta e margini maggiori
         ctx.clip();
 
         // Lista risultati precedenti
