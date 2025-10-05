@@ -38,6 +38,9 @@ export class SaveSystem {
      */
     resolveSlotKey(explicitSlotKey) {
         if (explicitSlotKey) return explicitSlotKey;
+        // Preferisci accountId locale (multi-account offline)
+        const accountId = this.game?.currentAccountId;
+        if (accountId) return accountId;
         const auth = this.game?.authSystem;
         if (auth && auth.isLoggedIn && typeof auth.getUserSaveKey === 'function') {
             return auth.getUserSaveKey();
@@ -56,12 +59,16 @@ export class SaveSystem {
             const saveData = this.collectSaveData();
             const saveDataString = JSON.stringify(saveData);
             
-            // Salva i dati principali
+            // Salva i dati principali (slot legacy)
             localStorage.setItem(`mmorpg_save_${resolvedKey}`, saveDataString);
+            // Salva anche nel contenitore per-account se stiamo usando accountId
+            try {
+                localStorage.setItem(`mmorpg_account_${resolvedKey}`, saveDataString);
+            } catch (_) {}
             
             // Crea backup solo se necessario
             if (this.shouldCreateBackup()) {
-                this.createBackup(saveData, resolvedKey);
+            this.createBackup(saveData, resolvedKey);
             }
             
             // Aggiorna statistiche
@@ -95,7 +102,11 @@ export class SaveSystem {
     load(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
-            const saveDataString = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
+            // Preferisci il contenitore per-account
+            let saveDataString = localStorage.getItem(`mmorpg_account_${resolvedKey}`);
+            if (!saveDataString) {
+                saveDataString = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
+            }
             if (!saveDataString) {
                 console.log('📁 Nessun salvataggio trovato');
                 return false;
@@ -134,7 +145,7 @@ export class SaveSystem {
     hasSave(slotKey = 'main') {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
-            const saveData = localStorage.getItem(`mmorpg_save_${resolvedKey}`);
+            const saveData = localStorage.getItem(`mmorpg_account_${resolvedKey}`) || localStorage.getItem(`mmorpg_save_${resolvedKey}`);
             return saveData !== null;
         } catch (error) {
             console.error('❌ Errore controllo salvataggio:', error);
@@ -166,6 +177,7 @@ export class SaveSystem {
         try {
             const resolvedKey = this.resolveSlotKey(slotKey);
             localStorage.removeItem(`mmorpg_save_${resolvedKey}`);
+            localStorage.removeItem(`mmorpg_account_${resolvedKey}`);
             console.log(`🗑️ Salvataggio ${resolvedKey} eliminato`);
             return true;
         } catch (error) {
