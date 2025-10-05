@@ -389,7 +389,7 @@ export class StartScreen {
         if (this.logoReady) {
             const imgW = 220; // ancora più grande
             const imgH = 220;
-            const top = this.y + 10; // più in alto
+            const top = this.y - 10; // ancora più su
             ctx.drawImage(this.logoImage, logoX - imgW / 2, top, imgW, imgH);
         }
         
