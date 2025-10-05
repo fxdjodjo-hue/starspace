@@ -1,7 +1,7 @@
 // StartScreen Minimalista - Design Pulito e Funzionale
 export class StartScreen {
     constructor(game) {
-        console.log('🏗️ StartScreen constructor - creating minimalist StartScreen');
+        console.log('🏗️ StartScreen constructor - creating login/register screen');
         this.game = game;
         this.isVisible = true;
         this.isTyping = true;
@@ -19,42 +19,6 @@ export class StartScreen {
         this.animationTime = 0;
         this.stars = this.generateStars(80);
         
-        // Fazioni
-        this.factions = [
-            {
-                id: 'venus',
-                name: 'VENUS',
-                fullName: 'Venus Research Union',
-                description: 'Scienziati all\'avanguardia',
-                color: '#9b59b6',
-                icon: '🔬'
-            },
-            {
-                id: 'mars',
-                name: 'MARS',
-                fullName: 'Mars Mining Organization',
-                description: 'Minatori esperti',
-                color: '#e74c3c',
-                icon: '⛏️'
-            },
-            {
-                id: 'eic',
-                name: 'EIC',
-                fullName: 'Earth Industries Corporation',
-                description: 'Commercianti esperti',
-                color: '#4a90e2',
-                icon: '🏢'
-            }
-        ];
-        
-        this.selectedFaction = null;
-        
-        // Controlla se il giocatore ha già scelto una fazione
-        this.hasChosenFaction = this.checkExistingFaction();
-        if (this.hasChosenFaction) {
-            this.selectedFaction = localStorage.getItem('mmorpg_player_faction');
-        }
-
         // Stato salvataggi
         this.hasExistingSave = false;
         this.availableSaves = [];
@@ -87,6 +51,7 @@ export class StartScreen {
         const savedFaction = localStorage.getItem('mmorpg_player_faction');
         return savedFaction && ['venus', 'mars', 'eic'].includes(savedFaction);
     }
+    
     
     // Aggiorna le posizioni degli elementi
     updatePositions() {
@@ -213,7 +178,6 @@ export class StartScreen {
         this.drawNameInput(ctx);
         
         // Selezione fazione
-        this.drawFactionSelection(ctx);
         
         // Pulsante inizia gioco
         this.drawStartButton(ctx);
@@ -318,72 +282,6 @@ export class StartScreen {
         ctx.fillText(displayText, this.nameInput.x + 15, this.nameInput.y + 30);
     }
     
-    // Disegna selezione fazione
-    drawFactionSelection(ctx) {
-        // Label dinamica
-        const labelText = this.hasChosenFaction ? 'La tua fazione:' : 'Seleziona fazione:';
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(labelText, this.x + 60, this.y + 280);
-        
-        const cardWidth = 180;
-        const cardHeight = 100;
-        const cardSpacing = 20;
-        const startX = this.x + 60;
-        const startY = this.y + 310;
-        
-        this.factions.forEach((faction, index) => {
-            const cardX = startX + index * (cardWidth + cardSpacing);
-            const cardY = startY;
-            const isSelected = this.selectedFaction === faction.id;
-            const isLocked = this.hasChosenFaction && !isSelected;
-            
-            // Sfondo carta
-            if (isLocked) {
-                ctx.fillStyle = 'rgba(30, 30, 30, 0.5)';
-            } else {
-                ctx.fillStyle = isSelected ? `rgba(${this.hexToRgb(faction.color)}, 0.3)` : 'rgba(42, 42, 42, 0.8)';
-            }
-            ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
-            
-            // Bordo
-            if (isLocked) {
-                ctx.strokeStyle = '#333333';
-                ctx.lineWidth = 1;
-            } else {
-                ctx.strokeStyle = isSelected ? faction.color : '#666666';
-                ctx.lineWidth = isSelected ? 3 : 2;
-            }
-            ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
-            
-            // Icona
-            ctx.fillStyle = isLocked ? '#555555' : faction.color;
-            ctx.font = '24px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(faction.icon, cardX + cardWidth / 2, cardY + 35);
-            
-            // Nome fazione
-            ctx.fillStyle = isLocked ? '#666666' : '#ffffff';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText(faction.name, cardX + cardWidth / 2, cardY + 55);
-            
-            // Descrizione
-            ctx.fillStyle = isLocked ? '#444444' : '#cccccc';
-            ctx.font = '11px Arial';
-            ctx.fillText(faction.description, cardX + cardWidth / 2, cardY + 75);
-            
-            // Overlay "bloccato" se la fazione è già stata scelta
-            if (isLocked) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
-                
-                ctx.fillStyle = '#999999';
-                ctx.font = 'bold 12px Arial';
-                ctx.fillText('GIÀ SCELTA', cardX + cardWidth / 2, cardY + cardHeight / 2);
-            }
-        });
-    }
     
     // Disegna pulsante inizia gioco
     drawStartButton(ctx) {
@@ -530,27 +428,6 @@ export class StartScreen {
             return true;
         }
         
-        // Click su fazioni
-        this.factions.forEach((faction, index) => {
-            const cardWidth = 180;
-            const cardHeight = 100;
-            const cardSpacing = 20;
-            const startX = this.x + 60;
-            const startY = this.y + 310;
-            const cardX = startX + index * (cardWidth + cardSpacing);
-            const cardY = startY;
-            
-            if (x >= cardX && x <= cardX + cardWidth && y >= cardY && y <= cardY + cardHeight) {
-                // Se la fazione è già stata scelta e non è quella selezionata, non permettere il cambio
-                if (this.hasChosenFaction && this.selectedFaction !== faction.id) {
-                    this.showError('Non puoi cambiare fazione! È una scelta permanente.');
-                    return true;
-                }
-                
-                this.selectedFaction = faction.id;
-                return true;
-            }
-        });
         
         // Click su pulsante inizia gioco
         if (this.isMouseOverButton(this.startGameButton)) {
@@ -576,57 +453,47 @@ export class StartScreen {
     
     // Gestisce avvio nuovo gioco
     handleStartGame() {
-        // Se è la prima volta, richiedi selezione fazione
-        if (!this.hasChosenFaction && !this.selectedFaction) {
-            this.showError('Seleziona una fazione');
-            return;
-        }
-        
         const playerName = this.playerName.trim() || 'Player';
         
         // Imposta nome giocatore
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
         
-        // Usa fazione esistente o quella appena selezionata
-        const factionToUse = this.hasChosenFaction ? 
-            localStorage.getItem('mmorpg_player_faction') : 
-            this.selectedFaction;
+        // Controlla se il giocatore ha già scelto una fazione
+        const hasChosenFaction = this.checkExistingFaction();
         
-        // Imposta fazione (scelta permanente)
-        this.game.factionSystem.joinFaction(factionToUse);
-        
-        // Salva la scelta fazione nel localStorage solo se è la prima volta
-        if (!this.hasChosenFaction) {
-            localStorage.setItem('mmorpg_player_faction', this.selectedFaction);
+        if (hasChosenFaction) {
+            // Giocatore esistente - vai direttamente al gioco
+            const savedFaction = localStorage.getItem('mmorpg_player_faction');
+            this.game.factionSystem.joinFaction(savedFaction);
+            
+            // Imposta mappa iniziale
+            const startingMaps = {
+                'venus': 'v1',
+                'mars': 'm1',
+                'eic': 'e1'
+            };
+            
+            this.game.mapManager.currentMap = startingMaps[savedFaction] || 'v1';
+            this.game.mapManager.loadCurrentMapInstance();
+            
+            // Nasconde la StartScreen
+            this.hide();
+            
+            // Avvia audio
+            this.game.startGameAudio();
+            
+            // Salva automaticamente
+            if (this.game.saveSystem) {
+                this.game.saveSystem.save('main');
+            }
+            
+            this.game.notifications.add(`Bentornato ${playerName}!`, 'success');
+        } else {
+            // Nuovo giocatore - vai alla selezione fazione
+            this.hide();
+            this.game.factionSelectionScreen.show();
         }
-        
-        // Imposta mappa iniziale
-        const startingMaps = {
-            'venus': 'v1',
-            'mars': 'm1',
-            'eic': 'e1'
-        };
-        
-        this.game.mapManager.currentMap = startingMaps[factionToUse] || 'v1';
-        this.game.mapManager.loadCurrentMapInstance();
-        
-        // Nasconde la StartScreen
-        this.hide();
-        
-        // Avvia audio
-        this.game.startGameAudio();
-        
-        // Salva automaticamente
-        if (this.game.saveSystem) {
-            this.game.saveSystem.save('main');
-        }
-        
-        const faction = this.factions.find(f => f.id === factionToUse);
-        const message = this.hasChosenFaction ? 
-            `Bentornato ${playerName} nella fazione ${faction.fullName}!` :
-            `Benvenuto ${playerName} nella fazione ${faction.fullName}!`;
-        this.game.notifications.add(message, 'success');
     }
     
     // Gestisce caricamento salvataggio

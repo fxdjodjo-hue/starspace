@@ -30,6 +30,7 @@ import { InventoryItem } from './src/systems/InventoryItem.js';
 // import { DreadspireBackground } from './modules/DreadspireBackground.js';
 import { HomePanel } from './src/ui/HomePanel.js';
 import { StartScreen } from './src/ui/StartScreen.js';
+import { FactionSelectionScreen } from './src/ui/FactionSelectionScreen.js';
 import { QuestTracker } from './src/systems/QuestTracker.js';
 import { CategorySkillbar } from './src/ui/CategorySkillbar.js';
 import { IconSystemUI } from './modules/IconSystemUI.js';
@@ -155,6 +156,10 @@ class Game {
         // Schermata di selezione iniziale
         this.startScreen = new StartScreen(this);
         console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
+        
+        // Schermata di selezione fazione
+        this.factionSelectionScreen = new FactionSelectionScreen(this);
+        console.log('✅ FactionSelectionScreen created');
         
         // Test globale per verificare se gli eventi da tastiera funzionano
         document.addEventListener('keydown', (e) => {
@@ -401,7 +406,7 @@ class Game {
             // Reset solo dei tasti processati nel StartScreen
             this.input.resetKeysJustPressed();
 
-            // Mouse (click su input/fazioni/start)
+            // Mouse (click su input/start)
             if (this.input.isLeftClickJustReleased()) {
                 const mousePos = this.input.getMousePosition();
                 if (this.startScreen.handleClick(mousePos.x, mousePos.y)) {
@@ -410,6 +415,32 @@ class Game {
             }
 
             return; // STOP - Non aggiornare/gestire altro finché la start screen è visibile
+        }
+        
+        // Se la FactionSelectionScreen è visibile, gestisci SOLO quella e ferma tutto il resto
+        if (this.factionSelectionScreen.isVisible) {
+            this.factionSelectionScreen.update(16); // 16ms = ~60fps
+
+            // Tastiera (ESC per tornare indietro)
+            const keys = this.input.getPressedKeys();
+            keys.forEach(key => {
+                if (this.factionSelectionScreen.handleKeyPress(key)) {
+                    this.input.resetKey(key);
+                }
+            });
+            
+            // Reset solo dei tasti processati nella FactionSelectionScreen
+            this.input.resetKeysJustPressed();
+
+            // Mouse (click su fazioni/conferma)
+            if (this.input.isLeftClickJustReleased()) {
+                const mousePos = this.input.getMousePosition();
+                if (this.factionSelectionScreen.handleClick(mousePos.x, mousePos.y)) {
+                    this.input.resetLeftClickReleased();
+                }
+            }
+
+            return; // STOP - Non aggiornare/gestire altro finché la faction selection screen è visibile
         }
         
         // Il gioco principale inizia SOLO quando la StartScreen non è visibile
@@ -1326,6 +1357,12 @@ class Game {
         if (this.startScreen.isVisible) {
             this.startScreen.draw(this.ctx);
             return; // Non disegnare il gioco se la start screen è visibile
+        }
+        
+        // Disegna la schermata di selezione fazione se visibile
+        if (this.factionSelectionScreen.isVisible) {
+            this.factionSelectionScreen.draw(this.ctx);
+            return; // Non disegnare il gioco se la faction selection screen è visibile
         }
         
         // Il pulsante di logout verrà disegnato alla fine, dopo tutti gli altri elementi UI
