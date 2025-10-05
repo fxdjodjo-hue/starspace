@@ -124,7 +124,7 @@ export class StartScreen {
         // Pulsanti unificati
         this.loginButton = {
             x: Math.round(this.x + 80),
-            y: Math.round(this.y + 450),
+            y: Math.round(this.y + 520),
             width: 180,
             height: 55,
             text: 'LOGIN',
@@ -133,7 +133,7 @@ export class StartScreen {
         
         this.registerButton = {
             x: Math.round(this.x + 280),
-            y: Math.round(this.y + 450),
+            y: Math.round(this.y + 520),
             width: 180,
             height: 55,
             text: 'REGISTRATI',
@@ -142,7 +142,7 @@ export class StartScreen {
         
         this.startGameButton = {
             x: Math.round(this.x + 300),
-            y: Math.round(this.y + 450),
+            y: Math.round(this.y + 520),
             width: 200,
             height: 55,
             text: 'INIZIA GIOCO',
@@ -374,7 +374,7 @@ export class StartScreen {
         ctx.fillStyle = '#4a90e2';
         ctx.font = '16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('La tua fazione sarà caricata automaticamente', this.x + this.width / 2, this.y + 420);
+        ctx.fillText('La tua fazione sarà caricata automaticamente', this.x + this.width / 2, this.y + 480);
         
         // Pulsanti
         this.drawModernButton(ctx, this.loginButton, this.mode === 'login');
