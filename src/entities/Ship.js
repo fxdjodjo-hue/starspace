@@ -923,18 +923,7 @@ export class Ship {
     }
     
     drawTarget(ctx, camera) {
-        if (this.isMoving) {
-            // Disegna il target di movimento (applica la camera)
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            
-            ctx.beginPath();
-            ctx.arc(this.targetX - camera.x, this.targetY - camera.y, 10, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            ctx.setLineDash([]);
-        }
+        // Rimosso l'indicatore verde di movimento
     }
     
     // Disegna barre HP e Scudo con tema unificato
