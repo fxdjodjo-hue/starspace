@@ -387,9 +387,9 @@ export class StartScreen {
 
         // Disegna immagine logo sopra il titolo, se caricata
         if (this.logoReady) {
-            const imgW = 140; // ingrandito
-            const imgH = 140;
-            const top = this.y + 40; // margine dall'inizio del pannello
+            const imgW = 220; // ancora più grande
+            const imgH = 220;
+            const top = this.y + 10; // più in alto
             ctx.drawImage(this.logoImage, logoX - imgW / 2, top, imgW, imgH);
         }
         
