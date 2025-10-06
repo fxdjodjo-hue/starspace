@@ -47,24 +47,43 @@ export class DeathPopup {
     }
 
     performRespawn(ship) {
-        if (this.nearestStation) {
-            // Respawn nella stazione più vicina
-            ship.x = this.nearestStation.x + 100;
-            ship.y = this.nearestStation.y;
-        } else {
-            // Fallback: respawn al centro della mappa
-            ship.x = 0;
-            ship.y = 0;
+        const game = window.gameInstance;
+        const factionId = (game?.factionSystem?.currentFaction) || ship.faction || 'venus';
+        const startByFaction = { venus: 'v1', mars: 'm1', eic: 'e1' };
+        const homeMap = startByFaction[factionId] || 'v1';
+
+        // Cambia sempre mappa alla x1 di fazione (space station)
+        if (game && game.mapManager) {
+            const mm = game.mapManager;
+            if (mm.currentMap !== homeMap) {
+                mm.changeMap(homeMap, ship);
+                // Se per qualche motivo non è cambiata, forza il cambio
+                if (mm.currentMap !== homeMap) {
+                    mm.currentMap = homeMap;
+                    mm.createPortalsForCurrentMap();
+                    mm.loadCurrentMapInstance();
+                }
+            }
         }
 
-        // Ripristina HP e scudo
-        ship.hp = ship.maxHP;
-        ship.shield = ship.maxShield;
+        // Posiziona presso la stazione spaziale (se presente), altrimenti centro mappa
+        if (game && game.spaceStation) {
+            ship.x = game.spaceStation.x + 120;
+            ship.y = game.spaceStation.y;
+        }
+
+        // Ripristina HP e scudo: respawn al minimo (per poi riparare)
+        const minimalHp = Math.max(1, Math.floor(ship.maxHP * 0.05));
+        ship.hp = minimalHp;
+        ship.shield = 0;
         ship.isDead = false; // La nave non è più morta
 
         // Ferma il movimento
         ship.vx = 0;
         ship.vy = 0;
+        ship.isMoving = false;
+        ship.targetX = ship.x;
+        ship.targetY = ship.y;
 
         // Cancella target e combattimento
         if (ship.selectedTarget && ship.selectedTarget.deselect) {
@@ -83,8 +102,16 @@ export class DeathPopup {
         ship.lastCombatTime = Date.now();
 
         // Notifica respawn
-        if (window.gameInstance && window.gameInstance.notifications) {
-            window.gameInstance.notifications.add('🚀 Respawn completato!', 'respawn');
+        if (game && game.notifications) {
+            game.notifications.add('🚀 Respawn alla stazione di fazione', 'respawn');
+        }
+
+        // Salva immediatamente la nuova mappa/posizione per coerenza con i login successivi
+        if (game && game.saveSystem && typeof game.saveSystem.save === 'function') {
+            try {
+                const slotKey = game.currentAccountId || 'main';
+                game.saveSystem.save(slotKey);
+            } catch (_) {}
         }
     }
 

@@ -11,6 +11,18 @@ import { ShieldEffect } from '../systems/ShieldEffect.js';
 import { MISSILE_CONFIG } from '../utils/Constants.js';
 import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
 
+// Configurazione semplice di due modelli di nave con statistiche diverse
+const SHIP_MODELS = {
+    1: { // Nave base
+        maxHP: 1000,
+        maxShield: 1000
+    },
+    2: { // Variante alternativa
+        maxHP: 1600,
+        maxShield: 600
+    }
+};
+
 export class Ship {
     constructor(x, y, size = 40, game = null) {
         this.x = x;
@@ -57,7 +69,7 @@ export class Ship {
 
         
         // Sistema di combattimento con proiettili
-        this.maxHP = 1000; // HP base della nave
+        this.maxHP = 1000; // Valore iniziale, verrà sovrascritto dal modello selezionato
         this.hp = this.maxHP;
         this.isDead = false; // Traccia se la nave è morta
         this.active = true; // Per compatibilità con AI system
@@ -65,7 +77,7 @@ export class Ship {
         this.showAttackRange = false; // Toggle per mostrare/nascondere il range (disattivato di default)
         
         // Sistema scudo
-        this.maxShield = 30; // Valore base
+        this.maxShield = 30; // Valore iniziale, verrà sovrascritto dal modello selezionato
         this.shield = this.maxShield;
         this.shieldRegenRate = 1; // Rigenerazione scudo per secondo
         this.shieldRegenDelay = 3000; // Ritardo prima della rigenerazione (3 secondi)
@@ -205,6 +217,10 @@ export class Ship {
         
         // Sistema di sprite animati
         this.sprite = new ShipSprite();
+        // Collega callback cambio nave per aggiornare le stats
+        this.sprite.onShipChanged = (shipNumber) => {
+            this.applyShipModelStats(shipNumber);
+        };
         this.missileSprite = new MissileSprite();
         
         // Sistema di scie
@@ -212,6 +228,9 @@ export class Ship {
         
         // Inizializza le statistiche basate sui potenziamenti
         this.updateStats();
+
+        // Applica le statistiche del modello di nave corrente (basato su ShipSprite.currentShip)
+        this.applyShipModelStats?.(this.sprite?.currentShip || 1);
         
         // Applica le configurazioni delle armi selezionate
         this.applyWeaponConfigs();
@@ -224,6 +243,37 @@ export class Ship {
         
         // Carica l'effetto di riparazione scudo
         this.shieldEffect.load();
+    }
+
+    // Applica le statistiche del modello di nave selezionato (1 o 2)
+    applyShipModelStats(shipNumber) {
+        const model = SHIP_MODELS[shipNumber] || SHIP_MODELS[1];
+        this.maxHP = model.maxHP;
+        this.maxShield = model.maxShield;
+        // Ripristina HP/Scudo al nuovo massimo quando si cambia nave
+        this.hp = this.maxHP;
+        this.shield = this.maxShield;
+        // Log di verifica
+        console.log('[Ship] applyShipModelStats:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield });
+        // Assicura clamp coerenti
+        this.updateStats();
+    }
+
+    // API semplice per cambiare nave a runtime
+    switchShip(shipNumber) {
+        if (shipNumber !== 1 && shipNumber !== 2) return;
+        if (this.sprite && this.sprite.switchShip) {
+            this.sprite.switchShip(shipNumber);
+        }
+        this.applyShipModelStats(shipNumber);
+        console.log('[Ship] switchShip done:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield });
+        // Persisti selezione nave a livello di gioco
+        try {
+            if (window.gameInstance) {
+                window.gameInstance.selectedShipNumber = shipNumber;
+            }
+            localStorage.setItem('selectedShipNumber', String(shipNumber));
+        } catch (_) { }
     }
     
     // Inizializza il RewardManager con le dipendenze

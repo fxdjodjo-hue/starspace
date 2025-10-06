@@ -25,7 +25,8 @@ export class ShipSprite {
     
     async loadAtlas() {
         try {
-            const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'Urus/ship02.atlas';
+            // Usa lo stesso atlas per entrambe le navi (ship103)
+            const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'Urus/ship103.atlas';
             const response = await fetch(atlasFile);
             const atlasText = await response.text();
             this.parseAtlas(atlasText);
@@ -35,7 +36,8 @@ export class ShipSprite {
     }
 
     loadCurrentShipSprite() {
-        const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'Urus/ship02.png';
+        // Nave 1: usa Urus/ship103.png; Nave 2: usa ship103.png alla root del progetto
+        const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'ship103.png';
         this.image.src = spriteFile;
     }
 
@@ -49,6 +51,14 @@ export class ShipSprite {
         this.frames = [];
         this.loadSprite();
         this.loadAtlas();
+        // Notifica il proprietario (Ship) del cambio nave, se registrato
+        if (typeof this.onShipChanged === 'function') {
+            try {
+                this.onShipChanged(this.currentShip);
+            } catch (e) {
+                console.error('❌ Errore in onShipChanged callback:', e);
+            }
+        }
     }
     
     parseAtlas(atlasText) {

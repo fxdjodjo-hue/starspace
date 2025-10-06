@@ -208,10 +208,15 @@ export class HomePanel extends UIComponent {
                     description: 'Drone Iris - 2 slot per laser o scudi',
                     cost: { uridium: 500 }
                 }
+            },
+            ships: {
+                ship_urus: { name: 'Urus Fighter', price: 50000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 1, description: 'Nave base bilanciata (HP 1000 / Shield 1000)' },
+                ship_alt:  { name: 'Interceptor Nova', price: 100000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 2, description: 'Nave veloce (HP 1600 / Shield 600)' }
             }
         };
         
         this.selectedShopCategory = 'ammunition';
+        this.selectedShipItem = 'ship_urus';
         this.shopScrollY = 0;
         this.selectedAmmoItem = 'laser_x1'; // Item selezionato per visualizzazione
         this.selectedLaserItem = 'lf1'; // Item selezionato per laser
@@ -1680,7 +1685,7 @@ export class HomePanel extends UIComponent {
         const tabWidth = 140; // Corretto per matchare drawShopTabs
         const tabHeight = 40; // Corretto per matchare drawShopTabs
         
-        const tabs = ['ammunition', 'laser', 'generators', 'uav'];
+        const tabs = ['ammunition', 'laser', 'generators', 'uav', 'ships'];
         for (let index = 0; index < tabs.length; index++) {
             const tabId = tabs[index];
             const tabX = contentX + 20 + index * tabWidth;
@@ -1692,7 +1697,7 @@ export class HomePanel extends UIComponent {
         }
         
         // Controlla click su thumbnail in basso (priorità alta)
-        if (['ammunition', 'laser', 'generators', 'uav'].includes(this.selectedShopCategory)) {
+        if (['ammunition', 'laser', 'generators', 'uav', 'ships'].includes(this.selectedShopCategory)) {
             const previewY = contentY + 90 + 500 + 10;
             
             // Controlla click su frecce di scroll
@@ -1729,6 +1734,8 @@ export class HomePanel extends UIComponent {
                 return this.handleConsumablesClick(x, y, detailsX, detailsY, items);
             } else if (this.selectedShopCategory === 'uav') {
                 return this.handleUAVClick(x, y, detailsX, detailsY, items);
+            } else if (this.selectedShopCategory === 'ships') {
+                return this.handleShipsClick(x, y, detailsX, detailsY, items);
             }
         }
         
@@ -1779,6 +1786,8 @@ export class HomePanel extends UIComponent {
                     this.selectedGeneratorItem = itemKey;
                 } else if (this.selectedShopCategory === 'uav') {
                     this.selectedUAVItem = itemKey;
+                } else if (this.selectedShopCategory === 'ships') {
+                    this.selectedShipItem = itemKey;
                 }
                 return true; // Click gestito
             }
@@ -2266,10 +2275,138 @@ export class HomePanel extends UIComponent {
             this.drawConsumablesLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items);
         } else if (this.selectedShopCategory === 'uav') {
             this.drawUAVLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items);
+        } else if (this.selectedShopCategory === 'ships') {
+            this.drawShipsLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items);
         }
         
         // Preview in basso
         this.drawItemPreview(ctx, x, y + areaHeight + 15, this.contentWidth - 40);
+    }
+
+    // Layout per categoria NAVI
+    drawShipsLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items) {
+        const imageX = x + 20;
+        const imageY = y + 20;
+        const imageSize = 380;
+        const detailsX = x + 20 + imageAreaWidth + 20;
+        const detailsY = y + 20;
+
+        // Placeholder immagine nave
+        ThemeUtils.drawPanel(ctx, imageX, imageY, imageAreaWidth - 40, imageSize, {
+            background: 'rgba(0,0,0,0.4)',
+            border: 'rgba(255,255,255,0.1)'
+        });
+
+        // Dettagli nave selezionata
+        const item = items[this.selectedShipItem];
+        const ownedShips = (window.gameInstance?.playerOwnedShips) || [1];
+        const isOwned = ownedShips.includes(item.shipNumber);
+        // Determina nave equipaggiata: preferisci stato runtime, poi localStorage
+        let isEquipped = false;
+        try {
+            const runtimeSel = (window.gameInstance?.selectedShipNumber);
+            if (runtimeSel === item.shipNumber) {
+                isEquipped = true;
+            } else {
+                const storedSel = parseInt(localStorage.getItem('selectedShipNumber') || '0', 10);
+                isEquipped = storedSel === item.shipNumber;
+            }
+        } catch (_) { isEquipped = false; }
+        ThemeUtils.drawText(ctx, item.name, detailsX, detailsY + 10, {
+            size: 22,
+            weight: 'bold',
+            color: '#ffffff'
+        });
+        // Badge stato
+        if (isEquipped) {
+            ThemeUtils.drawText(ctx, 'EQUIPAGGIATA', detailsX + 220, detailsY + 10, {
+                size: 12,
+                weight: 'bold',
+                color: '#00ff88'
+            });
+        } else if (isOwned) {
+            ThemeUtils.drawText(ctx, 'POSSEDUTA', detailsX + 220, detailsY + 10, {
+                size: 12,
+                weight: 'bold',
+                color: '#57b7ff'
+            });
+        }
+
+        ThemeUtils.drawText(ctx, item.description, detailsX, detailsY + 40, {
+            size: 14,
+            weight: 'normal',
+            color: '#cccccc'
+        });
+
+        // Stats sintetiche
+        const stats = item.shipNumber === 1 ? { hp: 1000, shield: 1000 } : { hp: 1600, shield: 600 };
+        ThemeUtils.drawText(ctx, `HP: ${stats.hp}`, detailsX, detailsY + 80, { size: 14, weight: 'bold', color: '#7ed957' });
+        ThemeUtils.drawText(ctx, `Shield: ${stats.shield}`, detailsX + 140, detailsY + 80, { size: 14, weight: 'bold', color: '#57b7ff' });
+
+        // Pulsante acquista/seleziona
+        const buyX = detailsX;
+        const buyY = detailsY + 120;
+        const buttonText = isEquipped ? 'EQUIPAGGIATA' : (isOwned ? 'SELEZIONA' : `ACQUISTA (${(item.price||0).toLocaleString()} ${item.currency==='uridium'?'Uridium':'Credits'})`);
+        const canAfford = item.currency === 'uridium' ? (this.playerData.uridium >= (item.price||0)) : (this.playerData.credits >= (item.price||0));
+        const enabledBg = ThemeConfig.colors.background.secondary;
+        const disabledBg = ThemeConfig.colors.background.disabled;
+        const borderCol = ThemeConfig.colors.border.secondary;
+        // Disegna manualmente un pulsante grigio neutro per evitare fallback a variant primary
+        ThemeUtils.drawPanel(ctx, buyX, buyY, 220, 36, {
+            background: (isEquipped ? disabledBg : (isOwned || canAfford ? enabledBg : disabledBg)),
+            border: borderCol,
+            radius: ThemeConfig.borders.radius.md,
+            shadow: false
+        });
+        ThemeUtils.drawText(ctx, buttonText, buyX + 110, buyY + 18, {
+            color: ThemeConfig.colors.text.primary,
+            size: 14,
+            weight: 'bold',
+            align: 'center',
+            baseline: 'middle'
+        });
+
+        // Le thumbnail sono disegnate e gestite dal preview condiviso in basso
+    }
+
+    handleShipsClick(x, y, detailsX, detailsY, items) {
+        // Pulsante acquista/seleziona
+        const buyX = detailsX;
+        const buyY = detailsY + 120;
+        if (x >= buyX && x <= buyX + 220 && y >= buyY && y <= buyY + 36) {
+            const item = items[this.selectedShipItem];
+            const currency = item.currency === 'uridium' ? 'uridium' : 'credits';
+            const price = item.price || 0;
+            const ownedShips = (window.gameInstance?.playerOwnedShips) || [1];
+            const isOwned = ownedShips.includes(item.shipNumber);
+            
+            if (!isOwned) {
+                const hasFunds = currency === 'uridium' ? (this.game.ship.getResource('uridium') >= price) : (this.game.ship.getResource('credits') >= price);
+                if (!hasFunds) {
+                    this.game.notifications?.add('❌ Valuta insufficiente', 1200, 'error');
+                    return true;
+                }
+                // Deduce e segna come posseduta
+                this.game.ship.addResource(currency, -price);
+                try {
+                    const stored = window.gameInstance.playerOwnedShips || [1];
+                    if (!stored.includes(item.shipNumber)) stored.push(item.shipNumber);
+                    window.gameInstance.playerOwnedShips = stored;
+                    localStorage.setItem('ownedShips', JSON.stringify(stored));
+                } catch (_){ }
+                // Aggiorna UI crediti
+                this.playerData.credits = this.game.ship.getResource('credits');
+                this.playerData.uridium = this.game.ship.getResource('uridium');
+                this.game.notifications?.add(`✅ Acquistata: ${item.name}`, 1200, 'success');
+            }
+            // Seleziona/applica nave
+            this.game.ship.switchShip(item.shipNumber);
+            window.gameInstance.selectedShipNumber = item.shipNumber;
+            localStorage.setItem('selectedShipNumber', String(item.shipNumber));
+            this.game.notifications?.add(`🚀 ${item.name} selezionata`, 1200, 'success');
+            return true;
+        }
+        return false;
     }
     
     drawAmmunitionLayout(ctx, x, y, imageAreaWidth, detailsAreaWidth, areaHeight, items) {
@@ -2804,6 +2941,8 @@ export class HomePanel extends UIComponent {
                 isSelected = itemKey === this.selectedGeneratorItem;
             } else if (this.selectedShopCategory === 'uav') {
                 isSelected = itemKey === this.selectedUAVItem;
+            } else if (this.selectedShopCategory === 'ships') {
+                isSelected = itemKey === this.selectedShipItem;
             }
             
             // Bordo evidenziato per item selezionato
@@ -2861,7 +3000,8 @@ export class HomePanel extends UIComponent {
             { id: 'ammunition', name: 'MUNIZIONI' },
             { id: 'laser', name: 'LASER' },
             { id: 'generators', name: 'GENERATORI' },
-            { id: 'uav', name: 'UAV' }
+            { id: 'uav', name: 'UAV' },
+            { id: 'ships', name: 'NAVI' }
         ];
         
         const tabWidth = 140;

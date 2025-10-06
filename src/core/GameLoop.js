@@ -87,6 +87,11 @@ export class GameLoop {
 
         // Controlla se è il momento di aggiornare (per limitare FPS)
         if (currentTime - this.lastFrameTime >= this.frameInterval) {
+            // Gestione hotkeys per frame PRIMA che l'Input resetti i flag
+            if (this.game && this.game.handleHotkeys) {
+                this.game.handleHotkeys();
+            }
+
             // Aggiorna il core del gioco
             this.gameCore.update(currentTime);
             

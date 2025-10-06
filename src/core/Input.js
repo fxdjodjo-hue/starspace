@@ -144,12 +144,14 @@ export class Input {
             if (e.code === 'Digit1') {
                 this.key1Pressed = true;
                 this.key1JustPressed = true;
+                console.log('[Input] Digit1 pressed');
             }
 
             // Gestisci tasto 2 per nave Urus
             if (e.code === 'Digit2') {
                 this.key2Pressed = true;
                 this.key2JustPressed = true;
+                console.log('[Input] Digit2 pressed');
             }
         });
         
@@ -426,8 +428,7 @@ export class Input {
         // NON resettare i flag "just" qui - vengono resettati manualmente quando usati
         this.mouse.wheelDelta = 0;
         this.dJustPressed = false;
-        this.key1JustPressed = false;
-        this.key2JustPressed = false;
+        // Non resettare qui key1/key2 "just pressed" per permettere lettura dal game loop
     }
 
     // Pulisce i tasti appena premuti (da chiamare a fine frame dopo aver gestito gli input)

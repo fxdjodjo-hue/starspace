@@ -85,6 +85,19 @@ export class Game {
         this.input = new Input(this.canvas);
         this.world = new World(this.width, this.height);
         
+        // Stato navi del giocatore (possesso e selezione) con persistenza locale semplice
+        try {
+            const storedOwned = localStorage.getItem('ownedShips');
+            this.playerOwnedShips = storedOwned ? JSON.parse(storedOwned) : [1];
+            if (!Array.isArray(this.playerOwnedShips) || this.playerOwnedShips.length === 0) {
+                this.playerOwnedShips = [1];
+            }
+        } catch (_) {
+            this.playerOwnedShips = [1];
+        }
+        const storedSelected = parseInt(localStorage.getItem('selectedShipNumber') || '1', 10);
+        this.selectedShipNumber = (storedSelected === 1 || storedSelected === 2) ? storedSelected : 1;
+        
         // Registra sistemi nel core
         this.registerCoreSystems();
         
@@ -111,6 +124,50 @@ export class Game {
         
         // Avvia il gioco
         this.start();
+
+        // Assicura focus sul canvas per ricevere i keydown
+        if (this.canvas) {
+            this.canvas.setAttribute('tabindex', '0');
+            this.canvas.focus();
+        }
+
+        // Applica la nave selezionata salvata
+        if (this.ship && this.selectedShipNumber) {
+            this.ship.switchShip(this.selectedShipNumber);
+        }
+    }
+
+    // Gestione hotkeys per frame, basata sul sistema Input
+    handleHotkeys() {
+        if (!this.input || !this.ship) return;
+        try {
+            const key1 = (this.input.isKey1JustPressed && this.input.isKey1JustPressed()) ||
+                         (this.input.isKeyJustPressed && (this.input.isKeyJustPressed('Digit1') || this.input.isKeyJustPressed('Numpad1')));
+            if (key1) {
+                this.ship.switchShip(1);
+                if (this.notifications) {
+                    this.notifications.add(`🚀 Nave 1 selezionata | HP ${this.ship.hp}/${this.ship.maxHP} | Shield ${this.ship.shield}/${this.ship.maxShield}`, 1500, 'info');
+                }
+                console.log('[Hotkey-Input] Ship 1', { maxHP: this.ship.maxHP, maxShield: this.ship.maxShield });
+                this.input.resetKey1JustPressed && this.input.resetKey1JustPressed();
+                this.input.resetKeyJustPressed && this.input.resetKeyJustPressed('Digit1');
+                this.input.resetKeyJustPressed && this.input.resetKeyJustPressed('Numpad1');
+            }
+            const key2 = (this.input.isKey2JustPressed && this.input.isKey2JustPressed()) ||
+                         (this.input.isKeyJustPressed && (this.input.isKeyJustPressed('Digit2') || this.input.isKeyJustPressed('Numpad2')));
+            if (key2) {
+                this.ship.switchShip(2);
+                if (this.notifications) {
+                    this.notifications.add(`🚀 Nave 2 selezionata | HP ${this.ship.hp}/${this.ship.maxHP} | Shield ${this.ship.shield}/${this.ship.maxShield}`, 1500, 'info');
+                }
+                console.log('[Hotkey-Input] Ship 2', { maxHP: this.ship.maxHP, maxShield: this.ship.maxShield });
+                this.input.resetKey2JustPressed && this.input.resetKey2JustPressed();
+                this.input.resetKeyJustPressed && this.input.resetKeyJustPressed('Digit2');
+                this.input.resetKeyJustPressed && this.input.resetKeyJustPressed('Numpad2');
+            }
+        } catch (e) {
+            console.error('[Hotkey-Input] error', e);
+        }
     }
 
     /**
@@ -334,6 +391,8 @@ export class Game {
      * Configura i gestori di eventi
      */
     setupEventHandlers() {
+        // Log di inizializzazione per debug
+        console.log('[Game] setupEventHandlers initialized');
         // Eventi di resize
         window.addEventListener('resize', () => {
             this.handleResize();
@@ -356,6 +415,38 @@ export class Game {
         this.ship.onArrival = () => {
             this.minimap.clearTarget();
         };
+
+        // Hotkeys temporanei per switch nave: 1 (modello 1), 2 (modello 2)
+        const hotkeyHandler = (e) => {
+            // Non usare hotkeys se siamo in schermate che potrebbero catturare input testuale
+            // (si può estendere con controlli UI attivi)
+            if (!this.ship) return;
+            const code = e.code;
+            // Log sempre, per verificare propagazione
+            console.log('[Hotkey] keydown:', code);
+            if (code === 'Digit1' || code === 'Numpad1') {
+                this.ship.switchShip(1);
+                console.log('[Hotkey] Switched to ship 1', { maxHP: this.ship.maxHP, maxShield: this.ship.maxShield, hp: this.ship.hp, shield: this.ship.shield });
+                if (this.notifications) {
+                    this.notifications.add('🚀 Nave 1 selezionata (HP/Shield aggiornati)', 600, 'info');
+                }
+            }
+            if (code === 'Digit2' || code === 'Numpad2') {
+                this.ship.switchShip(2);
+                console.log('[Hotkey] Switched to ship 2', { maxHP: this.ship.maxHP, maxShield: this.ship.maxShield, hp: this.ship.hp, shield: this.ship.shield });
+                if (this.notifications) {
+                    this.notifications.add('🚀 Nave 2 selezionata (HP/Shield aggiornati)', 600, 'info');
+                }
+            }
+        };
+
+        // Ascolta su window e document per massima compatibilità
+        window.addEventListener('keydown', hotkeyHandler, { capture: true });
+        document.addEventListener('keydown', hotkeyHandler, { capture: true });
+        // Anche sul canvas direttamente
+        if (this.canvas) {
+            this.canvas.addEventListener('keydown', hotkeyHandler, { capture: true });
+        }
     }
 
     /**
