@@ -332,7 +332,7 @@ export class Ship {
         this.hp = this.maxHP;
         this.shield = this.maxShield;
         // Log di verifica
-        console.log('[Ship] applyShipModelStats:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield });
+        console.log('[Ship] applyShipModelStats:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield, laserSlots: this.laserSlots, generatorSlots: this.generatorSlots, extraSlots: this.extraSlots });
         // Assicura clamp coerenti
         this.updateStats();
     }

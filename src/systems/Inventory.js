@@ -226,6 +226,12 @@ export class Inventory {
     toggle() {
         this.isOpen = !this.isOpen;
         if (this.isOpen) {
+            // Sincronizza i cap con la nave corrente all'apertura (anche via toggle)
+            if (this.game && this.game.ship) {
+                this.currentLaserCap = this.game.ship.laserSlots ?? 1;
+                this.currentGenCap = this.game.ship.generatorSlots ?? 1;
+                this.currentExtraCap = this.game.ship.extraSlots ?? 1;
+            }
             this.justOpened = true;
             setTimeout(() => {
                 this.justOpened = false;
@@ -1606,7 +1612,9 @@ export class Inventory {
         // Titolo equipaggiamento rimosso per pulizia
         
                 // Disegna slot laser
-        const laserCap = this.game?.ship?.laserSlots ?? 3;
+        const laserCap = (this.game && this.game.ship && this.game.ship.laserSlots !== undefined)
+            ? this.game.ship.laserSlots
+            : (this.currentLaserCap !== undefined ? this.currentLaserCap : 1);
         ThemeUtils.drawText(ctx, `LASER (${laserCap})`, equipmentX, equipmentY - 10, {
             color: ThemeConfig.colors.accent.warning,
             size: ThemeConfig.typography.sizes.base,
@@ -1623,7 +1631,9 @@ export class Inventory {
         
         // Disegna slot scudi/generatori
         const shieldGenY = equipmentY + 150; // Spazio ottimizzato
-        const genCap = this.game?.ship?.generatorSlots ?? 6;
+        const genCap = (this.game && this.game.ship && this.game.ship.generatorSlots !== undefined)
+            ? this.game.ship.generatorSlots
+            : (this.currentGenCap !== undefined ? this.currentGenCap : 1);
         ThemeUtils.drawText(ctx, `SCUDI/GENERATORI (${genCap})`, equipmentX, shieldGenY - 15, {
             color: ThemeConfig.colors.accent.info,
             size: ThemeConfig.typography.sizes.base,
@@ -1646,7 +1656,9 @@ export class Inventory {
         
         // Disegna slot extra
         const extraY = equipmentY + 300; // Spazio ottimizzato
-        const extraCap = this.game?.ship?.extraSlots ?? 3;
+        const extraCap = (this.game && this.game.ship && this.game.ship.extraSlots !== undefined)
+            ? this.game.ship.extraSlots
+            : (this.currentExtraCap !== undefined ? this.currentExtraCap : 1);
         ThemeUtils.drawText(ctx, `EXTRA (${extraCap})`, equipmentX, extraY - 15, {
             color: ThemeConfig.colors.accent.success,
             size: ThemeConfig.typography.sizes.base,

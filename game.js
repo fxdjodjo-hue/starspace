@@ -147,6 +147,10 @@ class Game {
         
         // Inventario
         this.inventory = new Inventory();
+        // Collega il riferimento al game per permettere all'inventario di leggere i cap dagli slot nave
+        if (this.inventory && typeof this.inventory.setGame === 'function') {
+            this.inventory.setGame(this);
+        }
         
         // Pannello Quest
         
