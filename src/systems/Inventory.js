@@ -231,6 +231,12 @@ export class Inventory {
     open() {
         this.isOpen = true;
         this.justOpened = true;
+        // Sincronizza i cap con la nave corrente all'apertura
+        if (this.game && this.game.ship) {
+            this.currentLaserCap = this.game.ship.laserSlots ?? 1;
+            this.currentGenCap = this.game.ship.generatorSlots ?? 1;
+            this.currentExtraCap = this.game.ship.extraSlots ?? 1;
+        }
         setTimeout(() => {
             this.justOpened = false;
         }, 100);
@@ -1602,7 +1608,7 @@ export class Inventory {
             weight: ThemeConfig.typography.weights.bold
         }); // Ancora più spazio dal titolo
         
-        const maxLaserSlots = this.game?.ship?.laserSlots ?? 1;
+        const maxLaserSlots = (this.currentLaserCap !== undefined) ? this.currentLaserCap : (this.game?.ship?.laserSlots ?? 1);
         for (let i = 0; i < maxLaserSlots; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             this.drawEquipmentSlot(ctx, slotX, equipmentY + 10, this.equipment.laser[i], `L${i+1}`); // Allineato con il nuovo titolo
@@ -1617,7 +1623,7 @@ export class Inventory {
             weight: ThemeConfig.typography.weights.bold
         });
         
-        const maxShieldGenSlots = this.game?.ship?.generatorSlots ?? 1;
+        const maxShieldGenSlots = (this.currentGenCap !== undefined) ? this.currentGenCap : (this.game?.ship?.generatorSlots ?? 1);
         for (let i = 0; i < maxShieldGenSlots; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             let slotName = '';
@@ -1638,7 +1644,7 @@ export class Inventory {
             weight: ThemeConfig.typography.weights.bold
         });
         
-        const maxExtraSlots = this.game?.ship?.extraSlots ?? 1;
+        const maxExtraSlots = (this.currentExtraCap !== undefined) ? this.currentExtraCap : (this.game?.ship?.extraSlots ?? 1);
         for (let i = 0; i < maxExtraSlots; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             this.drawEquipmentSlot(ctx, slotX, extraY, this.equipment.extra[i], `E${i+1}`);
