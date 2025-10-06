@@ -212,7 +212,14 @@ export class HomePanel extends UIComponent {
             ships: {
                 ship_urus: { name: 'Urus Fighter', price: 50000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 1, description: 'Nave base bilanciata (HP 1000 / Shield 1000)' },
                 ship_alt:  { name: 'Interceptor Nova', price: 100000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 2, description: 'Nave veloce (HP 1600 / Shield 600)' },
-                ship_falcon: { name: 'Falcon', price: 120000, currency: 'credits', amount: 1, icon: '🛰️', type: 'ship', shipNumber: 3, description: 'Falcon (HP 1200 / Shield 1400)' }
+                ship_falcon: { name: 'Falcon', price: 120000, currency: 'credits', amount: 1, icon: '🛰️', type: 'ship', shipNumber: 3, description: 'Falcon (HP 1200 / Shield 1400)' },
+                ship_liberator: { name: 'Liberator', price: 150000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 4, description: 'HP 16000 / Shield 12000 / Velocità 300' },
+                ship_piranha: { name: 'Piranha', price: 220000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 5, description: 'HP 32000 / Shield 24000 / Velocità 340' },
+                ship_nostromo: { name: 'Nostromo', price: 300000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 6, description: 'HP 64000 / Shield 48000 / Velocità 300' },
+                ship_bigboy: { name: 'BigBoy', price: 360000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 7, description: 'HP 64000 / Shield 52000 / Velocità 240' },
+                ship_vengeance: { name: 'Vengeance', price: 420000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 8, description: 'HP 64000 / Shield 50000 / Velocità 380' },
+                ship_goliath: { name: 'Goliath', price: 650000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 9, description: 'HP 160000 / Shield 120000 / Velocità 300' },
+                ship_leonov: { name: 'Leonov', price: 500000, currency: 'credits', amount: 1, icon: '🛸', type: 'ship', shipNumber: 10, description: 'HP 80000 / Shield 60000 / Velocità 360' }
             }
         };
         
