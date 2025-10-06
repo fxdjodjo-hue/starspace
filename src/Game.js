@@ -218,6 +218,7 @@ export class Game {
         // Sistemi di gioco
         this.audioManager = new AudioManager();
         this.inventory = new Inventory();
+        this.inventory.setGame?.(this);
         this.rankSystem = new RankSystem();
         this.rewardManager = new RewardManager();
         this.radiationSystem = new RadiationSystem();

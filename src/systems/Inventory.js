@@ -86,6 +86,11 @@ export class Inventory {
         // Aggiungi listener per mouse events
         this.setupMouseEvents();
     }
+
+    // Collega il riferimento al game per accedere alla nave corrente e alle notifiche
+    setGame(game) {
+        this.game = game;
+    }
     
     // Configura eventi del mouse per drag scroll
     setupMouseEvents() {
