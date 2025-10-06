@@ -349,6 +349,13 @@ export class Ship {
         try {
             if (window.gameInstance) {
                 window.gameInstance.selectedShipNumber = shipNumber;
+                // Aggiorna in live l'inventario aperto con i nuovi cap slot
+                if (window.gameInstance.inventory && window.gameInstance.inventory.isOpen) {
+                    const inv = window.gameInstance.inventory;
+                    inv.currentLaserCap = this.laserSlots ?? inv.currentLaserCap;
+                    inv.currentGenCap = this.generatorSlots ?? inv.currentGenCap;
+                    inv.currentExtraCap = this.extraSlots ?? inv.currentExtraCap;
+                }
             }
             localStorage.setItem('selectedShipNumber', String(shipNumber));
         } catch (_) { }
