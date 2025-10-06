@@ -313,8 +313,10 @@ export class Ship {
         this.maxHP = model.maxHP;
         this.maxShield = model.maxShield;
         if (model.velocity) this.speed = model.velocity / 100; // scala semplice: 300 -> 3.0
-        this.laserSlots = model.laserSlots || this.laserSlots || 0;
-        this.generatorSlots = model.generatorSlots || this.generatorSlots || 0;
+        this.laserSlots = model.laserSlots ?? this.laserSlots ?? 0;
+        this.generatorSlots = model.generatorSlots ?? this.generatorSlots ?? 0;
+        // Reset conteggio generatori equipaggiati quando cambi nave (diversi slot)
+        this.generatorSlotsEquipped = Math.min(this.generatorSlotsEquipped || 0, this.generatorSlots);
         // Ripristina HP/Scudo al nuovo massimo quando si cambia nave
         this.hp = this.maxHP;
         this.shield = this.maxShield;
@@ -1325,12 +1327,17 @@ export class Ship {
     
     // Metodi per gestire i cannoni equipaggiati
     equipLaser(laserType, amount = 1) {
-        if (this.equippedLasers.hasOwnProperty(laserType)) {
-            this.equippedLasers[laserType] += amount;
-            this.applyWeaponConfigs(); // Aggiorna il danno quando equipaggi un laser
-            return true;
+        if (!this.equippedLasers.hasOwnProperty(laserType)) return false;
+        const currentTotal = this.getTotalEquippedLasers();
+        const allowed = this.laserSlots || Infinity;
+        if (currentTotal + amount > allowed) {
+            // Notifica slot pieni
+            this.game?.notifications?.add(`❌ Slot laser pieni (${currentTotal}/${allowed})`, 1200, 'warning');
+            return false;
         }
-        return false;
+        this.equippedLasers[laserType] += amount;
+        this.applyWeaponConfigs();
+        return true;
     }
     
     // Equipaggia cannone (compatibilità con negozio)
@@ -1350,9 +1357,16 @@ export class Ship {
 
     // Gestione generatori: ogni generatore equipaggiato fornisce +2 speed
     equipGenerator(generatorType, amount = 1) {
-        // Applica bonus velocità
+        const currentGens = this.generatorSlotsEquipped || 0;
+        const allowedGens = this.generatorSlots || Infinity;
+        if (currentGens + amount > allowedGens) {
+            this.game?.notifications?.add(`❌ Slot generatori pieni (${currentGens}/${allowedGens})`, 1200, 'warning');
+            return false;
+        }
+        // Applica bonus velocità come prima
         const speedBonusPerGen = 2;
         this.speed += speedBonusPerGen * amount;
+        this.generatorSlotsEquipped = currentGens + amount;
         return true;
     }
     
