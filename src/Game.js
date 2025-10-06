@@ -96,7 +96,7 @@ export class Game {
             this.playerOwnedShips = [1];
         }
         const storedSelected = parseInt(localStorage.getItem('selectedShipNumber') || '1', 10);
-        this.selectedShipNumber = (storedSelected === 1 || storedSelected === 2) ? storedSelected : 1;
+        this.selectedShipNumber = ([1,2,3,4,5,6,7,8,9,10].includes(storedSelected)) ? storedSelected : 1;
         
         // Registra sistemi nel core
         this.registerCoreSystems();
