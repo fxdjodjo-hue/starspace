@@ -25,8 +25,8 @@ export class ShipSprite {
     
     async loadAtlas() {
         try {
-            // Usa lo stesso atlas per entrambe le navi (ship103)
-            const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'Urus/ship103.atlas';
+            // Atlas per nave 1 (Urus) e nave 2 (Interceptor)
+            const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'interceptor/ship103.atlas';
             const response = await fetch(atlasFile);
             const atlasText = await response.text();
             this.parseAtlas(atlasText);
@@ -36,8 +36,8 @@ export class ShipSprite {
     }
 
     loadCurrentShipSprite() {
-        // Nave 1: usa Urus/ship103.png; Nave 2: usa ship103.png alla root del progetto
-        const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'ship103.png';
+        // Nave 1: usa Urus/ship103.png; Nave 2: usa interceptor/ship103.png
+        const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'interceptor/ship103.png';
         this.image.src = spriteFile;
     }
 
