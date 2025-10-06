@@ -135,6 +135,12 @@ export class Game {
         if (this.ship && this.selectedShipNumber) {
             this.ship.switchShip(this.selectedShipNumber);
         }
+
+        // Se il profilo/account non ha selezione esplicita, imposta Urus come default
+        if (!this.selectedShipNumber) {
+            this.selectedShipNumber = 1;
+            localStorage.setItem('selectedShipNumber', '1');
+        }
     }
 
     // Gestione hotkeys per frame, basata sul sistema Input

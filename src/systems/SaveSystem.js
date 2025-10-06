@@ -217,6 +217,9 @@ export class SaveSystem {
                 uridium: ship.resources.uridium,
                 honor: ship.resources.honor,
                 starEnergy: ship.resources.starEnergy,
+                // Nave selezionata e possedute
+                selectedShipNumber: window.gameInstance?.selectedShipNumber || 1,
+                ownedShips: window.gameInstance?.playerOwnedShips || [1],
                 
                 // Progressione
                 streunerKilled: ship.streunerKilled,
@@ -319,6 +322,20 @@ export class SaveSystem {
             
             // Nome giocatore
             ship.playerName = player.playerName || ship.playerName;
+
+            // Applica selezione nave e possedute
+            try {
+                if (Array.isArray(player.ownedShips)) {
+                    window.gameInstance.playerOwnedShips = player.ownedShips;
+                    localStorage.setItem('ownedShips', JSON.stringify(player.ownedShips));
+                }
+                const sel = parseInt(player.selectedShipNumber || '1', 10);
+                if (sel && typeof ship.switchShip === 'function') {
+                    ship.switchShip(sel);
+                }
+                window.gameInstance.selectedShipNumber = sel || 1;
+                localStorage.setItem('selectedShipNumber', String(window.gameInstance.selectedShipNumber));
+            } catch (_) {}
         }
         
         // Ripristina mondo
