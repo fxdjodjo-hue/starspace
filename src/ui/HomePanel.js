@@ -211,7 +211,8 @@ export class HomePanel extends UIComponent {
             },
             ships: {
                 ship_urus: { name: 'Urus Fighter', price: 50000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 1, description: 'Nave base bilanciata (HP 1000 / Shield 1000)' },
-                ship_alt:  { name: 'Interceptor Nova', price: 100000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 2, description: 'Nave veloce (HP 1600 / Shield 600)' }
+                ship_alt:  { name: 'Interceptor Nova', price: 100000, currency: 'credits', amount: 1, icon: '🚀', type: 'ship', shipNumber: 2, description: 'Nave veloce (HP 1600 / Shield 600)' },
+                ship_falcon: { name: 'Falcon', price: 120000, currency: 'credits', amount: 1, icon: '🛰️', type: 'ship', shipNumber: 3, description: 'Falcon (HP 1200 / Shield 1400)' }
             }
         };
         

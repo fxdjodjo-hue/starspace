@@ -20,6 +20,10 @@ const SHIP_MODELS = {
     2: { // Variante alternativa
         maxHP: 1600,
         maxShield: 600
+    },
+    3: { // Falcon
+        maxHP: 1200,
+        maxShield: 1400
     }
 };
 
@@ -261,7 +265,7 @@ export class Ship {
 
     // API semplice per cambiare nave a runtime
     switchShip(shipNumber) {
-        if (shipNumber !== 1 && shipNumber !== 2) return;
+        if (![1,2,3].includes(shipNumber)) return;
         if (this.sprite && this.sprite.switchShip) {
             this.sprite.switchShip(shipNumber);
         }

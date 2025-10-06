@@ -25,8 +25,10 @@ export class ShipSprite {
     
     async loadAtlas() {
         try {
-            // Atlas per nave 1 (Urus) e nave 2 (Interceptor)
-            const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'interceptor/ship103.atlas';
+            // Atlas per nave 1 (Urus), 2 (Interceptor), 3 (Falcon)
+            let atlasFile = 'Urus/ship103.atlas';
+            if (this.currentShip === 2) atlasFile = 'interceptor/ship103.atlas';
+            if (this.currentShip === 3) atlasFile = 'falcon/falcon.atlas';
             const response = await fetch(atlasFile);
             const atlasText = await response.text();
             this.parseAtlas(atlasText);
@@ -36,8 +38,10 @@ export class ShipSprite {
     }
 
     loadCurrentShipSprite() {
-        // Nave 1: usa Urus/ship103.png; Nave 2: usa interceptor/ship103.png
-        const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'interceptor/ship103.png';
+        // Nave 1: Urus/ship103.png; Nave 2: interceptor/ship103.png; Nave 3: falcon/falcon.png
+        let spriteFile = 'Urus/ship103.png';
+        if (this.currentShip === 2) spriteFile = 'interceptor/ship103.png';
+        if (this.currentShip === 3) spriteFile = 'falcon/falcon.png';
         this.image.src = spriteFile;
     }
 
@@ -67,7 +71,8 @@ export class ShipSprite {
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            if (line.startsWith('ship frm')) {
+            // Supporta diversi formati: 'ship', 'ship frmX' ecc.
+            if (line === 'ship' || line.startsWith('ship ') || line.startsWith('ship frm')) {
                 // Cerca le coordinate xy e size
                 let xy = null, size = null;
                 
