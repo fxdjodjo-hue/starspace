@@ -98,6 +98,7 @@ export class Portal {
     
     // Teletrasporta il giocatore
     teleportPlayer() {
+        
         this.game.mapManager.changeMap(this.targetMap, this.game.ship);
         this.game.notifications.add(`Teletrasportato in ${this.targetMap}!`, 'info');
     }

@@ -24,7 +24,8 @@ export class MapPersistence {
         // Prova a caricare dal localStorage
         const saved = this.loadFromStorage();
         if (saved && saved[mapId]) {
-            const instance = MapInstance.deserialize(saved[mapId]);
+            const instance = new MapInstance(mapId);
+            instance.deserialize(saved[mapId]);
             this.instances.set(mapId, instance);
             return instance;
         }
@@ -33,10 +34,10 @@ export class MapPersistence {
     }
     
     // Crea o carica un'istanza
-    getOrCreateInstance(mapId, instanceId = 'default') {
+    getOrCreateInstance(mapId) {
         let instance = this.loadInstance(mapId);
         if (!instance) {
-            instance = new MapInstance(mapId, instanceId);
+            instance = new MapInstance(mapId);
             this.saveInstance(mapId, instance);
         }
         return instance;

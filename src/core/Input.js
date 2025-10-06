@@ -99,7 +99,6 @@ export class Input {
         
         // Tastiera
         document.addEventListener('keydown', (e) => {
-            console.log('🔑 Input.js keydown event:', e.code, e.key);
             this.keys[e.code] = true;
             this.keysJustPressed.add(e.code);
             
@@ -400,7 +399,6 @@ export class Input {
     getPressedKeys() {
         const pressedKeys = Object.keys(this.keys).filter(key => this.keys[key]);
         if (pressedKeys.length > 0) {
-            console.log('🔑 Input.js getPressedKeys:', pressedKeys);
         }
         return pressedKeys;
     }

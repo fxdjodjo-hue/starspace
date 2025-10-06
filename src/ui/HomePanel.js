@@ -9,7 +9,6 @@ export class HomePanel extends UIComponent {
     constructor(game) {
         super('home-panel', { x: 0, y: 0, width: 1200, height: 800 });
         this.game = game;
-        console.log('🚁 HomePanel constructor - game.droneManager:', this.game.droneManager);
         this.visible = false;
         this.isOpen = false; // Aggiunta proprietà isOpen per compatibilità
         this.selectedCategory = 'info';
@@ -19,17 +18,28 @@ export class HomePanel extends UIComponent {
         this.selectedFactionId = null;
         this.hoveredFactionId = null;
         
-        // Cronologia delle conversioni StarEnergy
-        this.conversionHistory = [];
+        // Cronologia delle conversioni StarEnergy con esempi (solo ammo e missili)
+        this.conversionHistory = [
+            { timestamp: Date.now() - 5000, result: '+ 1 R3 missiles' },
+            { timestamp: Date.now() - 15000, result: '+ 2 X3 ammo' },
+            { timestamp: Date.now() - 30000, result: '+ 1 Star Energy' },
+            { timestamp: Date.now() - 45000, result: '+ 3 R2 missiles' },
+            { timestamp: Date.now() - 60000, result: '+ 5 X1 ammo' },
+            { timestamp: Date.now() - 75000, result: '+ 1 Star Energy' },
+            { timestamp: Date.now() - 90000, result: '+ 4 X2 ammo' },
+            { timestamp: Date.now() - 105000, result: '+ 1 R1 missiles' },
+            { timestamp: Date.now() - 120000, result: '+ 6 X3 ammo' },
+            { timestamp: Date.now() - 135000, result: '+ 2 Star Energy' }
+        ];
         this.maxHistoryLength = 50; // Mantiene gli ultimi 50 risultati
         this.historyScrollOffset = 0; // Offset per lo scroll della cronologia
 
-        // Handler per lo scroll della cronologia
+        // Handler per lo scroll della cronologia migliorato
         this.handleWheel = (e) => {
             if (this.selectedCategory !== 'starenergy') return;
             
-            const maxScroll = Math.max(0, this.conversionHistory.length * 25 - 200); // 200 è l'altezza visibile della cronologia
-            this.historyScrollOffset = Math.min(Math.max(0, this.historyScrollOffset + e.deltaY * 0.5), maxScroll);
+            const maxScroll = Math.max(0, (this.conversionHistory.length - 1) * 28 - 300);
+            this.historyScrollOffset = Math.min(Math.max(0, this.historyScrollOffset + e.deltaY * 0.8), maxScroll);
         };
         document.addEventListener('wheel', this.handleWheel);
         
@@ -125,8 +135,9 @@ export class HomePanel extends UIComponent {
         ];
         
         // Dimensioni e posizioni
-        this.panelWidth = 1200;
-        this.panelHeight = 800;
+        // Dimensioni del pannello responsive
+        this.panelWidth = Math.min(1200, this.game.canvas.width * 0.9);
+        this.panelHeight = Math.min(800, this.game.canvas.height * 0.9);
         this.navWidth = 250;
         this.contentWidth = this.panelWidth - this.navWidth;
         
@@ -389,6 +400,7 @@ export class HomePanel extends UIComponent {
     show() {
         this.visible = true;
         this.isOpen = true; // Sincronizza isOpen con visible
+        this.updateDimensions(); // Aggiorna le dimensioni prima di centrare
         this.centerPanel();
     }
     
@@ -585,6 +597,13 @@ export class HomePanel extends UIComponent {
                     break;
             }
         });
+    }
+    
+    // Aggiorna le dimensioni del pannello quando il canvas cambia
+    updateDimensions() {
+        this.panelWidth = Math.min(1200, this.game.canvas.width * 0.9);
+        this.panelHeight = Math.min(800, this.game.canvas.height * 0.9);
+        this.contentWidth = this.panelWidth - this.navWidth;
     }
     
     
@@ -3052,9 +3071,11 @@ export class HomePanel extends UIComponent {
             return;
         }
 
-        // Decidi se dare missili (40%) o laser (60%)
-        if (Math.random() < 0.40) {
-            // Missili
+        // Decidi il tipo di ricompensa: missili (50%), ammo (35%), star energy (15%)
+        const random = Math.random();
+        
+        if (random < 0.50) {
+            // Missili (50%)
             const missileTypes = ['r1', 'r2', 'r3'];
             const randomType = missileTypes[Math.floor(Math.random() * missileTypes.length)];
             const amount = Math.floor(Math.random() * 3) + 1;
@@ -3071,11 +3092,10 @@ export class HomePanel extends UIComponent {
             if (this.game.notifications) {
                 this.game.notifications.add(`🚀 Hai ottenuto ${amount} missili ${randomType.toUpperCase()}!`, "reward");
             }
-        } else {
-            // Laser
-            const laserTypes = ['x1', 'x2', 'x3'];
-            const randomType = laserTypes[Math.floor(Math.random() * laserTypes.length)];
-            // Più munizioni per i laser dato che si consumano più velocemente
+        } else if (random < 0.85) {
+            // Ammo (35%)
+            const ammoTypes = ['x1', 'x2', 'x3'];
+            const randomType = ammoTypes[Math.floor(Math.random() * ammoTypes.length)];
             const amount = Math.floor(Math.random() * 10) + 5; // 5-15 munizioni
             
             this.game.ship.addAmmunition('laser', randomType, amount);
@@ -3088,7 +3108,23 @@ export class HomePanel extends UIComponent {
             }
             
             if (this.game.notifications) {
-                this.game.notifications.add(`🎯 Hai ottenuto ${amount} munizioni ${randomType.toUpperCase()}!`, "reward");
+                this.game.notifications.add(`💥 Hai ottenuto ${amount} munizioni ${randomType.toUpperCase()}!`, "reward");
+            }
+        } else {
+            // Star Energy (15%)
+            const amount = Math.floor(Math.random() * 2) + 1; // 1-2 Star Energy
+            
+            this.game.ship.addResource('starEnergy', amount);
+            
+            const result = `+ ${amount} Star Energy`;
+            this.lastConversionResult = result;
+            this.conversionHistory.unshift({ result, timestamp: Date.now() });
+            if (this.conversionHistory.length > this.maxHistoryLength) {
+                this.conversionHistory.pop();
+            }
+            
+            if (this.game.notifications) {
+                this.game.notifications.add(`⭐ Hai ottenuto ${amount} Star Energy!`, "reward");
             }
         }
     }
@@ -3096,11 +3132,11 @@ export class HomePanel extends UIComponent {
     drawStarEnergyContent(ctx, x, y) {
         const starEnergyInfo = this.game.ship.getStarEnergyInfo();
         
-        // Pannello principale centrale - più largo e alto
-        const centerX = x + this.contentWidth / 2 - 300; // Aumentato offset per pannello più largo
-        const centerY = y + 30; // Spostato più in alto
-        const panelWidth = 600; // Aumentato larghezza
-        const panelHeight = 600; // Aumentato altezza
+        // Layout migliorato con disposizione più organizzata
+        const centerX = x + this.contentWidth / 2 - 250;
+        const centerY = y + 20;
+        const panelWidth = 500;
+        const panelHeight = 650;
 
         // Aggiungi handler per il click se non esiste
         if (!this.starEnergyClickHandler) {
@@ -3116,10 +3152,10 @@ export class HomePanel extends UIComponent {
                 const canvasY = e.clientY - canvasRect.top;
                 
                 // Coordinate del bottone nel canvas
-                const buttonX = centerX + panelWidth/2 - 150; // Aggiornato con le nuove dimensioni
-                const buttonY = centerY + 180;
-                const buttonWidth = 300;
-                const buttonHeight = 50;
+                const buttonX = centerX + panelWidth/2 - 120;
+                const buttonY = centerY + 150;
+                const buttonWidth = 240;
+                const buttonHeight = 40;
 
                 // Controlla se il click è sul bottone con un piccolo padding per maggiore tolleranza
                 const padding = 2;
@@ -3146,28 +3182,38 @@ export class HomePanel extends UIComponent {
         ctx.lineWidth = 2;
         ctx.strokeRect(centerX, centerY, panelWidth, panelHeight);
 
-        // Titolo senza glow
+        // Titolo principale
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.font = 'bold 24px Arial';
+        ctx.font = 'bold 22px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('STAR ENERGY', centerX + panelWidth/2, centerY + 40);
-        ctx.shadowBlur = 0;
+        ctx.fillText('STAR ENERGY', centerX + panelWidth/2, centerY + 35);
 
-        // Energia disponibile con effetto glow - più grande e centrata
+        // Sezione energia corrente - più compatta
+        const energySectionY = centerY + 60;
+        
+        // Sfondo sezione energia
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(centerX + 20, energySectionY, panelWidth - 40, 60);
+        
+        // Bordo sezione energia
+        ctx.strokeStyle = 'rgba(74, 144, 226, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(centerX + 20, energySectionY, panelWidth - 40, 60);
+
+        // Valore energia con effetto glow
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#4a90e2';
-        ctx.shadowBlur = 15;
-        ctx.font = 'bold 72px Arial'; // Font più grande
-        ctx.fillText(`${Math.floor(starEnergyInfo.current)}`, centerX + panelWidth/2, centerY + 120); // Spostato più in basso
+        ctx.shadowBlur = 12;
+        ctx.font = 'bold 48px Arial';
+        ctx.fillText(`${Math.floor(starEnergyInfo.current)}`, centerX + panelWidth/2, energySectionY + 45);
         ctx.shadowBlur = 0;
         
-        // Bottone di conversione con effetto hover - più grande e spostato
-        const buttonX = centerX + panelWidth/2 - 150; // Centrato
-        const buttonY = centerY + 180; // Spostato più in basso
-        const buttonWidth = 300; // Più largo
-        const buttonHeight = 50; // Più alto
+        // Bottone di conversione - più compatto
+        const buttonX = centerX + panelWidth/2 - 120;
+        const buttonY = centerY + 150;
+        const buttonWidth = 240;
+        const buttonHeight = 40;
 
         // Sfondo bottone con gradiente
         const buttonGradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
@@ -3183,56 +3229,148 @@ export class HomePanel extends UIComponent {
         ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
         ctx.shadowBlur = 0;
 
-        // Testo bottone - più grande
+        // Testo bottone
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Arial'; // Font più grande
-        ctx.fillText('CONVERT (1 ENERGY)', centerX + panelWidth/2, buttonY + 32); // Centrato verticalmente
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('CONVERT (1 ENERGY)', centerX + panelWidth/2, buttonY + 26);
 
-        // Info conversione
+        // Descrizione conversione
         ctx.fillStyle = '#aaaaaa';
-        ctx.font = '14px Arial';
-        ctx.fillText('Convert to ammo (missiles or laser)', centerX + panelWidth/2, buttonY + 60);
+        ctx.font = '12px Arial';
+        ctx.fillText('Convert to ammo or missiles', centerX + panelWidth/2, buttonY + 50);
 
-        // Mostra risultato ultima conversione con effetto glow
+        // Risultato ultima conversione
         if (this.lastConversionResult) {
             ctx.fillStyle = '#00ff00';
             ctx.shadowColor = '#00ff00';
-            ctx.shadowBlur = 10;
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText(this.lastConversionResult, centerX + panelWidth/2, buttonY + 100);
+            ctx.shadowBlur = 8;
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(this.lastConversionResult, centerX + panelWidth/2, buttonY + 75);
             ctx.shadowBlur = 0;
         }
 
-        // Sezione cronologia
-        const historyY = buttonY + 140;
+        // Sezione cronologia - più organizzata
+        const historyY = buttonY + 100;
+        
+        // Titolo cronologia
         ctx.fillStyle = '#4a90e2';
+        ctx.shadowColor = '#4a90e2';
+        ctx.shadowBlur = 6;
         ctx.font = 'bold 16px Arial';
         ctx.fillText('CONVERSION HISTORY', centerX + panelWidth/2, historyY);
+        ctx.shadowBlur = 0;
 
-        // Area di clip per la cronologia - più alta
+        // Sfondo area cronologia
+        const historyAreaX = centerX + 20;
+        const historyAreaY = historyY + 20;
+        const historyAreaWidth = panelWidth - 40;
+        const historyAreaHeight = 300;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(historyAreaX, historyAreaY, historyAreaWidth, historyAreaHeight);
+        
+        // Bordo area cronologia
+        ctx.strokeStyle = 'rgba(74, 144, 226, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(historyAreaX, historyAreaY, historyAreaWidth, historyAreaHeight);
+
+        // Area di clip per la cronologia
         ctx.save();
         ctx.beginPath();
-        ctx.rect(centerX + 20, historyY + 20, panelWidth - 40, 280); // Area più alta e margini maggiori
+        ctx.rect(historyAreaX, historyAreaY, historyAreaWidth, historyAreaHeight);
         ctx.clip();
 
-        // Lista risultati precedenti
-        ctx.font = '14px Arial';
+        // Lista cronologia con layout migliorato
+        const maxVisibleItems = Math.floor(historyAreaHeight / 28);
+        
         this.conversionHistory.forEach((entry, index) => {
             if (index === 0) return; // Salta il primo che è già mostrato sopra
-            const timeAgo = Math.floor((Date.now() - entry.timestamp) / 1000);
-            const timeStr = timeAgo < 60 ? `${timeAgo}s ago` : `${Math.floor(timeAgo/60)}m ago`;
             
-            const y = historyY + 30 + (index * 25) - this.historyScrollOffset;
+            const itemY = historyAreaY + 12 + ((index - 1) * 28) - this.historyScrollOffset;
+            
             // Mostra solo se nell'area visibile
-            if (y > historyY + 20 && y < historyY + 220) {
-                ctx.fillStyle = '#aaaaaa';
-                ctx.fillText(timeStr, centerX + 20, y);
+            if (itemY >= historyAreaY && itemY <= historyAreaY + historyAreaHeight - 28) {
+                // Sfondo alternato per le righe
+                if ((index - 1) % 2 === 0) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+                    ctx.fillRect(historyAreaX + 8, itemY - 8, historyAreaWidth - 16, 24);
+                }
                 
-                ctx.fillStyle = '#00ff00';
-                ctx.fillText(entry.result, centerX + 100, y);
+                // Icona tipo munizione
+                const iconX = historyAreaX + 15;
+                const iconY = itemY - 2;
+                
+                // Determina icona e colore basato sul tipo
+                let icon = '⚡';
+                let iconColor = '#00ff00';
+                
+                if (entry.result.includes('missiles')) {
+                    icon = '🚀';
+                    iconColor = '#ff6b6b';
+                } else if (entry.result.includes('Star Energy')) {
+                    icon = '⭐';
+                    iconColor = '#4a90e2';
+                } else if (entry.result.includes('ammo')) {
+                    icon = '💥';
+                    iconColor = '#ffd93d';
+                }
+                
+                // Disegna icona
+                ctx.fillStyle = iconColor;
+                ctx.font = '14px Arial';
+                ctx.fillText(icon, iconX, iconY);
+                
+                // Tempo con formato migliorato
+                const timeAgo = Math.floor((Date.now() - entry.timestamp) / 1000);
+                let timeStr;
+                if (timeAgo < 60) {
+                    timeStr = `${timeAgo}s ago`;
+                } else if (timeAgo < 3600) {
+                    timeStr = `${Math.floor(timeAgo/60)}m ago`;
+                } else {
+                    timeStr = `${Math.floor(timeAgo/3600)}h ago`;
+                }
+                
+                ctx.fillStyle = '#888888';
+                ctx.font = '11px Arial';
+                ctx.fillText(timeStr, iconX + 20, iconY);
+                
+                // Risultato conversione
+                ctx.fillStyle = iconColor;
+                ctx.font = 'bold 13px Arial';
+                ctx.fillText(entry.result, iconX + 100, iconY);
+                
+                // Separatore sottile
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(historyAreaX + 10, itemY + 6);
+                ctx.lineTo(historyAreaX + historyAreaWidth - 10, itemY + 6);
+                ctx.stroke();
             }
         });
+        
         ctx.restore();
+        
+        // Scrollbar personalizzata se necessario
+        const totalItems = this.conversionHistory.length - 1;
+        if (totalItems > maxVisibleItems) {
+            const scrollbarWidth = 6;
+            const scrollbarX = historyAreaX + historyAreaWidth - scrollbarWidth - 5;
+            const scrollbarHeight = historyAreaHeight - 10;
+            const scrollbarY = historyAreaY + 5;
+            
+            // Sfondo scrollbar
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+            
+            // Handle scrollbar
+            const handleHeight = (scrollbarHeight * maxVisibleItems) / totalItems;
+            const handleY = scrollbarY + (this.historyScrollOffset / (totalItems * 28)) * (scrollbarHeight - handleHeight);
+            
+            ctx.fillStyle = '#4a90e2';
+            ctx.fillRect(scrollbarX, handleY, scrollbarWidth, handleHeight);
+        }
     }
 
     drawClanContent(ctx, x, y) {

@@ -21,7 +21,6 @@ export class SectorSystem {
         this.gridImage = new Image();
         this.gridImage.onload = () => {
             this.gridImageLoaded = true;
-            console.log('🗺️ Griglia settori caricata con successo!');
         };
         this.gridImage.onerror = () => {
             console.error('❌ Errore nel caricamento della griglia settori');

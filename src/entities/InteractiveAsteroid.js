@@ -40,7 +40,6 @@ export class InteractiveAsteroid {
     loadSprite() {
         this.sprite = new Image();
         this.sprite.onload = () => {
-            console.log('🪨 Asteroide interattivo caricato!');
         };
         this.sprite.src = 'asteroid.png';
     }

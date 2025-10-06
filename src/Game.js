@@ -32,8 +32,6 @@ import { UIManager } from './ui/UIManager.js';
 import { HomePanel } from './ui/HomePanel.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
 import { ProfilePanel } from './ui/ProfilePanel.js';
-import { StarEnergyPanel } from './ui/panels/StarEnergyPanel.js';
-import { StarEnergyIcon } from './ui/icons/StarEnergyIcon.js';
 import { SpaceStationPanel } from './ui/SpaceStationPanel.js';
 import { CategorySkillbar } from './ui/CategorySkillbar.js';
 
@@ -80,7 +78,7 @@ export class Game {
         this.gameCore = new GameCore();
         this.eventManager = new EventManager();
         this.renderer = new Renderer(this.canvas, this.width, this.height);
-        this.gameLoop = new GameLoop(this.gameCore, this.renderer);
+        this.gameLoop = new GameLoop(this.gameCore, this.renderer, this);
         
         // Inizializza sistemi core
         this.camera = new Camera(this.width, this.height);
@@ -186,7 +184,6 @@ export class Game {
         this.profilePanel = new ProfilePanel(this);
         this.spaceStationPanel = new SpaceStationPanel();
         this.categorySkillbar = new CategorySkillbar();
-        this.starEnergyPanel = new StarEnergyPanel(this);
         
         // Configura skillbar
         this.categorySkillbar.setGame(this);
@@ -198,7 +195,6 @@ export class Game {
         this.gameCore.registerSystem('profilePanel', this.profilePanel);
         this.gameCore.registerSystem('spaceStationPanel', this.spaceStationPanel);
         this.gameCore.registerSystem('categorySkillbar', this.categorySkillbar);
-        this.gameCore.registerSystem('starEnergyPanel', this.starEnergyPanel);
 
         // Inizializza UI Manager con le icone
         this.initUIManager();
@@ -299,11 +295,6 @@ export class Game {
         this.uiManager.registerIcon({
             ...configs.settings,
             panel: this.settingsPanel
-        });
-
-        this.uiManager.registerIcon({
-            ...configs.starenergy,
-            panel: this.starEnergyPanel
         });
     }
 

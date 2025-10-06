@@ -17,7 +17,6 @@ export class ZoneNotification {
             fadeIn: true,
             fadeOut: false
         });
-        console.log(`📍 Zona attiva: ${zoneName} - ${message}`);
         return id;
     }
     
@@ -28,7 +27,6 @@ export class ZoneNotification {
             // Inizia il fade out invece di rimuovere immediatamente
             notification.fadeOut = true;
             notification.fadeIn = false;
-            console.log(`📍 Zona disattivata: ${notification.zoneName}`);
         }
     }
     

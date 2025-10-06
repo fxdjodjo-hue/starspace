@@ -1,0 +1,3366 @@
+
+alien50.png
+size: 2048, 1024
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium01
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium02
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium03
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium04
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium05
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium06
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium07
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium08
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium09
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium10
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium11
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium12
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium13
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium14
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 2, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 0
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 233, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 11,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 464, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 22,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 695, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 33,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 926, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 45
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1157, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 56,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1388, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 67,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1619, 4
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 78,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 2, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 90
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 233, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 101,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 464, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 112,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 695, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 123,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 926, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 135
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1157, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 146,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1388, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 157,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1619, 235
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 168,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 2, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 180
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 233, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 191,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 464, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 202,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 695, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 213,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 926, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 225
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1157, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 236,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1388, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 247,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1619, 466
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 258,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 2, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 270
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 233, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 281,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 464, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 292,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 695, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 303,75
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 926, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 315
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1157, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 326,25
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1388, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 337,50
+xerks_do_npcs_g-surgeon-devolarium15
+  rotate: false
+  xy: 1619, 697
+  size: 229, 229
+  orig: 229, 229
+  offset: 0, 0
+  index: 348,75

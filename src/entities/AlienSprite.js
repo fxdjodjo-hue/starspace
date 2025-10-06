@@ -1,29 +1,46 @@
 // Modulo Sprite Alieno Barracuda
 export class AlienSprite {
-    constructor() {
+    constructor(spritePath = './alien60.png', atlasPath = './alien60.atlas') {
         this.atlas = null;
         this.frames = [];
         this.currentFrame = 0;
         this.frameTimer = 0;
         this.frameRate = 10; // Cambia frame ogni 10 frame (60 FPS)
         this.loaded = false;
+        this.spritePath = spritePath;
+        this.atlasPath = atlasPath;
     }
     
     async load() {
         try {
-
-            
             // Carica l'atlas
-            const atlasResponse = await fetch('./alien60.atlas');
+            const atlasResponse = await fetch(this.atlasPath);
             if (!atlasResponse.ok) {
-                throw new Error(`Errore caricamento atlas: ${atlasResponse.status}`);
+                console.warn(`⚠️ Atlas non trovato: ${this.atlasPath}, usando sprite statico`);
+                // Se l'atlas non esiste, carica solo l'immagine senza animazioni
+                const image = new Image();
+                image.src = this.spritePath;
+                
+                await new Promise((resolve, reject) => {
+                    image.onload = () => {
+                        this.atlas = image;
+                        // Crea un frame unico a schermo intero se non esiste atlas
+                        this.frames = [{ x: 0, y: 0, width: image.width, height: image.height }];
+                        this.loaded = true;
+                        resolve();
+                    };
+                    image.onerror = (error) => {
+                        console.error('❌ Errore caricamento immagine:', error);
+                        reject(error);
+                    };
+                });
+                return;
             }
             const atlasText = await atlasResponse.text();
 
-            
             // Carica l'immagine
             const image = new Image();
-            image.src = './alien60.png';
+            image.src = this.spritePath;
             
             await new Promise((resolve, reject) => {
                 image.onload = () => {
@@ -37,6 +54,10 @@ export class AlienSprite {
             
             this.atlas = image;
             this.parseAtlas(atlasText);
+            // Se l'atlas è malformato o non ha frame, fallback a frame unico
+            if (!this.frames || this.frames.length === 0) {
+                this.frames = [{ x: 0, y: 0, width: image.width, height: image.height }];
+            }
             this.loaded = true;
             
 
@@ -63,30 +84,40 @@ export class AlienSprite {
             } else if (line.startsWith('format:') || line.startsWith('filter:') || line.startsWith('repeat:')) {
                 // Salta le altre informazioni
                 continue;
-            } else if (line.match(/^[A-Z0-9]+$/)) {
+            } else if (line && !line.includes(':') && !line.endsWith('.png')) {
                 // Nome del frame (es. BARRA0000)
                 if (currentFrame) {
                     this.frames.push(currentFrame);
                 }
                 currentFrame = { name: line };
             } else if (line.startsWith('rotate:')) {
-                currentFrame.rotate = line.split(':')[1].trim() === 'true';
+                if (currentFrame) {
+                    currentFrame.rotate = line.split(':')[1].trim() === 'true';
+                }
             } else if (line.startsWith('xy:')) {
-                const coords = line.split(':')[1].trim().split(',');
-                currentFrame.x = parseInt(coords[0]);
-                currentFrame.y = parseInt(coords[1]);
+                if (currentFrame) {
+                    const coords = line.split(':')[1].trim().split(',');
+                    currentFrame.x = parseInt(coords[0]);
+                    currentFrame.y = parseInt(coords[1]);
+                }
             } else if (line.startsWith('size:')) {
-                const coords = line.split(':')[1].trim().split(',');
-                currentFrame.width = parseInt(coords[0]);
-                currentFrame.height = parseInt(coords[1]);
+                if (currentFrame) {
+                    const coords = line.split(':')[1].trim().split(',');
+                    currentFrame.width = parseInt(coords[0]);
+                    currentFrame.height = parseInt(coords[1]);
+                }
             } else if (line.startsWith('orig:')) {
-                const coords = line.split(':')[1].trim().split(',');
-                currentFrame.origWidth = parseInt(coords[0]);
-                currentFrame.origHeight = parseInt(coords[1]);
+                if (currentFrame) {
+                    const coords = line.split(':')[1].trim().split(',');
+                    currentFrame.origWidth = parseInt(coords[0]);
+                    currentFrame.origHeight = parseInt(coords[1]);
+                }
             } else if (line.startsWith('offset:')) {
-                const coords = line.split(':')[1].trim().split(',');
-                currentFrame.offsetX = parseInt(coords[0]);
-                currentFrame.offsetY = parseInt(coords[1]);
+                if (currentFrame) {
+                    const coords = line.split(':')[1].trim().split(',');
+                    currentFrame.offsetX = parseInt(coords[0]);
+                    currentFrame.offsetY = parseInt(coords[1]);
+                }
             }
         }
         
@@ -94,8 +125,6 @@ export class AlienSprite {
         if (currentFrame) {
             this.frames.push(currentFrame);
         }
-        
-
     }
     
     update() {

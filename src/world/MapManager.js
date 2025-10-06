@@ -2,17 +2,30 @@ import { Portal } from './Portal.js';
 import { Enemy } from '../entities/Enemy.js';
 import { BonusBox } from '../entities/BonusBox.js';
 import { InteractiveAsteroid } from '../entities/InteractiveAsteroid.js';
+import { SpaceStation } from '../entities/SpaceStation.js';
 import { MapInstance } from './MapInstance.js';
+import { MapServer } from './MapServer.js';
 import { MapPersistence } from './MapPersistence.js';
 import { ObjectManager } from './ObjectManager.js';
+import { GameConfig } from '../config/GameConfig.js';
 
 // Gestore delle mappe e portali
 export class MapManager {
     constructor(game) {
         this.game = game;
-        this.currentMap = 'v1'; // Mappa di partenza per VENUS
+        // Imposta mappa iniziale basata sulla fazione, se disponibile
+        const savedFaction = (() => {
+            try { return localStorage.getItem('mmorpg_player_faction'); } catch (_) { return null; }
+        })();
+        const faction = this.game?.ship?.faction || savedFaction || 'venus';
+        const startByFaction = { venus: 'v1', mars: 'm1', eic: 'e1' };
+        this.currentMap = startByFaction[faction] || 'v1';
         
-        // Nuovo sistema di persistenza
+        // Nuovo sistema di mappe separate
+        this.mapServer = new MapServer();
+        this.currentPlayerId = 'player_' + Date.now(); // ID temporaneo per il giocatore
+        
+        // Sistema di persistenza legacy (mantenuto per compatibilità)
         this.persistence = new MapPersistence();
         this.objectManager = new ObjectManager();
         this.currentInstance = null;
@@ -23,6 +36,68 @@ export class MapManager {
         
         // Carica istanza iniziale
         this.loadCurrentMapInstance();
+        
+        // Registra il giocatore nella mappa corrente
+        this.registerPlayerInCurrentMap();
+    }
+    
+    // Registra il giocatore nella mappa corrente
+    registerPlayerInCurrentMap() {
+        const playerData = {
+            id: this.currentPlayerId,
+            position: { x: this.game.ship.x, y: this.game.ship.y },
+            faction: this.game.ship.faction || 'venus',
+            stats: {
+                hp: this.game.ship.hp || 100,
+                shield: this.game.ship.shield || 50,
+                maxHp: this.game.ship.maxHp || 100,
+                maxShield: this.game.ship.maxShield || 50
+            }
+        };
+        
+        this.mapServer.playerChangeMap(playerData, null, this.currentMap);
+    }
+    
+    // Aggiorna posizione del giocatore nel sistema di mappe
+    updatePlayerPosition() {
+        const currentMapInstance = this.mapServer.getPlayerMap(this.currentPlayerId);
+        if (currentMapInstance) {
+            currentMapInstance.updatePlayerPosition(this.currentPlayerId, {
+                x: this.game.ship.x,
+                y: this.game.ship.y
+            });
+        }
+    }
+    
+    // Ottieni statistiche della mappa corrente
+    getCurrentMapStats() {
+        return this.mapServer.getMapStats(this.currentMap);
+    }
+    
+    // Ottieni tutti i giocatori nella mappa corrente
+    getPlayersInCurrentMap() {
+        return this.mapServer.getPlayersInMap(this.currentMap);
+    }
+    
+    // Debug: mostra informazioni mappe separate
+    debugShowMapInfo() {
+        const stats = this.getSystemStats();
+        console.log('=== MAP SYSTEM DEBUG ===');
+        console.log('Current Map:', stats.currentMap);
+        console.log('Global Stats:', stats.mapServerStats);
+        console.log('Current Map Stats:', stats.currentMapStats);
+        
+        // Mostra giocatori nella mappa corrente
+        const players = this.getPlayersInCurrentMap();
+        console.log('Players in current map:', players.length);
+        players.forEach(player => {
+            console.log(`  - ${player.id}: ${player.faction} at (${player.position.x}, ${player.position.y})`);
+        });
+        
+        // Mostra statistiche di tutte le mappe
+        Object.entries(stats.mapServerStats.maps).forEach(([mapId, mapStats]) => {
+            console.log(`${mapId}: ${mapStats.playerCount}/${mapStats.maxPlayers} players, ${mapStats.activeCombats} combats`);
+        });
     }
     
     // Inizializza i portali (ora crea solo i portali per la mappa corrente)
@@ -35,14 +110,82 @@ export class MapManager {
     createPortalsForCurrentMap() {
         this.portals = []; // Pulisci i portali esistenti
         
+        
         if (this.currentMap === 'v1') {
-            // V1 -> V2 (lato destro) e V1 -> T-1 (centro)
+            // V1 -> V2 (lato destro)
             this.portals.push(new Portal(15000, 5000, 'v2', 1000, 5000, this.game));
-            this.portals.push(new Portal(8000, 5000, 't-1', 8000, 5000, this.game));
+        } else if (this.currentMap === 'v2') {
+            // V2 -> V1 (sinistra) e V2 -> V3 (destra)
+            this.portals.push(new Portal(1000, 5000, 'v1', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'v3', 1000, 5000, this.game));
+        } else if (this.currentMap === 'v3') {
+            // V3 -> V2 (sinistra) e V3 -> T-1 (destra)
+            this.portals.push(new Portal(1000, 5000, 'v2', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 't-1', 1000, 5000, this.game));
+        } else if (this.currentMap === 'v4') {
+            // V4 -> T-1 (sinistra) e V4 -> V5 (destra)
+            this.portals.push(new Portal(1000, 5000, 't-1', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'v5', 1000, 5000, this.game));
+        } else if (this.currentMap === 'v5') {
+            // V5 -> V4 (sinistra) e V5 -> V6 (destra)
+            this.portals.push(new Portal(500, 5000, 'v4', 14000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'v6', 1000, 5000, this.game));
+        } else if (this.currentMap === 'v6') {
+            // V6 -> V5 (sinistra)
+            this.portals.push(new Portal(500, 5000, 'v5', 14000, 5000, this.game));
+        } else if (this.currentMap === 't-1') {
+            // T-1 -> V3, V4, M3, M4, E3, E4
+            this.portals.push(new Portal(1000, 2000, 'v3', 15000, 5000, this.game));  // V3 in alto a sinistra
+            this.portals.push(new Portal(15000, 2000, 'v4', 1000, 5000, this.game));  // V4 in alto a destra
+            this.portals.push(new Portal(1000, 5000, 'm3', 15000, 5000, this.game));  // M3 al centro sinistra
+            this.portals.push(new Portal(15000, 5000, 'm4', 1000, 5000, this.game));  // M4 al centro destra
+            this.portals.push(new Portal(1000, 8000, 'e3', 15000, 5000, this.game));  // E3 in basso a sinistra
+            this.portals.push(new Portal(15000, 8000, 'e4', 1000, 5000, this.game));  // E4 in basso a destra
+        } else if (this.currentMap === 'm1') {
+            // M1 -> M2 (destra)
+            this.portals.push(new Portal(15000, 5000, 'm2', 1000, 5000, this.game));
+        } else if (this.currentMap === 'm2') {
+            // M2 -> M1 (sinistra) e M2 -> M3 (destra)
+            this.portals.push(new Portal(1000, 5000, 'm1', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'm3', 1000, 5000, this.game));
+        } else if (this.currentMap === 'm3') {
+            // M3 -> M2 (sinistra) e M3 -> T-1 (destra)
+            this.portals.push(new Portal(1000, 5000, 'm2', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 't-1', 1000, 5000, this.game));
+        } else if (this.currentMap === 'm4') {
+            // M4 -> T-1 (sinistra) e M4 -> M5 (destra)
+            this.portals.push(new Portal(1000, 5000, 't-1', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'm5', 1000, 5000, this.game));
+        } else if (this.currentMap === 'm5') {
+            // M5 -> M4 (sinistra) e M5 -> M6 (destra)
+            this.portals.push(new Portal(500, 5000, 'm4', 14000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'm6', 1000, 5000, this.game));
+        } else if (this.currentMap === 'm6') {
+            // M6 -> M5 (sinistra)
+            this.portals.push(new Portal(500, 5000, 'm5', 14000, 5000, this.game));
+        } else if (this.currentMap === 'e1') {
+            // E1 -> E2 (destra)
+            this.portals.push(new Portal(15000, 5000, 'e2', 1000, 5000, this.game));
+        } else if (this.currentMap === 'e2') {
+            // E2 -> E1 (sinistra) e E2 -> E3 (destra)
+            this.portals.push(new Portal(1000, 5000, 'e1', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'e3', 1000, 5000, this.game));
+        } else if (this.currentMap === 'e3') {
+            // E3 -> E2 (sinistra) e E3 -> T-1 (destra)
+            this.portals.push(new Portal(1000, 5000, 'e2', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 't-1', 1000, 5000, this.game));
+        } else if (this.currentMap === 'e4') {
+            // E4 -> T-1 (sinistra) e E4 -> E5 (destra)
+            this.portals.push(new Portal(1000, 5000, 't-1', 15000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'e5', 1000, 5000, this.game));
+        } else if (this.currentMap === 'e5') {
+            // E5 -> E4 (sinistra) e E5 -> E6 (destra)
+            this.portals.push(new Portal(500, 5000, 'e4', 14000, 5000, this.game));
+            this.portals.push(new Portal(15000, 5000, 'e6', 1000, 5000, this.game));
+        } else if (this.currentMap === 'e6') {
+            // E6 -> E5 (sinistra)
+            this.portals.push(new Portal(500, 5000, 'e5', 14000, 5000, this.game));
         } else if (this.currentMap === 'x1') {
-            // X1 -> X2 (lato destro)
-            this.portals.push(new Portal(15000, 5000, 'x2', 1000, 5000, this.game));
-        } else if (this.currentMap === 'x2') {
             // X2 -> X1 (lato sinistro) e X2 -> X3 (lato destro)
             this.portals.push(new Portal(500, 5000, 'x1', 14000, 5000, this.game));
             this.portals.push(new Portal(15000, 5000, 'x3', 1000, 5000, this.game));
@@ -54,9 +197,6 @@ export class MapManager {
             // X4 -> X3 (lato sinistro) e X4 -> X5 (lato destro)
             this.portals.push(new Portal(500, 5000, 'x3', 14000, 5000, this.game));
             this.portals.push(new Portal(15000, 5000, 'x5', 1000, 5000, this.game));
-        } else if (this.currentMap === 'x5') {
-            // X5 -> X4 (lato sinistro)
-            this.portals.push(new Portal(500, 5000, 'x4', 14000, 5000, this.game));
         }
     }
     
@@ -68,8 +208,8 @@ export class MapManager {
         if (this.currentInstance && (!this.currentInstance.config.npcType || 
             (this.currentMap === 'x2' && !this.hasLordakiaInInstance()))) {
             console.log(`🔄 Rigenerando istanza ${this.currentMap} con nuova configurazione NPC`);
-            this.currentInstance.config = this.currentInstance.getMapConfig(this.currentMap);
-            this.currentInstance.generateInitialObjects();
+            // Rigenera oggetti della mappa
+            this.generateMapObjects();
         }
         
         this.syncInstanceToGame();
@@ -78,8 +218,9 @@ export class MapManager {
     // Controlla se l'istanza ha Lordakia
     hasLordakiaInInstance() {
         if (!this.currentInstance) return false;
-        const enemyObjects = this.currentInstance.getObjectsByType('enemy');
-        return enemyObjects.some(obj => obj.npcType === 'npc_x2_lordakia');
+        // Per ora, assumiamo che non ci sia Lordakia nel nuovo sistema
+        // TODO: Implementare controllo specifico per NPC
+        return false;
     }
     
     // Sincronizza istanza con il gioco
@@ -91,10 +232,8 @@ export class MapManager {
         this.game.bonusBoxes = [];
         this.game.interactiveAsteroids = [];
         
-        // Ricrea oggetti dall'istanza
-        this.createEnemiesFromInstance();
-        this.createBonusBoxesFromInstance();
-        this.createAsteroidsFromInstance();
+        // Sincronizza oggetti dall'istanza al gioco
+        this.syncObjectsFromInstance();
     }
     
     // Crea nemici dall'istanza
@@ -129,6 +268,173 @@ export class MapManager {
         }
     }
     
+    // Sincronizza oggetti dall'istanza al gioco
+    syncObjectsFromInstance() {
+        if (!this.currentInstance) return;
+        
+        // Genera oggetti basandosi sulla configurazione della mappa
+        this.generateMapObjects();
+        
+        // Crea oggetti dall'istanza (ora che getObjectsByType è implementato)
+        this.createEnemiesFromInstance();
+        this.createBonusBoxesFromInstance();
+        this.createAsteroidsFromInstance();
+    }
+    
+    // Genera oggetti della mappa basandosi sulla configurazione
+    generateMapObjects() {
+        
+        // Solo le mappe X1 hanno stazioni spaziali
+        const mapsWithBase = ['v1', 'm1', 'e1'];
+        
+        // Genera stazione spaziale se la mappa è X1
+        if (mapsWithBase.includes(this.currentMap)) {
+            this.generateSpaceStation();
+        }
+        
+        // Genera NPC/Nemici
+        this.generateNPCs();
+        
+        // Genera asteroidi interattivi
+        this.generateInteractiveAsteroids();
+        
+        // Genera bonus box
+        this.generateBonusBoxes();
+    }
+    
+    // Ottiene configurazione mappa dal MapSystem
+    getMapConfigFromSystem() {
+        console.log(`🔍 Cercando configurazione per mappa: ${this.currentMap}`);
+        console.log(`🎮 Game mapSystem:`, this.game.mapSystem);
+        
+        if (!this.game.mapSystem) {
+            console.warn(`⚠️ Game.mapSystem non disponibile`);
+            return null;
+        }
+        
+        const mapConnections = this.game.mapSystem.mapConnections;
+        console.log(`🗺️ MapConnections disponibili:`, Object.keys(mapConnections));
+        
+        const config = mapConnections[this.currentMap] || null;
+        console.log(`📋 Configurazione trovata:`, config);
+        
+        return config;
+    }
+    
+    // Genera stazione spaziale
+    generateSpaceStation() {
+        // Rimuovi stazione esistente se presente
+        if (this.game.spaceStation) {
+            this.game.spaceStation = null;
+        }
+        
+        // Crea nuova stazione spaziale al centro della mappa
+        this.game.spaceStation = new SpaceStation(
+            GameConfig.WORLD.CENTER_X, 
+            GameConfig.WORLD.CENTER_Y
+        );
+    }
+    
+    // Genera asteroidi interattivi
+    generateInteractiveAsteroids() {
+        // Genera 10 asteroidi interattivi in posizioni casuali
+        for (let i = 0; i < 10; i++) {
+            const x = Math.random() * GameConfig.WORLD.WIDTH;
+            const y = Math.random() * GameConfig.WORLD.HEIGHT;
+            const asteroid = new InteractiveAsteroid(x, y, this.game);
+            this.game.interactiveAsteroids.push(asteroid);
+        }
+    }
+    
+    // Genera bonus box
+    generateBonusBoxes() {
+        // Genera 5 bonus box in posizioni casuali
+        for (let i = 0; i < 5; i++) {
+            const x = Math.random() * GameConfig.WORLD.WIDTH;
+            const y = Math.random() * GameConfig.WORLD.HEIGHT;
+            const bonusBox = new BonusBox(x, y, this.game);
+            this.game.bonusBoxes.push(bonusBox);
+        }
+    }
+    
+    // Genera NPC/Nemici
+    generateNPCs() {
+        
+        // Configurazione NPC per mappa
+        const npcConfig = this.getNPCConfigForMap();
+        if (!npcConfig || npcConfig.types.length === 0) {
+            return;
+        }
+        
+        
+        // Genera NPC per ogni tipo nella configurazione
+        let npcIndex = 0;
+        for (let i = 0; i < npcConfig.types.length; i++) {
+            const npcType = npcConfig.types[i];
+            const npcCount = npcConfig.counts[i];
+            
+            
+            for (let j = 0; j < npcCount; j++) {
+                // Posizione casuale ma non troppo vicina al centro
+                let x, y;
+                do {
+                    x = Math.random() * GameConfig.WORLD.WIDTH;
+                    y = Math.random() * GameConfig.WORLD.HEIGHT;
+                } while (Math.abs(x - GameConfig.WORLD.CENTER_X) < 1000 && Math.abs(y - GameConfig.WORLD.CENTER_Y) < 1000);
+                
+                const enemy = new Enemy(x, y, npcType);
+                enemy.id = `npc_${this.currentMap}_${npcIndex}`;
+                
+                // Inizializza AI per il nemico
+                enemy.initAI(this.game);
+                
+                this.game.enemies.push(enemy);
+                npcIndex++;
+            }
+        }
+        
+    }
+    
+    // Ottiene configurazione NPC per la mappa corrente
+    getNPCConfigForMap() {
+        const npcConfigs = {
+            // X1 - Streuner per fazione (MASSIVAMENTE AUMENTATI)
+            'v1': { types: ['streuner_vru'], counts: [30] },
+            'm1': { types: ['streuner_mmo'], counts: [30] },
+            'e1': { types: ['streuner_eic'], counts: [30] },
+            
+            // X2 - Lordakia per fazione (MASSIVAMENTE AUMENTATI)
+            'v2': { types: ['lordakia_vru'], counts: [35] },
+            'm2': { types: ['lordakia_mmo'], counts: [35] },
+            'e2': { types: ['lordakia_eic'], counts: [35] },
+            
+            // X3 - Saimon + Mordon + Devolarium + Sibelon (MASSIVAMENTE AUMENTATI)
+            'v3': { types: ['saimon_vru', 'mordon_vru', 'devolarium_vru', 'sibelon_vru'], counts: [15, 15, 8, 15] },
+            'm3': { types: ['saimon_mmo', 'mordon_mmo', 'devolarium_mmo', 'sibelon_mmo'], counts: [15, 15, 8, 15] },
+            'e3': { types: ['saimon_eic', 'mordon_eic', 'devolarium_eic', 'sibelon_eic'], counts: [15, 15, 8, 15] },
+            
+            // X4 - Sibelonit + Lordakium (MASSIVAMENTE AUMENTATI)
+            'v4': { types: ['sibelonit_vru', 'lordakium_vru'], counts: [15, 8] },
+            'm4': { types: ['sibelonit_mmo', 'lordakium_mmo'], counts: [15, 8] },
+            'e4': { types: ['sibelonit_eic', 'lordakium_eic'], counts: [15, 8] },
+            
+            // X5 - Kristalling + Kristallon (MASSIVAMENTE AUMENTATI)
+            'v5': { types: ['kristallin_vru', 'kristallon_vru'], counts: [15, 8] },
+            'm5': { types: ['kristallin_mmo', 'kristallon_mmo'], counts: [15, 8] },
+            'e5': { types: ['kristallin_eic', 'kristallon_eic'], counts: [15, 8] },
+            
+            // X6 - Cubikon + Kristallon + Lordakium (MASSIVAMENTE AUMENTATI)
+            'v6': { types: ['cubikon_vru', 'kristallon_vru', 'lordakium_vru'], counts: [15, 8, 8] },
+            'm6': { types: ['cubikon_mmo', 'kristallon_mmo', 'lordakium_mmo'], counts: [15, 8, 8] },
+            'e6': { types: ['cubikon_eic', 'kristallon_eic', 'lordakium_eic'], counts: [15, 8, 8] },
+            
+            // T-1 - Nessun NPC
+            't-1': { types: [], counts: [] }
+        };
+        
+        return npcConfigs[this.currentMap] || null;
+    }
+    
     // Crea asteroidi dall'istanza
     createAsteroidsFromInstance() {
         const asteroidObjects = this.currentInstance.getObjectsByType('asteroid');
@@ -144,22 +450,41 @@ export class MapManager {
     
     // Cambia mappa
     changeMap(newMap, ship) {
+        
         // Salva stato corrente prima del cambio
         this.saveCurrentMapState();
         
         // Salva la mappa di origine
         const fromMap = this.currentMap;
         
-        // Cambia mappa
+        // Cambia mappa nel sistema di mappe separate
+        const playerData = {
+            id: this.currentPlayerId,
+            position: { x: ship.x, y: ship.y },
+            faction: ship.faction || 'venus',
+            stats: {
+                hp: ship.hp || 100,
+                shield: ship.shield || 50,
+                maxHp: ship.maxHp || 100,
+                maxShield: ship.maxShield || 50
+            }
+        };
+        
+        const success = this.mapServer.playerChangeMap(playerData, fromMap, newMap);
+        if (!success) {
+            console.error(`Failed to change map from ${fromMap} to ${newMap}`);
+            return;
+        }
+        
+        // Cambia mappa locale
         this.currentMap = newMap;
         
         // Ricrea i portali per la nuova mappa
         this.createPortalsForCurrentMap();
         
-        // Trova il portale di arrivo in base alla mappa di origine
+        // Posiziona al portale di arrivo in base alla mappa di origine
         const arrivalPortal = this.getArrivalPortal(newMap, fromMap);
         if (arrivalPortal) {
-            // Posiziona la nave al centro del portale di arrivo
             ship.x = arrivalPortal.x + arrivalPortal.width / 2;
             ship.y = arrivalPortal.y + arrivalPortal.height / 2;
         }
@@ -180,43 +505,88 @@ export class MapManager {
         const mapConfig = this.currentInstance?.config;
         if (mapConfig) {
             this.game.notifications.add(`🌌 Benvenuto in ${mapConfig.name}!`, 'info');
-            this.showMapWelcomeMessage(newMap);
+            this.showMapWelcomeMessage(mapConfig);
         }
         
         // Aggiorna il background
         this.updateBackground();
+        
+        // Aggiorna posizione nel sistema di mappe
+        this.updatePlayerPosition();
     }
     
     // Ottiene il portale di arrivo in base alla mappa di origine e destinazione
     getArrivalPortal(toMap, fromMap) {
-        // ANDATA: X1→X2→X3→X4→X5
-        if (fromMap === 'x1' && toMap === 'x2') {
-            // X1 destro → atterri in X2 sinistro (quello che porta a X1)
-            return new Portal(500, 5000, 'x1', 14000, 5000, this.game);
-        } else if (fromMap === 'x2' && toMap === 'x3') {
-            // X2 destro → atterri in X3 sinistro (quello che porta a X2)
-            return new Portal(500, 5000, 'x2', 14000, 5000, this.game);
-        } else if (fromMap === 'x3' && toMap === 'x4') {
-            // X3 destro → atterri in X4 sinistro (quello che porta a X3)
-            return new Portal(500, 5000, 'x3', 14000, 5000, this.game);
-        } else if (fromMap === 'x4' && toMap === 'x5') {
-            // X4 destro → atterri in X5 sinistro (quello che porta a X4)
-            return new Portal(500, 5000, 'x4', 14000, 5000, this.game);
+        // VENUS RESEARCH DIVISION
+        // Andata V1→V2→V3→T-1
+        if (fromMap === 'v1' && toMap === 'v2') {
+            return new Portal(1000, 5000, 'v1', 15000, 5000, this.game);
+        } else if (fromMap === 'v2' && toMap === 'v3') {
+            return new Portal(1000, 5000, 'v2', 15000, 5000, this.game);
+        } else if (fromMap === 'v3' && toMap === 't-1') {
+            return new Portal(1000, 2000, 'v3', 15000, 5000, this.game);
         }
-        
-        // RITORNO: X5→X4→X3→X2→X1
-        else if (fromMap === 'x5' && toMap === 'x4') {
-            // X5 sinistro → atterri in X4 destro (quello che porta a X5)
-            return new Portal(15000, 5000, 'x5', 1000, 5000, this.game);
-        } else if (fromMap === 'x4' && toMap === 'x3') {
-            // X4 sinistro → atterri in X3 destro (quello che porta a X4)
-            return new Portal(15000, 5000, 'x4', 1000, 5000, this.game);
-        } else if (fromMap === 'x3' && toMap === 'x2') {
-            // X3 sinistro → atterri in X2 destro (quello che porta a X3)
-            return new Portal(15000, 5000, 'x3', 1000, 5000, this.game);
-        } else if (fromMap === 'x2' && toMap === 'x1') {
-            // X2 sinistro → atterri in X1 destro (quello che porta a X2)
-            return new Portal(15000, 5000, 'x2', 1000, 5000, this.game);
+        // Ritorno V5←V4←T-1
+        else if (fromMap === 't-1' && toMap === 'v4') {
+            return new Portal(1000, 5000, 't-1', 15000, 5000, this.game);
+        } else if (fromMap === 'v4' && toMap === 'v5') {
+            return new Portal(1000, 5000, 'v4', 15000, 5000, this.game);
+        }
+        // Ritorno inverso
+        else if (fromMap === 'v2' && toMap === 'v1') {
+            return new Portal(15000, 5000, 'v2', 1000, 5000, this.game);
+        } else if (fromMap === 'v3' && toMap === 'v2') {
+            return new Portal(15000, 5000, 'v3', 1000, 5000, this.game);
+        } else if (fromMap === 'v5' && toMap === 'v4') {
+            return new Portal(15000, 5000, 'v5', 1000, 5000, this.game);
+        }
+
+        // MARS MINING OPERATIONS
+        // Andata M1→M2→M3→T-1
+        else if (fromMap === 'm1' && toMap === 'm2') {
+            return new Portal(1000, 5000, 'm1', 15000, 5000, this.game);
+        } else if (fromMap === 'm2' && toMap === 'm3') {
+            return new Portal(1000, 5000, 'm2', 15000, 5000, this.game);
+        } else if (fromMap === 'm3' && toMap === 't-1') {
+            return new Portal(1000, 5000, 'm3', 15000, 5000, this.game);
+        }
+        // Ritorno M5←M4←T-1
+        else if (fromMap === 't-1' && toMap === 'm4') {
+            return new Portal(1000, 5000, 't-1', 15000, 5000, this.game);
+        } else if (fromMap === 'm4' && toMap === 'm5') {
+            return new Portal(1000, 5000, 'm4', 15000, 5000, this.game);
+        }
+        // Ritorno inverso
+        else if (fromMap === 'm2' && toMap === 'm1') {
+            return new Portal(15000, 5000, 'm2', 1000, 5000, this.game);
+        } else if (fromMap === 'm3' && toMap === 'm2') {
+            return new Portal(15000, 5000, 'm3', 1000, 5000, this.game);
+        } else if (fromMap === 'm5' && toMap === 'm4') {
+            return new Portal(15000, 5000, 'm5', 1000, 5000, this.game);
+        }
+
+        // EARTH INDUSTRIES CORPORATION
+        // Andata E1→E2→E3→T-1
+        else if (fromMap === 'e1' && toMap === 'e2') {
+            return new Portal(1000, 5000, 'e1', 15000, 5000, this.game);
+        } else if (fromMap === 'e2' && toMap === 'e3') {
+            return new Portal(1000, 5000, 'e2', 15000, 5000, this.game);
+        } else if (fromMap === 'e3' && toMap === 't-1') {
+            return new Portal(1000, 8000, 'e3', 15000, 5000, this.game);
+        }
+        // Ritorno E5←E4←T-1
+        else if (fromMap === 't-1' && toMap === 'e4') {
+            return new Portal(1000, 5000, 't-1', 15000, 5000, this.game);
+        } else if (fromMap === 'e4' && toMap === 'e5') {
+            return new Portal(1000, 5000, 'e4', 15000, 5000, this.game);
+        }
+        // Ritorno inverso
+        else if (fromMap === 'e2' && toMap === 'e1') {
+            return new Portal(15000, 5000, 'e2', 1000, 5000, this.game);
+        } else if (fromMap === 'e3' && toMap === 'e2') {
+            return new Portal(15000, 5000, 'e3', 1000, 5000, this.game);
+        } else if (fromMap === 'e5' && toMap === 'e4') {
+            return new Portal(15000, 5000, 'e5', 1000, 5000, this.game);
         }
         
         return null;
@@ -237,46 +607,17 @@ export class MapManager {
     syncGameToInstance() {
         if (!this.currentInstance) return;
         
-        // Aggiorna nemici
-        for (const enemy of this.game.enemies) {
-            if (enemy.id) {
-                this.currentInstance.updateObject(enemy.id, {
-                    x: enemy.x,
-                    y: enemy.y,
-                    active: enemy.active !== false
-                });
-            }
-        }
-        
-        // Aggiorna bonus box
-        for (const box of this.game.bonusBoxes) {
-            if (box.id) {
-                this.currentInstance.updateObject(box.id, {
-                    x: box.x,
-                    y: box.y,
-                    active: box.active !== false
-                });
-            }
-        }
-        
-        // Aggiorna asteroidi
-        for (const asteroid of this.game.interactiveAsteroids) {
-            if (asteroid.id) {
-                this.currentInstance.updateObject(asteroid.id, {
-                    x: asteroid.x,
-                    y: asteroid.y,
-                    active: asteroid.active !== false
-                });
-            }
-        }
+        // TODO: Implementare sincronizzazione con il nuovo sistema MapInstance
+        // Per ora, salva solo le informazioni base
+        console.log('⚠️ Sincronizzazione gioco->istanza temporaneamente disabilitata per il nuovo sistema');
     }
     
     // Rigenera completamente la mappa (ora usa istanze)
     regenerateMap() {
         if (!this.currentInstance) return;
         
-        // Rigenera oggetti nell'istanza
-        this.currentInstance.generateInitialObjects();
+        // TODO: Implementare rigenerazione con il nuovo sistema MapInstance
+        console.log('⚠️ Rigenerazione mappa temporaneamente disabilitata per il nuovo sistema');
         
         // Sincronizza con il gioco
         this.syncInstanceToGame();
@@ -320,16 +661,20 @@ export class MapManager {
     }
     
     // Mostra messaggio di benvenuto per la mappa
-    showMapWelcomeMessage(mapId) {
-        const config = this.getCurrentMapConfig();
-        if (config && this.game.zoneNotifications) {
+    showMapWelcomeMessage(config) {
+        if (!config || !config.name) {
+            console.warn('⚠️ Config o config.name mancante in showMapWelcomeMessage');
+            return;
+        }
+        
+        if (this.game.zoneNotifications) {
             // Rimuovi eventuali notifiche di mappa precedenti
             this.game.zoneNotifications.removeZoneNotifications('MapWelcome');
             
             // Crea una notifica di zona nello stesso stile della spacestation
             const notificationId = this.game.zoneNotifications.addZoneNotification(
                 'MapWelcome', 
-                `Welcome to\n${config.name.toUpperCase()}\n[${config.description.toUpperCase()}]`, 
+                `Welcome to\n${config.name.toUpperCase()}\n[${config.description?.toUpperCase() || 'UNKNOWN AREA'}]`, 
                 'info'
             );
             
@@ -344,7 +689,12 @@ export class MapManager {
     
     // Ottiene la mappa corrente
     getCurrentMap() {
-        return this.currentInstance?.config || null;
+        if (!this.currentInstance?.config) return null;
+        
+        return {
+            name: this.currentMap,
+            config: this.currentInstance.config
+        };
     }
     
     // Salva automaticamente lo stato (da chiamare periodicamente)
@@ -356,6 +706,8 @@ export class MapManager {
     getSystemStats() {
         return {
             currentMap: this.currentMap,
+            mapServerStats: this.mapServer.getGlobalStats(),
+            currentMapStats: this.getCurrentMapStats(),
             instanceStats: this.currentInstance ? {
                 objectCount: this.currentInstance.objects.size,
                 lastUpdate: this.currentInstance.lastUpdate
@@ -390,6 +742,13 @@ export class MapManager {
     
     // Aggiorna tutti i portali
     update() {
+        // TODO: Temporaneamente disabilitato per evitare conflitti con Minimap
+        // this.mapServer.update(16); // 60 FPS
+        
+        // TODO: Temporaneamente disabilitato per evitare conflitti con Minimap
+        // this.updatePlayerPosition();
+        
+        // Aggiorna portali legacy
         const currentPortals = this.getCurrentMapPortals();
         currentPortals.forEach(portal => {
             portal.update();

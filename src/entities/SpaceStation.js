@@ -33,7 +33,6 @@ export class SpaceStation {
         
         this.image.onload = () => {
             this.isLoaded = true;
-            console.log('🚀 Stazione spaziale caricata con successo!');
         };
         
         this.image.onerror = () => {

@@ -183,7 +183,6 @@ export class Inventory {
         const laser3Img = new Image();
         laser3Img.onload = () => {
             this.equipImages.laser3 = laser3Img;
-            console.log('✅ Immagine laser N3 caricata');
         };
         laser3Img.onerror = () => {
             console.warn('⚠️ Errore nel caricamento immagine laser N3');
@@ -194,7 +193,6 @@ export class Inventory {
         const shield3Img = new Image();
         shield3Img.onload = () => {
             this.equipImages.shield3 = shield3Img;
-            console.log('✅ Immagine scudo N3 caricata');
         };
         shield3Img.onerror = () => {
             console.warn('⚠️ Errore nel caricamento immagine scudo N3');
@@ -205,7 +203,6 @@ export class Inventory {
         const gen3Img = new Image();
         gen3Img.onload = () => {
             this.equipImages.gen3 = gen3Img;
-            console.log('✅ Immagine generatore N3 caricata');
         };
         gen3Img.onerror = () => {
             console.warn('⚠️ Errore nel caricamento immagine generatore N3');

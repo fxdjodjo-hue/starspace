@@ -5,9 +5,10 @@
 import { GAME_EVENTS } from '../utils/Constants.js';
 
 export class GameLoop {
-    constructor(gameCore, renderer) {
+    constructor(gameCore, renderer, game) {
         this.gameCore = gameCore;
         this.renderer = renderer;
+        this.game = game;
         this.isRunning = false;
         this.animationFrameId = null;
         this.lastTime = 0;
@@ -90,7 +91,7 @@ export class GameLoop {
             this.gameCore.update(currentTime);
             
             // Renderizza il frame
-            this.render();
+            this.render(this.game);
             
             this.lastFrameTime = currentTime;
         }
@@ -102,10 +103,10 @@ export class GameLoop {
     /**
      * Esegue il rendering del frame
      */
-    render() {
+    render(game) {
         try {
             if (this.renderer && this.renderer.render) {
-                this.renderer.render();
+                this.renderer.render(game);
             }
         } catch (error) {
             console.error('Error during rendering:', error);

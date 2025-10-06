@@ -1,0 +1,230 @@
+
+alien70.png
+size: 2048, 1024
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+Comp 1
+  rotate: false
+  xy: 0, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 22
+Comp 1
+  rotate: false
+  xy: 0, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 9
+Comp 1
+  rotate: false
+  xy: 250, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 1
+Comp 1
+  rotate: false
+  xy: 0, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 14
+Comp 1
+  rotate: false
+  xy: 250, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 27
+Comp 1
+  rotate: false
+  xy: 500, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 6
+Comp 1
+  rotate: false
+  xy: 0, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 19
+Comp 1
+  rotate: false
+  xy: 250, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 11
+Comp 1
+  rotate: false
+  xy: 500, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 24
+Comp 1
+  rotate: false
+  xy: 750, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 3
+Comp 1
+  rotate: false
+  xy: 250, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 16
+Comp 1
+  rotate: false
+  xy: 500, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 29
+Comp 1
+  rotate: false
+  xy: 750, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 21
+Comp 1
+  rotate: false
+  xy: 1000, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 8
+Comp 1
+  rotate: false
+  xy: 500, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 0
+Comp 1
+  rotate: false
+  xy: 750, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 13
+Comp 1
+  rotate: false
+  xy: 1000, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 26
+Comp 1
+  rotate: false
+  xy: 1250, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 31
+Comp 1
+  rotate: false
+  xy: 750, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 5
+Comp 1
+  rotate: false
+  xy: 1000, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 18
+Comp 1
+  rotate: false
+  xy: 1250, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 23
+Comp 1
+  rotate: false
+  xy: 1500, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 10
+Comp 1
+  rotate: false
+  xy: 1000, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 2
+Comp 1
+  rotate: false
+  xy: 1250, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 15
+Comp 1
+  rotate: false
+  xy: 1500, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 28
+Comp 1
+  rotate: false
+  xy: 1750, 615
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 7
+Comp 1
+  rotate: false
+  xy: 1250, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 20
+Comp 1
+  rotate: false
+  xy: 1500, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 25
+Comp 1
+  rotate: false
+  xy: 1750, 410
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 12
+Comp 1
+  rotate: false
+  xy: 1500, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 30
+Comp 1
+  rotate: false
+  xy: 1750, 205
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 4
+Comp 1
+  rotate: false
+  xy: 1750, 0
+  size: 250, 205
+  orig: 250, 205
+  offset: 0, 0
+  index: 17

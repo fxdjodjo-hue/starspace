@@ -188,13 +188,11 @@
             
             // Test per verificare se gli eventi da tastiera funzionano sul canvas
             canvas.addEventListener('keydown', function(e) {
-                console.log('🔑 CANVAS KEYDOWN TEST:', e.code, e.key);
             });
             
             // Focus sul canvas quando viene cliccato
             canvas.addEventListener('click', function() {
                 canvas.focus();
-                console.log('🎯 Canvas focused for keyboard input');
             });
             
             // Ridimensiona al caricamento della pagina

@@ -155,17 +155,10 @@ class Game {
         
         // Schermata di selezione iniziale
         this.startScreen = new StartScreen(this);
-        console.log('✅ StartScreen created - isVisible:', this.startScreen.isVisible, 'isTyping:', this.startScreen.isTyping);
         
         // Schermata di selezione fazione
         this.factionSelectionScreen = new FactionSelectionScreen(this);
-        console.log('✅ FactionSelectionScreen created');
         
-        // Test globale per verificare se gli eventi da tastiera funzionano
-        document.addEventListener('keydown', (e) => {
-            console.log('🔑 GLOBAL KEYDOWN TEST:', e.code, e.key);
-            
-        });
         
         // Quest Tracker (mini pannello per quest attive)
         this.questTracker = new QuestTracker(this);
@@ -241,7 +234,6 @@ class Game {
         this.canvas.width = containerWidth;
         this.canvas.height = containerHeight;
         
-        console.log('📐 Canvas size set to:', containerWidth, 'x', containerHeight);
     }
     
     // initIconSystemUI legacy rimosso (UIManager in uso)
@@ -1354,7 +1346,13 @@ class Game {
         
         // Disegna stazione spaziale solo se presente nella mappa corrente
         if (this.mapManager.shouldShowSpaceStation()) {
-            this.spaceStation.draw(this.ctx, this.camera);
+            if (this.spaceStation) {
+                this.spaceStation.draw(this.ctx, this.camera);
+            } else {
+                console.error(`❌ Stazione spaziale non trovata!`);
+            }
+        } else {
+            // Non disegnare la stazione spaziale se non dovrebbe essere visibile
         }
         
         // Disegna asteroidi interattivi
@@ -2601,7 +2599,6 @@ window.addEventListener('load', () => {
     const game = new Game();
     
     // Mostra sempre la StartScreen all'avvio
-    console.log('🎮 Avvio gioco - mostrando StartScreen');
     game.startScreen.show();
     
     // Avvia il game loop dopo un breve delay per permettere il caricamento degli asset

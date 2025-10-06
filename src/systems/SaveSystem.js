@@ -40,7 +40,6 @@ export class SaveSystem {
             legacy.forEach(k => localStorage.removeItem(k));
         } catch (_) {}
         
-        console.log('💾 SaveSystem initialized with best practices (per-account only)');
     }
     
     /**
@@ -236,7 +235,7 @@ export class SaveSystem {
                 playerName: ship.playerName
             },
             world: {
-                currentMap: mapManager ? mapManager.currentMap : 'x1',
+                currentMap: mapManager ? mapManager.currentMap : null,
                 sector: world ? world.currentSector : null
             },
             settings: {
@@ -324,7 +323,11 @@ export class SaveSystem {
         
         // Ripristina mondo
         if (saveData.world && mapManager) {
-            mapManager.currentMap = saveData.world.currentMap || 'x1';
+            const factionId = (typeof this.game.factionSystem?.currentFaction === 'string')
+                ? this.game.factionSystem.currentFaction
+                : (this.game.ship?.faction || 'venus');
+            const startByFaction = { venus: 'v1', mars: 'm1', eic: 'e1' };
+            mapManager.currentMap = saveData.world.currentMap || startByFaction[factionId] || 'v1';
         }
         
         // Ripristina impostazioni
@@ -358,12 +361,41 @@ export class SaveSystem {
                     this.game.droneManager.repositionDrones();
                 }
             }
+            
+            // Riapplica gli effetti degli item equipaggiati
+            this.reapplyEquippedEffects();
         }
         
         // Ripristina fazione
         if (saveData.faction && this.game.factionSystem) {
             this.game.factionSystem.importData(saveData.faction);
         }
+    }
+    
+    // Riapplica gli effetti degli item equipaggiati
+    reapplyEquippedEffects() {
+        if (!this.game.ship || !this.game.inventory) return;
+        
+        // Riapplica laser
+        Object.entries(this.game.inventory.equipment.laser).forEach(([index, item]) => {
+            if (item && item.stats && item.stats.key) {
+                this.game.ship.equipLaser(item.stats.key, 1);
+            }
+        });
+        
+        // Riapplica scudi e generatori
+        Object.entries(this.game.inventory.equipment.shieldGen).forEach(([index, item]) => {
+            if (item && item.stats && item.stats.key) {
+                const key = item.stats.key;
+                if (key.startsWith('gen')) {
+                    this.game.ship.equipGenerator(key, 1);
+                } else if (key.startsWith('sh')) {
+                    const extra = Number(item.stats?.protection || 0);
+                    this.game.ship.maxShield += extra;
+                    this.game.ship.shield += extra;
+                }
+            }
+        });
     }
     
     /**
@@ -429,7 +461,6 @@ export class SaveSystem {
                 }
             }, this.backupInterval);
             
-            console.log('🔄 Salvataggio automatico avviato');
         }
     }
     

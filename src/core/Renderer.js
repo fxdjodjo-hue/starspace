@@ -102,6 +102,94 @@ export class Renderer {
         // Implementazione futura per barre HP, munizioni, ecc.
     }
     
+    // Metodo principale di rendering
+    render(game) {
+        if (!game) return;
+        
+        // Pulisci il canvas
+        this.clear();
+        
+        // Ottieni la camera
+        const camera = game.camera;
+        
+        // Disegna il mondo
+        this.drawWorld(game.world, camera);
+        
+        // Disegna la stazione spaziale se presente
+        if (game.spaceStation) {
+            this.drawSpaceStation(game.spaceStation, camera);
+        }
+        
+        // Disegna la nave
+        this.drawShip(game.ship, camera);
+        
+        // Disegna proiettili e missili
+        this.drawProjectiles(game.ship, camera);
+        this.drawMissiles(game.ship, camera);
+        
+        // Disegna scie
+        this.drawTrail(game.ship, camera);
+        
+        // Disegna droni UAV
+        this.drawUAVDrones(game.ship, camera, game.inventory);
+        
+        // Disegna nemici
+        this.drawEnemies(game.enemies, camera);
+        
+        // Disegna bonus box
+        this.drawBonusBoxes(game.bonusBoxes, camera);
+        
+        // Disegna asteroidi interattivi
+        this.drawInteractiveAsteroids(game.interactiveAsteroids, camera);
+        
+        // Disegna portali
+        if (game.mapManager) {
+            game.mapManager.draw(this.ctx, camera);
+        }
+    }
+    
+    // Disegna la stazione spaziale
+    drawSpaceStation(spaceStation, camera) {
+        if (!spaceStation || !spaceStation.active) return;
+        
+        const screenPos = camera.worldToScreen(spaceStation.x, spaceStation.y);
+        
+        this.ctx.save();
+        this.ctx.translate(screenPos.x, screenPos.y);
+        
+        // Disegna la stazione spaziale
+        spaceStation.draw(this.ctx, camera);
+        
+        this.ctx.restore();
+    }
+    
+    // Disegna nemici
+    drawEnemies(enemies, camera) {
+        enemies.forEach(enemy => {
+            if (enemy && !enemy.isDead) {
+                enemy.draw(this.ctx, camera);
+            }
+        });
+    }
+    
+    // Disegna bonus box
+    drawBonusBoxes(bonusBoxes, camera) {
+        bonusBoxes.forEach(box => {
+            if (box && box.active) {
+                box.draw(this.ctx, camera);
+            }
+        });
+    }
+    
+    // Disegna asteroidi interattivi
+    drawInteractiveAsteroids(asteroids, camera) {
+        asteroids.forEach(asteroid => {
+            if (asteroid && asteroid.active) {
+                asteroid.draw(this.ctx, camera);
+            }
+        });
+    }
+    
     // Disegna i droni UAV semplici attorno alla nave
     drawUAVDrones(ship, camera, inventory) {
         if (!inventory || !inventory.equipment || !inventory.equipment.uav) return;

@@ -195,7 +195,6 @@ export class AudioManager {
         // Fade in del suono della stazione
         this.fadeInSpaceStationSound();
         
-        console.log('🏭 Suono ambientale stazione avviato (con fade in)');
     }
     
     // Ferma suono ambientale stazione spaziale
@@ -234,7 +233,6 @@ export class AudioManager {
             
             if (currentStep >= fadeSteps) {
                 clearInterval(this.fadeInterval);
-                console.log('🎵 Fade in stazione completato');
             }
         }, stepTime);
     }
@@ -363,7 +361,6 @@ export class AudioManager {
         this.backgroundMusic.loop = true; // Riproduci in loop
         
         this.backgroundMusic.oncanplaythrough = () => {
-            console.log('🎵 Musica di sottofondo caricata!');
         };
         
         this.backgroundMusic.onerror = (e) => {
@@ -382,7 +379,6 @@ export class AudioManager {
             this.backgroundMusic.currentTime = 0; // Ricomincia dall'inizio
             this.backgroundMusic.play().then(() => {
                 this.musicPlaying = true;
-                console.log('🎵 Musica di sottofondo avviata!');
             }).catch(e => {
                 console.log('🔇 Errore avvio musica:', e);
             });

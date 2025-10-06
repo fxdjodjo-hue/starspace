@@ -16,7 +16,6 @@ export class MissileSprite {
                 this.width = this.image.width;
                 this.height = this.image.height;
                 this.isLoaded = true;
-                console.log('Missile sprite caricato:', this.width, 'x', this.height);
                 resolve();
             };
             this.image.onerror = () => {

@@ -1,7 +1,6 @@
 // Schermata di selezione fazione
 export class FactionSelectionScreen {
     constructor(game) {
-        console.log('🏗️ FactionSelectionScreen constructor');
         this.game = game;
         this.isVisible = false;
         
@@ -217,8 +216,13 @@ export class FactionSelectionScreen {
             'eic': 'e1'
         };
         
-        this.game.mapManager.currentMap = startingMaps[this.selectedFaction] || 'v1';
+        const startingMap = startingMaps[this.selectedFaction] || 'v1';
+        
+        this.game.mapManager.currentMap = startingMap;
         this.game.mapManager.loadCurrentMapInstance();
+        
+        // IMPORTANTE: Ricrea i portali per la nuova mappa
+        this.game.mapManager.createPortalsForCurrentMap();
         
         // Reset inventario e stato iniziale per nuovo account
         if (this.game.inventory) {
@@ -238,6 +242,9 @@ export class FactionSelectionScreen {
             this.game.ship.resources.starEnergy = 100;
             this.game.ship.ammunition = { laser: { x1: 1000, x2: 500, x3: 200, sab: 100 }, missile: { r1: 50, r2: 25, r3: 10 } };
             this.game.ship.equippedLasers = { lf1: 0, lf2: 0, lf3: 0, lf4: 0 };
+            
+            // Imposta la fazione nella nave
+            this.game.ship.faction = this.selectedFaction;
         }
 
         // Salva tutto nell'account per-id

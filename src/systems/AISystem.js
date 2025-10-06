@@ -9,7 +9,6 @@ export class AISystem {
         this.target = null;
         this.lastSeenPlayer = null;
         this.alertTimer = 0;
-        this.attackTimer = 0;
         this.fleeTimer = 0;
         
         // Sistema di sparo
@@ -39,7 +38,6 @@ export class AISystem {
             isAggressive: false,
             retaliateOnDamage: true,
             fleeWhenLow: false,
-            attackCooldown: 60, // 1 secondo
             alertDuration: 300, // 5 secondi
             fleeDuration: 180 // 3 secondi
         };
@@ -75,7 +73,6 @@ export class AISystem {
     
     updateTimers() {
         if (this.alertTimer > 0) this.alertTimer--;
-        if (this.attackTimer > 0) this.attackTimer--;
         if (this.fleeTimer > 0) this.fleeTimer--;
     }
     
@@ -149,11 +146,6 @@ export class AISystem {
             this.fleeTimer = 300; // 5 secondi di fuga
             console.log(`${this.enemy.getDisplayName()} sta scappando! HP: ${Math.floor(hpPercentage * 100)}%`);
             return;
-        }
-        
-        // Attacca se in range (solo se molto vicino)
-        if (this.getDistanceToTarget() <= this.attackRange && this.attackTimer <= 0) {
-            this.performAttack();
         }
         
         // Sistema di sparo (sempre attivo quando in ATTACK)
@@ -304,22 +296,6 @@ export class AISystem {
         }
     }
     
-    performAttack() {
-        // Implementa attacco al giocatore
-        if (this.target && this.target.active) {
-            // Calcola danno basato sulla configurazione NPC
-            // Danno casuale tra -2.5 e +2.5 dal danno base
-            const baseDamage = this.enemy.damage || this.enemy.config.damage || 20;
-            const variation = (Math.random() * 5) - 2.5; // Variazione di ±2.5
-            const damage = Math.round(baseDamage + variation);
-            
-            if (this.game.ship && this.game.ship.takeDamage) {
-                this.game.ship.takeDamage(damage);
-            }
-        }
-        
-        this.attackTimer = this.config.attackCooldown;
-    }
     
     onDamageReceived() {
         // Reagisce ai danni ricevuti - attacca direttamente il giocatore

@@ -41,7 +41,6 @@ export class FastRepair {
             this.repairAnimation.frameDuration = 7000 / 576; // ~12.2ms per frame
             
             this.animationLoaded = true;
-            console.log('🔧 Animazione FastRepair caricata con successo');
         } catch (error) {
             console.error('❌ Errore caricamento animazione FastRepair:', error);
         }

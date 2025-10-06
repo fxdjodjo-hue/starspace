@@ -6,7 +6,6 @@ export class QuestTracker {
         this.game = game;
         this.visible = true;
         this.minimized = true; // Stato iniziale minimizzato
-        console.log('🏗️ QuestTracker constructor - inizializzato come minimizzato:', this.minimized);
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         this.hasMoved = false; // Traccia se c'è stato movimento durante il drag

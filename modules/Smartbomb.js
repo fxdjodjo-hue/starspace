@@ -38,7 +38,6 @@ export class Smartbomb {
             this.explosionAnimation.frameDuration = 2500 / 72; // ~34.7ms per frame
             
             this.animationLoaded = true;
-            console.log('✅ Animazione smartbomb caricata');
         } catch (error) {
             console.error('❌ Errore caricamento animazione smartbomb:', error);
         }

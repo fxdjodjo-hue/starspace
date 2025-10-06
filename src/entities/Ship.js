@@ -53,8 +53,7 @@ export class Ship {
         this.floatingSpeed = 0.02;
         this.floatingAmplitude = 2; // Ampiezza della fluttuazione in pixel
         
-        // Sistema debug
-        this.debugMode = false;
+        // Sistema di movimento senza cooldown per rotazione fluida
 
         
         // Sistema di combattimento con proiettili
@@ -295,9 +294,10 @@ export class Ship {
             const dy = this.targetY - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-
+            // Controllo di stabilità: se il target è troppo vicino, ferma il movimento
+            const stabilityZone = 50; // Zona di stabilità ottimale per movimento fluido
             
-            if (distance > 5) {
+            if (distance > stabilityZone) {
                 // Calcola direzione di movimento
                 this.direction = Math.atan2(dy, dx);
                 
@@ -307,10 +307,12 @@ export class Ship {
                 
                 this.x += moveX;
                 this.y += moveY;
-
             } else {
-                // Arrivato al target
+                // Arrivato al target o troppo vicino per evitare oscillazioni
                 this.isMoving = false;
+                // Imposta il target alla posizione corrente per evitare movimenti strani
+                this.targetX = this.x;
+                this.targetY = this.y;
 
                 // Emetti evento di arrivo
                 this.onArrival && this.onArrival();
@@ -321,9 +323,24 @@ export class Ship {
     }
     
     setTarget(x, y) {
-        this.targetX = x;
-        this.targetY = y;
-        this.isMoving = true;
+        // Calcola la distanza dal target
+        const dx = x - this.x;
+        const dy = y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Zona morta per controllo preciso senza micro-movimenti
+        const deadZone = 80;
+        
+        if (distance > deadZone) {
+            this.targetX = x;
+            this.targetY = y;
+            this.isMoving = true;
+        } else {
+            // Se il target è troppo vicino, ferma completamente il movimento
+            this.isMoving = false;
+            this.targetX = this.x; // Imposta il target alla posizione corrente
+            this.targetY = this.y;
+        }
     }
     
     // Metodo per fermare il movimento quando l'utente smette di cliccare

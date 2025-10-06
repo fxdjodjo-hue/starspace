@@ -10,12 +10,12 @@ export class MapSystem {
                 name: 'V1',
                 fullName: 'Venus Research Station Alpha',
                 description: 'Stazione di ricerca avanzata con tecnologie all\'avanguardia',
-                connections: ['v2', 't-1'],
+                connections: ['v2'],
                 faction: 'venus',
-                npcType: 'npc_vru_7',
+                npcType: 'streuner_vru',
                 color: '#9b59b6',
                 status: 'accessible',
-                position: { x: 150, y: 100 },
+                position: { x: 100, y: 150 },
                 level: 1,
                 difficulty: 'Facile',
                 hasBase: true,
@@ -27,10 +27,10 @@ export class MapSystem {
                 description: 'Laboratorio di ricerca secondario con esperimenti avanzati',
                 connections: ['v1', 'v3'],
                 faction: 'venus',
-                npcType: 'npc_vru_6',
+                npcType: 'lordakia_vru',
                 color: '#9b59b6',
                 status: 'accessible',
-                position: { x: 350, y: 100 },
+                position: { x: 300, y: 150 },
                 level: 2,
                 difficulty: 'Medio',
                 hasBase: false,
@@ -40,12 +40,12 @@ export class MapSystem {
                 name: 'V3',
                 fullName: 'Venus Research Station Gamma',
                 description: 'Centro di ricerca principale con tecnologie sperimentali',
-                connections: ['v2', 'v4'],
+                connections: ['v2'],
                 faction: 'venus',
-                npcType: 'npc_vru_5',
+                npcType: 'saimon_vru',
                 color: '#9b59b6',
                 status: 'accessible',
-                position: { x: 550, y: 100 },
+                position: { x: 500, y: 150 },
                 level: 3,
                 difficulty: 'Medio',
                 hasBase: true,
@@ -55,12 +55,12 @@ export class MapSystem {
                 name: 'V4',
                 fullName: 'Venus Research Station Delta',
                 description: 'Zona di test per nuove tecnologie e armi',
-                connections: ['v3', 'v5'],
+                connections: ['t-1', 'v5'],
                 faction: 'venus',
-                npcType: 'npc_vru_2',
+                npcType: 'sibelonit_vru',
                 color: '#9b59b6',
                 status: 'accessible',
-                position: { x: 750, y: 100 },
+                position: { x: 700, y: 150 },
                 level: 4,
                 difficulty: 'Difficile',
                 hasBase: false,
@@ -70,12 +70,12 @@ export class MapSystem {
                 name: 'V5',
                 fullName: 'Venus Research Station Omega',
                 description: 'Stazione di ricerca principale con tecnologie più avanzate',
-                connections: ['v4', 'v6', 't-1'],
+                connections: ['v4', 'v6'],
                 faction: 'venus',
-                npcType: 'npc_vru_1',
+                npcType: 'kristallin_vru',
                 color: '#9b59b6',
                 status: 'accessible',
-                position: { x: 950, y: 100 },
+                position: { x: 900, y: 150 },
                 level: 5,
                 difficulty: 'Difficile',
                 hasBase: true,
@@ -87,10 +87,10 @@ export class MapSystem {
                 description: 'Zona di ricerca avanzata con esperimenti pericolosi',
                 connections: ['v5'],
                 faction: 'venus',
-                npcType: 'npc_vru_3',
+                npcType: 'cubikon_vru',
                 color: '#9b59b6',
                 status: 'locked',
-                position: { x: 1150, y: 100 },
+                position: { x: 1100, y: 150 },
                 level: 6,
                 difficulty: 'Estremo',
                 hasBase: false,
@@ -102,12 +102,12 @@ export class MapSystem {
                 name: 'M1',
                 fullName: 'Mars Mining Outpost Alpha',
                 description: 'Avamposto minerario principale con estrazione di risorse',
-                connections: ['m2', 't-1'],
+                connections: ['m2'],
                 faction: 'mars',
-                npcType: 'npc_mmo_7',
+                npcType: 'streuner_mmo',
                 color: '#e74c3c',
                 status: 'accessible',
-                position: { x: 150, y: 300 },
+                position: { x: 100, y: 350 },
                 level: 1,
                 difficulty: 'Facile',
                 hasBase: true,
@@ -119,10 +119,10 @@ export class MapSystem {
                 description: 'Zona di estrazione secondaria con miniere attive',
                 connections: ['m1', 'm3'],
                 faction: 'mars',
-                npcType: 'npc_mmo_6',
+                npcType: 'lordakia_mmo',
                 color: '#e74c3c',
                 status: 'accessible',
-                position: { x: 350, y: 300 },
+                position: { x: 300, y: 350 },
                 level: 2,
                 difficulty: 'Medio',
                 hasBase: false,
@@ -132,12 +132,12 @@ export class MapSystem {
                 name: 'M3',
                 fullName: 'Mars Mining Outpost Gamma',
                 description: 'Centro di produzione mineraria con raffinerie',
-                connections: ['m2', 'm4'],
+                connections: ['m2'],
                 faction: 'mars',
-                npcType: 'npc_mmo_5',
+                npcType: 'saimon_mmo',
                 color: '#e74c3c',
                 status: 'accessible',
-                position: { x: 550, y: 300 },
+                position: { x: 500, y: 350 },
                 level: 3,
                 difficulty: 'Medio',
                 hasBase: true,
@@ -147,12 +147,12 @@ export class MapSystem {
                 name: 'M4',
                 fullName: 'Mars Mining Outpost Delta',
                 description: 'Zona di estrazione profonda con miniere pericolose',
-                connections: ['m3', 'm5'],
+                connections: ['t-1', 'm5'],
                 faction: 'mars',
-                npcType: 'npc_mmo_3',
+                npcType: 'sibelonit_mmo',
                 color: '#e74c3c',
                 status: 'accessible',
-                position: { x: 750, y: 300 },
+                position: { x: 700, y: 350 },
                 level: 4,
                 difficulty: 'Difficile',
                 hasBase: false,
@@ -164,10 +164,10 @@ export class MapSystem {
                 description: 'Centro di produzione principale con raffinerie avanzate',
                 connections: ['m4', 'm6'],
                 faction: 'mars',
-                npcType: 'npc_mmo_2',
+                npcType: 'kristallin_mmo',
                 color: '#e74c3c',
                 status: 'accessible',
-                position: { x: 950, y: 300 },
+                position: { x: 900, y: 350 },
                 level: 5,
                 difficulty: 'Difficile',
                 hasBase: true,
@@ -177,12 +177,12 @@ export class MapSystem {
                 name: 'M6',
                 fullName: 'Mars Mining Outpost Omega',
                 description: 'Zona di estrazione estrema con miniere più profonde',
-                connections: ['m5', 't-1'],
+                connections: ['m5'],
                 faction: 'mars',
-                npcType: 'npc_mmo_1',
+                npcType: 'cubikon_mmo',
                 color: '#e74c3c',
                 status: 'locked',
-                position: { x: 1150, y: 300 },
+                position: { x: 1100, y: 350 },
                 level: 6,
                 difficulty: 'Estremo',
                 hasBase: false,
@@ -194,12 +194,12 @@ export class MapSystem {
                 name: 'E1',
                 fullName: 'Earth Industries Corporation Alpha',
                 description: 'Sede principale della corporazione terrestre',
-                connections: ['e2', 't-1'],
+                connections: ['e2'],
                 faction: 'eic',
-                npcType: 'npc_eic_7',
+                npcType: 'streuner_eic',
                 color: '#4a90e2',
                 status: 'accessible',
-                position: { x: 150, y: 500 },
+                position: { x: 100, y: 550 },
                 level: 1,
                 difficulty: 'Facile',
                 hasBase: true,
@@ -211,10 +211,10 @@ export class MapSystem {
                 description: 'Centro commerciale secondario con mercati attivi',
                 connections: ['e1', 'e3'],
                 faction: 'eic',
-                npcType: 'npc_eic_6',
+                npcType: 'lordakia_eic',
                 color: '#4a90e2',
                 status: 'accessible',
-                position: { x: 350, y: 500 },
+                position: { x: 300, y: 550 },
                 level: 2,
                 difficulty: 'Medio',
                 hasBase: false,
@@ -224,12 +224,12 @@ export class MapSystem {
                 name: 'E3',
                 fullName: 'Earth Industries Corporation Gamma',
                 description: 'Hub commerciale principale con scambi interplanetari',
-                connections: ['e2', 'e4'],
+                connections: ['e2'],
                 faction: 'eic',
-                npcType: 'npc_eic_5',
+                npcType: 'saimon_eic',
                 color: '#4a90e2',
                 status: 'accessible',
-                position: { x: 550, y: 500 },
+                position: { x: 500, y: 550 },
                 level: 3,
                 difficulty: 'Medio',
                 hasBase: true,
@@ -239,12 +239,12 @@ export class MapSystem {
                 name: 'E4',
                 fullName: 'Earth Industries Corporation Delta',
                 description: 'Zona di produzione industriale con fabbriche',
-                connections: ['e3', 'e5'],
+                connections: ['t-1', 'e5'],
                 faction: 'eic',
-                npcType: 'npc_eic_3',
+                npcType: 'sibelonit_eic',
                 color: '#4a90e2',
                 status: 'accessible',
-                position: { x: 750, y: 500 },
+                position: { x: 700, y: 550 },
                 level: 4,
                 difficulty: 'Difficile',
                 hasBase: false,
@@ -256,10 +256,10 @@ export class MapSystem {
                 description: 'Centro di produzione avanzata con tecnologie industriali',
                 connections: ['e4', 'e6'],
                 faction: 'eic',
-                npcType: 'npc_eic_2',
+                npcType: 'kristallin_eic',
                 color: '#4a90e2',
                 status: 'accessible',
-                position: { x: 950, y: 500 },
+                position: { x: 900, y: 550 },
                 level: 5,
                 difficulty: 'Difficile',
                 hasBase: true,
@@ -269,12 +269,12 @@ export class MapSystem {
                 name: 'E6',
                 fullName: 'Earth Industries Corporation Omega',
                 description: 'Sede centrale della corporazione con tecnologie più avanzate',
-                connections: ['e5', 't-1'],
+                connections: ['e5'],
                 faction: 'eic',
-                npcType: 'npc_eic_1',
+                npcType: 'cubikon_eic',
                 color: '#4a90e2',
                 status: 'locked',
-                position: { x: 1150, y: 500 },
+                position: { x: 1100, y: 550 },
                 level: 6,
                 difficulty: 'Estremo',
                 hasBase: false,
@@ -286,12 +286,12 @@ export class MapSystem {
                 name: 'T-1',
                 fullName: 'PvP Battle Zone',
                 description: 'Zona di combattimento PvP tra fazioni - Attualmente vuota',
-                connections: ['v1', 'v5', 'm1', 'm6', 'e1', 'e6'],
+                connections: ['v3', 'v4', 'm3', 'm4', 'e3', 'e4'],
                 faction: 'neutral',
                 npcType: null,
                 color: '#f39c12',
                 status: 'accessible',
-                position: { x: 650, y: 300 },
+                position: { x: 600, y: 350 },
                 level: 0,
                 difficulty: 'PvP',
                 hasBase: false,
@@ -353,7 +353,7 @@ export class MapSystem {
         const centerY = canvas.height / 2;
         
         // Sfondo semi-trasparente
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Pannello principale
@@ -362,19 +362,27 @@ export class MapSystem {
         const panelX = centerX - panelWidth / 2;
         const panelY = centerY - panelHeight / 2;
 
-        ctx.fillStyle = 'rgba(20, 20, 40, 0.95)';
-        ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+        // Sfondo pannello
+        ctx.fillStyle = 'rgba(10, 10, 15, 0.95)';
         
-        // Bordo
-        ctx.strokeStyle = '#4a90e2';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+        // Disegna pannello con angoli arrotondati
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 10);
+        ctx.fill();
         
-        // Titolo
+        // Bordo bianco sottile
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Reset shadow per il testo
+        ctx.shadowBlur = 0;
+        
+        // Titolo con stile minimale
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px Arial';
+        ctx.font = 'bold 24px "Orbitron", Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Mappa Spaziale', centerX, panelY + 40);
+        ctx.fillText('MAPPA SPAZIALE', centerX, panelY + 40);
 
         // Disegna le connessioni
         this.drawConnections(ctx, panelX, panelY);
@@ -394,14 +402,36 @@ export class MapSystem {
     /**
      * Disegna le connessioni tra i nodi
      */
-    drawConnections(ctx, panelX, panelY) {
-        ctx.strokeStyle = '#666666';
-        ctx.lineWidth = 2;
+    // Converte colore hex in RGB
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 255, 255';
+    }
 
+    drawConnections(ctx, panelX, panelY) {
+        // Disegna tutte le connessioni
         Object.values(this.mapConnections).forEach(map => {
             map.connections.forEach(connectionId => {
                 const connectedMap = this.mapConnections[connectionId];
                 if (connectedMap) {
+                    const baseColor = map.color;
+                    const isT1Connection = connectionId === 't-1' || map.id === 't-1';
+
+                    // Linea base
+                    ctx.strokeStyle = isT1Connection ? 
+                        'rgba(243, 156, 18, 0.3)' : 
+                        `rgba(${this.hexToRgb(baseColor)}, 0.2)`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(panelX + map.position.x, panelY + map.position.y);
+                    ctx.lineTo(panelX + connectedMap.position.x, panelY + connectedMap.position.y);
+                    ctx.stroke();
+
+                    // Linea sottile sopra
+                    ctx.strokeStyle = isT1Connection ? 
+                        'rgba(243, 156, 18, 0.5)' : 
+                        `rgba(${this.hexToRgb(baseColor)}, 0.4)`;
+                    ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(panelX + map.position.x, panelY + map.position.y);
                     ctx.lineTo(panelX + connectedMap.position.x, panelY + connectedMap.position.y);
@@ -425,45 +455,46 @@ export class MapSystem {
             const isEnemyMap = currentFaction && map.faction !== 'neutral' && map.faction !== currentFaction.id;
 
             // Sfondo del nodo
-            if (isCurrent) {
-                ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
-            } else if (isEnemyMap) {
-                ctx.fillStyle = 'rgba(255, 100, 100, 0.2)'; // Rosso per mappe nemiche
-            } else if (canAccess) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            } else {
-                ctx.fillStyle = 'rgba(100, 100, 100, 0.1)';
-            }
-            ctx.fillRect(x - 30, y - 15, 60, 30);
+            let baseColor = mapId === 't-1' ? '#f39c12' : map.color;
+            ctx.fillStyle = isCurrent ? `rgba(${this.hexToRgb(baseColor)}, 0.2)` : 
+                           mapId === 't-1' ? 'rgba(243, 156, 18, 0.15)' : 
+                           `rgba(${this.hexToRgb(baseColor)}, 0.1)`;
+            
+            // Disegna il nodo con angoli arrotondati
+            ctx.beginPath();
+            ctx.roundRect(x - 30, y - 15, 60, 30, 5);
+            ctx.fill();
 
             // Bordo del nodo
-        if (isCurrent) {
-                // Bordo verde per la mappa corrente
-                ctx.strokeStyle = '#00ff00';
-                ctx.lineWidth = 3;
-            } else if (isEnemyMap) {
-                // Bordo rosso per mappe nemiche
-                ctx.strokeStyle = '#ff4444';
+            if (isCurrent) {
+                ctx.strokeStyle = baseColor;
                 ctx.lineWidth = 2;
-        } else {
-                ctx.strokeStyle = canAccess ? map.color : '#666666';
-                ctx.lineWidth = canAccess ? 2 : 1;
+            } else if (mapId === 't-1') {
+                ctx.strokeStyle = 'rgba(243, 156, 18, 0.7)';
+                ctx.lineWidth = 2;
+            } else {
+                ctx.strokeStyle = `rgba(${this.hexToRgb(baseColor)}, 0.5)`;
+                ctx.lineWidth = 1;
             }
-            ctx.strokeRect(x - 30, y - 15, 60, 30);
+            ctx.stroke();
+
+            // Reset shadow per il testo
+            ctx.shadowBlur = 0;
 
             // Nome della mappa
             ctx.fillStyle = canAccess ? '#ffffff' : '#666666';
-            ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
+            ctx.font = `bold 12px "Orbitron", Arial`;
+            ctx.textAlign = 'center';
             ctx.fillText(map.name, x, y + 5);
 
-            // Icone speciali rimosse per semplicità
-
+            // Icona PvP minimalista
             if (map.isPvP) {
-            ctx.fillStyle = '#ff0000';
-                ctx.font = '16px Arial';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.font = '14px Arial';
                 ctx.fillText('⚔️', x, y - 20);
             }
+
+            // Rimuovi indicatore livello
         });
     }
 

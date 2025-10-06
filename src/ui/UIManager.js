@@ -28,7 +28,6 @@ export class UIManager {
         const icon = new UIIcon(this.game, config);
         this.icons.push(icon);
         
-        console.log(`✅ Icona registrata: ${config.type}`, config);
         return icon;
     }
     
@@ -111,12 +110,6 @@ export class UIManager {
                 icon: '🏠',
                 tooltipText: 'Home Dashboard',
                 showCount: false
-            },
-            starenergy: {
-                type: 'starenergy',
-                icon: '⚡',
-                tooltipText: 'Star Energy',
-                showCount: true
             }
         };
     }

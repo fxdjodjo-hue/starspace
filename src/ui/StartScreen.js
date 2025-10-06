@@ -1,7 +1,6 @@
 // StartScreen Minimalista - Design Pulito e Funzionale
 export class StartScreen {
     constructor(game) {
-        console.log('🏗️ StartScreen constructor - creating login/register screen');
         this.game = game;
         this.isVisible = true;
         this.isTyping = true;
@@ -161,10 +160,28 @@ export class StartScreen {
                     } catch (_) {}
                 }
                 
-                // Carica mappa
-                if (data.currentMap) {
-                    this.game.mapManager.currentMap = data.currentMap;
+                // Carica mappa (priorità: save.world.currentMap -> legacy currentMap -> fallback fazione)
+                {
+                    const factionId = (typeof this.game.factionSystem?.currentFaction === 'string')
+                        ? this.game.factionSystem.currentFaction
+                        : (this.game.ship?.faction || 'venus');
+                    const startByFaction = { venus: 'v1', mars: 'm1', eic: 'e1' };
+                    const fallbackMap = startByFaction[factionId] || 'v1';
+                    const savedMap = (data.world && data.world.currentMap) ? data.world.currentMap : null;
+                    const legacyMap = data.currentMap || null;
+                    const mapToLoad = savedMap || legacyMap || fallbackMap;
+
+                    // Ripristina posizione del giocatore se disponibile
+                    const px = data.player?.x;
+                    const py = data.player?.y;
+                    if (typeof px === 'number' && typeof py === 'number') {
+                        this.game.ship.x = px;
+                        this.game.ship.y = py;
+                    }
+
+                    this.game.mapManager.currentMap = mapToLoad;
                     this.game.mapManager.loadCurrentMapInstance();
+                    this.game.mapManager.createPortalsForCurrentMap();
                 }
                 
                 // Carica dati nave
@@ -172,9 +189,24 @@ export class StartScreen {
                     Object.assign(this.game.ship, data.ship);
                 }
                 
+                // Imposta la fazione nella nave se disponibile
+                if (data.faction && typeof data.faction === 'string') {
+                    this.game.ship.faction = data.faction;
+                } else if (data.faction && data.faction.currentFaction) {
+                    this.game.ship.faction = data.faction.currentFaction;
+                }
+                
                 // Carica inventario
                 if (data.inventory) {
                     Object.assign(this.game.inventory, data.inventory);
+                    
+                    // Assicurati che equipment.uav sia sempre inizializzato
+                    if (!this.game.inventory.equipment.uav) {
+                        this.game.inventory.equipment.uav = [];
+                    }
+                    
+                    // Riapplica gli effetti degli item equipaggiati
+                    this.reapplyEquippedEffects();
                 }
                 
                 // Carica risorse
@@ -196,7 +228,6 @@ export class StartScreen {
                     }
                 }
                 
-                console.log(`✅ Account ${accountId} caricato con successo`);
             } catch (error) {
                 console.error('❌ Errore nel caricamento account:', error);
                 this.showError('Errore nel caricamento account');
@@ -474,18 +505,18 @@ export class StartScreen {
             ctx.textAlign = 'center';
         ctx.fillText(this.startGameButton.text, this.startGameButton.x + this.startGameButton.width / 2, this.startGameButton.y + this.startGameButton.height / 2 + 5);
     }
-    
+            
     // Disegna pulsanti salvataggi
     drawLoadButtons(ctx) {
         // Label
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'left';
         ctx.fillText('Salvataggi esistenti:', this.x + 60, this.y + 480);
         
         this.loadButtons.forEach(button => {
-            const isHovered = this.isMouseOverButton(button);
-            
+        const isHovered = this.isMouseOverButton(button);
+        
             // Gradiente del pulsante
             const buttonGradient = ctx.createLinearGradient(
                 button.x, button.y,
@@ -586,10 +617,10 @@ export class StartScreen {
         
         // Click su input nome
         if (this.isMouseOverInput(this.nameInput, x, y)) {
-            this.isTyping = true;
-            return true;
-        }
-        
+                this.isTyping = true;
+                return true;
+            }
+            
         // Click su un account salvato
         for (const btn of this.accountButtons) {
             if (x >= btn.x && x <= btn.x + btn.width && y >= btn.y && y <= btn.y + btn.height) {
@@ -599,15 +630,15 @@ export class StartScreen {
                 this.loadAccountDataById(btn.accountId);
                 this.hide();
                 this.game.startGameAudio();
-                return true;
+            return true;
             }
         }
         
         
         // Click su pulsante inizia gioco
-        if (this.isMouseOverButton(this.startGameButton)) {
+            if (this.isMouseOverButton(this.startGameButton)) {
             this.handleStartGame();
-            return true;
+                return true;
         }
         
         // (Rimosso) Click su pulsanti salvataggi
@@ -770,13 +801,37 @@ export class StartScreen {
     show() {
         this.isVisible = true;
         this.isTyping = true;
-        console.log('🎮 StartScreen shown - typing enabled');
+    }
+    
+    // Riapplica gli effetti degli item equipaggiati
+    reapplyEquippedEffects() {
+        if (!this.game.ship) return;
+        
+        // Riapplica laser
+        Object.entries(this.game.inventory.equipment.laser).forEach(([index, item]) => {
+            if (item && item.stats && item.stats.key) {
+                this.game.ship.equipLaser(item.stats.key, 1);
+            }
+        });
+        
+        // Riapplica scudi e generatori
+        Object.entries(this.game.inventory.equipment.shieldGen).forEach(([index, item]) => {
+            if (item && item.stats && item.stats.key) {
+                const key = item.stats.key;
+                if (key.startsWith('gen')) {
+                    this.game.ship.equipGenerator(key, 1);
+                } else if (key.startsWith('sh')) {
+                    const extra = Number(item.stats?.protection || 0);
+                    this.game.ship.maxShield += extra;
+                    this.game.ship.shield += extra;
+                }
+            }
+        });
     }
     
     // Nasconde la schermata
     hide() {
         this.isVisible = false;
         this.isTyping = false;
-        console.log('🎮 StartScreen hidden - isVisible:', this.isVisible);
     }
 }

@@ -16,7 +16,6 @@ export class ShipSprite {
         this.image = new Image();
         this.image.onload = () => {
             this.isLoaded = true;
-            console.log('🚀 Sprite nave caricato con successo!');
         };
         this.image.onerror = () => {
             console.error('❌ Errore nel caricamento dello sprite della nave');
@@ -27,12 +26,9 @@ export class ShipSprite {
     async loadAtlas() {
         try {
             const atlasFile = this.currentShip === 1 ? 'Urus/ship103.atlas' : 'Urus/ship02.atlas';
-            console.log('📋 Loading atlas:', atlasFile);
             const response = await fetch(atlasFile);
             const atlasText = await response.text();
-            console.log('📋 Atlas content:', atlasText.substring(0, 100) + '...');
             this.parseAtlas(atlasText);
-            console.log('📋 Atlas caricato con successo! Frames:', this.frames.length);
         } catch (error) {
             console.error('❌ Errore nel caricamento dell\'atlas:', error);
         }
@@ -40,7 +36,6 @@ export class ShipSprite {
 
     loadCurrentShipSprite() {
         const spriteFile = this.currentShip === 1 ? 'Urus/ship103.png' : 'Urus/ship02.png';
-        console.log('🎨 Loading sprite:', spriteFile);
         this.image.src = spriteFile;
     }
 
@@ -88,7 +83,6 @@ export class ShipSprite {
             }
         }
         
-        console.log(`📊 Parsed ${this.frames.length} frames from atlas`);
     }
     
 

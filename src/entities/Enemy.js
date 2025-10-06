@@ -43,8 +43,9 @@ export class Enemy {
         this.uniqueDirection = Math.random() * Math.PI * 2;
         
         // Sistema di sprite animato
-        this.sprite = new AlienSprite();
+        this.sprite = new AlienSprite(this.config.sprite, this.getAtlasPath());
         this.spriteLoaded = false;
+        this.fallbackLogged = false;
         this.loadSprite();
         
         // Colori basati su configurazione
@@ -59,6 +60,13 @@ export class Enemy {
         
         // Sistema AI (inizializzato dopo che il gioco è pronto)
         this.ai = null;
+    }
+    
+    // Ottiene il percorso dell'atlas basato sullo sprite
+    getAtlasPath() {
+        const spritePath = this.config.sprite;
+        // Sostituisce .png con .atlas
+        return spritePath.replace('.png', '.atlas');
     }
     
     getMaxHP() {
@@ -89,7 +97,7 @@ export class Enemy {
             this.spriteLoaded = true;
 
         } catch (error) {
-            console.error('❌ Errore caricamento sprite per nemico:', error);
+            console.error(`❌ Errore caricamento sprite per ${this.type}:`, error);
             this.spriteLoaded = false;
         }
     }
@@ -230,6 +238,10 @@ export class Enemy {
             this.sprite.draw(ctx, screenPos.x, screenPos.y, direction, 0.8); // Passa la rotazione, scala = 0.8
         } else {
             // Fallback: disegna un cerchio semplice mentre lo sprite si carica
+            if (!this.fallbackLogged) {
+                console.log(`⚠️ Fallback sprite per ${this.type} - spriteLoaded: ${this.spriteLoaded}`);
+                this.fallbackLogged = true;
+            }
             ctx.fillStyle = this.colors.fill;
             ctx.strokeStyle = this.colors.stroke;
             ctx.lineWidth = 2;

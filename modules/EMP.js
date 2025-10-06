@@ -38,7 +38,6 @@ export class EMP {
             this.empAnimation.frameDuration = 5000 / 32; // ~156ms per frame
 
             this.animationLoaded = true;
-            console.log('⚡ Animazione EMP caricata con successo');
         } catch (error) {
             console.error('❌ Errore caricamento animazione EMP:', error);
         }

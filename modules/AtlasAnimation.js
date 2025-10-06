@@ -46,7 +46,6 @@ export class AtlasAnimation {
             }
         }
         
-        console.log(`📊 Atlas parsato: ${this.frames.length} frame trovati`);
     }
     
     // Avvia l'animazione
