@@ -15,15 +15,73 @@ import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
 const SHIP_MODELS = {
     1: { // Nave base
         maxHP: 1000,
-        maxShield: 1000
+        maxShield: 1000,
+        velocity: 300,
+        laserSlots: 3,
+        generatorSlots: 3
     },
     2: { // Variante alternativa
         maxHP: 1600,
-        maxShield: 600
+        maxShield: 600,
+        velocity: 370,
+        laserSlots: 2,
+        generatorSlots: 2
     },
     3: { // Falcon
         maxHP: 1200,
-        maxShield: 1400
+        maxShield: 1400,
+        velocity: 360,
+        laserSlots: 2,
+        generatorSlots: 3
+    },
+    4: { // Liberator equivalent
+        maxHP: 16000,
+        maxShield: 12000,
+        velocity: 300,
+        laserSlots: 3,
+        generatorSlots: 3
+    },
+    5: { // Piranha equivalent
+        maxHP: 32000,
+        maxShield: 24000,
+        velocity: 340,
+        laserSlots: 4,
+        generatorSlots: 4
+    },
+    6: { // Nostromo equivalent
+        maxHP: 64000,
+        maxShield: 48000,
+        velocity: 300,
+        laserSlots: 5,
+        generatorSlots: 6
+    },
+    7: { // BigBoy equivalent
+        maxHP: 64000,
+        maxShield: 52000,
+        velocity: 240,
+        laserSlots: 5,
+        generatorSlots: 7
+    },
+    8: { // Vengeance equivalent
+        maxHP: 64000,
+        maxShield: 50000,
+        velocity: 380,
+        laserSlots: 8,
+        generatorSlots: 10
+    },
+    9: { // Goliath equivalent
+        maxHP: 160000,
+        maxShield: 120000,
+        velocity: 300,
+        laserSlots: 15,
+        generatorSlots: 15
+    },
+    10: { // Leonov equivalent
+        maxHP: 80000,
+        maxShield: 60000,
+        velocity: 360,
+        laserSlots: 6,
+        generatorSlots: 6
     }
 };
 
@@ -254,6 +312,9 @@ export class Ship {
         const model = SHIP_MODELS[shipNumber] || SHIP_MODELS[1];
         this.maxHP = model.maxHP;
         this.maxShield = model.maxShield;
+        if (model.velocity) this.speed = model.velocity / 100; // scala semplice: 300 -> 3.0
+        this.laserSlots = model.laserSlots || this.laserSlots || 0;
+        this.generatorSlots = model.generatorSlots || this.generatorSlots || 0;
         // Ripristina HP/Scudo al nuovo massimo quando si cambia nave
         this.hp = this.maxHP;
         this.shield = this.maxShield;
@@ -265,7 +326,7 @@ export class Ship {
 
     // API semplice per cambiare nave a runtime
     switchShip(shipNumber) {
-        if (![1,2,3].includes(shipNumber)) return;
+        if (![1,2,3,4,5,6,7,8,9,10].includes(shipNumber)) return;
         if (this.sprite && this.sprite.switchShip) {
             this.sprite.switchShip(shipNumber);
         }

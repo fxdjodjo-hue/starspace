@@ -69,10 +69,17 @@ export class ShipSprite {
         this.frames = [];
         const lines = atlasText.split('\n');
         
+        const ignoreSet = new Set(['', 'size', 'format', 'filter', 'repeat']);
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            // Supporta diversi formati: 'ship', 'ship frmX' ecc.
-            if (line === 'ship' || line.startsWith('ship ') || line.startsWith('ship frm')) {
+            const rawLine = lines[i];
+            const line = rawLine.trim();
+            // In Spine/Sprite atlas, ogni frame inizia con il nome (senza ':').
+            // Consideriamo come inizio frame qualunque riga non vuota che NON contiene ':'
+            // e non è una delle chiavi globali (size/format/filter/repeat) o il nome del file immagine.
+            const isHeader = line.length > 0 && !line.includes(':');
+            const isGlobal = ignoreSet.has(line.toLowerCase());
+            const looksLikeImageName = line.toLowerCase().endsWith('.png') || line.toLowerCase().endsWith('.jpg');
+            if (isHeader && !isGlobal && !looksLikeImageName) {
                 // Cerca le coordinate xy e size
                 let xy = null, size = null;
                 
