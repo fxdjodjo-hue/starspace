@@ -28,7 +28,7 @@ export class ShipSprite {
             // Atlas per nave 1 (Urus), 2 (Interceptor), 3 (Falcon)
             let atlasFile = 'Urus/ship103.atlas';
             if (this.currentShip === 2) atlasFile = 'interceptor/ship103.atlas';
-            if (this.currentShip === 3) atlasFile = 'falcon/falcon.atlas';
+            if (this.currentShip === 3) atlasFile = 'falcon/ship90.atlas';
             const response = await fetch(atlasFile);
             const atlasText = await response.text();
             this.parseAtlas(atlasText);
@@ -38,16 +38,16 @@ export class ShipSprite {
     }
 
     loadCurrentShipSprite() {
-        // Nave 1: Urus/ship103.png; Nave 2: interceptor/ship103.png; Nave 3: falcon/falcon.png
+        // Nave 1: Urus/ship103.png; Nave 2: interceptor/ship103.png; Nave 3: falcon/ship90.png
         let spriteFile = 'Urus/ship103.png';
         if (this.currentShip === 2) spriteFile = 'interceptor/ship103.png';
-        if (this.currentShip === 3) spriteFile = 'falcon/falcon.png';
+        if (this.currentShip === 3) spriteFile = 'falcon/ship90.png';
         this.image.src = spriteFile;
     }
 
     switchShip(shipNumber) {
         if (shipNumber === this.currentShip) return;
-        if (shipNumber !== 1 && shipNumber !== 2) return;
+        if (![1, 2, 3].includes(shipNumber)) return;
 
         console.log('🚢 Switching to ship:', shipNumber);
         this.currentShip = shipNumber;
