@@ -17,9 +17,9 @@ const SHIP_MODELS = {
         maxHP: 1000,
         maxShield: 1000,
         velocity: 300,
-        laserSlots: 3,
-        generatorSlots: 3,
-        extraSlots: 3
+        laserSlots: 1,
+        generatorSlots: 1,
+        extraSlots: 1
     },
     2: { // Variante alternativa
         maxHP: 1600,
@@ -27,13 +27,13 @@ const SHIP_MODELS = {
         velocity: 370,
         laserSlots: 2,
         generatorSlots: 2,
-        extraSlots: 3
+        extraSlots: 2
     },
     3: { // Falcon
         maxHP: 1200,
         maxShield: 1400,
         velocity: 360,
-        laserSlots: 2,
+        laserSlots: 3,
         generatorSlots: 3,
         extraSlots: 3
     },

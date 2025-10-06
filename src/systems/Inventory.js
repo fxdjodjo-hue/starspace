@@ -1595,7 +1595,8 @@ export class Inventory {
         // Titolo equipaggiamento rimosso per pulizia
         
                 // Disegna slot laser
-        ThemeUtils.drawText(ctx, 'LASER', equipmentX, equipmentY - 10, {
+        const laserCap = this.game?.ship?.laserSlots ?? 3;
+        ThemeUtils.drawText(ctx, `LASER (${laserCap})`, equipmentX, equipmentY - 10, {
             color: ThemeConfig.colors.accent.warning,
             size: ThemeConfig.typography.sizes.base,
             weight: ThemeConfig.typography.weights.bold
@@ -1609,7 +1610,8 @@ export class Inventory {
         
         // Disegna slot scudi/generatori
         const shieldGenY = equipmentY + 150; // Spazio ottimizzato
-        ThemeUtils.drawText(ctx, 'SCUDI/GENERATORI', equipmentX, shieldGenY - 15, {
+        const genCap = this.game?.ship?.generatorSlots ?? 6;
+        ThemeUtils.drawText(ctx, `SCUDI/GENERATORI (${genCap})`, equipmentX, shieldGenY - 15, {
             color: ThemeConfig.colors.accent.info,
             size: ThemeConfig.typography.sizes.base,
             weight: ThemeConfig.typography.weights.bold
@@ -1629,7 +1631,8 @@ export class Inventory {
         
         // Disegna slot extra
         const extraY = equipmentY + 300; // Spazio ottimizzato
-        ThemeUtils.drawText(ctx, 'EXTRA', equipmentX, extraY - 15, {
+        const extraCap = this.game?.ship?.extraSlots ?? 3;
+        ThemeUtils.drawText(ctx, `EXTRA (${extraCap})`, equipmentX, extraY - 15, {
             color: ThemeConfig.colors.accent.success,
             size: ThemeConfig.typography.sizes.base,
             weight: ThemeConfig.typography.weights.bold
