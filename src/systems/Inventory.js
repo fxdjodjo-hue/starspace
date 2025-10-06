@@ -1601,7 +1601,8 @@ export class Inventory {
             weight: ThemeConfig.typography.weights.bold
         }); // Ancora più spazio dal titolo
         
-        for (let i = 0; i < 3; i++) {
+        const maxLaserSlots = this.game?.ship?.laserSlots ?? 3;
+        for (let i = 0; i < maxLaserSlots; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             this.drawEquipmentSlot(ctx, slotX, equipmentY + 10, this.equipment.laser[i], `L${i+1}`); // Allineato con il nuovo titolo
         }
@@ -1614,10 +1615,11 @@ export class Inventory {
             weight: ThemeConfig.typography.weights.bold
         });
         
-        for (let i = 0; i < 6; i++) {
+        const maxShieldGenSlots = this.game?.ship?.generatorSlots ?? 6;
+        for (let i = 0; i < maxShieldGenSlots; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             let slotName = '';
-            if (i < 3) {
+            if (i < Math.min(3, maxShieldGenSlots)) {
                 slotName = `S${i+1}`;
                 } else {
                 slotName = `G${i-2}`;
@@ -1633,7 +1635,8 @@ export class Inventory {
             weight: ThemeConfig.typography.weights.bold
         });
         
-        for (let i = 0; i < 3; i++) {
+        const maxExtraSlots = this.game?.ship?.extraSlots ?? 3;
+        for (let i = 0; i < maxExtraSlots; i++) {
             const slotX = equipmentX + (i * slotSpacing);
             this.drawEquipmentSlot(ctx, slotX, extraY, this.equipment.extra[i], `E${i+1}`);
         }
