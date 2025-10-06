@@ -15,7 +15,9 @@ export class MapManager {
         this.game = game;
         // Imposta mappa iniziale basata sulla fazione, se disponibile
         const savedFaction = (() => {
-            try { return localStorage.getItem('mmorpg_player_faction'); } catch (_) { return null; }
+            // RIMOSSO: Caricamento da localStorage globale
+            // La fazione viene ora gestita completamente per-account
+            return null;
         })();
         const faction = this.game?.ship?.faction || savedFaction || 'venus';
         const startByFaction = { venus: 'v1', mars: 'm1', eic: 'e1' };

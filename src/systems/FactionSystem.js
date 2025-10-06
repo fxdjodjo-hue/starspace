@@ -6,6 +6,18 @@ export class FactionSystem {
         this.factionReputation = {}; // Reputazione con ogni fazione
         this.factionHistory = []; // Storia delle fazioni
         this.maxHistoryLength = 100;
+        
+        // Carica la fazione corrente dal localStorage se disponibile
+        this.loadCurrentFaction();
+    }
+    
+    /**
+     * Carica la fazione corrente dal localStorage
+     */
+    loadCurrentFaction() {
+        // RIMOSSO: Caricamento da localStorage globale
+        // La fazione viene ora gestita completamente per-account
+        console.log('🎯 Fazione gestita per-account, nessun caricamento globale');
     }
     
     /**
@@ -461,4 +473,5 @@ export class FactionSystem {
         this.factionHistory = data.factionHistory || [];
     }
 }
+
 

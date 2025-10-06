@@ -6,11 +6,11 @@ export class Inventory {
         // Stato del pannello
         this.isOpen = false;
         
-        // Hangar (equipaggiamento attivo) - 3 slot per categoria
+        // Hangar (equipaggiamento attivo) - inizializzazione dinamica
         this.equipment = {
-            laser: new Array(3).fill(null),      // 3 slot laser
-            shieldGen: new Array(6).fill(null),  // 6 slot scudi/generatori (3+3)
-            extra: new Array(3).fill(null),      // 3 slot extra
+            laser: new Array(1).fill(null),      // Inizializzato con 1, sarà espanso dinamicamente
+            shieldGen: new Array(1).fill(null), // Inizializzato con 1, sarà espanso dinamicamente
+            extra: new Array(1).fill(null),     // Inizializzato con 1, sarà espanso dinamicamente
             uav: []                               // Droni UAV equipaggiati
         };
         
@@ -27,8 +27,8 @@ export class Inventory {
         this.panelY = 0;
         
         // Dimensioni slot
-        this.slotSize = 60;
-        this.slotSpacing = 5; // Slot inventario più compatti
+        this.slotSize = 46; // ulteriormente rimpiccioliti
+        this.slotSpacing = 0; // completamente attaccati
         
         // Flag per evitare chiusura immediata
         this.justOpened = false;
@@ -43,10 +43,11 @@ export class Inventory {
         this.mouseY = 0;
         
         // Sistema di tab
-        this.currentTab = 'equipment'; // 'equipment', 'uav'
+        this.currentTab = 'equipment'; // 'equipment', 'uav', 'ships'
         this.tabs = [
             { id: 'equipment', name: 'EQUIPAGGIAMENTO', color: '#4a90e2' },
-            { id: 'uav', name: 'UAV', color: '#ff6b6b' }
+            { id: 'uav', name: 'UAV', color: '#ff6b6b' },
+            { id: 'ships', name: 'NAVI', color: '#9b59b6' }
         ];
 
         // Sistema di equipaggiamento unificato per droni e equipaggiamento principale
@@ -55,11 +56,26 @@ export class Inventory {
         this.uavScrollY = 0;
         this.uavItemHeight = 120; // Altezza di ogni drone (aumentata per più spazio slot)
         
+        // Scroll per navi
+        this.shipsScrollY = 0;
+        this.shipItemHeight = 200; // Altezza di ogni nave (più grande per mostrare più dettagli)
+        
         // Drag scroll per droni UAV
         this.isDraggingUAV = false;
         this.dragStartY = 0;
         this.scrollStartY = 0;
         this.uavScrollArea = {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0
+        };
+        
+        // Drag scroll per navi
+        this.isDraggingShips = false;
+        this.shipsDragStartY = 0;
+        this.shipsScrollStartY = 0;
+        this.shipsScrollArea = {
             x: 0,
             y: 0,
             width: 0,
@@ -90,39 +106,84 @@ export class Inventory {
     // Collega il riferimento al game per accedere alla nave corrente e alle notifiche
     setGame(game) {
         this.game = game;
+        
+        // Aggiungi listener per i cambi di nave
+        if (game && game.ship) {
+            game.ship.onInventoryCapsChanged = () => {
+                this.expandEquipmentArrays();
+            };
+        }
+    }
+    
+    // Ottieni le navi possedute dal giocatore
+    getOwnedShips() {
+        return window.gameInstance?.playerOwnedShips || [1]; // Default: nave 1 (Phoenix)
+    }
+    
+    // Ottieni la nave attualmente equipaggiata
+    getCurrentShip() {
+        return window.gameInstance?.selectedShipNumber || 1; // Default: nave 1 (Phoenix)
+    }
+    
+    // Ottieni le informazioni di una nave specifica
+    getShipInfo(shipNumber) {
+        const SHIP_MODELS = {
+            1: { name: 'Phoenix', maxHP: 4000, maxShield: 4000, velocity: 320, laserSlots: 1, generatorSlots: 1, extraSlots: 1 },
+            2: { name: 'Yamato', maxHP: 8000, maxShield: 8000, velocity: 340, laserSlots: 2, generatorSlots: 2, extraSlots: 1 },
+            3: { name: 'Defcom', maxHP: 12000, maxShield: 12000, velocity: 280, laserSlots: 3, generatorSlots: 5, extraSlots: 2 },
+            4: { name: 'Liberator', maxHP: 16000, maxShield: 16000, velocity: 330, laserSlots: 4, generatorSlots: 6, extraSlots: 2 },
+            5: { name: 'Piranha', maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 8, extraSlots: 2 },
+            6: { name: 'Nostromo', maxHP: 120000, maxShield: 120000, velocity: 340, laserSlots: 7, generatorSlots: 10, extraSlots: 3 },
+            7: { name: 'BigBoy', maxHP: 160000, maxShield: 160000, velocity: 260, laserSlots: 8, generatorSlots: 15, extraSlots: 3 },
+            8: { name: 'Vengeance', maxHP: 180000, maxShield: 180000, velocity: 380, laserSlots: 10, generatorSlots: 10, extraSlots: 2 },
+            9: { name: 'Goliath', maxHP: 256000, maxShield: 256000, velocity: 300, laserSlots: 15, generatorSlots: 15, extraSlots: 3 },
+            10: { name: 'Leonov', maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 6, extraSlots: 1 }
+        };
+        return SHIP_MODELS[shipNumber] || null;
     }
     
     // Configura eventi del mouse per drag scroll
     setupMouseEvents() {
         // Mouse down
         document.addEventListener('mousedown', (e) => {
-            if (!this.isOpen || this.currentTab !== 'uav') return;
+            if (!this.isOpen) return;
             
             const rect = document.querySelector('canvas').getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            if (this.isInsideUAVScrollArea(x, y)) {
+            if (this.currentTab === 'uav' && this.isInsideUAVScrollArea(x, y)) {
                 this.startDragScroll(x, y);
+                e.preventDefault();
+            } else if (this.currentTab === 'ships' && this.isInsideShipsScrollArea(x, y)) {
+                this.startShipsDragScroll(x, y);
                 e.preventDefault();
             }
         });
         
         // Mouse move
         document.addEventListener('mousemove', (e) => {
-            if (!this.isOpen || this.currentTab !== 'uav' || !this.isDraggingUAV) return;
+            if (!this.isOpen) return;
             
             const rect = document.querySelector('canvas').getBoundingClientRect();
             const y = e.clientY - rect.top;
             
-            this.updateDragScroll(y);
-            e.preventDefault();
+            if (this.currentTab === 'uav' && this.isDraggingUAV) {
+                this.updateDragScroll(y);
+                e.preventDefault();
+            } else if (this.currentTab === 'ships' && this.isDraggingShips) {
+                this.updateShipsDragScroll(y);
+                e.preventDefault();
+            }
         });
         
         // Mouse up
         document.addEventListener('mouseup', (e) => {
             if (this.isDraggingUAV) {
                 this.endDragScroll();
+            }
+            if (this.isDraggingShips) {
+                this.endShipsDragScroll();
             }
         });
         
@@ -131,20 +192,29 @@ export class Inventory {
             if (this.isDraggingUAV) {
                 this.endDragScroll();
             }
+            if (this.isDraggingShips) {
+                this.endShipsDragScroll();
+            }
         });
         
         // Mouse wheel per scroll
         document.addEventListener('wheel', (e) => {
-            if (!this.isOpen || this.currentTab !== 'uav') return;
+            if (!this.isOpen) return;
             
             const rect = document.querySelector('canvas').getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            if (this.isInsideUAVScrollArea(x, y)) {
+            if (this.currentTab === 'uav' && this.isInsideUAVScrollArea(x, y)) {
                 const scrollAmount = e.deltaY * 0.5; // Sensibilità scroll
                 const maxScroll = Math.max(0, (this.equipment.uav.length * this.uavItemHeight) - this.uavScrollArea.height);
                 this.uavScrollY = Math.max(0, Math.min(this.uavScrollY + scrollAmount, maxScroll));
+                e.preventDefault();
+            } else if (this.currentTab === 'ships' && this.isInsideShipsScrollArea(x, y)) {
+                const ownedShips = this.getOwnedShips();
+                const scrollAmount = e.deltaY * 0.5; // Sensibilità scroll
+                const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - this.shipsScrollArea.height);
+                this.shipsScrollY = Math.max(0, Math.min(this.shipsScrollY + scrollAmount, maxScroll));
                 e.preventDefault();
             }
         });
@@ -156,6 +226,14 @@ export class Inventory {
                x <= this.uavScrollArea.x + this.uavScrollArea.width &&
                y >= this.uavScrollArea.y && 
                y <= this.uavScrollArea.y + this.uavScrollArea.height;
+    }
+    
+    // Controlla se il click è nell'area di scroll navi
+    isInsideShipsScrollArea(x, y) {
+        return x >= this.shipsScrollArea.x && 
+               x <= this.shipsScrollArea.x + this.shipsScrollArea.width &&
+               y >= this.shipsScrollArea.y && 
+               y <= this.shipsScrollArea.y + this.shipsScrollArea.height;
     }
     
     // Inizia il drag scroll
@@ -180,6 +258,31 @@ export class Inventory {
     // Termina il drag scroll
     endDragScroll() {
         this.isDraggingUAV = false;
+    }
+    
+    // Inizia il drag scroll per navi
+    startShipsDragScroll(x, y) {
+        this.isDraggingShips = true;
+        this.shipsDragStartY = y;
+        this.shipsScrollStartY = this.shipsScrollY;
+    }
+    
+    // Aggiorna il drag scroll per navi
+    updateShipsDragScroll(y) {
+        if (!this.isDraggingShips) return;
+        
+        const deltaY = y - this.shipsDragStartY;
+        const newScrollY = this.shipsScrollStartY - deltaY;
+        
+        // Calcola i limiti di scroll
+        const ownedShips = this.getOwnedShips();
+        const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - this.shipsScrollArea.height);
+        this.shipsScrollY = Math.max(0, Math.min(newScrollY, maxScroll));
+    }
+    
+    // Termina il drag scroll per navi
+    endShipsDragScroll() {
+        this.isDraggingShips = false;
     }
     
     // Carica le immagini degli equipaggiamenti N3
@@ -222,6 +325,69 @@ export class Inventory {
     
     
     
+    // Espandi gli array di equipaggiamento in base alla nave corrente
+    expandEquipmentArrays() {
+        if (!this.game || !this.game.ship) return;
+        
+        const laserSlots = this.game.ship.laserSlots || 1;
+        const genSlots = this.game.ship.generatorSlots || 1;
+        const extraSlots = this.game.ship.extraSlots || 1;
+        
+        // Gestisci array laser
+        if (this.equipment.laser.length !== laserSlots) {
+            const newLaserArray = new Array(laserSlots).fill(null);
+            // Copia gli oggetti esistenti che possono essere mantenuti
+            for (let i = 0; i < Math.min(this.equipment.laser.length, laserSlots); i++) {
+                newLaserArray[i] = this.equipment.laser[i];
+            }
+            // Se la nave ha meno slot, rimetti gli oggetti "persi" nell'inventario
+            if (laserSlots < this.equipment.laser.length) {
+                for (let i = laserSlots; i < this.equipment.laser.length; i++) {
+                    if (this.equipment.laser[i]) {
+                        this.addItem(this.equipment.laser[i]);
+                    }
+                }
+            }
+            this.equipment.laser = newLaserArray;
+        }
+        
+        // Gestisci array scudi/generatori
+        if (this.equipment.shieldGen.length !== genSlots) {
+            const newGenArray = new Array(genSlots).fill(null);
+            // Copia gli oggetti esistenti che possono essere mantenuti
+            for (let i = 0; i < Math.min(this.equipment.shieldGen.length, genSlots); i++) {
+                newGenArray[i] = this.equipment.shieldGen[i];
+            }
+            // Se la nave ha meno slot, rimetti gli oggetti "persi" nell'inventario
+            if (genSlots < this.equipment.shieldGen.length) {
+                for (let i = genSlots; i < this.equipment.shieldGen.length; i++) {
+                    if (this.equipment.shieldGen[i]) {
+                        this.addItem(this.equipment.shieldGen[i]);
+                    }
+                }
+            }
+            this.equipment.shieldGen = newGenArray;
+        }
+        
+        // Gestisci array extra
+        if (this.equipment.extra.length !== extraSlots) {
+            const newExtraArray = new Array(extraSlots).fill(null);
+            // Copia gli oggetti esistenti che possono essere mantenuti
+            for (let i = 0; i < Math.min(this.equipment.extra.length, extraSlots); i++) {
+                newExtraArray[i] = this.equipment.extra[i];
+            }
+            // Se la nave ha meno slot, rimetti gli oggetti "persi" nell'inventario
+            if (extraSlots < this.equipment.extra.length) {
+                for (let i = extraSlots; i < this.equipment.extra.length; i++) {
+                    if (this.equipment.extra[i]) {
+                        this.addItem(this.equipment.extra[i]);
+                    }
+                }
+            }
+            this.equipment.extra = newExtraArray;
+        }
+    }
+    
     // Apri/chiudi inventario
     toggle() {
         this.isOpen = !this.isOpen;
@@ -231,6 +397,7 @@ export class Inventory {
                 this.currentLaserCap = this.game.ship.laserSlots ?? 1;
                 this.currentGenCap = this.game.ship.generatorSlots ?? 1;
                 this.currentExtraCap = this.game.ship.extraSlots ?? 1;
+                this.expandEquipmentArrays(); // Espandi gli array se necessario
             }
             this.justOpened = true;
             setTimeout(() => {
@@ -247,6 +414,7 @@ export class Inventory {
             this.currentLaserCap = this.game.ship.laserSlots ?? 1;
             this.currentGenCap = this.game.ship.generatorSlots ?? 1;
             this.currentExtraCap = this.game.ship.extraSlots ?? 1;
+            this.expandEquipmentArrays(); // Espandi gli array se necessario
         }
         setTimeout(() => {
             this.justOpened = false;
@@ -418,61 +586,107 @@ export class Inventory {
             equipment: this.equipment,
             items: this.items
         };
-        localStorage.setItem('inventory', JSON.stringify(inventoryData));
+        // RIMOSSO: localStorage.setItem('inventory', JSON.stringify(inventoryData));
     }
     
     // Carica inventario
     load() {
-        const savedData = localStorage.getItem('inventory');
-        if (savedData) {
-            const inventoryData = JSON.parse(savedData);
-            this.equipment = inventoryData.equipment || this.equipment;
-            this.items = inventoryData.items || this.items;
-            
-            // Assicurati che equipment.uav sia sempre inizializzato
-            if (!this.equipment.uav) {
-                this.equipment.uav = [];
-            }
+        // RIMOSSO: const savedData = localStorage.getItem('inventory');
+        // RIMOSSO: if (savedData) {
+        //     const inventoryData = JSON.parse(savedData);
+        //     this.equipment = inventoryData.equipment || this.equipment;
+        //     this.items = inventoryData.items || this.items;
+        //     
+        //     // Assicurati che equipment.uav sia sempre inizializzato
+        //     if (!this.equipment.uav) {
+        //         this.equipment.uav = [];
+        //     }
+        //
+        //     // Inizializza equippedItems per tutti i droni
+        //     this.equipment.uav.forEach(drone => {
+        //         if (!drone.equippedItems) {
+        //             drone.equippedItems = new Array(drone.slots).fill(null);
+        //         }
+        //     });
+        //     
+        //     // Applica effetti dei droni al caricamento
+        //     this.applyDroneEffects();
+        //     
+        //     // Pulisci eventuali droni dall'inventario generale
+        //     this.cleanupDronesFromInventory();
+        //     
+        //     
+        //     // Riapplica gli effetti degli item equipaggiati
+        //     if (window.gameInstance && window.gameInstance.ship) {
+        //         // Riapplica laser
+        //         Object.entries(this.equipment.laser).forEach(([index, item]) => {
+        //             if (item && item.stats && item.stats.key) {
+        //                 console.log('🔄 Riapplico laser:', item);
+        //                 window.gameInstance.ship.equipLaser(item.stats.key, 1);
+        //             }
+        //         });
+        //         
+        //         // Riapplica scudi e generatori
+        //         Object.entries(this.equipment.shieldGen).forEach(([index, item]) => {
+        //             if (item && item.stats && item.stats.key) {
+        //                 const key = item.stats.key;
+        //                 console.log('🔄 Riapplico shield/gen:', item);
+        //                 if (key.startsWith('gen')) {
+        //                     window.gameInstance.ship.equipGenerator(key, 1);
+        //                 } else if (key.startsWith('sh')) {
+        //                     const extra = Number(item.stats?.protection || 0);
+        //                     window.gameInstance.ship.maxShield += extra;
+        //                     window.gameInstance.ship.shield += extra;
+        //                 }
+        //             }
+        //         });
+        //     }
+        // }
+        
+        // L'inventario è ora caricato per-account dal SaveSystem
+        // Assicurati che equipment.uav sia sempre inizializzato
+        if (!this.equipment.uav) {
+            this.equipment.uav = [];
+        }
 
-            // Inizializza equippedItems per tutti i droni
-            this.equipment.uav.forEach(drone => {
-                if (!drone.equippedItems) {
-                    drone.equippedItems = new Array(drone.slots).fill(null);
+        // Inizializza equippedItems per tutti i droni
+        this.equipment.uav.forEach(drone => {
+            if (!drone.equippedItems) {
+                drone.equippedItems = new Array(drone.slots).fill(null);
+            }
+        });
+        
+        // Applica effetti dei droni al caricamento
+        this.applyDroneEffects();
+        
+        // Pulisci eventuali droni dall'inventario generale
+        this.cleanupDronesFromInventory();
+        
+        
+        // Riapplica gli effetti degli item equipaggiati
+        if (window.gameInstance && window.gameInstance.ship) {
+            // Riapplica laser
+            Object.entries(this.equipment.laser).forEach(([index, item]) => {
+                if (item && item.stats && item.stats.key) {
+                    console.log('🔄 Riapplico laser:', item);
+                    window.gameInstance.ship.equipLaser(item.stats.key, 1);
                 }
             });
             
-            // Applica effetti dei droni al caricamento
-            this.applyDroneEffects();
-            
-            // Pulisci eventuali droni dall'inventario generale
-            this.cleanupDronesFromInventory();
-            
-            
-            // Riapplica gli effetti degli item equipaggiati
-            if (window.gameInstance && window.gameInstance.ship) {
-                // Riapplica laser
-                Object.entries(this.equipment.laser).forEach(([index, item]) => {
-                    if (item && item.stats && item.stats.key) {
-                        console.log('🔄 Riapplico laser:', item);
-                        window.gameInstance.ship.equipLaser(item.stats.key, 1);
+            // Riapplica scudi e generatori
+            Object.entries(this.equipment.shieldGen).forEach(([index, item]) => {
+                if (item && item.stats && item.stats.key) {
+                    const key = item.stats.key;
+                    console.log('🔄 Riapplico shield/gen:', item);
+                    if (key.startsWith('gen')) {
+                        window.gameInstance.ship.equipGenerator(key, 1);
+                    } else if (key.startsWith('sh')) {
+                        const extra = Number(item.stats?.protection || 0);
+                        window.gameInstance.ship.maxShield += extra;
+                        window.gameInstance.ship.shield += extra;
                     }
-                });
-                
-                // Riapplica scudi e generatori
-                Object.entries(this.equipment.shieldGen).forEach(([index, item]) => {
-                    if (item && item.stats && item.stats.key) {
-                        const key = item.stats.key;
-                        console.log('🔄 Riapplico shield/gen:', item);
-                        if (key.startsWith('gen')) {
-                            window.gameInstance.ship.equipGenerator(key, 1);
-                        } else if (key.startsWith('sh')) {
-                            const extra = Number(item.stats?.protection || 0);
-                            window.gameInstance.ship.maxShield += extra;
-                            window.gameInstance.ship.shield += extra;
-                        }
-                    }
-                });
-            }
+                }
+            });
         }
     }
     
@@ -643,6 +857,14 @@ export class Inventory {
             }
         }
         
+        // Gestisci click sulle navi se siamo nella tab navi (priorità alta)
+        if (this.currentTab === 'ships') {
+            const shipsHandled = this.handleShipsClick(x, y);
+            if (shipsHandled) {
+                return true;
+            }
+        }
+        
         // Gestisci click sugli slot di equipaggiamento
         const equipmentHandled = this.handleEquipmentClick(x, y);
         if (equipmentHandled) {
@@ -801,6 +1023,112 @@ export class Inventory {
         });
 
         return false;
+    }
+    
+    // Gestisci click sulle navi
+    handleShipsClick(x, y) {
+        const shipsY = this.panelY + 200;
+        const shipsX = this.panelX + 50;
+        const shipAreaWidth = 500;
+        const shipAreaHeight = 400;
+        
+        const ownedShips = this.getOwnedShips();
+        const currentShip = this.getCurrentShip();
+        
+        // Se non ci sono navi, non c'è click
+        if (ownedShips.length === 0) {
+            return false;
+        }
+        
+        // Controlla click sulle navi equipaggiate (layout verticale)
+        ownedShips.forEach((shipNumber, shipIndex) => {
+            const shipY = shipsY + (shipIndex * this.shipItemHeight) - this.shipsScrollY;
+            const shipX = shipsX + 10;
+            const shipWidth = shipAreaWidth - 20;
+            const shipHeight = this.shipItemHeight - 20;
+            
+            // Click sulla nave (area generale)
+            if (x >= shipX && x <= shipX + shipWidth &&
+                y >= shipY && y <= shipY + shipHeight) {
+                
+                // Se non è già la nave corrente, equipaggiala
+                if (shipNumber !== currentShip) {
+                    this.equipShip(shipNumber);
+                }
+                return true;
+            }
+        });
+        
+        // Controlla click sulla scrollbar moderna
+        const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - shipAreaHeight);
+        if (maxScroll > 0) {
+            const scrollbarWidth = 8;
+            const scrollbarX = shipsX + shipAreaWidth - scrollbarWidth - 5;
+            const scrollbarY = shipsY + 5;
+            const scrollbarHeight = shipAreaHeight - 10;
+            
+            // Click sulla scrollbar
+            if (x >= scrollbarX && x <= scrollbarX + scrollbarWidth &&
+                y >= scrollbarY && y <= scrollbarY + scrollbarHeight) {
+                
+                // Calcola nuova posizione scroll basata sul click
+                const clickRatio = (y - scrollbarY) / scrollbarHeight;
+                this.shipsScrollY = clickRatio * maxScroll;
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // Equipaggia una nave
+    equipShip(shipNumber) {
+        if (!window.gameInstance) {
+            console.warn('⚠️ Game instance non disponibile per equipaggiare nave');
+            return false;
+        }
+        
+        // Aggiorna la nave selezionata
+        window.gameInstance.selectedShipNumber = shipNumber;
+        // RIMOSSO: localStorage.setItem('selectedShipNumber', shipNumber.toString());
+        
+        // Aggiorna la nave nel gioco
+        if (window.gameInstance.ship) {
+            const shipInfo = this.getShipInfo(shipNumber);
+            if (shipInfo) {
+                // Aggiorna le statistiche della nave
+                window.gameInstance.ship.maxHP = shipInfo.maxHP;
+                window.gameInstance.ship.maxShield = shipInfo.maxShield;
+                window.gameInstance.ship.velocity = shipInfo.velocity;
+                window.gameInstance.ship.laserSlots = shipInfo.laserSlots;
+                window.gameInstance.ship.generatorSlots = shipInfo.generatorSlots;
+                window.gameInstance.ship.extraSlots = shipInfo.extraSlots;
+                
+                // Ripristina HP e scudo al massimo
+                window.gameInstance.ship.hp = shipInfo.maxHP;
+                window.gameInstance.ship.shield = shipInfo.maxShield;
+                
+                // CAMBIA LO SPRITE DELLA NAVE
+                if (window.gameInstance.ship.sprite && window.gameInstance.ship.sprite.switchShip) {
+                    window.gameInstance.ship.sprite.switchShip(shipNumber);
+                    console.log(`🎨 Sprite nave cambiato a: ${shipNumber}`);
+                }
+                
+                // Espandi gli array di equipaggiamento per la nuova nave
+                this.expandEquipmentArrays();
+                
+                // Salva automaticamente il cambio nave
+                if (window.gameInstance.saveSystem) {
+                    window.gameInstance.saveSystem.save();
+                    console.log(`💾 Salvataggio automatico dopo cambio nave`);
+                }
+                
+                console.log(`🚀 Nave equipaggiata: ${shipInfo.name} (${shipNumber})`);
+                this.showPopup(`Nave equipaggiata: ${shipInfo.name}`, 'success');
+            }
+        }
+        
+        return true;
     }
     
     // Equipaggia oggetto automaticamente nel primo slot disponibile (usa metodo unificato)
@@ -981,17 +1309,27 @@ export class Inventory {
     handleEquipmentClick(x, y) {
         const equipmentY = this.panelY + 200; // Corretto per corrispondere a drawEquipment
         const equipmentX = this.panelX + 50;
-        const slotSpacing = 65; // Slot equipaggiamento più compatti
+        const slotSpacing = this.slotSize + this.slotSpacing; // spacing orizzontale
+        const rowGap = 10; // aria verticale tra righe
+        const lineHeight = this.slotSize + rowGap;
+        const slotsPerRow = 8;
         
         // DEBUG: Equipment click debug (disabilitato per performance)
         // console.log('🔧 EQUIPMENT CLICK DEBUG:', { clickX: x, clickY: y });
         
-        // Controlla click su slot laser
-        for (let i = 0; i < 3; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
-            const slotY = equipmentY + 10;
-            const slotRight = slotX + this.slotSize;
-            const slotBottom = slotY + this.slotSize;
+    // Controlla click su slot laser
+    const maxLaserSlots = (this.game && this.game.ship && this.game.ship.laserSlots !== undefined)
+        ? this.game.ship.laserSlots
+        : (this.currentLaserCap !== undefined ? this.currentLaserCap : 1);
+    const laserRows = Math.max(1, Math.ceil(maxLaserSlots / slotsPerRow));
+    
+    for (let i = 0; i < maxLaserSlots; i++) {
+        const row = Math.floor(i / slotsPerRow);
+        const col = i % slotsPerRow;
+        const slotX = equipmentX + (col * slotSpacing);
+        const slotY = equipmentY + 10 + (row * lineHeight);
+        const slotRight = slotX + this.slotSize;
+        const slotBottom = slotY + this.slotSize;
                 
             // DEBUG: Laser slot debug (disabilitato per performance)
             // console.log(`🔍 Laser slot ${i}:`, { slotX, slotY, isInside: x >= slotX && x <= slotRight && y >= slotY && y <= slotBottom });
@@ -1005,19 +1343,25 @@ export class Inventory {
             }
         }
         
-        // Controlla click su slot scudi/generatori (6 slot totali)
-        const shieldGenY = equipmentY + 150; // Corretto per corrispondere a drawEquipment
+        // Controlla click su slot scudi/generatori
+        const shieldGenY = equipmentY + 60 + laserRows * lineHeight;
+        const maxShieldGenSlots = (this.game && this.game.ship && this.game.ship.generatorSlots !== undefined)
+            ? this.game.ship.generatorSlots
+            : (this.currentGenCap !== undefined ? this.currentGenCap : 1);
+        const genRows = Math.max(1, Math.ceil(maxShieldGenSlots / slotsPerRow));
         
-        // Tutti gli slot scudi/generatori
-        for (let i = 0; i < 6; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
+        for (let i = 0; i < maxShieldGenSlots; i++) {
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * slotSpacing);
+            const slotY = shieldGenY + (row * lineHeight);
             const slotRight = slotX + this.slotSize;
-            const slotBottom = shieldGenY + this.slotSize;
+            const slotBottom = slotY + this.slotSize;
                 
             // DEBUG: Shield/Gen slot debug (disabilitato per performance)
             // console.log(`🔍 Shield/Gen slot ${i}:`, { slotX, slotY: shieldGenY, isInside: x >= slotX && x <= slotRight && y >= shieldGenY && y <= slotBottom });
             
-            if (x >= slotX && x <= slotRight && y >= shieldGenY && y <= slotBottom) {
+            if (x >= slotX && x <= slotRight && y >= slotY && y <= slotBottom) {
                 if (this.equipment.shieldGen[i]) {
                     const item = this.unequipItem('shieldGen', i);
                 }
@@ -1027,16 +1371,23 @@ export class Inventory {
         }
         
         // Controlla click su slot extra
-        const extraY = equipmentY + 300; // Corretto per corrispondere a drawEquipment
-        for (let i = 0; i < 3; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
+        const extraY = shieldGenY + 60 + genRows * lineHeight;
+        const maxExtraSlots = (this.game && this.game.ship && this.game.ship.extraSlots !== undefined)
+            ? this.game.ship.extraSlots
+            : (this.currentExtraCap !== undefined ? this.currentExtraCap : 1);
+        
+        for (let i = 0; i < maxExtraSlots; i++) {
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * slotSpacing);
+            const slotY = extraY + (row * lineHeight);
             const slotRight = slotX + this.slotSize;
-            const slotBottom = extraY + this.slotSize;
+            const slotBottom = slotY + this.slotSize;
                 
             // DEBUG: Extra slot debug (disabilitato per performance)
             // console.log(`🔍 Extra slot ${i}:`, { slotX, slotY: extraY, isInside: x >= slotX && x <= slotRight && y >= extraY && y <= slotBottom });
             
-            if (x >= slotX && x <= slotRight && y >= extraY && y <= slotBottom) {
+            if (x >= slotX && x <= slotRight && y >= slotY && y <= slotBottom) {
                 if (this.equipment.extra[i]) {
                     const item = this.unequipItem('extra', i);
                 }
@@ -1052,19 +1403,31 @@ export class Inventory {
     checkEquipmentHover(x, y) {
         const equipmentY = this.panelY + 200; // Corretto per corrispondere a drawEquipment
         const equipmentX = this.panelX + 50;
-        const slotSpacing = 65; // Slot equipaggiamento più compatti
+        const slotSpacing = this.slotSize + this.slotSpacing; // spacing orizzontale
+        const rowGap = 10; // aria verticale tra righe
+        const lineHeight = this.slotSize + rowGap;
+        const slotsPerRow = 8;
         
         // Controlla hover su slot laser
-        for (let i = 0; i < 3; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
-            if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= equipmentY + 10 && y <= equipmentY + 10 + this.slotSize) {
+        const maxLaserSlots = (this.game && this.game.ship && this.game.ship.laserSlots !== undefined)
+            ? this.game.ship.laserSlots
+            : (this.currentLaserCap !== undefined ? this.currentLaserCap : 1);
+        const laserRows = Math.max(1, Math.ceil(maxLaserSlots / slotsPerRow));
+        
+        for (let i = 0; i < maxLaserSlots; i++) {
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * slotSpacing);
+            const slotY = equipmentY + 10 + (row * lineHeight);
                 
+            if (x >= slotX && x <= slotX + this.slotSize &&
+                y >= slotY && y <= slotY + this.slotSize) {
+        
                 if (this.equipment.laser[i]) {
                     this.tooltip = {
                         item: this.equipment.laser[i],
                         x: slotX,
-                        y: equipmentY + 40
+                        y: slotY + 40
                     };
                 } else {
                     this.tooltip = null;
@@ -1073,20 +1436,27 @@ export class Inventory {
             }
         }
         
-                // Controlla hover su slot scudi/generatori (6 slot in una riga)
-        const shieldGenY = equipmentY + 150; // Corretto per corrispondere a drawEquipment
+        // Controlla hover su slot scudi/generatori
+        const shieldGenY = equipmentY + 60 + laserRows * lineHeight;
+        const maxShieldGenSlots = (this.game && this.game.ship && this.game.ship.generatorSlots !== undefined)
+            ? this.game.ship.generatorSlots
+            : (this.currentGenCap !== undefined ? this.currentGenCap : 1);
+        const genRows = Math.max(1, Math.ceil(maxShieldGenSlots / slotsPerRow));
         
-        // Tutti gli slot scudi/generatori
-        for (let i = 0; i < 6; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
+        for (let i = 0; i < maxShieldGenSlots; i++) {
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * slotSpacing);
+            const slotY = shieldGenY + (row * lineHeight);
+                
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= shieldGenY && y <= shieldGenY + this.slotSize) {
+                y >= slotY && y <= slotY + this.slotSize) {
                 
                 if (this.equipment.shieldGen[i]) {
                     this.tooltip = {
                         item: this.equipment.shieldGen[i],
                         x: slotX,
-                        y: shieldGenY
+                        y: slotY
                     };
                 } else {
                     this.tooltip = null;
@@ -1096,27 +1466,33 @@ export class Inventory {
         }
         
         // Controlla hover su slot extra
-        const extraY = equipmentY + 300; // Corretto per corrispondere a drawEquipment
-        for (let i = 0; i < 3; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
+        const extraY = shieldGenY + 60 + genRows * lineHeight;
+        const maxExtraSlots = (this.game && this.game.ship && this.game.ship.extraSlots !== undefined)
+            ? this.game.ship.extraSlots
+            : (this.currentExtraCap !== undefined ? this.currentExtraCap : 1);
+        
+        for (let i = 0; i < maxExtraSlots; i++) {
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * slotSpacing);
+            const slotY = extraY + (row * lineHeight);
+            
             if (x >= slotX && x <= slotX + this.slotSize &&
-                y >= extraY && y <= extraY + this.slotSize) {
-                
+                y >= slotY && y <= slotY + this.slotSize) {
                 if (this.equipment.extra[i]) {
                     this.tooltip = {
                         item: this.equipment.extra[i],
                         x: slotX,
-                        y: extraY
+                        y: slotY
                     };
                 } else {
                     this.tooltip = null;
                 }
-            return;
-        }
+                return;
+            }
         }
     }
     
-    // Controlla hover sugli oggetti dell'inventario
     checkInventoryHover(x, y) {
         const inventoryY = this.panelY + 80;
         const inventoryX = this.panelX + 650; // Posizionato molto più a destra
@@ -1235,7 +1611,10 @@ export class Inventory {
         let targetSlotIndex = -1;
         
         if (item.type === 'laser') {
-            for (let i = 0; i < 3; i++) {
+            const maxLaserSlots = (this.game && this.game.ship && this.game.ship.laserSlots !== undefined)
+                ? this.game.ship.laserSlots
+                : (this.currentLaserCap !== undefined ? this.currentLaserCap : 1);
+            for (let i = 0; i < maxLaserSlots; i++) {
                 if (!this.equipment.laser[i]) {
                     targetSlotType = 'laser';
                     targetSlotIndex = i;
@@ -1243,7 +1622,10 @@ export class Inventory {
                 }
             }
         } else if (item.type === 'shield' || item.type === 'generator') {
-            for (let i = 0; i < 6; i++) {
+            const maxShieldGenSlots = (this.game && this.game.ship && this.game.ship.generatorSlots !== undefined)
+                ? this.game.ship.generatorSlots
+                : (this.currentGenCap !== undefined ? this.currentGenCap : 1);
+            for (let i = 0; i < maxShieldGenSlots; i++) {
                 if (!this.equipment.shieldGen[i]) {
                     targetSlotType = 'shieldGen';
                     targetSlotIndex = i;
@@ -1251,7 +1633,10 @@ export class Inventory {
                 }
             }
         } else if (item.type === 'extra') {
-            for (let i = 0; i < 3; i++) {
+            const maxExtraSlots = (this.game && this.game.ship && this.game.ship.extraSlots !== undefined)
+                ? this.game.ship.extraSlots
+                : (this.currentExtraCap !== undefined ? this.currentExtraCap : 1);
+            for (let i = 0; i < maxExtraSlots; i++) {
                 if (!this.equipment.extra[i]) {
                     targetSlotType = 'extra';
                     targetSlotIndex = i;
@@ -1339,10 +1724,17 @@ export class Inventory {
             this.drawInventory(ctx);
         } else if (this.currentTab === 'uav') {
             this.drawUAV(ctx);
+        } else if (this.currentTab === 'ships') {
+            this.drawShips(ctx);
         }
         
         // Istruzioni (più in basso)
-        ThemeUtils.drawText(ctx, 'Click su oggetti per equipaggiare automaticamente', this.panelX + this.panelWidth / 2, this.panelY + this.panelHeight - 40, {
+        let instructionText = 'Click su oggetti per equipaggiare automaticamente';
+        if (this.currentTab === 'ships') {
+            instructionText = 'Click su una nave per equipaggiarla';
+        }
+        
+        ThemeUtils.drawText(ctx, instructionText, this.panelX + this.panelWidth / 2, this.panelY + this.panelHeight - 40, {
             color: ThemeConfig.colors.text.secondary,
             size: ThemeConfig.typography.sizes.base,
             align: 'center',
@@ -1504,6 +1896,215 @@ export class Inventory {
         
         // Informazioni UAV rimosse per pulizia
     }
+    
+    // Disegna sezione navi
+    drawShips(ctx) {
+        const shipsY = this.panelY + 200;
+        const shipsX = this.panelX + 50;
+        
+        const ownedShips = this.getOwnedShips();
+        const currentShip = this.getCurrentShip();
+        
+        // Titolo navi con contatore
+        ThemeUtils.drawText(ctx, `NAVI POSSEDUTE (${ownedShips.length})`, shipsX, shipsY - 20, {
+            color: ThemeConfig.colors.accent.secondary,
+            size: ThemeConfig.typography.sizes.lg,
+            weight: ThemeConfig.typography.weights.bold
+        });
+        
+        // Se non ci sono navi, mostra messaggio
+        if (ownedShips.length === 0) {
+            ThemeUtils.drawText(ctx, 'Non hai navi', shipsX, shipsY + 50, {
+                color: ThemeConfig.colors.text.muted,
+                size: ThemeConfig.typography.sizes.base,
+                weight: ThemeConfig.typography.weights.normal
+            });
+            return;
+        }
+        
+        // Area navi senza pannello (allargata)
+        const shipAreaWidth = 500;
+        const shipAreaHeight = 400;
+        const shipAreaX = shipsX;
+        const shipAreaY = shipsY;
+        
+        // Aggiorna area di scroll per drag
+        this.shipsScrollArea = {
+            x: shipAreaX,
+            y: shipAreaY,
+            width: shipAreaWidth,
+            height: shipAreaHeight
+        };
+        
+        // Calcola scroll
+        const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - shipAreaHeight);
+        this.shipsScrollY = Math.max(0, Math.min(this.shipsScrollY, maxScroll));
+        
+        // Disegna navi con scroll
+        ctx.save();
+        ctx.rect(shipAreaX, shipAreaY, shipAreaWidth, shipAreaHeight);
+        ctx.clip();
+        
+        ownedShips.forEach((shipNumber, index) => {
+            const shipY = shipAreaY + (index * this.shipItemHeight) - this.shipsScrollY;
+            if (shipY + this.shipItemHeight > shipAreaY && shipY < shipAreaY + shipAreaHeight) {
+                this.drawShipVertical(ctx, shipAreaX + 10, shipY + 10, shipAreaWidth - 20, this.shipItemHeight - 20, shipNumber, index);
+            }
+        });
+        
+        ctx.restore();
+        
+        // Disegna scrollbar moderna se necessario
+        if (maxScroll > 0) {
+            this.drawShipsScrollbar(ctx, shipAreaX, shipAreaY, shipAreaWidth, shipAreaHeight, maxScroll);
+        }
+    }
+    
+    // Disegna nave verticalmente (moderno)
+    drawShipVertical(ctx, x, y, width, height, shipNumber, shipIndex) {
+        const shipInfo = this.getShipInfo(shipNumber);
+        const currentShip = this.getCurrentShip();
+        const isEquipped = shipNumber === currentShip;
+        
+        if (!shipInfo) return;
+        
+        // Colore bordo basato sullo stato
+        let borderColor = ThemeConfig.colors.border.primary;
+        let backgroundColor = ThemeConfig.colors.background.card;
+        
+        if (isEquipped) {
+            borderColor = ThemeConfig.colors.accent.success;
+            backgroundColor = 'rgba(0, 255, 136, 0.1)';
+        }
+        
+        // Pannello nave moderno
+        ThemeUtils.drawPanel(ctx, x, y, width, height, {
+            background: backgroundColor,
+            border: borderColor,
+            borderWidth: ThemeConfig.borders.width.normal,
+            radius: ThemeConfig.borders.radius.md,
+            blur: false,
+            glow: isEquipped ? ThemeConfig.colors.accent.success : null
+        });
+        
+        // Nome nave
+        ThemeUtils.drawText(ctx, shipInfo.name, x + 20, y + 25, {
+            color: isEquipped ? ThemeConfig.colors.accent.success : ThemeConfig.colors.text.primary,
+            size: ThemeConfig.typography.sizes.lg,
+            weight: ThemeConfig.typography.weights.bold
+        });
+        
+        // Badge stato
+        if (isEquipped) {
+            ThemeUtils.drawText(ctx, 'EQUIPAGGIATA', x + width - 120, y + 25, {
+                color: ThemeConfig.colors.accent.success,
+                size: ThemeConfig.typography.sizes.sm,
+                weight: ThemeConfig.typography.weights.bold
+            });
+        }
+        
+        // Statistiche nave
+        const statsY = y + 50;
+        const statsSpacing = 25;
+        
+        // HP
+        ThemeUtils.drawText(ctx, `HP: ${shipInfo.maxHP.toLocaleString()}`, x + 20, statsY, {
+            color: ThemeConfig.colors.accent.danger,
+            size: ThemeConfig.typography.sizes.sm,
+            weight: ThemeConfig.typography.weights.semibold
+        });
+        
+        // Scudo
+        ThemeUtils.drawText(ctx, `Scudo: ${shipInfo.maxShield.toLocaleString()}`, x + 20, statsY + statsSpacing, {
+            color: ThemeConfig.colors.accent.info,
+            size: ThemeConfig.typography.sizes.sm,
+            weight: ThemeConfig.typography.weights.semibold
+        });
+        
+        // Velocità
+        ThemeUtils.drawText(ctx, `Velocità: ${shipInfo.velocity}`, x + 20, statsY + statsSpacing * 2, {
+            color: ThemeConfig.colors.accent.warning,
+            size: ThemeConfig.typography.sizes.sm,
+            weight: ThemeConfig.typography.weights.semibold
+        });
+        
+        // Slot equipaggiamento
+        const slotsY = statsY + statsSpacing * 3;
+        ThemeUtils.drawText(ctx, `Slot Laser: ${shipInfo.laserSlots}`, x + 20, slotsY, {
+            color: ThemeConfig.colors.text.secondary,
+            size: ThemeConfig.typography.sizes.sm,
+            weight: ThemeConfig.typography.weights.normal
+        });
+        
+        ThemeUtils.drawText(ctx, `Slot Scudi/Gen: ${shipInfo.generatorSlots}`, x + 20, slotsY + 15, {
+            color: ThemeConfig.colors.text.secondary,
+            size: ThemeConfig.typography.sizes.sm,
+            weight: ThemeConfig.typography.weights.normal
+        });
+        
+        ThemeUtils.drawText(ctx, `Slot Extra: ${shipInfo.extraSlots}`, x + 20, slotsY + 30, {
+            color: ThemeConfig.colors.text.secondary,
+            size: ThemeConfig.typography.sizes.sm,
+            weight: ThemeConfig.typography.weights.normal
+        });
+        
+        // Pulsante equipaggia (se non è già equipaggiata)
+        if (!isEquipped) {
+            const buttonX = x + width - 100;
+            const buttonY = y + height - 35;
+            const buttonWidth = 80;
+            const buttonHeight = 25;
+            
+            ThemeUtils.drawButton(ctx, buttonX, buttonY, buttonWidth, buttonHeight, {
+                text: 'EQUIPAGGIA',
+                size: 'sm',
+                isHovered: false,
+                isActive: false,
+                textColor: ThemeConfig.colors.text.primary,
+                background: ThemeConfig.colors.accent.primary,
+                border: ThemeConfig.colors.accent.primary,
+                glow: false
+            });
+        }
+    }
+    
+    // Disegna scrollbar moderna per navi
+    drawShipsScrollbar(ctx, x, y, width, height, maxScroll) {
+        const scrollbarWidth = 8;
+        const scrollbarX = x + width - scrollbarWidth - 5;
+        const scrollbarY = y + 5;
+        const scrollbarHeight = height - 10;
+        
+        // Sfondo scrollbar (trasparente)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+        
+        // Calcola dimensioni e posizione della barra di scroll
+        const thumbHeight = Math.max(20, (scrollbarHeight * scrollbarHeight) / (scrollbarHeight + maxScroll));
+        const thumbY = scrollbarY + (this.shipsScrollY / maxScroll) * (scrollbarHeight - thumbHeight);
+        
+        // Barra di scroll (thumb)
+        const gradient = ctx.createLinearGradient(scrollbarX, thumbY, scrollbarX, thumbY + thumbHeight);
+        gradient.addColorStop(0, ThemeConfig.colors.accent.secondary);
+        gradient.addColorStop(1, ThemeConfig.colors.accent.primary);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight);
+        
+        // Bordo della barra di scroll
+        ctx.strokeStyle = ThemeConfig.colors.border.glass;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight);
+        
+        // Effetto glow selezionato
+        if (this.isDraggingShips) {
+            ctx.shadowColor = ThemeConfig.colors.accent.secondary;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = 'rgba(155, 89, 182, 0.3)';
+            ctx.fillRect(scrollbarX - 2, thumbY - 2, scrollbarWidth + 4, thumbHeight + 4);
+            ctx.shadowBlur = 0;
+        }
+    }
 
     // Disegna drone verticalmente (moderno)
     drawDroneVertical(ctx, x, y, width, height, drone, droneIndex) {
@@ -1607,7 +2208,10 @@ export class Inventory {
     drawEquipment(ctx) {
         const equipmentY = this.panelY + 200;
         const equipmentX = this.panelX + 50;
-        const slotSpacing = 65; // Slot equipaggiamento più compatti
+        const slotSpacing = this.slotSize + this.slotSpacing; // spacing orizzontale
+        const rowGap = 10; // aria verticale tra righe
+        const lineHeight = this.slotSize + rowGap;
+        const slotsPerRow = 8;
         
         // Titolo equipaggiamento rimosso per pulizia
         
@@ -1624,13 +2228,19 @@ export class Inventory {
         const maxLaserSlots = (this.game && this.game.ship && this.game.ship.laserSlots !== undefined)
             ? this.game.ship.laserSlots
             : (this.currentLaserCap !== undefined ? this.currentLaserCap : 1);
+        const laserRows = Math.max(1, Math.ceil(maxLaserSlots / slotsPerRow));
+        
+        // Wrapping per slot laser (max 8 per riga)
         for (let i = 0; i < maxLaserSlots; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
-            this.drawEquipmentSlot(ctx, slotX, equipmentY + 10, this.equipment.laser[i], `L${i+1}`); // Allineato con il nuovo titolo
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * (this.slotSize + this.slotSpacing));
+            const slotY = equipmentY + 10 + (row * lineHeight);
+            this.drawEquipmentSlot(ctx, slotX, slotY, this.equipment.laser[i], `L${i+1}`);
         }
         
         // Disegna slot scudi/generatori
-        const shieldGenY = equipmentY + 150; // Spazio ottimizzato
+        const shieldGenY = equipmentY + 60 + laserRows * lineHeight; // aria sotto i laser
         const genCap = (this.game && this.game.ship && this.game.ship.generatorSlots !== undefined)
             ? this.game.ship.generatorSlots
             : (this.currentGenCap !== undefined ? this.currentGenCap : 1);
@@ -1643,19 +2253,25 @@ export class Inventory {
         const maxShieldGenSlots = (this.game && this.game.ship && this.game.ship.generatorSlots !== undefined)
             ? this.game.ship.generatorSlots
             : (this.currentGenCap !== undefined ? this.currentGenCap : 1);
+        const genRows = Math.max(1, Math.ceil(maxShieldGenSlots / slotsPerRow));
+        
+        // Wrapping per slot scudi/generatori (max 8 per riga)
         for (let i = 0; i < maxShieldGenSlots; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * (this.slotSize + this.slotSpacing));
+            const slotY = shieldGenY + (row * lineHeight);
             let slotName = '';
             if (i < Math.min(3, maxShieldGenSlots)) {
                 slotName = `S${i+1}`;
-                } else {
+            } else {
                 slotName = `G${i-2}`;
             }
-            this.drawEquipmentSlot(ctx, slotX, shieldGenY, this.equipment.shieldGen[i], slotName);
+            this.drawEquipmentSlot(ctx, slotX, slotY, this.equipment.shieldGen[i], slotName);
         }
         
         // Disegna slot extra
-        const extraY = equipmentY + 300; // Spazio ottimizzato
+        const extraY = shieldGenY + 60 + genRows * lineHeight; // aria sotto scudi/generatori
         const extraCap = (this.game && this.game.ship && this.game.ship.extraSlots !== undefined)
             ? this.game.ship.extraSlots
             : (this.currentExtraCap !== undefined ? this.currentExtraCap : 1);
@@ -1668,9 +2284,14 @@ export class Inventory {
         const maxExtraSlots = (this.game && this.game.ship && this.game.ship.extraSlots !== undefined)
             ? this.game.ship.extraSlots
             : (this.currentExtraCap !== undefined ? this.currentExtraCap : 1);
+        
+        // Wrapping per slot extra (max 8 per riga)
         for (let i = 0; i < maxExtraSlots; i++) {
-            const slotX = equipmentX + (i * slotSpacing);
-            this.drawEquipmentSlot(ctx, slotX, extraY, this.equipment.extra[i], `E${i+1}`);
+            const row = Math.floor(i / slotsPerRow);
+            const col = i % slotsPerRow;
+            const slotX = equipmentX + (col * (this.slotSize + this.slotSpacing));
+            const slotY = extraY + (row * lineHeight);
+            this.drawEquipmentSlot(ctx, slotX, slotY, this.equipment.extra[i], `E${i+1}`);
         }
     }
     

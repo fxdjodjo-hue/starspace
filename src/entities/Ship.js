@@ -13,85 +13,85 @@ import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
 
 // Configurazione semplice di due modelli di nave con statistiche diverse
 const SHIP_MODELS = {
-    1: { // Nave base
-        maxHP: 1000,
-        maxShield: 1000,
-        velocity: 300,
+    1: { // Phoenix (Urus)
+        maxHP: 4000,
+        maxShield: 4000,
+        velocity: 320,
         laserSlots: 1,
         generatorSlots: 1,
         extraSlots: 1
     },
-    2: { // Variante alternativa
-        maxHP: 1600,
-        maxShield: 600,
-        velocity: 370,
+    2: { // Yamato (Interceptor)
+        maxHP: 8000,
+        maxShield: 8000,
+        velocity: 340,
         laserSlots: 2,
         generatorSlots: 2,
+        extraSlots: 1
+    },
+    3: { // Defcom (Falcon)
+        maxHP: 12000,
+        maxShield: 12000,
+        velocity: 280,
+        laserSlots: 3,
+        generatorSlots: 5,
         extraSlots: 2
     },
-    3: { // Falcon
-        maxHP: 1200,
-        maxShield: 1400,
-        velocity: 360,
-        laserSlots: 3,
-        generatorSlots: 3,
-        extraSlots: 3
-    },
-    4: { // Liberator equivalent
+    4: { // Liberator
         maxHP: 16000,
-        maxShield: 12000,
-        velocity: 300,
-        laserSlots: 3,
-        generatorSlots: 3,
-        extraSlots: 3
-    },
-    5: { // Piranha equivalent
-        maxHP: 32000,
-        maxShield: 24000,
-        velocity: 340,
+        maxShield: 16000,
+        velocity: 330,
         laserSlots: 4,
-        generatorSlots: 4,
-        extraSlots: 3
-    },
-    6: { // Nostromo equivalent
-        maxHP: 64000,
-        maxShield: 48000,
-        velocity: 300,
-        laserSlots: 5,
         generatorSlots: 6,
-        extraSlots: 3
+        extraSlots: 2
     },
-    7: { // BigBoy equivalent
+    5: { // Piranha
         maxHP: 64000,
-        maxShield: 52000,
-        velocity: 240,
-        laserSlots: 5,
-        generatorSlots: 7,
-        extraSlots: 3
+        maxShield: 64000,
+        velocity: 360,
+        laserSlots: 6,
+        generatorSlots: 8,
+        extraSlots: 2
     },
-    8: { // Vengeance equivalent
-        maxHP: 64000,
-        maxShield: 50000,
-        velocity: 380,
-        laserSlots: 8,
+    6: { // Nostromo
+        maxHP: 120000,
+        maxShield: 120000,
+        velocity: 340,
+        laserSlots: 7,
         generatorSlots: 10,
         extraSlots: 3
     },
-    9: { // Goliath equivalent
+    7: { // BigBoy
         maxHP: 160000,
-        maxShield: 120000,
+        maxShield: 160000,
+        velocity: 260,
+        laserSlots: 8,
+        generatorSlots: 15,
+        extraSlots: 3
+    },
+    8: { // Vengeance
+        maxHP: 180000,
+        maxShield: 180000,
+        velocity: 380,
+        laserSlots: 10,
+        generatorSlots: 10,
+        extraSlots: 2
+    },
+    9: { // Goliath
+        maxHP: 256000,
+        maxShield: 256000,
         velocity: 300,
         laserSlots: 15,
         generatorSlots: 15,
         extraSlots: 3
     },
-    10: { // Leonov equivalent
-        maxHP: 80000,
-        maxShield: 60000,
+    10: { // Leonov
+        maxHP: 64000,
+        maxShield: 64000,
         velocity: 360,
         laserSlots: 6,
         generatorSlots: 6,
-        extraSlots: 3
+        extraSlots: 1
     }
 };
 
@@ -108,9 +108,31 @@ export class Ship {
         this.direction = 0; // Angolo in radianti
         this.rotation = 0;  // Rotazione visiva
         
-        // Tracking per quest
+        // Tracking per quest - STATISTICHE GLOBALI (per debug e statistiche generali)
         this.streunerKilled = 0;
         this.bonusBoxesCollected = 0;
+        
+        // Nuove statistiche per quest progressive - STATISTICHE GLOBALI
+        this.survivalTime = 0; // Tempo di sopravvivenza in secondi
+        this.aliensKilled = 0; // Tutti gli alieni uccisi
+        this.alienTypeKilled = 0; // Alieni di tipo specifico uccisi
+        this.bossAliensKilled = 0; // Boss alieni uccisi
+        this.mapsCleared = 0; // Mappe pulite completamente
+        
+        // Timer per sopravvivenza
+        this.survivalStartTime = null;
+        this.isInDangerZone = false;
+        
+        // SNAPSHOT delle statistiche per le quest (per contare solo dopo l'accettazione)
+        this.questSnapshot = {
+            streunerKilled: 0,
+            bonusBoxesCollected: 0,
+            aliensKilled: 0,
+            alienTypeKilled: 0,
+            bossAliensKilled: 0,
+            mapsCleared: 0,
+            survivalTime: 0
+        };
         this.playerName = 'TestPlayer'; // Nome del giocatore
         
         // Sistema clan
@@ -234,9 +256,10 @@ export class Ship {
         };
         
         // Sistema risorse unificato (Single Source of Truth)
-        this.resources = {
-            credits: 100000, // Crediti di test per acquisti
-            uridium: 5000,   // Uridium di test
+        // Carica i valori salvati o usa i default
+        this.resources = this.loadSavedResources() || {
+            credits: 0,      // Crediti iniziali (0 per nuovi account)
+            uridium: 0,      // Uridium iniziale (0 per nuovi account)
             honor: 0,
             experience: 0,
             starEnergy: 100  // Energia iniziale
@@ -248,7 +271,7 @@ export class Ship {
         };
         
         // Sistema di livelli integrato
-        this.currentLevel = 1;
+        this.currentLevel = this.loadSavedLevel() || 1;
         this.levelRequirements = {
             1: 0, 2: 10000, 3: 20000, 4: 40000, 5: 80000,
             6: 160000, 7: 320000, 8: 640000, 9: 1280000, 10: 2560000,
@@ -272,8 +295,8 @@ export class Ship {
         
         // Compatibilità con codice esistente
         this.honor = 0;
-        this.credits = 100000; // Crediti di test per acquisti
-        this.uridium = 5000;   // Uridium di test
+        this.credits = 0;      // Crediti iniziali (0 per nuovi account)
+        this.uridium = 0;      // Uridium iniziale (0 per nuovi account)
         
         // Sistema di potenziamenti
         // Sistema reward centralizzato
@@ -326,13 +349,22 @@ export class Ship {
         this.laserSlots = model.laserSlots ?? this.laserSlots ?? 0;
         this.generatorSlots = model.generatorSlots ?? this.generatorSlots ?? 0;
         this.extraSlots = model.extraSlots ?? this.extraSlots ?? 1;
-        // Reset conteggio generatori equipaggiati quando cambi nave (diversi slot)
+        // Reset conteggio equipaggiamenti quando cambi nave (diversi slot)
+        this.laserSlotsEquipped = Math.min(this.laserSlotsEquipped || 0, this.laserSlots);
         this.generatorSlotsEquipped = Math.min(this.generatorSlotsEquipped || 0, this.generatorSlots);
-        // Ripristina HP/Scudo al nuovo massimo quando si cambia nave
-        this.hp = this.maxHP;
-        this.shield = this.maxShield;
+        // Ripristina HP/Scudo al nuovo massimo quando si cambia nave (solo se non in combattimento)
+        if (!this.isInCombat || this.hp <= 0) {
+            this.hp = this.maxHP;
+            this.shield = this.maxShield;
+        } else {
+            // Se in combattimento, mantieni proporzioni ma assicura che non superi il nuovo massimo
+            const hpRatio = this.hp / (this.maxHP || 1);
+            const shieldRatio = this.shield / (this.maxShield || 1);
+            this.hp = Math.min(this.hp, this.maxHP);
+            this.shield = Math.min(this.shield, this.maxShield);
+        }
         // Log di verifica
-        console.log('[Ship] applyShipModelStats:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield, laserSlots: this.laserSlots, generatorSlots: this.generatorSlots, extraSlots: this.extraSlots });
+        console.log('[Ship] applyShipModelStats:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield });
         // Assicura clamp coerenti
         this.updateStats();
     }
@@ -340,11 +372,24 @@ export class Ship {
     // API semplice per cambiare nave a runtime
     switchShip(shipNumber) {
         if (![1,2,3,4,5,6,7,8,9,10].includes(shipNumber)) return;
+        
+        // Blocca cambio nave durante il combattimento
+        if (this.isInCombat) {
+            console.log('🚫 Impossibile cambiare nave durante il combattimento!');
+            return;
+        }
+        
         if (this.sprite && this.sprite.switchShip) {
             this.sprite.switchShip(shipNumber);
         }
         this.applyShipModelStats(shipNumber);
         console.log('[Ship] switchShip done:', { shipNumber, maxHP: this.maxHP, maxShield: this.maxShield, hp: this.hp, shield: this.shield });
+        
+        // Notifica l'inventario del cambio nave
+        if (this.onInventoryCapsChanged) {
+            this.onInventoryCapsChanged();
+        }
+        
         // Persisti selezione nave a livello di gioco
         try {
             if (window.gameInstance) {
@@ -357,7 +402,7 @@ export class Ship {
                     inv.currentExtraCap = this.extraSlots ?? inv.currentExtraCap;
                 }
             }
-            localStorage.setItem('selectedShipNumber', String(shipNumber));
+            // RIMOSSO: localStorage.setItem('selectedShipNumber', String(shipNumber));
         } catch (_) { }
     }
     
@@ -395,6 +440,9 @@ export class Ship {
         } else {
             this.shieldEffect.reset();
         }
+        
+        // Aggiorna tracking tempo di sopravvivenza per quest
+        this.updateSurvivalTracking();
         
         // Controlla il suono del motore
         if (window.gameInstance && window.gameInstance.audioManager) {
@@ -1237,6 +1285,26 @@ export class Ship {
             this.streunerKilled++;
         }
         
+        // Tracking per nuove quest progressive
+        this.aliensKilled++; // Incrementa sempre il contatore totale alieni
+        
+        // Controlla se è un boss alieno (HP alto o nome contiene "boss")
+        const isBoss = (enemyConfig && enemyConfig.maxHP > 5000) || 
+                      (enemyConfig && enemyConfig.name && enemyConfig.name.toLowerCase().includes('boss'));
+        
+        if (isBoss) {
+            this.bossAliensKilled++;
+        }
+        
+        // Controlla tipo specifico di alieno (per quest specializzate)
+        if (enemyConfig && enemyConfig.name) {
+            const alienName = enemyConfig.name.toLowerCase();
+            if (alienName.includes('lordakia') || alienName.includes('saimon') || 
+                alienName.includes('mordon') || alienName.includes('cubikon')) {
+                this.alienTypeKilled++;
+            }
+        }
+        
         // Applica i reward alla nave usando il sistema unificato
         if (results.credits) {
             this.addResource('credits', results.credits);
@@ -1873,5 +1941,149 @@ export class Ship {
     disableDebug() {
         this.debugMode = false;
         console.log('🔧 Debug mode: OFF');
+    }
+    
+    // Aggiorna il tracking del tempo di sopravvivenza per quest
+    updateSurvivalTracking() {
+        // Controlla se siamo in una zona pericolosa (con alieni)
+        const hasEnemiesNearby = this.game && this.game.enemies && 
+                                this.game.enemies.some(enemy => enemy.active && 
+                                Math.sqrt((enemy.x - this.x) ** 2 + (enemy.y - this.y) ** 2) < 500);
+        
+        if (hasEnemiesNearby) {
+            this.isInDangerZone = true;
+            if (!this.survivalStartTime) {
+                this.survivalStartTime = Date.now();
+            }
+        } else {
+            this.isInDangerZone = false;
+            this.survivalStartTime = null;
+        }
+        
+        // Aggiorna il tempo di sopravvivenza se siamo in zona pericolosa
+        if (this.isInDangerZone && this.survivalStartTime) {
+            const currentTime = Date.now();
+            const survivalSeconds = Math.floor((currentTime - this.survivalStartTime) / 1000);
+            this.survivalTime = Math.max(this.survivalTime, survivalSeconds);
+        }
+    }
+    
+    // Metodo per segnalare che una mappa è stata pulita
+    markMapCleared() {
+        this.mapsCleared++;
+        console.log(`🗺️ Mappa pulita! Totale: ${this.mapsCleared}`);
+    }
+    
+    // Crea uno snapshot delle statistiche attuali per le quest
+    createQuestSnapshot() {
+        this.questSnapshot = {
+            streunerKilled: this.streunerKilled,
+            bonusBoxesCollected: this.bonusBoxesCollected,
+            aliensKilled: this.aliensKilled,
+            alienTypeKilled: this.alienTypeKilled,
+            bossAliensKilled: this.bossAliensKilled,
+            mapsCleared: this.mapsCleared,
+            survivalTime: this.survivalTime
+        };
+        console.log(`📸 Snapshot quest creato:`, this.questSnapshot);
+    }
+    
+    // Carica il livello salvato dal localStorage
+    loadSavedLevel() {
+        try {
+            // Prova a caricare i dati dell'account corrente
+            // RIMOSSO: const accountId = localStorage.getItem('currentAccountId') || 'default';
+            const accountId = 'default'; // Usa sempre default per compatibilità
+            const accountKey = `mmorpg_account_${accountId}`;
+            const savedData = localStorage.getItem(accountKey);
+            
+            if (savedData) {
+                const accountData = JSON.parse(savedData);
+                if (accountData.ship && accountData.ship.level) {
+                    console.log('📊 Livello caricato dal salvataggio:', accountData.ship.level);
+                    return accountData.ship.level;
+                }
+            }
+            
+            // Fallback: prova a caricare dal sistema di salvataggio generale
+            // RIMOSSO: const generalSave = localStorage.getItem('mmorpg_save');
+            // RIMOSSO: if (generalSave) {
+            //     const saveData = JSON.parse(generalSave);
+            //     if (saveData.player && saveData.player.level) {
+            //         console.log('📊 Livello caricato dal salvataggio generale:', saveData.player.level);
+            //         return saveData.player.level;
+            //     }
+            // }
+            
+            console.log('📊 Nessun livello salvato trovato, usando livello 1');
+            return null;
+        } catch (error) {
+            console.error('❌ Errore nel caricamento del livello:', error);
+            return null;
+        }
+    }
+    
+    // Carica le risorse salvate dal localStorage
+    loadSavedResources() {
+        try {
+            // Prova a caricare i dati dell'account corrente
+            // RIMOSSO: const accountId = localStorage.getItem('currentAccountId') || 'default';
+            const accountId = 'default'; // Usa sempre default per compatibilità
+            const accountKey = `mmorpg_account_${accountId}`;
+            const savedData = localStorage.getItem(accountKey);
+            
+            if (savedData) {
+                const accountData = JSON.parse(savedData);
+                if (accountData.resources) {
+                    console.log('💰 Risorse caricate dal salvataggio:', accountData.resources);
+                    return accountData.resources;
+                }
+            }
+            
+            // Fallback: prova a caricare dal sistema di salvataggio generale
+            // RIMOSSO: const generalSave = localStorage.getItem('mmorpg_save');
+            // RIMOSSO: if (generalSave) {
+            //     const saveData = JSON.parse(generalSave);
+            //     if (saveData.player) {
+            //         const resources = {
+            //             credits: saveData.player.credits || 100000,
+            //             uridium: saveData.player.uridium || 5000,
+            //             honor: saveData.player.honor || 0,
+            //             experience: saveData.player.experience || 0,
+            //             starEnergy: saveData.player.starEnergy || 100
+            //         };
+            //         console.log('💰 Risorse caricate dal salvataggio generale:', resources);
+            //         return resources;
+            //     }
+            // }
+            
+            console.log('💰 Nessun salvataggio trovato, usando valori default');
+            return null;
+        } catch (error) {
+            console.error('❌ Errore nel caricamento delle risorse:', error);
+            return null;
+        }
+    }
+    
+    // Ottiene il progresso di una quest basato sullo snapshot
+    getQuestProgress(questType) {
+        switch (questType) {
+            case 'kill_streuner':
+                return Math.max(0, this.streunerKilled - this.questSnapshot.streunerKilled);
+            case 'collect_bonus_box':
+                return Math.max(0, this.bonusBoxesCollected - this.questSnapshot.bonusBoxesCollected);
+            case 'kill_any_alien':
+                return Math.max(0, this.aliensKilled - this.questSnapshot.aliensKilled);
+            case 'kill_alien_type':
+                return Math.max(0, this.alienTypeKilled - this.questSnapshot.alienTypeKilled);
+            case 'kill_alien_boss':
+                return Math.max(0, this.bossAliensKilled - this.questSnapshot.bossAliensKilled);
+            case 'clear_map':
+                return Math.max(0, this.mapsCleared - this.questSnapshot.mapsCleared);
+            case 'survive_time':
+                return Math.max(0, this.survivalTime - this.questSnapshot.survivalTime);
+            default:
+                return 0;
+        }
     }
 }

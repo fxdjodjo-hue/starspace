@@ -327,14 +327,14 @@ export class SaveSystem {
             try {
                 if (Array.isArray(player.ownedShips)) {
                     window.gameInstance.playerOwnedShips = player.ownedShips;
-                    localStorage.setItem('ownedShips', JSON.stringify(player.ownedShips));
+                    // RIMOSSO: localStorage.setItem('ownedShips', JSON.stringify(player.ownedShips));
                 }
                 const sel = parseInt(player.selectedShipNumber || '1', 10);
                 if (sel && typeof ship.switchShip === 'function') {
                     ship.switchShip(sel);
                 }
                 window.gameInstance.selectedShipNumber = sel || 1;
-                localStorage.setItem('selectedShipNumber', String(window.gameInstance.selectedShipNumber));
+                // RIMOSSO: localStorage.setItem('selectedShipNumber', String(window.gameInstance.selectedShipNumber));
             } catch (_) {}
         }
         
@@ -550,10 +550,21 @@ export class SaveSystem {
      */
     loadSaveStats() {
         try {
-            const stats = localStorage.getItem('mmorpg_save_stats');
-            if (stats) {
-                this.saveStats = { ...this.saveStats, ...JSON.parse(stats) };
-            }
+            // RIMOSSO: const stats = localStorage.getItem('mmorpg_save_stats');
+            // RIMOSSO: if (stats) {
+            //     this.saveStats = { ...this.saveStats, ...JSON.parse(stats) };
+            // }
+            
+            // Le statistiche di salvataggio sono ora gestite per-account
+            // Usa valori di default
+            this.saveStats = {
+                totalSaves: 0,
+                totalBackups: 0,
+                lastSaveDuration: 0,
+                averageSaveTime: 0,
+                saveErrors: 0,
+                lastError: null
+            };
         } catch (error) {
             console.warn('⚠️ Errore nel caricamento statistiche salvataggio:', error);
         }
@@ -564,7 +575,7 @@ export class SaveSystem {
      */
     saveSaveStats() {
         try {
-            localStorage.setItem('mmorpg_save_stats', JSON.stringify(this.saveStats));
+            // RIMOSSO: localStorage.setItem('mmorpg_save_stats', JSON.stringify(this.saveStats));
         } catch (error) {
             console.warn('⚠️ Errore nel salvataggio statistiche:', error);
         }
@@ -775,6 +786,158 @@ export class SaveSystem {
             console.error('❌ Errore nel reset:', error);
             return false;
         }
+    }
+    
+    /**
+     * Pulisce completamente tutti i dati localStorage del gioco
+     * Usato quando si crea un nuovo account per evitare contaminazione
+     */
+    clearAllGameData() {
+        console.log('🧹 Pulizia completa di tutti i dati localStorage...');
+        
+        // Lista di tutte le chiavi localStorage utilizzate dal gioco
+        const gameKeys = [
+            // Account e autenticazione
+            'mmorpg_accounts_index',
+            'mmorpg_player_id',
+            'currentAccountId',
+            
+            // Salvataggi principali
+            'mmorpg_save',
+            'mmorpg_save_stats',
+            
+            // Inventario e equipaggiamento
+            'inventory',
+            'selectedShipNumber',
+            'ownedShips',
+            
+            // Mappe e persistenza
+            'mmorpg_map_persistence',
+            // NOTA: 'mmorpg_player_faction' viene gestita separatamente per mantenere la fazione corrente
+            
+            // Impostazioni
+            'gameSettings',
+            
+            // Sistema di autenticazione
+            'mmorpg_users',
+            'mmorpg_sessions',
+            
+            // Account specifici (pattern: mmorpg_account_*)
+            // Questi verranno gestiti separatamente
+        ];
+        
+        // Pulisce le chiavi specifiche
+        gameKeys.forEach(key => {
+            try {
+                localStorage.removeItem(key);
+                console.log(`✅ Rimosso: ${key}`);
+            } catch (error) {
+                console.warn(`⚠️ Errore rimozione ${key}:`, error);
+            }
+        });
+        
+        // Pulisce tutti gli account specifici (mmorpg_account_*)
+        this.clearAllAccountData();
+        
+        // Pulisce tutti i salvataggi specifici (mmorpg_save_*)
+        this.clearAllSaveData();
+        
+        console.log('🎉 Pulizia completa terminata!');
+        
+        // Reset delle statistiche interne
+        this.saveStats = {
+            totalSaves: 0,
+            totalBackups: 0,
+            lastSaveDuration: 0,
+            averageSaveTime: 0,
+            saveErrors: 0,
+            lastError: null
+        };
+        
+        return true;
+    }
+    
+    /**
+     * Pulisce tutti i dati degli account (mmorpg_account_*)
+     */
+    clearAllAccountData() {
+        const keysToRemove = [];
+        
+        // Scansiona tutte le chiavi localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('mmorpg_account_')) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        // Rimuove tutte le chiavi trovate
+        keysToRemove.forEach(key => {
+            try {
+                localStorage.removeItem(key);
+                console.log(`✅ Rimosso account: ${key}`);
+            } catch (error) {
+                console.warn(`⚠️ Errore rimozione account ${key}:`, error);
+            }
+        });
+        
+        console.log(`🧹 Rimossi ${keysToRemove.length} account dal localStorage`);
+    }
+    
+    /**
+     * Pulisce tutti i salvataggi specifici (mmorpg_save_*)
+     */
+    clearAllSaveData() {
+        const keysToRemove = [];
+        
+        // Scansiona tutte le chiavi localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('mmorpg_save_')) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        // Rimuove tutte le chiavi trovate
+        keysToRemove.forEach(key => {
+            try {
+                localStorage.removeItem(key);
+                console.log(`✅ Rimosso salvataggio: ${key}`);
+            } catch (error) {
+                console.warn(`⚠️ Errore rimozione salvataggio ${key}:`, error);
+            }
+        });
+        
+        console.log(`🧹 Rimossi ${keysToRemove.length} salvataggi dal localStorage`);
+    }
+    
+    /**
+     * Metodo per il debug: mostra tutte le chiavi localStorage del gioco
+     */
+    debugShowAllGameKeys() {
+        console.log('🔍 Chiavi localStorage del gioco:');
+        const gameKeys = [];
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (
+                key.startsWith('mmorpg_') ||
+                key === 'inventory' ||
+                key === 'selectedShipNumber' ||
+                key === 'ownedShips' ||
+                key === 'currentAccountId' ||
+                key === 'gameSettings'
+            )) {
+                gameKeys.push(key);
+            }
+        }
+        
+        gameKeys.forEach(key => {
+            console.log(`  - ${key}`);
+        });
+        
+        console.log(`📊 Totale chiavi del gioco: ${gameKeys.length}`);
+        return gameKeys;
     }
 }
 

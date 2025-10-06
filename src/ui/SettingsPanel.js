@@ -28,15 +28,20 @@ export class SettingsPanel {
     
     // Carica impostazioni dal localStorage
     loadSettings() {
-        const saved = localStorage.getItem('gameSettings');
-        if (saved) {
-            const settings = JSON.parse(saved);
-            this.audioEnabled = settings.audioEnabled !== undefined ? settings.audioEnabled : true;
-            this.masterVolume = settings.masterVolume !== undefined ? settings.masterVolume : 0.7;
-            this.musicVolume = settings.musicVolume !== undefined ? settings.musicVolume : 0.3;
-            this.sfxVolume = settings.sfxVolume !== undefined ? settings.sfxVolume : 0.8;
-
-        }
+        // RIMOSSO: const saved = localStorage.getItem('gameSettings');
+        // RIMOSSO: if (saved) {
+        //     const settings = JSON.parse(saved);
+        //     this.audioEnabled = settings.audioEnabled !== undefined ? settings.audioEnabled : true;
+        //     this.masterVolume = settings.masterVolume !== undefined ? settings.masterVolume : 0.7;
+        //     this.musicVolume = settings.musicVolume !== undefined ? settings.musicVolume : 0.3;
+        //     this.sfxVolume = settings.sfxVolume !== undefined ? settings.sfxVolume : 0.8;
+        // }
+        
+        // Usa valori di default poiché le impostazioni sono ora per-account
+        this.audioEnabled = true;
+        this.masterVolume = 0.7;
+        this.musicVolume = 0.3;
+        this.sfxVolume = 0.8;
     }
     
     // Salva impostazioni nel localStorage
@@ -48,7 +53,8 @@ export class SettingsPanel {
             sfxVolume: this.sfxVolume,
 
         };
-        localStorage.setItem('gameSettings', JSON.stringify(settings));
+        // RIMOSSO: localStorage.setItem('gameSettings', JSON.stringify(settings));
+        // Le impostazioni sono ora salvate per-account nel SaveSystem
     }
     
     // Apri/chiudi pannello

@@ -120,6 +120,83 @@ class Game {
         this.authSystem = new AuthSystem(this);
         this.saveLoadPanel = new SaveLoadPanel(this);
         
+        // Imposta un account ID di default per il salvataggio offline
+        this.currentAccountId = 'default_player';
+        
+        // Espone metodi di debug per la console
+        window.debugGame = {
+            clearAllData: () => {
+                console.log('🧹 Avvio pulizia completa...');
+                this.saveSystem.clearAllGameData();
+                console.log('✅ Pulizia completata! Ricarica la pagina per vedere i risultati.');
+            },
+            showAllKeys: () => {
+                return this.saveSystem.debugShowAllGameKeys();
+            },
+            checkFaction: () => {
+                console.log('🎯 Stato Fazione:');
+                console.log('  - Ship faction:', this.ship?.faction);
+                console.log('  - localStorage faction:', localStorage.getItem('mmorpg_player_faction'));
+                console.log('  - FactionSystem current:', this.factionSystem?.currentFaction);
+                console.log('  - MapManager faction:', this.mapManager?.currentMap);
+                return {
+                    ship: this.ship?.faction,
+                    localStorage: localStorage.getItem('mmorpg_player_faction'),
+                    factionSystem: this.factionSystem?.currentFaction,
+                    map: this.mapManager?.currentMap
+                };
+            },
+            checkAccounts: () => {
+                console.log('👥 Stato Account:');
+                const accountsIndex = localStorage.getItem('mmorpg_accounts_index');
+                console.log('  - Accounts index exists:', !!accountsIndex);
+                if (accountsIndex) {
+                    try {
+                        const parsed = JSON.parse(accountsIndex);
+                        console.log('  - Total accounts:', parsed.list?.length || 0);
+                        console.log('  - Account list:', parsed.list || []);
+                        
+                        // Debug dettagliato per ogni account
+                        parsed.list?.forEach(accountId => {
+                            const accountData = localStorage.getItem(`mmorpg_account_${accountId}`);
+                            if (accountData) {
+                                try {
+                                    const data = JSON.parse(accountData);
+                                    console.log(`  - Account ${accountId}:`, {
+                                        nickname: data.nickname,
+                                        faction: data.faction,
+                                        shipFaction: data.ship?.faction,
+                                        timestamp: new Date(data.timestamp).toLocaleString()
+                                    });
+                                } catch (error) {
+                                    console.log(`  - Account ${accountId}: Error parsing data`);
+                                }
+                            }
+                        });
+                        
+                        return parsed;
+                    } catch (error) {
+                        console.log('  - Error parsing accounts index:', error);
+                        return null;
+                    }
+                }
+                return null;
+            },
+            saveSystem: this.saveSystem
+        };
+        
+        console.log('🔧 Debug disponibili:');
+        console.log('  - window.debugGame.clearAllData() - Pulisce tutti i dati');
+        console.log('  - window.debugGame.showAllKeys() - Mostra tutte le chiavi del gioco');
+        console.log('  - window.debugGame.checkFaction() - Controlla stato fazione');
+        console.log('  - window.debugGame.checkAccounts() - Controlla stato account');
+        console.log('  - window.debugGame.saveSystem - Accesso diretto al SaveSystem');
+        
+        // Salvataggio automatico ogni 30 secondi
+        this.lastAutoSave = 0;
+        this.autoSaveInterval = 30000; // 30 secondi
+        this.lastSavedResources = null; // Per tracciare cambiamenti nelle risorse
+        
         // Sistema fazioni
         this.factionSystem = new FactionSystem();
         
@@ -172,6 +249,23 @@ class Game {
         
         // Esponi il pannello Home globalmente per il sistema di log
         window.gameInstance = this;
+        // Ripristina nave selezionata e navi possedute da localStorage
+        try {
+            const storedOwned = JSON.parse(localStorage.getItem('ownedShips') || '[1]');
+            this.playerOwnedShips = Array.isArray(storedOwned) && storedOwned.length > 0 ? storedOwned : [1];
+        } catch (_) {
+            this.playerOwnedShips = [1];
+        }
+        try {
+            const sel = parseInt(localStorage.getItem('selectedShipNumber') || '1', 10);
+            const validSel = (sel >= 1 && sel <= 10) ? sel : 1;
+            this.selectedShipNumber = validSel;
+            if (this.ship && typeof this.ship.switchShip === 'function') {
+                this.ship.switchShip(validSel);
+            }
+        } catch (_) {
+            this.selectedShipNumber = 1;
+        }
         
         // Sistema di gestione mappe e portali
         this.mapManager = new MapManager(this);
@@ -207,6 +301,12 @@ class Game {
             // Pulisce anche le coordinate del click quando la nave arriva
 
         };
+        
+        // Salvataggio automatico quando si chiude la finestra
+        window.addEventListener('beforeunload', () => {
+            this.saveSystem.save();
+            console.log('💾 Salvataggio finale eseguito');
+        });
     }
     
     // Disegna un semplice badge di build in alto a destra
@@ -401,18 +501,6 @@ class Game {
         
         // Il gioco principale inizia SOLO quando la StartScreen non è visibile
         
-        // Gestisci cambio nave con tasti 1 e 2
-        if (this.input.isKey1JustPressed()) {
-            this.ship.sprite.switchShip(1);
-            this.notifications.add("Nave base selezionata", "info");
-            this.input.resetKey1JustPressed();
-        }
-        if (this.input.isKey2JustPressed()) {
-            this.ship.sprite.switchShip(2);
-            this.notifications.add("Urus Fighter selezionata", "info");
-            this.input.resetKey2JustPressed();
-        }
-
         // === GESTIONE EVENTI UI (PRIORITÀ MASSIMA) ===
         const mousePos = this.input.getMousePosition();
         let uiEventHandled = false;
@@ -564,6 +652,18 @@ class Game {
         
         // Aggiorna quest tracker
         this.questTracker.update();
+        
+        // Salvataggio automatico ogni 30 secondi
+        const currentTime = Date.now();
+        if (currentTime - this.lastAutoSave > this.autoSaveInterval) {
+            const saved = this.saveSystem.save();
+            if (saved) {
+                console.log('💾 Salvataggio automatico eseguito con successo');
+            } else {
+                console.error('❌ Errore nel salvataggio automatico periodico');
+            }
+            this.lastAutoSave = currentTime;
+        }
         
         // Aggiorna profile panel
         this.profilePanel.update();
@@ -1125,6 +1225,21 @@ class Game {
         // Tasto F9 per caricare
         if (this.input.isKeyJustPressed('F9')) {
             this.saveSystem.load();
+        }
+        
+        // Salvataggio automatico quando si guadagnano risorse
+        if (this.ship && this.ship.resources) {
+            // Salva ogni volta che le risorse cambiano significativamente
+            const currentResources = JSON.stringify(this.ship.resources);
+            if (this.lastSavedResources !== currentResources) {
+                const saved = this.saveSystem.save();
+                if (saved) {
+                    console.log('💾 Risorse salvate automaticamente:', this.ship.resources);
+                } else {
+                    console.error('❌ Errore nel salvataggio automatico delle risorse');
+                }
+                this.lastSavedResources = currentResources;
+            }
         }
         
         // Tasto F6 per aprire pannello salvataggio
@@ -2601,6 +2716,16 @@ class Game {
 // Avvia il gioco quando la pagina è caricata
 window.addEventListener('load', () => {
     const game = new Game();
+    
+    // Carica automaticamente i dati salvati all'avvio
+    if (game.saveSystem) {
+        const loaded = game.saveSystem.load();
+        if (loaded) {
+            console.log('💾 Dati salvati caricati automaticamente all\'avvio');
+        } else {
+            console.log('💾 Nessun salvataggio trovato, usando valori default');
+        }
+    }
     
     // Mostra sempre la StartScreen all'avvio
     game.startScreen.show();

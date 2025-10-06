@@ -199,6 +199,27 @@ export class FactionSelectionScreen {
             return;
         }
         
+        // Ottieni nickname e password dalla StartScreen
+        const playerName = this.game.startScreen.playerName.trim();
+        const playerPassword = this.game.startScreen.playerPassword.trim();
+        
+        if (!playerName || !playerPassword) {
+            this.showError('Errore: Credenziali non trovate');
+            return;
+        }
+        
+        // Registra l'utente con AuthSystem se non esiste già
+        if (!this.game.authSystem.userExists(playerName)) {
+            const registerResult = this.game.authSystem.register(playerName, playerPassword, this.selectedFaction);
+            if (!registerResult.success) {
+                this.showError(registerResult.error || 'Errore nella registrazione');
+                return;
+            }
+        } else {
+            // Utente esiste già, aggiorna solo la fazione
+            this.game.authSystem.updateUserFaction(this.selectedFaction);
+        }
+        
         // Ottieni l'accountId corrente
         const accountId = this.game.currentAccountId || this.game.startScreen.currentAccountId;
         if (!accountId) {
@@ -208,6 +229,9 @@ export class FactionSelectionScreen {
         
         // Imposta fazione nel gioco
         this.game.factionSystem.joinFaction(this.selectedFaction);
+        
+        // IMPORTANTE: Aggiorna anche il currentFaction del FactionSystem
+        this.game.factionSystem.currentFaction = this.selectedFaction;
         
         // Imposta mappa iniziale
         const startingMaps = {
@@ -234,17 +258,55 @@ export class FactionSelectionScreen {
             };
         }
 
-        // Reset risorse base della nave per nuovo profilo
+        // IMPORTANTE: Non puliamo alcun dato globale, ogni account è completamente isolato
+        // I dati vengono salvati solo nell'account specifico (mmorpg_account_${accountId})
+        console.log('🎯 Creazione account completamente isolato...');
+
+        // Reset COMPLETO della nave per nuovo profilo
         if (this.game.ship) {
-            this.game.ship.resources.credits = 100000;
-            this.game.ship.resources.uridium = 5000;
+            // Reset risorse a valori iniziali
+            this.game.ship.resources.credits = 0;      // Inizia con 0 crediti
+            this.game.ship.resources.uridium = 0;      // Inizia con 0 uridium
             this.game.ship.resources.honor = 0;
+            this.game.ship.resources.experience = 0;   // Reset esperienza
             this.game.ship.resources.starEnergy = 100;
-            this.game.ship.ammunition = { laser: { x1: 1000, x2: 500, x3: 200, sab: 100 }, missile: { r1: 50, r2: 25, r3: 10 } };
+            
+            // Reset livello e statistiche
+            this.game.ship.currentLevel = 1;           // Reset livello a 1
+            this.game.ship.streunerKilled = 0;         // Reset statistiche
+            this.game.ship.bonusBoxesCollected = 0;
+            this.game.ship.survivalTime = 0;
+            this.game.ship.aliensKilled = 0;
+            this.game.ship.alienTypeKilled = 0;
+            this.game.ship.bossAliensKilled = 0;
+            this.game.ship.mapsCleared = 0;
+            
+            // Reset snapshot quest
+            this.game.ship.questSnapshot = {
+                streunerKilled: 0,
+                bonusBoxesCollected: 0,
+                aliensKilled: 0,
+                alienTypeKilled: 0,
+                bossAliensKilled: 0,
+                mapsCleared: 0,
+                survivalTime: 0
+            };
+            
+            // Reset munizioni a valori iniziali
+            this.game.ship.ammunition = { 
+                laser: { x1: 1000, x2: 500, x3: 200, sab: 100 }, 
+                missile: { r1: 50, r2: 25, r3: 10 } 
+            };
             this.game.ship.equippedLasers = { lf1: 0, lf2: 0, lf3: 0, lf4: 0 };
             
             // Imposta la fazione nella nave
             this.game.ship.faction = this.selectedFaction;
+        }
+        
+        // Reset navi possedute a solo nave 1
+        if (window.gameInstance) {
+            window.gameInstance.playerOwnedShips = [1];     // Solo nave di base
+            window.gameInstance.selectedShipNumber = 1;     // Nave 1 selezionata
         }
 
         // Salva tutto nell'account per-id
@@ -261,6 +323,21 @@ export class FactionSelectionScreen {
         this.game.startGameAudio();
     }
     
+    // Genera un ID unico per il giocatore
+    generatePlayerId() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    
+    // Ottiene le impostazioni del gioco
+    getGameSettings() {
+        // RIMOSSO: return JSON.parse(localStorage.getItem('gameSettings') || '{}');
+    }
+    
+    // Ottiene i dati di persistenza delle mappe
+    getMapPersistence() {
+        // RIMOSSO: return JSON.parse(localStorage.getItem('mmorpg_map_persistence') || '{}');
+    }
+    
     // Salva tutti i dati per l'account specifico
     saveAccountData(accountId) {
         const accountKey = `mmorpg_account_${accountId}`;
@@ -270,6 +347,8 @@ export class FactionSelectionScreen {
             nickname: this.game.playerProfile?.getNickname?.() || '',
             faction: this.selectedFaction,
             currentMap: this.game.mapManager.currentMap,
+            
+            // Dati nave completi
             ship: {
                 x: this.game.ship.x,
                 y: this.game.ship.y,
@@ -282,22 +361,40 @@ export class FactionSelectionScreen {
                 equippedLasers: this.game.ship.equippedLasers,
                 ammunition: this.game.ship.ammunition,
                 selectedLaser: this.game.ship.selectedLaser,
-                selectedMissile: this.game.ship.selectedMissile
+                selectedMissile: this.game.ship.selectedMissile,
+                faction: this.selectedFaction
             },
+            
+            // Risorse complete
             resources: {
                 credits: this.game.ship.resources.credits,
                 uridium: this.game.ship.resources.uridium,
                 honor: this.game.ship.resources.honor,
                 starEnergy: this.game.ship.resources.starEnergy
             },
+            
+            // Inventario completo
             inventory: {
                 items: this.game.inventory.items,
                 equipment: this.game.inventory.equipment
             },
+            
+            // Dati globali specifici per questo account
+            globalData: {
+                playerId: this.game.homePanel?.playerId || this.generatePlayerId(),
+                selectedShipNumber: window.gameInstance?.selectedShipNumber || 1,
+                ownedShips: window.gameInstance?.playerOwnedShips || [1],
+                gameSettings: this.getGameSettings(),
+                mapPersistence: this.getMapPersistence()
+            },
+            
             timestamp: Date.now()
         };
         
         localStorage.setItem(accountKey, JSON.stringify(accountData));
+        
+        // RIMOSSO: localStorage.setItem('mmorpg_player_faction', this.selectedFaction);
+        
         console.log(`✅ Account ${accountId} salvato con successo`);
     }
     

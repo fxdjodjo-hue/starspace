@@ -10,9 +10,12 @@ export class StartScreen {
         
         // Input utente
         this.playerName = '';
+        this.playerPassword = '';
         this.maxPlayerNameLength = 20;
+        this.maxPasswordLength = 20;
         this.cursorVisible = true;
         this.cursorBlinkTime = 0;
+        this.isTypingPassword = false;
         
         // Sistema account per-nickname (chiavi isolate)
         this.currentAccount = null;
@@ -77,30 +80,60 @@ export class StartScreen {
         const items = listIds.map(id => {
             // Prova a leggere il nickname dal salvataggio per coerenza
             let nickname = (idx.byId?.[id]?.nickname) || '';
+            let faction = 'venus'; // Default
             try {
                 const raw = localStorage.getItem(`mmorpg_account_${id}`);
                 if (raw) {
                     const data = JSON.parse(raw);
                     // Preferisci nickname salvato nel player
                     nickname = data?.player?.nickname || data?.nickname || nickname || id;
+                    // Ottieni la fazione - gestisce sia stringa che oggetto
+                    let factionValue = data?.faction || data?.ship?.faction || 'venus';
+                    
+                    // Se la fazione è un oggetto, estrai l'ID
+                    if (typeof factionValue === 'object' && factionValue !== null) {
+                        factionValue = factionValue.id || factionValue.currentFaction || 'venus';
+                    }
+                    
+                    faction = factionValue;
+                    console.log(`🔍 Account ${id}: faction=${faction}, data.faction=${data?.faction}, data.ship?.faction=${data?.ship?.faction}`);
+                    
+                    // Debug dettagliato se la fazione è un oggetto
+                    if (typeof data?.faction === 'object' && data?.faction !== null) {
+                        console.log(`🔍 Oggetto fazione per ${id}:`, data.faction);
+                    }
+                    
+                    // Se l'account non ha fazione salvata, aggiornalo con la fazione corrente
+                    if (!data?.faction && !data?.ship?.faction) {
+                        console.log(`🔄 Aggiornamento fazione per account ${id}...`);
+                        data.faction = 'venus'; // Default per account esistenti
+                        localStorage.setItem(`mmorpg_account_${id}`, JSON.stringify(data));
+                    }
+                    
+                    // Se la fazione è salvata come oggetto, correggila
+                    if (typeof data?.faction === 'object' && data?.faction !== null) {
+                        console.log(`🔧 Correzione fazione oggetto per account ${id}...`);
+                        data.faction = factionValue; // Usa la fazione estratta
+                        localStorage.setItem(`mmorpg_account_${id}`, JSON.stringify(data));
+                    }
                 }
             } catch (_) {}
             if (!nickname) {
                 nickname = Object.keys(idx.byName || {}).find(n => idx.byName[n] === id) || id;
             }
-            return { id, nickname, lastPlayed: idx.byId?.[id]?.lastPlayed || 0 };
+            return { id, nickname, faction, lastPlayed: idx.byId?.[id]?.lastPlayed || 0 };
         });
         // Ordina per lastPlayed desc
         items.sort((a,b) => (b.lastPlayed||0) - (a.lastPlayed||0));
 
-        // Layout centrato sotto l'input
+        // Layout centrato sotto l'input - spostato più in basso
         const w = 300; // larghezza come prima per i bottoni
         const x = Math.round(this.x + (this.width - w) / 2);
-        const startY = Math.round(this.nameInput ? (this.nameInput.y + this.nameInput.height + 24) : (this.y + 260));
+        const startY = Math.round(this.passwordInput ? (this.passwordInput.y + this.passwordInput.height + 40) : (this.y + 350));
         const h = 36;
         const gap = 12;
         this.accountButtons = items.slice(0, 8).map((acc, i) => ({
-            x, y: startY + i * (h + gap), width: w, height: h, accountId: acc.id, label: acc.nickname
+            x, y: startY + i * (h + gap), width: w, height: h, accountId: acc.id, label: acc.nickname, faction: acc.faction
         }));
     }
 
@@ -122,7 +155,7 @@ export class StartScreen {
     
     // Controlla se il giocatore ha già scelto una fazione (legacy)
     checkExistingFaction() {
-        const savedFaction = localStorage.getItem('mmorpg_player_faction');
+        // RIMOSSO: const savedFaction = localStorage.getItem('mmorpg_player_faction');
         return savedFaction && ['venus', 'mars', 'eic'].includes(savedFaction);
     }
     
@@ -192,8 +225,18 @@ export class StartScreen {
                 // Imposta la fazione nella nave se disponibile
                 if (data.faction && typeof data.faction === 'string') {
                     this.game.ship.faction = data.faction;
+                    // RIMOSSO: localStorage.setItem('mmorpg_player_faction', data.faction);
+                    // IMPORTANTE: Aggiorna anche il FactionSystem
+                    if (this.game.factionSystem) {
+                        this.game.factionSystem.currentFaction = data.faction;
+                    }
                 } else if (data.faction && data.faction.currentFaction) {
                     this.game.ship.faction = data.faction.currentFaction;
+                    // RIMOSSO: localStorage.setItem('mmorpg_player_faction', data.faction.currentFaction);
+                    // IMPORTANTE: Aggiorna anche il FactionSystem
+                    if (this.game.factionSystem) {
+                        this.game.factionSystem.currentFaction = data.faction.currentFaction;
+                    }
                 }
                 
                 // Carica inventario
@@ -212,6 +255,11 @@ export class StartScreen {
                 // Carica risorse
                 if (data.resources) {
                     Object.assign(this.game.ship.resources, data.resources);
+                }
+                
+                // Carica dati globali specifici per questo account
+                if (data.globalData) {
+                    this.loadAccountGlobalData(data.globalData);
                 }
 
                 // Forza nickname dall'indice account per allineamento (evita "TestPlayer")
@@ -235,6 +283,38 @@ export class StartScreen {
         }
     }
     
+    // Carica i dati globali specifici per questo account
+    loadAccountGlobalData(globalData) {
+        console.log('🔄 Caricamento dati globali specifici per account...');
+        
+        // Carica playerId
+        if (globalData.playerId && this.game.homePanel) {
+            this.game.homePanel.playerId = globalData.playerId;
+        }
+        
+        // Carica dati navi - RESET per nuovo account
+        if (globalData.selectedShipNumber) {
+            window.gameInstance.selectedShipNumber = globalData.selectedShipNumber;
+            // RIMOSSO: localStorage.setItem('selectedShipNumber', String(globalData.selectedShipNumber));
+        }
+        
+        // RESET navi possedute a solo nave 1 per evitare mixing tra account
+        window.gameInstance.playerOwnedShips = [1];
+        // RIMOSSO: localStorage.setItem('ownedShips', JSON.stringify(globalData.ownedShips));
+        
+        // Carica impostazioni del gioco
+        if (globalData.gameSettings) {
+            // RIMOSSO: localStorage.setItem('gameSettings', JSON.stringify(globalData.gameSettings));
+        }
+        
+        // Carica persistenza mappe
+        if (globalData.mapPersistence) {
+            // RIMOSSO: localStorage.setItem('mmorpg_map_persistence', JSON.stringify(globalData.mapPersistence));
+        }
+        
+        console.log('✅ Dati globali caricati per account');
+    }
+    
     
     // Aggiorna le posizioni degli elementi
     updatePositions() {
@@ -254,13 +334,22 @@ export class StartScreen {
             placeholder: 'Nickname...'
         };
         
-        // Pulsante login
+        // Input password (centrato)
+        this.passwordInput = {
+            x: Math.round(this.x + (this.width - inputWidth) / 2),
+            y: Math.round(this.y + 258),
+            width: inputWidth,
+            height: 50,
+            placeholder: 'Password...'
+        };
+        
+        // Pulsante login/registrazione - spostato più in basso
         this.startGameButton = {
             x: Math.round(this.x + this.width / 2 - 100),
-            y: Math.round(this.y + 450),
+            y: Math.round(this.y + 520),
             width: 200,
             height: 55,
-            text: 'LOGIN',
+            text: 'LOGIN / REGISTRA',
             gradient: ['#e74c3c', '#c0392b']
         };
         
@@ -271,11 +360,11 @@ export class StartScreen {
         this.refreshAccountButtons();
         if (this.accountButtons && this.accountButtons.length > 0) {
             const lastBtn = this.accountButtons[this.accountButtons.length - 1];
-            const spacingBelow = 28;
+            const spacingBelow = 40; // Aumentato lo spazio
             this.startGameButton.y = lastBtn.y + lastBtn.height + spacingBelow;
         } else {
-            // Se non ci sono account, posiziona sotto l'input
-            this.startGameButton.y = this.nameInput.y + this.nameInput.height + 36;
+            // Se non ci sono account, posiziona sotto l'input password
+            this.startGameButton.y = this.passwordInput.y + this.passwordInput.height + 50;
         }
 
         // Rigenera stelle per le nuove dimensioni
@@ -325,6 +414,9 @@ export class StartScreen {
         
         // Input nome utente
         this.drawNameInput(ctx);
+        
+        // Input password
+        this.drawPasswordInput(ctx);
         
         // Selezione fazione
         
@@ -472,6 +564,40 @@ export class StartScreen {
         ctx.shadowColor = 'transparent';
     }
     
+    // Disegna input password
+    drawPasswordInput(ctx) {
+        // Label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Password', this.x + this.width / 2, this.passwordInput.y - 15);
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        
+        // Input field
+        ctx.fillStyle = 'rgba(20, 20, 22, 0.95)';
+        ctx.fillRect(this.passwordInput.x, this.passwordInput.y, this.passwordInput.width, this.passwordInput.height);
+        
+        // Bordo
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+        ctx.lineWidth = 2.0;
+        ctx.strokeRect(this.passwordInput.x, this.passwordInput.y, this.passwordInput.width, this.passwordInput.height);
+        
+        // Testo (nascondi password)
+        ctx.fillStyle = this.playerPassword === '' ? '#666666' : '#ffffff';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        
+        let displayText = this.playerPassword === '' ? this.passwordInput.placeholder : '•'.repeat(this.playerPassword.length);
+        if (this.isTypingPassword && this.cursorVisible) {
+            displayText += '|';
+        }
+        
+        ctx.fillText(displayText, this.passwordInput.x + 15, this.passwordInput.y + 30);
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+    }
+    
     
     // Disegna pulsante inizia gioco
     drawStartButton(ctx) {
@@ -569,7 +695,7 @@ export class StartScreen {
     
     // Gestisce input da tastiera
     handleKeyPress(key) {
-        if (!this.isVisible || !this.isTyping) return false;
+        if (!this.isVisible || (!this.isTyping && !this.isTypingPassword)) return false;
         
         // Enter per iniziare il gioco
         if (key === 'Enter') {
@@ -580,13 +706,16 @@ export class StartScreen {
         // Escape per uscire
         if (key === 'Escape') {
             this.isTyping = false;
+            this.isTypingPassword = false;
             return true;
         }
         
         // Backspace
         if (key === 'Backspace') {
-            if (this.playerName.length > 0) {
+            if (this.isTyping && this.playerName.length > 0) {
                 this.playerName = this.playerName.slice(0, -1);
+            } else if (this.isTypingPassword && this.playerPassword.length > 0) {
+                this.playerPassword = this.playerPassword.slice(0, -1);
             }
             return true;
         }
@@ -602,8 +731,10 @@ export class StartScreen {
                 char = ' ';
             }
             
-            if (this.playerName.length < this.maxPlayerNameLength) {
+            if (this.isTyping && this.playerName.length < this.maxPlayerNameLength) {
                 this.playerName += char;
+            } else if (this.isTypingPassword && this.playerPassword.length < this.maxPasswordLength) {
+                this.playerPassword += char;
             }
             return true;
         }
@@ -617,9 +748,17 @@ export class StartScreen {
         
         // Click su input nome
         if (this.isMouseOverInput(this.nameInput, x, y)) {
-                this.isTyping = true;
-                return true;
-            }
+            this.isTyping = true;
+            this.isTypingPassword = false;
+            return true;
+        }
+        
+        // Click su input password
+        if (this.isMouseOverInput(this.passwordInput, x, y)) {
+            this.isTyping = false;
+            this.isTypingPassword = true;
+            return true;
+        }
             
         // Click su un account salvato
         for (const btn of this.accountButtons) {
@@ -644,8 +783,9 @@ export class StartScreen {
         // (Rimosso) Click su pulsanti salvataggi
         
         // Click fuori dall'input - stop typing
-        if (this.isTyping) {
+        if (this.isTyping || this.isTypingPassword) {
             this.isTyping = false;
+            this.isTypingPassword = false;
         }
         
         return false;
@@ -654,14 +794,45 @@ export class StartScreen {
     // Gestisce avvio nuovo gioco
     handleStartGame() {
         const playerName = this.playerName.trim();
+        const playerPassword = this.playerPassword.trim();
         
-        // Verifica che il nickname non sia vuoto
+        // Verifica che nickname e password non siano vuoti
         if (!playerName) {
             this.showError('Inserisci un nickname per continuare');
             return;
         }
         
-        // Imposta nickname visuale
+        if (!playerPassword) {
+            this.showError('Inserisci una password per continuare');
+            return;
+        }
+        
+        // Verifica lunghezza password
+        if (playerPassword.length < 4) {
+            this.showError('La password deve essere di almeno 4 caratteri');
+            return;
+        }
+        
+        // Prova il login con AuthSystem
+        const loginResult = this.game.authSystem.login(playerName, playerPassword);
+        
+        if (loginResult.success) {
+            // Login riuscito - procedi con il caricamento dell'account esistente
+            this.handleSuccessfulLogin(playerName);
+        } else {
+            // Login fallito - controlla se l'utente esiste
+            if (this.game.authSystem.userExists(playerName)) {
+                // Utente esiste ma password sbagliata
+                this.showError('Password errata');
+            } else {
+                // Utente non esiste - registra automaticamente
+                this.handleNewUserRegistration(playerName, playerPassword);
+            }
+        }
+    }
+    
+    // Gestisce il login riuscito
+    handleSuccessfulLogin(playerName) {
         this.currentAccount = playerName;
         this.game.playerProfile.setNickname(playerName);
         this.game.ship.setPlayerName(playerName);
@@ -689,7 +860,7 @@ export class StartScreen {
             
             this.game.notifications.add(`Bentornato ${playerName}!`, 'success');
         } else {
-            // Nuovo account: genera accountId, aggiorna indice e vai a selezione fazione
+            // Nuovo account: crea accountId e vai alla selezione fazione
             const index = this.loadAccountsIndex();
             const newId = this.generateAccountId();
             index.byName[playerName] = newId;
@@ -702,6 +873,36 @@ export class StartScreen {
 
             this.hide();
             this.game.factionSelectionScreen.show();
+        }
+    }
+    
+    // Gestisce la registrazione di un nuovo utente
+    handleNewUserRegistration(playerName, playerPassword) {
+        // Registra l'utente con AuthSystem (senza fazione per ora)
+        const registerResult = this.game.authSystem.register(playerName, playerPassword, 'venus'); // Fazione temporanea
+        
+        if (registerResult.success) {
+            // Registrazione riuscita - crea accountId e vai alla selezione fazione
+            const index = this.loadAccountsIndex();
+            const newId = this.generateAccountId();
+            index.byName[playerName] = newId;
+            index.byId[newId] = { nickname: playerName, createdAt: Date.now(), lastPlayed: Date.now() };
+            index.list.push(newId);
+            this.saveAccountsIndex(index);
+
+            this.currentAccount = playerName;
+            this.currentAccountId = newId;
+            this.game.currentAccountId = newId;
+            this.game.playerProfile.setNickname(playerName);
+            this.game.ship.setPlayerName(playerName);
+
+            this.hide();
+            this.game.factionSelectionScreen.show();
+            
+            this.game.notifications.add(`Account ${playerName} creato con successo!`, 'success');
+        } else {
+            // Errore nella registrazione
+            this.showError(registerResult.error || 'Errore nella creazione dell\'account');
         }
     }
 
@@ -723,12 +924,44 @@ export class StartScreen {
             ctx.lineWidth = 2;
             this.roundRectPath(ctx, btn.x, btn.y, btn.width, btn.height, 8);
             ctx.stroke();
-            // text
+            
+            // Logo fazione a sinistra
+            const factionIcon = this.getFactionIcon(btn.faction);
+            const iconSize = 20;
+            const iconX = btn.x + 12;
+            const iconY = btn.y + (btn.height - iconSize) / 2;
+            
+            ctx.fillStyle = this.getFactionColor(btn.faction);
+            ctx.font = `${iconSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(factionIcon, iconX + iconSize/2, iconY + iconSize - 2);
+            
+            // Nickname a destra del logo
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 13px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + 24);
+            ctx.textAlign = 'left';
+            ctx.fillText(btn.label, iconX + iconSize + 8, btn.y + 24);
         });
+    }
+    
+    // Ottiene l'icona della fazione
+    getFactionIcon(faction) {
+        const icons = {
+            'eic': '●', // Cerchio blu
+            'mars': '●', // Cerchio rosso
+            'venus': '●'  // Cerchio viola
+        };
+        return icons[faction] || '●';
+    }
+    
+    // Ottiene il colore della fazione
+    getFactionColor(faction) {
+        const colors = {
+            'eic': '#4A90E2', // Blu
+            'mars': '#E74C3C', // Rosso
+            'venus': '#9B59B6'  // Viola
+        };
+        return colors[faction] || '#9B59B6';
     }
     
     // Gestisce caricamento salvataggio

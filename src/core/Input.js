@@ -25,12 +25,6 @@ export class Input {
         this.dPressed = false;
         this.dJustPressed = false; // Flag per test morte player
         
-        // Flags per cambio nave
-        this.key1Pressed = false;
-        this.key1JustPressed = false;
-        this.key2Pressed = false;
-        this.key2JustPressed = false;
-        
         // Inizializza Set per i tasti appena premuti
         this.keysJustPressed = new Set();
         
@@ -140,19 +134,7 @@ export class Input {
                 this.keysJustPressed.add('Space');
             }
 
-            // Gestisci tasto 1 per nave base
-            if (e.code === 'Digit1') {
-                this.key1Pressed = true;
-                this.key1JustPressed = true;
-                console.log('[Input] Digit1 pressed');
-            }
-
-            // Gestisci tasto 2 per nave Urus
-            if (e.code === 'Digit2') {
-                this.key2Pressed = true;
-                this.key2JustPressed = true;
-                console.log('[Input] Digit2 pressed');
-            }
+            // Gestisci altri tasti...
         });
         
         document.addEventListener('keyup', (e) => {
@@ -341,23 +323,6 @@ export class Input {
         this.dJustPressed = false;
     }
 
-    // Metodi per il tasto 1
-    isKey1JustPressed() {
-        return this.key1JustPressed;
-    }
-
-    resetKey1JustPressed() {
-        this.key1JustPressed = false;
-    }
-
-    // Metodi per il tasto 2
-    isKey2JustPressed() {
-        return this.key2JustPressed;
-    }
-
-    resetKey2JustPressed() {
-        this.key2JustPressed = false;
-    }
     
     // Controlla se un tasto è stato appena premuto
     isKeyJustPressed(key) {

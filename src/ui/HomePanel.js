@@ -36,10 +36,25 @@ export class HomePanel extends UIComponent {
 
         // Handler per lo scroll della cronologia migliorato
         this.handleWheel = (e) => {
-            if (this.selectedCategory !== 'starenergy') return;
-            
+            if (this.selectedCategory === 'starenergy') {
             const maxScroll = Math.max(0, (this.conversionHistory.length - 1) * 28 - 300);
             this.historyScrollOffset = Math.min(Math.max(0, this.historyScrollOffset + e.deltaY * 0.8), maxScroll);
+            } else if (this.selectedCategory === 'quest') {
+                // Scroll diretto delle quest con controlli rigorosi
+                e.preventDefault();
+                
+                // Calcola la nuova posizione
+                const newScrollY = this.questScrollY + e.deltaY;
+                
+                // Applica i limiti rigorosamente
+                if (newScrollY < 0) {
+                    this.questScrollY = 0; // Non può andare sopra
+                } else if (newScrollY > this.maxQuestScrollY) {
+                    this.questScrollY = this.maxQuestScrollY; // Non può andare sotto
+                } else {
+                    this.questScrollY = newScrollY; // Scroll normale
+                }
+            }
         };
         document.addEventListener('wheel', this.handleWheel);
         
@@ -98,8 +113,11 @@ export class HomePanel extends UIComponent {
         document.addEventListener('mouseup', this.handlePreviewUp);
         
         // Dati del giocatore (verranno aggiornati dinamicamente)
+        // Genera un ID unico per il giocatore
+        this.generatePlayerId();
+        
         this.playerData = {
-            id: '883098',
+            id: this.playerId,
             level: 1,
             rank: '',
             credits: 0,
@@ -254,7 +272,7 @@ export class HomePanel extends UIComponent {
         this.questDetailsScrollY = 0;
         this.maxQuestDetailsScrollY = 0;
         
-        // Dati quest reali
+        // Dati quest reali con sistema progressivo
         this.questData = {
             disponibili: {
                 'livello1': [
@@ -286,10 +304,286 @@ export class HomePanel extends UIComponent {
                             { type: 'experience', description: 'Esperienza', quantity: 300 },
                             { type: 'credits', description: 'Crediti', quantity: 500 }
                         ]
+                    },
+                    { 
+                        id: 'survive_2min', 
+                        name: 'Sopravvivenza Base', 
+                        level: 1, 
+                        status: 'available',
+                        description: 'Rimani vivo per 2 minuti in zona pericolosa.',
+                        conditions: [
+                            { type: 'survive_time', description: 'Sopravvivi', quantity: 120, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 400 },
+                            { type: 'credits', description: 'Crediti', quantity: 800 }
+                        ]
+                    },
+                    { 
+                        id: 'kill_any_alien', 
+                        name: 'Primo Contatto', 
+                        level: 1, 
+                        status: 'available',
+                        description: 'Elimina 3 alieni qualsiasi per iniziare la tua carriera da cacciatore.',
+                        conditions: [
+                            { type: 'kill_any_alien', description: 'Uccidi alieni', quantity: 3, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 350 },
+                            { type: 'honor', description: 'Onore', quantity: 3 },
+                            { type: 'credits', description: 'Crediti', quantity: 600 }
+                        ]
+                    }
+                ],
+                'livello2': [
+                    { 
+                        id: 'kill_streuner_advanced', 
+                        name: 'Cacciatore di Streuner', 
+                        level: 2, 
+                        status: 'available',
+                        description: 'Elimina 15 Streuner per dimostrare la tua maestria.',
+                        conditions: [
+                            { type: 'kill_streuner', description: 'Uccidi Streuner', quantity: 15, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 1200 },
+                            { type: 'honor', description: 'Onore', quantity: 12 },
+                            { type: 'credits', description: 'Crediti', quantity: 2500 }
+                        ]
+                    },
+                    { 
+                        id: 'survive_5min', 
+                        name: 'Resistenza', 
+                        level: 2, 
+                        status: 'available',
+                        description: 'Sopravvivi per 5 minuti senza morire in zona alieni.',
+                        conditions: [
+                            { type: 'survive_time', description: 'Sopravvivi', quantity: 300, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 1000 },
+                            { type: 'honor', description: 'Onore', quantity: 8 },
+                            { type: 'credits', description: 'Crediti', quantity: 2000 }
+                        ]
+                    },
+                    { 
+                        id: 'kill_alien_type', 
+                        name: 'Specialista', 
+                        level: 2, 
+                        status: 'available',
+                        description: 'Elimina 10 alieni di un tipo specifico per diventare uno specialista.',
+                        conditions: [
+                            { type: 'kill_alien_type', description: 'Uccidi alieni specifici', quantity: 10, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 1500 },
+                            { type: 'honor', description: 'Onore', quantity: 10 },
+                            { type: 'credits', description: 'Crediti', quantity: 3000 }
+                        ]
+                    },
+                    { 
+                        id: 'collect_many_bonus', 
+                        name: 'Raccoglitore Esperto', 
+                        level: 2, 
+                        status: 'available',
+                        description: 'Raccogli 20 Bonus Box per dimostrare la tua efficienza.',
+                        conditions: [
+                            { type: 'collect_bonus_box', description: 'Raccogli Bonus Box', quantity: 20, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 800 },
+                            { type: 'credits', description: 'Crediti', quantity: 1500 }
+                        ]
+                    }
+                ],
+                'livello3': [
+                    { 
+                        id: 'kill_streuner_master', 
+                        name: 'Maestro Streuner', 
+                        level: 3, 
+                        status: 'available',
+                        description: 'Elimina 50 Streuner per diventare un vero maestro.',
+                        conditions: [
+                            { type: 'kill_streuner', description: 'Uccidi Streuner', quantity: 50, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 3000 },
+                            { type: 'honor', description: 'Onore', quantity: 25 },
+                            { type: 'credits', description: 'Crediti', quantity: 5000 }
+                        ]
+                    },
+                    { 
+                        id: 'survive_10min', 
+                        name: 'Sopravvivenza Estrema', 
+                        level: 3, 
+                        status: 'available',
+                        description: 'Sopravvivi per 10 minuti in zona pericolosa - una vera sfida!',
+                        conditions: [
+                            { type: 'survive_time', description: 'Sopravvivi', quantity: 600, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 2500 },
+                            { type: 'honor', description: 'Onore', quantity: 20 },
+                            { type: 'credits', description: 'Crediti', quantity: 4000 }
+                        ]
+                    },
+                    { 
+                        id: 'kill_alien_boss', 
+                        name: 'Cacciatore di Boss', 
+                        level: 3, 
+                        status: 'available',
+                        description: 'Elimina 5 boss alieni per dimostrare la tua forza.',
+                        conditions: [
+                            { type: 'kill_alien_boss', description: 'Uccidi boss alieni', quantity: 5, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 4000 },
+                            { type: 'honor', description: 'Onore', quantity: 30 },
+                            { type: 'credits', description: 'Crediti', quantity: 6000 }
+                        ]
+                    },
+                    { 
+                        id: 'clear_map', 
+                        name: 'Spazzino Spaziale', 
+                        level: 3, 
+                        status: 'available',
+                        description: 'Pulisci completamente una mappa da tutti gli alieni.',
+                        conditions: [
+                            { type: 'clear_map', description: 'Pulisci mappa', quantity: 1, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 3500 },
+                            { type: 'honor', description: 'Onore', quantity: 35 },
+                            { type: 'credits', description: 'Crediti', quantity: 7000 }
+                        ]
+                    }
+                ],
+                'livello4': [
+                    { 
+                        id: 'kill_streuner_legend', 
+                        name: 'Leggenda Streuner', 
+                        level: 4, 
+                        status: 'available',
+                        description: 'Elimina 100 Streuner per diventare una leggenda.',
+                        conditions: [
+                            { type: 'kill_streuner', description: 'Uccidi Streuner', quantity: 100, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 6000 },
+                            { type: 'honor', description: 'Onore', quantity: 50 },
+                            { type: 'credits', description: 'Crediti', quantity: 10000 }
+                        ]
+                    },
+                    { 
+                        id: 'survive_20min', 
+                        name: 'Sopravvivenza Leggendaria', 
+                        level: 4, 
+                        status: 'available',
+                        description: 'Sopravvivi per 20 minuti - solo per i più coraggiosi!',
+                        conditions: [
+                            { type: 'survive_time', description: 'Sopravvivi', quantity: 1200, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 5000 },
+                            { type: 'honor', description: 'Onore', quantity: 40 },
+                            { type: 'credits', description: 'Crediti', quantity: 8000 }
+                        ]
+                    },
+                    { 
+                        id: 'kill_many_boss', 
+                        name: 'Distruttore di Boss', 
+                        level: 4, 
+                        status: 'available',
+                        description: 'Elimina 15 boss alieni per diventare un distruttore.',
+                        conditions: [
+                            { type: 'kill_alien_boss', description: 'Uccidi boss alieni', quantity: 15, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 8000 },
+                            { type: 'honor', description: 'Onore', quantity: 60 },
+                            { type: 'credits', description: 'Crediti', quantity: 12000 }
+                        ]
+                    },
+                    { 
+                        id: 'clear_multiple_maps', 
+                        name: 'Pulitore Galattico', 
+                        level: 4, 
+                        status: 'available',
+                        description: 'Pulisci 3 mappe completamente per diventare un pulitore galattico.',
+                        conditions: [
+                            { type: 'clear_map', description: 'Pulisci mappe', quantity: 3, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 7000 },
+                            { type: 'honor', description: 'Onore', quantity: 70 },
+                            { type: 'credits', description: 'Crediti', quantity: 15000 }
+                        ]
+                    }
+                ],
+                'livello5': [
+                    { 
+                        id: 'kill_streuner_god', 
+                        name: 'Dio degli Streuner', 
+                        level: 5, 
+                        status: 'available',
+                        description: 'Elimina 500 Streuner per diventare un dio del combattimento.',
+                        conditions: [
+                            { type: 'kill_streuner', description: 'Uccidi Streuner', quantity: 500, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 15000 },
+                            { type: 'honor', description: 'Onore', quantity: 100 },
+                            { type: 'credits', description: 'Crediti', quantity: 25000 }
+                        ]
+                    },
+                    { 
+                        id: 'survive_1hour', 
+                        name: 'Sopravvivenza Eterna', 
+                        level: 5, 
+                        status: 'available',
+                        description: 'Sopravvivi per 1 ora intera - la sfida definitiva!',
+                        conditions: [
+                            { type: 'survive_time', description: 'Sopravvivi', quantity: 3600, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 12000 },
+                            { type: 'honor', description: 'Onore', quantity: 80 },
+                            { type: 'credits', description: 'Crediti', quantity: 20000 }
+                        ]
+                    },
+                    { 
+                        id: 'kill_legendary_boss', 
+                        name: 'Cacciatore di Leggende', 
+                        level: 5, 
+                        status: 'available',
+                        description: 'Elimina 50 boss alieni per diventare un cacciatore di leggende.',
+                        conditions: [
+                            { type: 'kill_alien_boss', description: 'Uccidi boss alieni', quantity: 50, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 20000 },
+                            { type: 'honor', description: 'Onore', quantity: 150 },
+                            { type: 'credits', description: 'Crediti', quantity: 30000 }
+                        ]
+                    },
+                    { 
+                        id: 'clear_all_maps', 
+                        name: 'Salvatore della Galassia', 
+                        level: 5, 
+                        status: 'available',
+                        description: 'Pulisci tutte le mappe della galassia - la missione finale!',
+                        conditions: [
+                            { type: 'clear_map', description: 'Pulisci tutte le mappe', quantity: 10, completed: 0 }
+                        ],
+                        rewards: [
+                            { type: 'experience', description: 'Esperienza', quantity: 25000 },
+                            { type: 'honor', description: 'Onore', quantity: 200 },
+                            { type: 'credits', description: 'Crediti', quantity: 50000 }
+                        ]
                     }
                 ]
             },
-            accettate: [],
+            accettate: {},
             completate: [],
             tutte: []
         };
@@ -473,6 +767,22 @@ export class HomePanel extends UIComponent {
         // Il pannello Home non supporta il drag, quindi è vuoto
     }
     
+    // Genera un ID unico per il giocatore
+    generatePlayerId() {
+        // RIMOSSO: const savedId = localStorage.getItem('mmorpg_player_id');
+        // RIMOSSO: if (savedId) {
+        //     this.playerId = savedId;
+        // } else {
+        //     // Genera un nuovo ID casuale di 6 cifre
+        //     this.playerId = Math.floor(100000 + Math.random() * 900000).toString();
+        //     // Salva l'ID per future sessioni
+        //     // RIMOSSO: localStorage.setItem('mmorpg_player_id', this.playerId);
+        // }
+        
+        // L'ID del giocatore è ora gestito per-account
+        // Genera sempre un nuovo ID casuale di 6 cifre
+        this.playerId = Math.floor(100000 + Math.random() * 900000).toString();
+    }
     
     updatePlayerData() {
         // Aggiorna i dati del giocatore con quelli reali
@@ -511,32 +821,45 @@ export class HomePanel extends UIComponent {
         let allConditionsCompleted = true;
         
         quest.conditions.forEach(condition => {
+            // Ottieni il progresso basato sullo snapshot (solo progressi dopo l'accettazione)
+            let currentProgress = 0;
+            
+            if (this.game && this.game.ship && this.game.ship.getQuestProgress) {
+                currentProgress = this.game.ship.getQuestProgress(condition.type);
+            } else {
+                // Fallback al sistema vecchio se il nuovo non è disponibile
             switch (condition.type) {
                 case 'kill_streuner':
-                    // Conta gli Streuner uccisi
-                    if (this.game.ship && this.game.ship.streunerKilled !== undefined) {
-                        const newCompleted = Math.min(this.game.ship.streunerKilled, condition.quantity);
+                        currentProgress = this.game.ship ? this.game.ship.streunerKilled : 0;
+                        break;
+                    case 'collect_bonus_box':
+                        currentProgress = this.game.ship ? this.game.ship.bonusBoxesCollected : 0;
+                        break;
+                    case 'survive_time':
+                        currentProgress = this.game.ship ? this.game.ship.survivalTime : 0;
+                        break;
+                    case 'kill_any_alien':
+                        currentProgress = this.game.ship ? this.game.ship.aliensKilled : 0;
+                        break;
+                    case 'kill_alien_type':
+                        currentProgress = this.game.ship ? this.game.ship.alienTypeKilled : 0;
+                        break;
+                    case 'kill_alien_boss':
+                        currentProgress = this.game.ship ? this.game.ship.bossAliensKilled : 0;
+                        break;
+                    case 'clear_map':
+                        currentProgress = this.game.ship ? this.game.ship.mapsCleared : 0;
+                        break;
+                }
+            }
+            
+            // Aggiorna il progresso della condizione
+            const newCompleted = Math.min(currentProgress, condition.quantity);
                         if (newCompleted !== condition.completed) {
                             condition.completed = newCompleted;
                         }
                         if (condition.completed < condition.quantity) {
                             allConditionsCompleted = false;
-                        }
-                    }
-                    break;
-                    
-                case 'collect_bonus_box':
-                    // Conta le Bonus Box raccolte
-                    if (this.game.ship && this.game.ship.bonusBoxesCollected !== undefined) {
-                        const newCompleted = Math.min(this.game.ship.bonusBoxesCollected, condition.quantity);
-                        if (newCompleted !== condition.completed) {
-                            condition.completed = newCompleted;
-                        }
-                        if (condition.completed < condition.quantity) {
-                            allConditionsCompleted = false;
-                        }
-                    }
-                    break;
             }
         });
         
@@ -1033,22 +1356,11 @@ export class HomePanel extends UIComponent {
         ctx.lineTo(x + this.contentWidth - 20, shipY + 80);
         ctx.stroke();
         
-        // Solo eventi attivi (centrato)
-        const colWidth = this.contentWidth - 40;
-        this.drawActiveEvents(ctx, x + 20, shipY + 100, colWidth);
+        // Rimuoviamo la sezione eventi attivi
     }
     
     
     
-    drawActiveEvents(ctx, x, y, width) {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText('Eventi attivi', x, y);
-        
-        ctx.fillStyle = '#888888';
-        ctx.font = '12px Arial';
-        ctx.fillText('Nessun evento attivo', x, y + 20);
-    }
     
     
     drawQuestContent(ctx, x, y) {
@@ -1167,9 +1479,11 @@ export class HomePanel extends UIComponent {
             });
         }
         
-        // Calcola l'altezza totale del contenuto
-        const totalContentHeight = currentY - (y + 30 + 10) + this.questScrollY;
+        // NON ricalcolare maxQuestScrollY ogni frame - solo se è 0 (prima volta)
+        if (this.maxQuestScrollY === 0) {
+            const totalContentHeight = currentY - (y + 30 + 10);
         this.maxQuestScrollY = Math.max(0, totalContentHeight - (listHeight - 30));
+        }
         
         // Ripristina il contesto
         ctx.restore();
@@ -1526,6 +1840,7 @@ export class HomePanel extends UIComponent {
                 this.selectedQuestTab = this.questTabs[i];
                 this.selectedQuest = null; // Reset quest selezionata
                 this.questScrollY = 0; // Reset scroll quando si cambia tab
+                this.maxQuestScrollY = 0; // Reset per ricalcolare il limite
                 return true;
             }
         }
@@ -1626,6 +1941,11 @@ export class HomePanel extends UIComponent {
             return;
         }
         
+        // Crea uno snapshot delle statistiche attuali quando si accetta la quest
+        if (this.game && this.game.ship && this.game.ship.createQuestSnapshot) {
+            this.game.ship.createQuestSnapshot();
+        }
+        
         // Sposta la quest da disponibili ad accettate
         this.moveQuestToAccepted(quest);
         
@@ -1657,30 +1977,6 @@ export class HomePanel extends UIComponent {
         
         const acceptedQuest = { ...quest, status: 'accepted' };
         this.questData.accettate[`livello${quest.level}`].push(acceptedQuest);
-    }
-    
-    // Gestisce lo scroll della rotella del mouse per le quest
-    handleQuestScroll(deltaY) {
-        if (this.selectedCategory !== 'quest') {
-            return false;
-        }
-        
-        // Scroll verso l'alto (deltaY negativo) o verso il basso (deltaY positivo)
-        const scrollAmount = deltaY * 20; // Velocità di scroll
-        
-        // Se c'è una quest selezionata, scrolla i dettagli
-        if (this.selectedQuest && this.maxQuestDetailsScrollY > 0) {
-            this.questDetailsScrollY = Math.max(0, Math.min(this.maxQuestDetailsScrollY, this.questDetailsScrollY - scrollAmount));
-            return true;
-        }
-        
-        // Altrimenti scrolla la lista delle quest
-        if (this.maxQuestScrollY > 0) {
-            this.questScrollY = Math.max(0, Math.min(this.maxQuestScrollY, this.questScrollY - scrollAmount));
-            return true;
-        }
-        
-        return false;
     }
     
     // Metodi per il sistema shop
@@ -2316,7 +2612,7 @@ export class HomePanel extends UIComponent {
             if (runtimeSel === item.shipNumber) {
                 isEquipped = true;
             } else {
-                const storedSel = parseInt(localStorage.getItem('selectedShipNumber') || '0', 10);
+                // RIMOSSO: const storedSel = parseInt(localStorage.getItem('selectedShipNumber') || '0', 10);
                 isEquipped = storedSel === item.shipNumber;
             }
         } catch (_) { isEquipped = false; }
@@ -2346,14 +2642,18 @@ export class HomePanel extends UIComponent {
             color: '#cccccc'
         });
 
-        // Stats sintetiche
-        const stats = item.shipNumber === 1 ? { hp: 1000, shield: 1000 } : { hp: 1600, shield: 600 };
-        ThemeUtils.drawText(ctx, `HP: ${stats.hp}`, detailsX, detailsY + 80, { size: 14, weight: 'bold', color: '#7ed957' });
-        ThemeUtils.drawText(ctx, `Shield: ${stats.shield}`, detailsX + 140, detailsY + 80, { size: 14, weight: 'bold', color: '#57b7ff' });
+        // Stats dinamiche dal modello nave
+        const shipModel = this.getShipModel(item.shipNumber);
+        if (shipModel) {
+            ThemeUtils.drawText(ctx, `HP: ${shipModel.maxHP.toLocaleString()}`, detailsX, detailsY + 80, { size: 14, weight: 'bold', color: '#7ed957' });
+            ThemeUtils.drawText(ctx, `Shield: ${shipModel.maxShield.toLocaleString()}`, detailsX + 140, detailsY + 80, { size: 14, weight: 'bold', color: '#57b7ff' });
+            ThemeUtils.drawText(ctx, `Velocità: ${shipModel.velocity}`, detailsX, detailsY + 100, { size: 12, weight: 'bold', color: '#ffd700' });
+            ThemeUtils.drawText(ctx, `Laser: ${shipModel.laserSlots} | Gen: ${shipModel.generatorSlots} | Extra: ${shipModel.extraSlots}`, detailsX, detailsY + 120, { size: 11, weight: 'normal', color: '#cccccc' });
+        }
 
         // Pulsante acquista/seleziona
         const buyX = detailsX;
-        const buyY = detailsY + 120;
+        const buyY = detailsY + 140;
         const buttonText = isEquipped ? 'EQUIPAGGIATA' : (isOwned ? 'SELEZIONA' : `ACQUISTA (${(item.price||0).toLocaleString()} ${item.currency==='uridium'?'Uridium':'Credits'})`);
         const canAfford = item.currency === 'uridium' ? (this.playerData.uridium >= (item.price||0)) : (this.playerData.credits >= (item.price||0));
         const enabledBg = ThemeConfig.colors.background.secondary;
@@ -2376,11 +2676,29 @@ export class HomePanel extends UIComponent {
 
         // Le thumbnail sono disegnate e gestite dal preview condiviso in basso
     }
-
+    
+    // Ottiene il modello nave dalle stats centrali
+    getShipModel(shipNumber) {
+        // Importa SHIP_MODELS da Ship.js
+        const SHIP_MODELS = {
+            1: { maxHP: 4000, maxShield: 4000, velocity: 320, laserSlots: 1, generatorSlots: 1, extraSlots: 1 },
+            2: { maxHP: 8000, maxShield: 8000, velocity: 340, laserSlots: 2, generatorSlots: 2, extraSlots: 1 },
+            3: { maxHP: 12000, maxShield: 12000, velocity: 280, laserSlots: 3, generatorSlots: 5, extraSlots: 2 },
+            4: { maxHP: 16000, maxShield: 16000, velocity: 330, laserSlots: 4, generatorSlots: 6, extraSlots: 2 },
+            5: { maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 8, extraSlots: 2 },
+            6: { maxHP: 120000, maxShield: 120000, velocity: 340, laserSlots: 7, generatorSlots: 10, extraSlots: 3 },
+            7: { maxHP: 160000, maxShield: 160000, velocity: 260, laserSlots: 8, generatorSlots: 15, extraSlots: 3 },
+            8: { maxHP: 180000, maxShield: 180000, velocity: 380, laserSlots: 10, generatorSlots: 10, extraSlots: 2 },
+            9: { maxHP: 256000, maxShield: 256000, velocity: 300, laserSlots: 15, generatorSlots: 15, extraSlots: 3 },
+            10: { maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 6, extraSlots: 1 }
+        };
+        return SHIP_MODELS[shipNumber] || null;
+    }
+    
     handleShipsClick(x, y, detailsX, detailsY, items) {
         // Pulsante acquista/seleziona
         const buyX = detailsX;
-        const buyY = detailsY + 120;
+        const buyY = detailsY + 140;
         if (x >= buyX && x <= buyX + 220 && y >= buyY && y <= buyY + 36) {
             const item = items[this.selectedShipItem];
             const currency = item.currency === 'uridium' ? 'uridium' : 'credits';
@@ -2400,17 +2718,21 @@ export class HomePanel extends UIComponent {
                     const stored = window.gameInstance.playerOwnedShips || [1];
                     if (!stored.includes(item.shipNumber)) stored.push(item.shipNumber);
                     window.gameInstance.playerOwnedShips = stored;
-                    localStorage.setItem('ownedShips', JSON.stringify(stored));
+                    // RIMOSSO: localStorage.setItem('ownedShips', JSON.stringify(stored));
                 } catch (_){ }
                 // Aggiorna UI crediti
                 this.playerData.credits = this.game.ship.getResource('credits');
                 this.playerData.uridium = this.game.ship.getResource('uridium');
                 this.game.notifications?.add(`✅ Acquistata: ${item.name}`, 1200, 'success');
             }
-            // Seleziona/applica nave
+            // Seleziona/applica nave (sia per acquisto che per selezione)
+            if (this.game.ship.isInCombat) {
+                this.game.notifications?.add("Impossibile cambiare nave durante il combattimento!", 2000, 'warning');
+                return true;
+            }
             this.game.ship.switchShip(item.shipNumber);
             window.gameInstance.selectedShipNumber = item.shipNumber;
-            localStorage.setItem('selectedShipNumber', String(item.shipNumber));
+            // RIMOSSO: localStorage.setItem('selectedShipNumber', String(item.shipNumber));
             this.game.notifications?.add(`🚀 ${item.name} selezionata`, 1200, 'success');
             return true;
         }

@@ -29,6 +29,12 @@ export class AuthSystem {
                 throw new Error('Password deve essere di almeno 4 caratteri');
             }
             
+            // LIMITAZIONE: Permetti solo un account per ora
+            const existingUsers = this.getAllUsers();
+            if (existingUsers.length > 0) {
+                throw new Error('È già presente un account. Per ora è possibile avere solo un account per giocatore.');
+            }
+            
             // Controlla se l'utente esiste già
             if (this.userExists(nickname)) {
                 throw new Error('Nickname già esistente');
