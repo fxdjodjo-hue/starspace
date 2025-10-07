@@ -127,19 +127,24 @@ export class Inventory {
     
     // Ottieni le informazioni di una nave specifica
     getShipInfo(shipNumber) {
-        const SHIP_MODELS = {
-            1: { name: 'Phoenix', maxHP: 4000, maxShield: 4000, velocity: 320, laserSlots: 1, generatorSlots: 1, extraSlots: 1 },
-            2: { name: 'Yamato', maxHP: 8000, maxShield: 8000, velocity: 340, laserSlots: 2, generatorSlots: 2, extraSlots: 1 },
-            3: { name: 'Defcom', maxHP: 12000, maxShield: 12000, velocity: 280, laserSlots: 3, generatorSlots: 5, extraSlots: 2 },
-            4: { name: 'Liberator', maxHP: 16000, maxShield: 16000, velocity: 330, laserSlots: 4, generatorSlots: 6, extraSlots: 2 },
-            5: { name: 'Piranha', maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 8, extraSlots: 2 },
-            6: { name: 'Nostromo', maxHP: 120000, maxShield: 120000, velocity: 340, laserSlots: 7, generatorSlots: 10, extraSlots: 3 },
-            7: { name: 'BigBoy', maxHP: 160000, maxShield: 160000, velocity: 260, laserSlots: 8, generatorSlots: 15, extraSlots: 3 },
-            8: { name: 'Vengeance', maxHP: 180000, maxShield: 180000, velocity: 380, laserSlots: 10, generatorSlots: 10, extraSlots: 2 },
-            9: { name: 'Goliath', maxHP: 256000, maxShield: 256000, velocity: 300, laserSlots: 15, generatorSlots: 15, extraSlots: 3 },
-            10: { name: 'Leonov', maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 6, extraSlots: 1 }
-        };
-        return SHIP_MODELS[shipNumber] || null;
+        // Legge i modelli dalla fonte unica in Ship.js tramite window.gameInstance.ship
+        try {
+            const models = window.gameInstance?.ship?.constructor?.prototype?.constructor?.toString ? null : null; // placeholder safe
+        } catch (_) {}
+        // Fallback: usa SHIP_MODELS di Ship se accessibile
+        try {
+            // Ship.js definisce SHIP_MODELS nello scope del modulo; esponiamo tramite istanza
+            const ship = window.gameInstance?.ship;
+            if (ship && ship.getShipModelByNumber) {
+                return ship.getShipModelByNumber(shipNumber);
+            }
+        } catch (_) {}
+        // Ultimo fallback: mappa minimale leggendo dalle stats correnti se la nave richiesta è la corrente
+        if (window.gameInstance?.ship && window.gameInstance.selectedShipNumber === shipNumber) {
+            const s = window.gameInstance.ship;
+            return { name: s?.modelName || 'Nave', maxHP: s.maxHP, maxShield: s.maxShield, velocity: s.speed || 0, laserSlots: s.laserSlots, generatorSlots: s.generatorSlots, extraSlots: s.extraSlots };
+        }
+        return null;
     }
     
     // Configura eventi del mouse per drag scroll
@@ -274,9 +279,14 @@ export class Inventory {
         const deltaY = y - this.shipsDragStartY;
         const newScrollY = this.shipsScrollStartY - deltaY;
         
-        // Calcola i limiti di scroll
+        // Calcola i limiti di scroll per layout a griglia (3 colonne)
         const ownedShips = this.getOwnedShips();
-        const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - this.shipsScrollArea.height);
+        const cols = 3;
+        const gap = 10;
+        const gridItemHeight = 120;
+        const rowHeight = gridItemHeight + gap;
+        const totalRows = Math.ceil(ownedShips.length / cols);
+        const maxScroll = Math.max(0, (totalRows * rowHeight) - this.shipsScrollArea.height);
         this.shipsScrollY = Math.max(0, Math.min(newScrollY, maxScroll));
     }
     
@@ -512,15 +522,10 @@ export class Inventory {
                 }
                 // Aggiorna la nave quando equipaggi un generatore (speed +2 per ognuno)
                 if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
-                    // Determina se è un generatore o uno scudo guardando stats.key
+                    // Determina se è un generatore speed o uno scudo guardando stats.key
                     const key = item.stats?.key || '';
-                    if (key.startsWith('gen')) {
+                    if (key.startsWith('gen') || key.startsWith('sh')) {
                         window.gameInstance.ship.equipGenerator(key, 1);
-                    } else if (key.startsWith('sh')) {
-                        // Scudi: aumenta la capacità scudo
-                        const extra = Number(item.stats?.protection || 0);
-                        window.gameInstance.ship.maxShield += extra;
-                        window.gameInstance.ship.shield += extra;
                     }
                 }
                 
@@ -565,12 +570,8 @@ export class Inventory {
             }
             if (slotType === 'shieldGen' && window.gameInstance && window.gameInstance.ship) {
                 const key = item.stats?.key || '';
-                if (key.startsWith('gen')) {
+                if (key.startsWith('gen') || key.startsWith('sh')) {
                     window.gameInstance.ship.unequipGenerator(key, 1);
-                } else if (key.startsWith('sh')) {
-                    const extra = Number(item.stats?.protection || 0);
-                    window.gameInstance.ship.maxShield = Math.max(0, window.gameInstance.ship.maxShield - extra);
-                    window.gameInstance.ship.shield = Math.min(window.gameInstance.ship.shield, window.gameInstance.ship.maxShield);
                 }
             }
             
@@ -683,7 +684,7 @@ export class Inventory {
                     } else if (key.startsWith('sh')) {
                         const extra = Number(item.stats?.protection || 0);
                         window.gameInstance.ship.maxShield += extra;
-                        window.gameInstance.ship.shield += extra;
+                        // Rimosso: gestione manuale dello scudo; ora via API ship.equipGenerator
                     }
                 }
             });
@@ -1025,7 +1026,7 @@ export class Inventory {
         return false;
     }
     
-    // Gestisci click sulle navi
+    // Gestisci click sulle navi (layout a griglia)
     handleShipsClick(x, y) {
         const shipsY = this.panelY + 200;
         const shipsX = this.panelX + 50;
@@ -1034,44 +1035,41 @@ export class Inventory {
         
         const ownedShips = this.getOwnedShips();
         const currentShip = this.getCurrentShip();
+        if (ownedShips.length === 0) return false;
         
-        // Se non ci sono navi, non c'è click
-        if (ownedShips.length === 0) {
-            return false;
-        }
+        // Parametri griglia
+        const cols = 3;
+        const gap = 10;
+        const gridItemWidth = Math.floor((shipAreaWidth - (gap * (cols + 1))) / cols);
+        const gridItemHeight = 120;
         
-        // Controlla click sulle navi equipaggiate (layout verticale)
-        ownedShips.forEach((shipNumber, shipIndex) => {
-            const shipY = shipsY + (shipIndex * this.shipItemHeight) - this.shipsScrollY;
-            const shipX = shipsX + 10;
-            const shipWidth = shipAreaWidth - 20;
-            const shipHeight = this.shipItemHeight - 20;
+        // Loop elementi visibili e check click
+        for (let index = 0; index < ownedShips.length; index++) {
+            const shipNumber = ownedShips[index];
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const itemX = shipsX + gap + col * (gridItemWidth + gap);
+            const itemY = shipsY + gap + row * (gridItemHeight + gap) - this.shipsScrollY;
             
-            // Click sulla nave (area generale)
-            if (x >= shipX && x <= shipX + shipWidth &&
-                y >= shipY && y <= shipY + shipHeight) {
-                
-                // Se non è già la nave corrente, equipaggiala
+            // Bounding box item
+            if (x >= itemX && x <= itemX + gridItemWidth && y >= itemY && y <= itemY + gridItemHeight) {
                 if (shipNumber !== currentShip) {
                     this.equipShip(shipNumber);
                 }
                 return true;
             }
-        });
+        }
         
-        // Controlla click sulla scrollbar moderna
-        const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - shipAreaHeight);
+        // Scrollbar click (calcolata per righe)
+        const totalRows = Math.ceil(ownedShips.length / cols);
+        const rowHeight = gridItemHeight + gap;
+        const maxScroll = Math.max(0, (totalRows * rowHeight) - shipAreaHeight);
         if (maxScroll > 0) {
             const scrollbarWidth = 8;
             const scrollbarX = shipsX + shipAreaWidth - scrollbarWidth - 5;
             const scrollbarY = shipsY + 5;
             const scrollbarHeight = shipAreaHeight - 10;
-            
-            // Click sulla scrollbar
-            if (x >= scrollbarX && x <= scrollbarX + scrollbarWidth &&
-                y >= scrollbarY && y <= scrollbarY + scrollbarHeight) {
-                
-                // Calcola nuova posizione scroll basata sul click
+            if (x >= scrollbarX && x <= scrollbarX + scrollbarWidth && y >= scrollbarY && y <= scrollbarY + scrollbarHeight) {
                 const clickRatio = (y - scrollbarY) / scrollbarHeight;
                 this.shipsScrollY = clickRatio * maxScroll;
                 return true;
@@ -1928,6 +1926,14 @@ export class Inventory {
         const shipAreaX = shipsX;
         const shipAreaY = shipsY;
         
+        // Parametri griglia
+        const cols = 3; // 3 colonne
+        const gap = 10;
+        const gridItemWidth = Math.floor((shipAreaWidth - (gap * (cols + 1))) / cols);
+        const gridItemHeight = 140; // slot più leggibili per layout a griglia
+        const rowHeight = gridItemHeight + gap; // altezza riga inclusa spaziatura
+        const totalRows = Math.ceil(ownedShips.length / cols);
+        
         // Aggiorna area di scroll per drag
         this.shipsScrollArea = {
             x: shipAreaX,
@@ -1936,8 +1942,8 @@ export class Inventory {
             height: shipAreaHeight
         };
         
-        // Calcola scroll
-        const maxScroll = Math.max(0, (ownedShips.length * this.shipItemHeight) - shipAreaHeight);
+        // Calcola scroll basato su righe della griglia
+        const maxScroll = Math.max(0, (totalRows * rowHeight) - shipAreaHeight);
         this.shipsScrollY = Math.max(0, Math.min(this.shipsScrollY, maxScroll));
         
         // Disegna navi con scroll
@@ -1946,9 +1952,13 @@ export class Inventory {
         ctx.clip();
         
         ownedShips.forEach((shipNumber, index) => {
-            const shipY = shipAreaY + (index * this.shipItemHeight) - this.shipsScrollY;
-            if (shipY + this.shipItemHeight > shipAreaY && shipY < shipAreaY + shipAreaHeight) {
-                this.drawShipVertical(ctx, shipAreaX + 10, shipY + 10, shipAreaWidth - 20, this.shipItemHeight - 20, shipNumber, index);
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const itemX = shipAreaX + gap + col * (gridItemWidth + gap);
+            const itemY = shipAreaY + gap + row * rowHeight - this.shipsScrollY;
+            // Clip verticale
+            if (itemY + gridItemHeight > shipAreaY && itemY < shipAreaY + shipAreaHeight) {
+                this.drawShipGridItem(ctx, itemX, itemY, gridItemWidth, gridItemHeight, shipNumber, index, currentShip);
             }
         });
         
@@ -2061,6 +2071,60 @@ export class Inventory {
                 isHovered: false,
                 isActive: false,
                 textColor: ThemeConfig.colors.text.primary,
+                background: ThemeConfig.colors.accent.primary,
+                border: ThemeConfig.colors.accent.primary,
+                glow: false
+            });
+        }
+    }
+
+    // Disegna item nave in griglia (slot compatti)
+    drawShipGridItem(ctx, x, y, width, height, shipNumber, shipIndex, currentShip) {
+        const shipInfo = this.getShipInfo(shipNumber);
+        if (!shipInfo) return;
+        const isEquipped = shipNumber === (typeof currentShip === 'number' ? currentShip : this.getCurrentShip());
+        
+        // Card compatta
+        ThemeUtils.drawPanel(ctx, x, y, width, height, {
+            background: isEquipped ? 'rgba(0, 255, 136, 0.15)' : 'rgba(20, 20, 30, 0.92)',
+            border: isEquipped ? ThemeConfig.colors.accent.success : '#3a3f55',
+            borderWidth: ThemeConfig.borders.width.normal,
+            radius: ThemeConfig.borders.radius.md,
+            blur: false,
+            glow: isEquipped ? ThemeConfig.colors.accent.success : null
+        });
+        
+        // Nome
+        ThemeUtils.drawText(ctx, shipInfo.name || 'Nave', x + 12, y + 20, {
+            color: isEquipped ? ThemeConfig.colors.accent.success : '#e6eaf2',
+            size: 16,
+            weight: ThemeConfig.typography.weights.bold
+        });
+        
+        // Stats principali in riga
+        const statsY = y + 44;
+        ThemeUtils.drawText(ctx, `HP ${shipInfo.maxHP.toLocaleString()}`, x + 12, statsY, { size: 13, weight: 'bold', color: '#57ff57' });
+        ThemeUtils.drawText(ctx, `SC ${shipInfo.maxShield.toLocaleString()}`, x + 12, statsY + 18, { size: 13, weight: 'bold', color: '#57b7ff' });
+        ThemeUtils.drawText(ctx, `VEL ${shipInfo.velocity}`, x + 12, statsY + 36, { size: 13, weight: 'bold', color: '#ffd966' });
+        
+        // Badge equip
+        if (isEquipped) {
+            ThemeUtils.drawText(ctx, 'EQUIP', x + width - 48, y + 16, {
+                size: 10,
+                weight: ThemeConfig.typography.weights.bold,
+                color: ThemeConfig.colors.accent.success
+            });
+        } else {
+            // Pulsante equip compatto
+            const btnW = 76, btnH = 26;
+            const btnX = x + width - btnW - 10;
+            const btnY = y + height - btnH - 10;
+            ThemeUtils.drawButton(ctx, btnX, btnY, btnW, btnH, {
+                text: 'EQUIP',
+                size: 'sm',
+                isHovered: false,
+                isActive: false,
+                textColor: '#0b0b0e',
                 background: ThemeConfig.colors.accent.primary,
                 border: ThemeConfig.colors.accent.primary,
                 glow: false

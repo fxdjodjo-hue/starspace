@@ -26,6 +26,8 @@ export class Renderer {
             return;
         }
         
+        // (Sprite flames disattivate, si usa TrailSystem classico)
+
         // Disegna sempre il range di attacco se attivo
         ship.draw(this.ctx, camera);
         

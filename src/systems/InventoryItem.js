@@ -15,7 +15,7 @@ export class InventoryItem {
     static createExampleItems() {
         return [
             // Laser
-            new InventoryItem('LF1', 'laser', { damage: 100, fireRate: 1.0 }),
+            new InventoryItem('LF1', 'laser', { damage: 65, fireRate: 1.0 }),
             new InventoryItem('LF2', 'laser', { damage: 200, fireRate: 1.0 }),
             new InventoryItem('LF3', 'laser', { damage: 300, fireRate: 1.0 }),
             

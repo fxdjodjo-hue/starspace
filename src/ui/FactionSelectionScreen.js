@@ -297,7 +297,7 @@ export class FactionSelectionScreen {
                 laser: { x1: 1000, x2: 500, x3: 200, sab: 100 }, 
                 missile: { r1: 50, r2: 25, r3: 10 } 
             };
-            this.game.ship.equippedLasers = { lf1: 0, lf2: 0, lf3: 0, lf4: 0 };
+            this.game.ship.equippedLasers = { lf1: 0, lf2: 0, lf3: 0 };
             
             // Imposta la fazione nella nave
             this.game.ship.faction = this.selectedFaction;

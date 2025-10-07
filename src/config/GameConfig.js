@@ -25,7 +25,7 @@ export const GameConfig = {
         SIZE: 40,
         SPEED: 2,
         MAX_HP: 1000,
-        MAX_SHIELD: 30,
+        MAX_SHIELD: 0,
         ATTACK_RANGE: 400
     },
 

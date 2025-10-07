@@ -287,11 +287,9 @@ export class SaveSystem {
             ship.x = player.x || ship.x;
             ship.y = player.y || ship.y;
             
-            // Salute
+            // Salute (lo scudo verrà ricalcolato dai generatori equipaggiati)
             ship.hp = player.hp || ship.hp;
             ship.maxHP = player.maxHP || ship.maxHP;
-            ship.shield = player.shield || ship.shield;
-            ship.maxShield = player.maxShield || ship.maxShield;
             
             // Livello ed esperienza
             ship.currentLevel = player.level || ship.currentLevel;
@@ -322,6 +320,17 @@ export class SaveSystem {
             
             // Nome giocatore
             ship.playerName = player.playerName || ship.playerName;
+
+            // Ricalcola scudo in base ai generatori equipaggiati (evita valori legacy salvati)
+            if (typeof ship.recomputeShieldStats === 'function') {
+                ship.recomputeShieldStats();
+            }
+            // Reimposta il valore di shield dal save, clampato al nuovo maxShield
+            if (typeof player.shield === 'number') {
+                ship.shield = Math.max(0, Math.min(player.shield, ship.maxShield || 0));
+            } else {
+                ship.shield = Math.min(ship.shield || 0, ship.maxShield || 0);
+            }
 
             // Applica selezione nave e possedute
             try {
@@ -400,17 +409,11 @@ export class SaveSystem {
             }
         });
         
-        // Riapplica scudi e generatori
+        // Riapplica generatori speed e scudi via API della nave (no aggiunte manuali)
         Object.entries(this.game.inventory.equipment.shieldGen).forEach(([index, item]) => {
             if (item && item.stats && item.stats.key) {
                 const key = item.stats.key;
-                if (key.startsWith('gen')) {
-                    this.game.ship.equipGenerator(key, 1);
-                } else if (key.startsWith('sh')) {
-                    const extra = Number(item.stats?.protection || 0);
-                    this.game.ship.maxShield += extra;
-                    this.game.ship.shield += extra;
-                }
+                this.game.ship.equipGenerator(key, 1);
             }
         });
     }

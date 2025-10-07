@@ -250,6 +250,15 @@ export class StartScreen {
                     
                     // Riapplica gli effetti degli item equipaggiati
                     this.reapplyEquippedEffects();
+
+                    // Ripristina lo shield salvato clampato al maxShield attuale (dopo il ricalcolo dei generatori)
+                    try {
+                        const savedPlayerShield = Number(data?.player?.shield);
+                        if (!isNaN(savedPlayerShield)) {
+                            const maxS = Number(this.game.ship.maxShield) || 0;
+                            this.game.ship.shield = Math.max(0, Math.min(savedPlayerShield, maxS));
+                        }
+                    } catch (_) {}
                 }
                 
                 // Carica risorse
@@ -298,8 +307,12 @@ export class StartScreen {
             // RIMOSSO: localStorage.setItem('selectedShipNumber', String(globalData.selectedShipNumber));
         }
         
-        // RESET navi possedute a solo nave 1 per evitare mixing tra account
-        window.gameInstance.playerOwnedShips = [1];
+        // Navi possedute per-account
+        if (Array.isArray(globalData.ownedShips) && globalData.ownedShips.length > 0) {
+            window.gameInstance.playerOwnedShips = [...new Set(globalData.ownedShips.map(n => parseInt(n, 10)).filter(n => n > 0))];
+        } else {
+            window.gameInstance.playerOwnedShips = [1]; // default per account nuovo
+        }
         // RIMOSSO: localStorage.setItem('ownedShips', JSON.stringify(globalData.ownedShips));
         
         // Carica impostazioni del gioco
@@ -1047,19 +1060,17 @@ export class StartScreen {
             }
         });
         
-        // Riapplica scudi e generatori
+        // Riapplica generatori speed e shield usando le API della nave
         Object.entries(this.game.inventory.equipment.shieldGen).forEach(([index, item]) => {
             if (item && item.stats && item.stats.key) {
                 const key = item.stats.key;
-                if (key.startsWith('gen')) {
-                    this.game.ship.equipGenerator(key, 1);
-                } else if (key.startsWith('sh')) {
-                    const extra = Number(item.stats?.protection || 0);
-                    this.game.ship.maxShield += extra;
-                    this.game.ship.shield += extra;
-                }
+                this.game.ship.equipGenerator(key, 1);
             }
         });
+        // Ricalcola scudi una volta completato il ripristino
+        if (typeof this.game.ship.recomputeShieldStats === 'function') {
+            this.game.ship.recomputeShieldStats();
+        }
     }
     
     // Nasconde la schermata

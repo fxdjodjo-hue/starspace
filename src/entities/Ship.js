@@ -10,90 +10,106 @@ import { RepairEffect } from '../systems/RepairEffect.js';
 import { ShieldEffect } from '../systems/ShieldEffect.js';
 import { MISSILE_CONFIG } from '../utils/Constants.js';
 import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
+import { EngineFlameSprite } from '../effects/EngineFlameSprite.js';
 
 // Configurazione semplice di due modelli di nave con statistiche diverse
 const SHIP_MODELS = {
     1: { // Phoenix (Urus)
+        name: 'Phoenix',
         maxHP: 4000,
         maxShield: 4000,
-        velocity: 320,
+        velocity: 3.2,
         laserSlots: 1,
         generatorSlots: 1,
         extraSlots: 1
     },
     2: { // Yamato (Interceptor)
+        name: 'Yamato',
         maxHP: 8000,
         maxShield: 8000,
-        velocity: 340,
+        velocity: 3.4,
         laserSlots: 2,
         generatorSlots: 2,
         extraSlots: 1
     },
     3: { // Defcom (Falcon)
+        name: 'Defcom',
         maxHP: 12000,
         maxShield: 12000,
-        velocity: 280,
+        velocity: 2.8,
         laserSlots: 3,
         generatorSlots: 5,
         extraSlots: 2
     },
     4: { // Liberator
+        name: 'Liberator',
         maxHP: 16000,
         maxShield: 16000,
-        velocity: 330,
+        velocity: 3.3,
         laserSlots: 4,
         generatorSlots: 6,
         extraSlots: 2
     },
     5: { // Piranha
+        name: 'Piranha',
         maxHP: 64000,
         maxShield: 64000,
-        velocity: 360,
+        velocity: 3.6,
         laserSlots: 6,
         generatorSlots: 8,
         extraSlots: 2
     },
     6: { // Nostromo
+        name: 'Nostromo',
         maxHP: 120000,
         maxShield: 120000,
-        velocity: 340,
+        velocity: 3.4,
         laserSlots: 7,
         generatorSlots: 10,
         extraSlots: 3
     },
     7: { // BigBoy
+        name: 'BigBoy',
         maxHP: 160000,
         maxShield: 160000,
-        velocity: 260,
+        velocity: 2.6,
         laserSlots: 8,
         generatorSlots: 15,
         extraSlots: 3
     },
     8: { // Vengeance
+        name: 'Vengeance',
         maxHP: 180000,
         maxShield: 180000,
-        velocity: 380,
+        velocity: 3.8,
         laserSlots: 10,
         generatorSlots: 10,
         extraSlots: 2
     },
     9: { // Goliath
+        name: 'Goliath',
         maxHP: 256000,
         maxShield: 256000,
-        velocity: 300,
+        velocity: 3.0,
         laserSlots: 15,
         generatorSlots: 15,
         extraSlots: 3
     },
     10: { // Leonov
+        name: 'Leonov',
         maxHP: 64000,
         maxShield: 64000,
-        velocity: 360,
+        velocity: 3.6,
         laserSlots: 6,
         generatorSlots: 6,
         extraSlots: 1
     }
 };
+
+// Accessor helper per altri moduli (UI)
+export function getShipModelByNumber(num) {
+    return SHIP_MODELS[num] || null;
+}
 
 export class Ship {
     constructor(x, y, size = 40, game = null) {
@@ -170,10 +186,12 @@ export class Ship {
         this.attackRange = 400; // Range di attacco in pixel
         this.showAttackRange = false; // Toggle per mostrare/nascondere il range (disattivato di default)
         
-        // Sistema scudo
-        this.maxShield = 30; // Valore iniziale, verrà sovrascritto dal modello selezionato
-        this.shield = this.maxShield;
+        // Sistema scudo (base 0, cresce dai generatori scudo equipaggiati)
+        this.maxShield = 0;
+        this.shield = 0;
         this.shieldRegenRate = 1; // Rigenerazione scudo per secondo
+        this.lastShieldTickTime = 0; // timestamp ms per rigenerazione a scatti
+        this.lastHpTickTime = 0;     // timestamp ms per rigenerazione HP a scatti
         this.shieldRegenDelay = 3000; // Ritardo prima della rigenerazione (3 secondi)
         this.lastDamageTime = 0;
         this.selectedTarget = null;
@@ -200,16 +218,14 @@ export class Ship {
         this.equippedLasers = {
             lf1: 0, // Numero di laser LF1 equipaggiati
             lf2: 0, // Numero di laser LF2 equipaggiati
-            lf3: 0, // Numero di laser LF3 equipaggiati
-            lf4: 0  // Numero di laser LF4 equipaggiati
+            lf3: 0  // Numero di laser LF3 equipaggiati
         };
 
         // Danno base per laser
         this.laserDamage = {
-            lf1: 100,
-            lf2: 200,
-            lf3: 300,
-            lf4: 400
+            lf1: 65,
+            lf2: 140,
+            lf3: 175
         };
         
         // Sistema munizioni
@@ -303,7 +319,7 @@ export class Ship {
         this.rewardManager = new RewardManager();
         
         // Sistema di riparazione automatica
-        this.autoRepairDelay = 600; // 10 secondi (600 frame a 60 FPS)
+        this.autoRepairDelay = 420; // ~7 secondi (420 frame a 60 FPS)
         this.lastCombatTime = 0; // Tempo dell'ultimo combattimento
         this.repairRate = 5; // HP riparati per secondo
         this.shieldRepairRate = 3; // Scudo riparato per secondo
@@ -320,6 +336,7 @@ export class Ship {
         
         // Sistema di scie
         this.trailSystem = new TrailSystem();
+        this.engineFlames = null;
         
         // Inizializza le statistiche basate sui potenziamenti
         this.updateStats();
@@ -340,22 +357,32 @@ export class Ship {
         this.shieldEffect.load();
     }
 
+    // Accessor istanza per i modelli nave (usato dalla UI)
+    getShipModelByNumber(num) {
+        return SHIP_MODELS[num] || null;
+    }
+
     // Applica le statistiche del modello di nave selezionato (1 o 2)
     applyShipModelStats(shipNumber) {
         const model = SHIP_MODELS[shipNumber] || SHIP_MODELS[1];
+        this.modelName = model.name || this.modelName || 'Nave';
         this.maxHP = model.maxHP;
-        this.maxShield = model.maxShield;
-        if (model.velocity) this.speed = model.velocity / 100; // scala semplice: 300 -> 3.0
+        // Scudo ora dipende dai generatori equipaggiati: base 0
+        if (model.velocity) this.speed = model.velocity; // ora i modelli usano valore decimale diretto
         this.laserSlots = model.laserSlots ?? this.laserSlots ?? 0;
         this.generatorSlots = model.generatorSlots ?? this.generatorSlots ?? 0;
         this.extraSlots = model.extraSlots ?? this.extraSlots ?? 1;
         // Reset conteggio equipaggiamenti quando cambi nave (diversi slot)
         this.laserSlotsEquipped = Math.min(this.laserSlotsEquipped || 0, this.laserSlots);
         this.generatorSlotsEquipped = Math.min(this.generatorSlotsEquipped || 0, this.generatorSlots);
-        // Ripristina HP/Scudo al nuovo massimo quando si cambia nave (solo se non in combattimento)
+        // Lo scudo non è più derivato automaticamente: è dato dai pezzi scudo equipaggiati
+        // Base 0 fino a quando non si montano shield generators (sh1/sh2/sh3)
+        this.maxShield = Math.max(0, Number(this.maxShield) || 0);
+        
+        // Ripristina HP e adegua scudo al nuovo massimo quando si cambia nave (solo se non in combattimento)
         if (!this.isInCombat || this.hp <= 0) {
             this.hp = this.maxHP;
-            this.shield = this.maxShield;
+            this.shield = this.maxShield; // resta 0 se non monti scudi
         } else {
             // Se in combattimento, mantieni proporzioni ma assicura che non superi il nuovo massimo
             const hpRatio = this.hp / (this.maxHP || 1);
@@ -743,6 +770,7 @@ export class Ship {
     
     // Aggiorna il sistema di scie
     updateTrail() {
+        if (!this.trailSystem) return;
         this.trailSystem.update();
         this.trailSystem.createTrail(this);
     }
@@ -1214,8 +1242,8 @@ export class Ship {
         y += lineHeight;
         
         // Danno totale laser
-        const totalDamage = this.getTotalLaserDamage();
-        ctx.fillText(`Damage: ${totalDamage}`, debugX, y);
+        const totalDamage = Number(this.getTotalLaserDamage());
+        ctx.fillText(`Damage: ${isNaN(totalDamage) ? 0 : totalDamage}`, debugX, y);
         y += lineHeight;
         
         // Laser equipaggiati
@@ -1241,12 +1269,13 @@ export class Ship {
         });
         
         // Moltiplicatore munizioni
-        const multiplier = this.selectedLaser === 'sab' ? 0 : parseInt(this.selectedLaser.slice(1)) || 1;
-        ctx.fillText(`Multiplier: ${this.selectedLaser} (x${multiplier})`, debugX, y);
+        const sel = String(this.selectedLaser || 'x1');
+        const multiplier = sel === 'sab' ? 0 : (parseInt(sel.slice(1), 10) || 1);
+        ctx.fillText(`Multiplier: ${sel} (x${multiplier})`, debugX, y);
         y += lineHeight;
         
         // Danno finale
-        const finalDamage = totalDamage * multiplier;
+        const finalDamage = (isNaN(totalDamage) ? 0 : totalDamage) * multiplier;
         ctx.fillStyle = '#ffff00';
         ctx.fillText(`FINAL DAMAGE: ${finalDamage}`, debugX, y);
     }
@@ -1449,18 +1478,66 @@ export class Ship {
             this.game?.notifications?.add(`❌ Slot generatori pieni (${currentGens}/${allowedGens})`, 1200, 'warning');
             return false;
         }
-        // Applica bonus velocità come prima
-        const speedBonusPerGen = 2;
-        this.speed += speedBonusPerGen * amount;
+        // Applica bonus velocità in base al tipo
+        const addSpeed = (type) => {
+            if (type === 'gen1') return 0.05;
+            if (type === 'gen2') return 0.10;
+            if (type === 'gen3') return 0.15;
+            return 0;
+        };
+        if (!this.speedGens) this.speedGens = { gen1: 0, gen2: 0, gen3: 0 };
+        if (!this.shieldPieces) this.shieldPieces = { sh1: 0, sh2: 0, sh3: 0 };
+        
+        if (generatorType.startsWith('gen')) {
+            this.speed += addSpeed(generatorType) * amount;
+            this.speedGens[generatorType] = (this.speedGens[generatorType] || 0) + amount;
+        } else if (generatorType.startsWith('sh')) {
+            // Equippa scudo: aggiorna conteggio pezzi e ricalcola stats
+            this.shieldPieces[generatorType] = (this.shieldPieces[generatorType] || 0) + amount;
+            this.recomputeShieldStats();
+        }
         this.generatorSlotsEquipped = currentGens + amount;
         return true;
     }
     
     unequipGenerator(generatorType, amount = 1) {
-        const speedBonusPerGen = 2;
         const baseSpeed = 2; // Velocità base della nave
-        this.speed = Math.max(baseSpeed, this.speed - speedBonusPerGen * amount);
+        if (!this.speedGens) this.speedGens = { gen1: 0, gen2: 0, gen3: 0 };
+        if (!this.shieldPieces) this.shieldPieces = { sh1: 0, sh2: 0, sh3: 0 };
+        
+        if (generatorType.startsWith('gen')) {
+            const removeSpeed = (type) => {
+                if (type === 'gen1') return 0.05;
+                if (type === 'gen2') return 0.10;
+                if (type === 'gen3') return 0.15;
+                return 0;
+            };
+            this.speed = Math.max(baseSpeed, this.speed - removeSpeed(generatorType) * amount);
+            this.speedGens[generatorType] = Math.max(0, (this.speedGens[generatorType] || 0) - amount);
+        } else if (generatorType.startsWith('sh')) {
+            this.shieldPieces[generatorType] = Math.max(0, (this.shieldPieces[generatorType] || 0) - amount);
+            this.recomputeShieldStats();
+        }
+        this.generatorSlotsEquipped = Math.max(0, (this.generatorSlotsEquipped || 0) - amount);
         return true;
+    }
+
+    // Ricalcola scudo e assorbimento da pezzi montati
+    recomputeShieldStats() {
+        const counts = this.shieldPieces || { sh1: 0, sh2: 0, sh3: 0 };
+        const cap1 = 5000, cap2 = 9000, cap3 = 10000;
+        const abs1 = 0.50, abs2 = 0.70, abs3 = 0.80;
+        const s1 = (counts.sh1 || 0) * cap1;
+        const s2 = (counts.sh2 || 0) * cap2;
+        const s3 = (counts.sh3 || 0) * cap3;
+        const total = s1 + s2 + s3;
+        this.maxShield = total;
+        if (total > 0) {
+            this.shieldAbsorption = (s1*abs1 + s2*abs2 + s3*abs3) / total;
+        } else {
+            this.shieldAbsorption = 0;
+        }
+        this.shield = Math.min(this.shield, this.maxShield);
     }
 
     getEquippedLasers(laserType) {
@@ -1478,22 +1555,27 @@ export class Ship {
     
     getTotalLaserDamage() {
         let totalDamage = 0;
-        for (const [laserType, count] of Object.entries(this.equippedLasers)) {
-            totalDamage += count * this.laserDamage[laserType];
+        const equipped = this.equippedLasers || {};
+        for (const [laserType, countRaw] of Object.entries(equipped)) {
+            const count = Number(countRaw) || 0;
+            const perLaser = Number(this.laserDamage?.[laserType]);
+            if (!isNaN(perLaser) && count > 0) {
+                totalDamage += count * perLaser;
+            }
         }
         
-        // Aggiungi bonus danno dai droni UAV
-        if (this.droneDamageBonus) {
-            totalDamage += this.droneDamageBonus;
+        // Aggiungi bonus danno dai droni UAV (solo se numerico)
+        if (!isNaN(Number(this.droneDamageBonus))) {
+            totalDamage += Number(this.droneDamageBonus);
         }
         
-        // Moltiplica per il tipo di munizioni selezionato
-        // Gestisci SAB separatamente, non ha un moltiplicatore di danno
+        // Gestisci tipo munizioni (SAB = 0)
         if (this.selectedLaser === 'sab') {
             return 0; // SAB non fa danno, solo assorbe scudo
         }
-        const multiplier = parseInt(this.selectedLaser.slice(1)); // x1 -> 1, x2 -> 2, x3 -> 3
-        return totalDamage * (isNaN(multiplier) ? 1 : multiplier); // Fallback a 1 se non è un numero valido
+        const sel = String(this.selectedLaser || 'x1');
+        const multiplier = parseInt(sel.slice(1), 10); // x1 -> 1, x2 -> 2, x3 -> 3
+        return totalDamage * (isNaN(multiplier) ? 1 : multiplier);
     }
     
     setResource(type, amount) {
@@ -1593,15 +1675,41 @@ export class Ship {
         this.shield = Math.min(this.shield, this.maxShield); // Non superare il max scudo
     }
     
-    // Aggiorna la rigenerazione dello scudo
+    // Aggiorna rigenerazione scudo e HP (a scatti)
     updateShield() {
         const currentTime = Date.now();
         const timeSinceCombat = currentTime - this.lastCombatTime;
+        const cooldownMs = this.autoRepairDelay * 16.67; // compatibilità con logica esistente
         
-        // Se sono passati 10 secondi dall'ultimo combattimento e lo scudo non è al massimo
-        if (timeSinceCombat >= this.autoRepairDelay * 16.67 && this.shield < this.maxShield) {
-            this.shield += this.shieldRegenRate / 60; // 60 FPS
-            this.shield = Math.min(this.shield, this.maxShield);
+        // Intervallo di tick: 3 secondi
+        const tickIntervalMs = 3000;
+        // Reset timer se in cooldown
+        if (timeSinceCombat < cooldownMs) {
+            this.lastShieldTickTime = currentTime - tickIntervalMs;
+            this.lastHpTickTime = currentTime - tickIntervalMs;
+            return;
+        }
+        
+        // Shield tick
+        if (this.maxShield > 0 && this.shield < this.maxShield) {
+            if (!this.lastShieldTickTime) this.lastShieldTickTime = currentTime - tickIntervalMs;
+            if (currentTime - this.lastShieldTickTime >= tickIntervalMs) {
+                const rawShield = 0.10 * (this.maxShield || 0);
+                const shieldTick = Math.max(500, Math.floor(rawShield));
+                if (shieldTick > 0) this.shield = Math.min(this.maxShield, this.shield + shieldTick);
+                this.lastShieldTickTime = currentTime;
+            }
+        }
+        
+        // HP tick (indipendente, nessuna priorità rispetto allo scudo)
+        if (this.hp < this.maxHP) {
+            if (!this.lastHpTickTime) this.lastHpTickTime = currentTime - tickIntervalMs;
+            if (currentTime - this.lastHpTickTime >= tickIntervalMs) {
+                const rawHp = 0.08 * (this.maxHP || 0); // 8% del maxHP ogni tick
+                const hpTick = Math.max(300, Math.floor(rawHp));
+                if (hpTick > 0) this.hp = Math.min(this.maxHP, this.hp + hpTick);
+                this.lastHpTickTime = currentTime;
+            }
         }
     }
     
@@ -1625,8 +1733,10 @@ export class Ship {
         }
         
         if (this.shield > 0) {
-            // Danno allo scudo
-            const shieldDamage = Math.min(damage, this.shield);
+            // Quota assorbita in base agli scudi montati
+            const absorption = Math.max(0, Math.min(1, Number(this.shieldAbsorption) || 0));
+            const absorbed = damage * absorption;
+            const shieldDamage = Math.min(absorbed, this.shield);
             this.shield -= shieldDamage;
             damage -= shieldDamage;
         }

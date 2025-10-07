@@ -180,20 +180,20 @@ export class HomePanel extends UIComponent {
             },
             laser: {
                 // Laser (nella categoria LASER)
-                lf1: { name: 'Laser LF1 (100 danno)', price: 150, amount: 10, max: 200, icon: '🔴', type: 'laser', key: 'lf1', damage: 100 },
-                lf2: { name: 'Laser LF2 (200 danno)', price: 300, amount: 5, max: 100, icon: '🟠', type: 'laser', key: 'lf2', damage: 200 },
-                lf3: { name: 'Laser LF3 (300 danno)', price: 600, amount: 2, max: 50, icon: '🟡', type: 'laser', key: 'lf3', damage: 300 },
-                lf4: { name: 'Laser LF4 (400 danno)', price: 1200, amount: 1, max: 25, icon: '🟢', type: 'laser', key: 'lf4', damage: 400 }
+                lf1: { name: 'Laser LF1 (65 danno)', price: 150, amount: 10, max: 200, icon: '🔴', type: 'laser', key: 'lf1', damage: 65 },
+                lf2: { name: 'Laser LF2 (140 danno)', price: 300, amount: 5, max: 100, icon: '🟠', type: 'laser', key: 'lf2', damage: 140 },
+                lf3: { name: 'Laser LF3 (175 danno)', price: 600, amount: 2, max: 50, icon: '🟡', type: 'laser', key: 'lf3', damage: 175 },
+                // LF4 rimosso definitivamente
             },
             generators: {
                 // Generatori e Scudi (categoria GENERATORI)
-                generator_1: { name: 'Generatore 1', price: 500, amount: 1, max: 50, icon: '⚡', type: 'generator', key: 'gen1' },
-                generator_2: { name: 'Generatore 2', price: 1000, amount: 1, max: 30, icon: '⚡', type: 'generator', key: 'gen2' },
-                generator_3: { name: 'Generatore 3', price: 2000, amount: 1, max: 20, icon: '⚡', type: 'generator', key: 'gen3' },
+                generator_1: { name: 'Generatore 1', price: 500, amount: 1, max: 50, icon: '⚡', type: 'generator', key: 'gen1', speed: 0.05 },
+                generator_2: { name: 'Generatore 2', price: 1000, amount: 1, max: 30, icon: '⚡', type: 'generator', key: 'gen2', speed: 0.10 },
+                generator_3: { name: 'Generatore 3', price: 2000, amount: 1, max: 20, icon: '⚡', type: 'generator', key: 'gen3', speed: 0.15 },
                 // Scudi nella stessa categoria
-                shield_1: { name: 'Shield 1', price: 600, amount: 1, max: 50, icon: '🛡️', type: 'shield', key: 'sh1', protection: 50 },
-                shield_2: { name: 'Shield 2', price: 1200, amount: 1, max: 30, icon: '🛡️', type: 'shield', key: 'sh2', protection: 100 },
-                shield_3: { name: 'Shield 3', price: 2400, amount: 1, max: 20, icon: '🛡️', type: 'shield', key: 'sh3', protection: 150 }
+                shield_1: { name: 'Shield 1', price: 600, amount: 1, max: 50, icon: '🛡️', type: 'shield', key: 'sh1', shield: 5000, absorption: 0.50 },
+                shield_2: { name: 'Shield 2', price: 1200, amount: 1, max: 30, icon: '🛡️', type: 'shield', key: 'sh2', shield: 9000, absorption: 0.70 },
+                shield_3: { name: 'Shield 3', price: 2400, amount: 1, max: 20, icon: '🛡️', type: 'shield', key: 'sh3', shield: 10000, absorption: 0.80 }
             },
             consumables: {
                 // Placeholder per consumabili futuri
@@ -2071,7 +2071,7 @@ export class HomePanel extends UIComponent {
         const items = this.shopItems[this.selectedShopCategory];
         const thumbSize = 70;
         const thumbSpacing = 180;
-        let thumbX = previewX + 20 + this.thumbnailScrollX;
+        let thumbX = previewX + 30 + this.thumbnailScrollX;
         const thumbY = previewY + 15;
         
         // Controlla click su ogni thumbnail
@@ -2475,7 +2475,10 @@ export class HomePanel extends UIComponent {
                         stats: {
                             key: item.key,
                             protection: item.protection || 0,
-                            damage: item.damage || 0
+                            damage: item.damage || 0,
+                            speed: item.speed || 0,
+                            shield: item.shield || 0,
+                            absorption: item.absorption || 0
                         }
                     };
                     console.log('📦 Item da aggiungere:', invItem);
@@ -2679,20 +2682,13 @@ export class HomePanel extends UIComponent {
     
     // Ottiene il modello nave dalle stats centrali
     getShipModel(shipNumber) {
-        // Importa SHIP_MODELS da Ship.js
-        const SHIP_MODELS = {
-            1: { maxHP: 4000, maxShield: 4000, velocity: 320, laserSlots: 1, generatorSlots: 1, extraSlots: 1 },
-            2: { maxHP: 8000, maxShield: 8000, velocity: 340, laserSlots: 2, generatorSlots: 2, extraSlots: 1 },
-            3: { maxHP: 12000, maxShield: 12000, velocity: 280, laserSlots: 3, generatorSlots: 5, extraSlots: 2 },
-            4: { maxHP: 16000, maxShield: 16000, velocity: 330, laserSlots: 4, generatorSlots: 6, extraSlots: 2 },
-            5: { maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 8, extraSlots: 2 },
-            6: { maxHP: 120000, maxShield: 120000, velocity: 340, laserSlots: 7, generatorSlots: 10, extraSlots: 3 },
-            7: { maxHP: 160000, maxShield: 160000, velocity: 260, laserSlots: 8, generatorSlots: 15, extraSlots: 3 },
-            8: { maxHP: 180000, maxShield: 180000, velocity: 380, laserSlots: 10, generatorSlots: 10, extraSlots: 2 },
-            9: { maxHP: 256000, maxShield: 256000, velocity: 300, laserSlots: 15, generatorSlots: 15, extraSlots: 3 },
-            10: { maxHP: 64000, maxShield: 64000, velocity: 360, laserSlots: 6, generatorSlots: 6, extraSlots: 1 }
-        };
-        return SHIP_MODELS[shipNumber] || null;
+        // Fonte unica: usa accessor da Ship.js se disponibile
+        try {
+            if (window.gameInstance?.ship?.getShipModelByNumber) {
+                return window.gameInstance.ship.getShipModelByNumber(shipNumber);
+            }
+        } catch (_) {}
+        return null;
     }
     
     handleShipsClick(x, y, detailsX, detailsY, items) {
@@ -2983,7 +2979,7 @@ export class HomePanel extends UIComponent {
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Danno: ' + (selectedItem.key === 'lf1' ? '60' : selectedItem.key === 'lf2' ? '120' : selectedItem.key === 'lf3' ? '200' : '300'), imageX + imageSize/2, imageY + imageSize - 30);
+            ctx.fillText('Danno: ' + (selectedItem.key === 'lf1' ? '65' : selectedItem.key === 'lf2' ? '140' : selectedItem.key === 'lf3' ? '175' : '-'), imageX + imageSize/2, imageY + imageSize - 30);
         }
         
         ctx.textAlign = 'left';
@@ -3034,11 +3030,18 @@ export class HomePanel extends UIComponent {
             ctx.font = 'bold 16px Arial';
             ctx.fillText('GENERATORE', imageX + imageSize/2, imageY + imageSize/2 + 90);
             
-            // Potenza
+            // Specifiche
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Potenza: ' + (selectedItem.key === 'gen1' ? '100' : selectedItem.key === 'gen2' ? '200' : selectedItem.key === 'gen3' ? '400' : '800'), imageX + imageSize/2, imageY + imageSize - 30);
+            if (selectedItem.key.startsWith('gen')) {
+                const spd = selectedItem.speed || (selectedItem.key==='gen1'?3:selectedItem.key==='gen2'?5:10);
+                ctx.fillText(`Velocità: +${spd}`, imageX + imageSize/2, imageY + imageSize - 30);
+            } else if (selectedItem.key.startsWith('sh')) {
+                const cap = (selectedItem.shield || 0).toLocaleString();
+                const abs = Math.round((selectedItem.absorption || 0)*100);
+                ctx.fillText(`Scudo: +${cap} | Assorbimento: ${abs}%`, imageX + imageSize/2, imageY + imageSize - 30);
+            }
         }
         
         ctx.textAlign = 'left';
@@ -3255,7 +3258,7 @@ export class HomePanel extends UIComponent {
         const items = this.shopItems[this.selectedShopCategory];
         const thumbSize = 70;
         const thumbSpacing = 180;
-        let thumbX = x + 20 + this.thumbnailScrollX;
+        let thumbX = x + 30 + this.thumbnailScrollX;
         const thumbY = y + 15;
         
         // Lista tutti gli items

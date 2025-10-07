@@ -4,23 +4,24 @@
 export class TrailSystem {
     constructor() {
         this.segments = [];           // { x1,y1,x2,y2, alpha, width }
-        this.maxSegments = 320;       // cap memory/CPU
-        this.fadeDamping = 0.92;      // per-frame alpha damping
-        this.widthDamping = 0.985;    // per-frame width damping
-        this.spawnDistance = 2.5;     // spawn frequency tied to movement
-        this.baseWidth = 8;           // initial ribbon half-width
-        this.colorCore = '#bfe6ff';   // bright core (near white with hint of blue)
-        this.colorEdge = 'rgba(191, 230, 255, 0)'; // transparent edge
+        this.maxSegments = 360;       // cap memory/CPU
+        this.fadeDamping = 0.965;     // slower fade for longer persistence
+        this.widthDamping = 0.992;    // slower thinning for smoother tails
+        this.spawnDistance = 2.0;     // spawn a bit more frequently
+        this.baseWidth = 10;          // initial ribbon half-width (slightly thicker)
+        // Warmer engine flame palette (in linea con engflames)
+        this.colorCore = '#ffc66d';   // warm core (soft orange)
+        this.colorEdge = 'rgba(255, 198, 109, 0)'; // transparent edge
         this._lastSpawnPositions = null; // { left:{x,y}, right:{x,y} }
         this._lastRotation = null;     // for turn-based fanning
 
         // Subtle turbulence wobble
-        this.noiseAmplitude = 0.6;     // px wobble around ribbon
-        this.noiseSpeed = 0.22;        // phase increment per frame
+        this.noiseAmplitude = 0.8;     // px wobble around ribbon
+        this.noiseSpeed = 0.28;        // phase increment per frame
 
         // Occasional bright sparks for hot exhaust
         this.sparks = [];              // { x,y,vx,vy,alpha,size }
-        this.maxSparks = 120;
+        this.maxSparks = 160;
     }
 
     update() {
@@ -114,7 +115,7 @@ export class TrailSystem {
 
     _spawnStreak(x1, y1, x2, y2, ship, fanSign = 0) {
         // Length correlates with speed; use distance as implicit length
-        const width = Math.max(2.5, this.baseWidth * (ship.speed / 6));
+        const width = Math.max(3, this.baseWidth * (ship.speed / 5.5));
         this.segments.push({ x1, y1, x2, y2, alpha: 0.9, width, phase: Math.random() * Math.PI * 2, fan: fanSign });
     }
 
@@ -162,9 +163,12 @@ export class TrailSystem {
             const wobble = Math.sin(s.phase || 0) * this.noiseAmplitude;
             const grad = ctx.createLinearGradient(0, 0, len, 0);
             grad.addColorStop(0.0, this._withAlpha(this.colorEdge, 0));
-            grad.addColorStop(0.15, this._withAlpha(this.colorCore, s.alpha * 0.5));
-            grad.addColorStop(0.5, this._withAlpha('#ffffff', s.alpha));
-            grad.addColorStop(0.85, this._withAlpha(this.colorCore, s.alpha * 0.5));
+            // cool blue start near nozzle
+            grad.addColorStop(0.12, this._withAlpha('#7ec8ff', s.alpha * 0.55));
+            // hot white core
+            grad.addColorStop(0.35, this._withAlpha('#ffffff', s.alpha));
+            // warm orange tail
+            grad.addColorStop(0.7, this._withAlpha(this.colorCore, s.alpha * 0.7));
             grad.addColorStop(1.0, this._withAlpha(this.colorEdge, 0));
 
             ctx.fillStyle = grad;
@@ -185,8 +189,8 @@ export class TrailSystem {
             const r = sp.size;
             const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
             g.addColorStop(0.0, `rgba(255, 255, 255, ${sp.alpha})`);
-            g.addColorStop(0.4, `rgba(191, 230, 255, ${sp.alpha * 0.8})`);
-            g.addColorStop(1.0, 'rgba(191, 230, 255, 0)');
+            g.addColorStop(0.45, `rgba(255, 198, 109, ${sp.alpha * 0.9})`);
+            g.addColorStop(1.0, 'rgba(255, 198, 109, 0)');
             ctx.fillStyle = g;
             ctx.beginPath();
             ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
