@@ -3145,8 +3145,10 @@ export class HomePanel extends UIComponent {
             const buttonWidth = 120;
             const buttonHeight = 35;
             
-            // Controlla se il limite è stato raggiunto
-            const currentUAVCount = this.game.inventory.equipment.uav.length;
+            // Controlla se il limite è stato raggiunto (null-safe in produzione)
+            const currentUAVCount = (this.game && this.game.inventory && this.game.inventory.equipment && Array.isArray(this.game.inventory.equipment.uav))
+                ? this.game.inventory.equipment.uav.length
+                : 0;
             const canBuy = currentUAVCount < 8;
             
             // Sfondo pulsante
