@@ -3,6 +3,11 @@
  * Single source of truth per tutte le impostazioni
  */
 export const GameConfig = {
+    // Build/Version
+    BUILD: {
+        VERSION: '0.1.0',      // aggiorna manualmente prima dei test/release
+        LABEL: 'ALPHA PRE-BUILD'
+    },
     // Configurazione Canvas
     CANVAS: {
         WIDTH: 1920,

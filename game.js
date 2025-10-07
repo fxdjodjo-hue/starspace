@@ -43,6 +43,7 @@ import { DamageNumberSystem } from './modules/DamageNumbers.js';
 import { SaveSystem } from './src/systems/SaveSystem.js';
 import { SaveLoadPanel } from './src/ui/SaveLoadPanel.js';
 import { FactionSystem } from './src/systems/FactionSystem.js';
+import { GameConfig } from './src/config/GameConfig.js';
 import { AuthSystem } from './src/systems/AuthSystem.js';
 
 
@@ -51,7 +52,11 @@ class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        
+        // Etichetta build/version per overlay
+        this.buildLabel = {
+            text: `${GameConfig.BUILD.LABEL} v${GameConfig.BUILD.VERSION}`,
+            color: '#9aa4b2'
+        };
         // Imposta dimensioni dinamiche del canvas
         this.setCanvasSize();
         
@@ -280,11 +285,7 @@ class Game {
         
         // Il logout è ora gestito dalla HomePanel
         
-        // Etichetta build (overlay)
-        this.buildLabel = {
-            text: 'PRE-ALPHA BUILD',
-            color: '#9aa4b2'
-        };
+        // Etichetta build (overlay) già inizializzata nel costruttore in alto
         
         // Inizializza audio e altri sistemi
         this.initAudio();
@@ -1422,12 +1423,16 @@ class Game {
         // Disegna la schermata di selezione iniziale se visibile
         if (this.startScreen.isVisible) {
             this.startScreen.draw(this.ctx);
+            // Mostra sempre il badge build anche in start screen
+            this.drawBuildBadge();
             return; // Non disegnare il gioco se la start screen è visibile
         }
         
         // Disegna la schermata di selezione fazione se visibile
         if (this.factionSelectionScreen.isVisible) {
             this.factionSelectionScreen.draw(this.ctx);
+            // Mostra sempre il badge build anche in selezione fazione
+            this.drawBuildBadge();
             return; // Non disegnare il gioco se la faction selection screen è visibile
         }
         
@@ -1546,8 +1551,8 @@ class Game {
         // Ripristina il contesto (rimuove lo zoom)
         this.ctx.restore();
         
-         // Badge build (overlay in alto a destra) - no glow
-         this.drawBuildBadge();
+        // Badge build (overlay in alto a destra) - no glow
+        this.drawBuildBadge();
         
         // Disegna la minimappa (separata dal renderer, non influenzata dallo zoom)
         this.minimap.draw(this.ctx, this.ship, this.camera, this.enemies, this.sectorSystem, this.spaceStation, this.interactiveAsteroids, this.mapManager);
@@ -1621,16 +1626,24 @@ class Game {
         
         // Il pulsante di logout è ora gestito dal UIManager
         
-        // Badge build in alto a destra
-        this.ctx.save();
-        this.ctx.font = 'bold 12px Inter, Arial, sans-serif';
-        this.ctx.textAlign = 'right';
-        this.ctx.textBaseline = 'top';
-        this.ctx.fillStyle = (this.buildLabel && this.buildLabel.color) ? this.buildLabel.color : '#9aa4b2';
-        const labelText = (this.buildLabel && this.buildLabel.text) ? this.buildLabel.text : 'PRE-ALPHA BUILD';
-        this.ctx.globalAlpha = 0.9;
-        this.ctx.fillText(labelText, this.canvas.width - 14, 14);
-        this.ctx.restore();
+        // Badge build in alto a destra (ridondanza rimossa: ora gestito da drawBuildBadge)
+        this.drawBuildBadge();
+    }
+
+    // Disegna la label di build in alto a destra sempre sopra tutto
+    drawBuildBadge() {
+        try {
+            const text = (this.buildLabel && this.buildLabel.text) ? this.buildLabel.text : 'PRE-ALPHA BUILD';
+            const color = (this.buildLabel && this.buildLabel.color) ? this.buildLabel.color : '#9aa4b2';
+            this.ctx.save();
+            this.ctx.font = 'bold 12px Inter, Arial, sans-serif';
+            this.ctx.textAlign = 'right';
+            this.ctx.textBaseline = 'top';
+            this.ctx.globalAlpha = 0.9;
+            this.ctx.fillStyle = color;
+            this.ctx.fillText(text, this.canvas.width - 14, 14);
+            this.ctx.restore();
+        } catch (_) { /* no-op */ }
     }
     
     // Inizializza l'inventario (nessun mock)
