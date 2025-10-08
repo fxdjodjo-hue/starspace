@@ -4,8 +4,11 @@ import { ThemeConfig, ThemeUtils } from '../config/ThemeConfig.js';
 export class QuestTracker {
     constructor(game) {
         this.game = game;
-        this.visible = true;
+        this.visible = false;
         this.minimized = true; // Stato iniziale minimizzato
+        // Il sistema UIIcon gestisce già l'icona nella toolbar.
+        // Evita di disegnare una seconda icona a stella sopra la toolbar.
+        this.drawMinimizedIcon = false;
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         this.hasMoved = false; // Traccia se c'è stato movimento durante il drag
@@ -566,7 +569,9 @@ export class QuestTracker {
         ctx.strokeRect(this.x, this.y, currentWidth, currentHeight);
         
         // Icona di drag (clipboard con checkmark) - centrata
-        this.drawDragIcon(ctx, this.x + (currentWidth - 24) / 2, this.y + (currentHeight - 24) / 2);
+        if (this.drawMinimizedIcon) {
+            this.drawDragIcon(ctx, this.x + (currentWidth - 24) / 2, this.y + (currentHeight - 24) / 2);
+        }
         
         // Indicatore del numero di quest attive (sempre visibile)
         const questCount = this.activeQuests ? this.activeQuests.length : 0;
@@ -613,7 +618,9 @@ export class QuestTracker {
         
         
         // Icona di drag (clipboard con checkmark)
-        this.drawDragIcon(ctx, this.x + 8, this.y + 8);
+        if (this.drawMinimizedIcon) {
+            this.drawDragIcon(ctx, this.x + 8, this.y + 8);
+        }
         
         // Titolo (solo se abbastanza grande)
         if (currentWidth > 100) {
@@ -776,6 +783,18 @@ export class QuestTracker {
     // Toggle del tracker
     toggle() {
         this.visible = !this.visible;
+        if (this.visible) {
+            // Quando aperto da toolbar: mostra in stato espanso
+            this.minimized = false;
+            this.animating = true;
+            if (this.savedExpandedX !== null && this.savedExpandedY !== null) {
+                this.expandedX = this.savedExpandedX;
+                this.expandedY = this.savedExpandedY;
+            } else {
+                this.expandedX = (this.game.canvas.width - this.width) / 2;
+                this.expandedY = (this.game.canvas.height - this.height) / 2;
+            }
+        }
     }
     
     // Toggle dello stato minimizzato

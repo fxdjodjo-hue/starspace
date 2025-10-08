@@ -354,25 +354,52 @@ class Game {
     initUIManager() {
         const configs = UIManager.getDefaultConfigs();
         
-        // Registra le icone con i pannelli associati
+        // Pulisci eventuali icone precedenti per evitare duplicazioni
+        if (this.uiManager && Array.isArray(this.uiManager.icons)) {
+            this.uiManager.icons = [];
+        }
+
+        // Calcola posizioni esplicite per ordine deterministico
+        const baseX = this.uiManager.startX;
+        const baseY = this.uiManager.startY;
+        const step = this.uiManager.iconSize + this.uiManager.iconSpacing;
+
+        // Registra le icone con i pannelli associati (ordine desiderato)
+        // 1) Home Dashboard, 2) Inventory, 3) User, 4) Quest Tracker
         this.uiManager.registerIcon({
-            ...configs.quest,
-            panel: this.questTracker
+            type: 'home',
+            icon: '🏠',
+            tooltipText: 'Home Dashboard',
+            showCount: false,
+            panel: this.homePanel,
+            position: { x: baseX + step * 0, y: baseY }
         });
-        
+
         this.uiManager.registerIcon({
-            ...configs.profile,
-            panel: this.profilePanel
+            type: 'inventory',
+            icon: '📦',
+            tooltipText: 'Inventory',
+            showCount: false,
+            panel: this.inventory,
+            position: { x: baseX + step * 1, y: baseY }
         });
-        
+
         this.uiManager.registerIcon({
-            ...configs.inventory,
-            panel: this.inventory
+            type: 'profile',
+            icon: '🚀',
+            tooltipText: 'User',
+            showCount: false,
+            panel: this.profilePanel,
+            position: { x: baseX + step * 2, y: baseY }
         });
-        
+
         this.uiManager.registerIcon({
-            ...configs.home,
-            panel: this.homePanel
+            type: 'quest',
+            icon: '⭐',
+            tooltipText: 'Quest Tracker',
+            showCount: false,
+            panel: this.questTracker,
+            position: { x: baseX + step * 3, y: baseY }
         });
         
         // Settings icon removed per user request

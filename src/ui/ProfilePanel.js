@@ -39,6 +39,7 @@ export class ProfilePanel {
         
         // Dati del profilo
         this.profileData = {
+            level: 0,
             experience: 0,
             honor: 0,
             credit: 0,
@@ -49,6 +50,8 @@ export class ProfilePanel {
     // Aggiorna i dati del profilo
     update() {
         if (this.game.ship) {
+            // Level
+            this.profileData.level = (this.game.ship.currentLevel || this.game.ship.level || 1);
             // Experience
             this.profileData.experience = this.game.ship.getResource('experience') || 0;
             
@@ -303,13 +306,16 @@ export class ProfilePanel {
         const leftValueX = this.x + this.width / 2 - 8; // Fine della colonna sinistra
         const rightValueX = this.x + this.width - 15; // Fine della colonna destra
         
-        // Prima riga: Experience e Credits
-        this.drawStatLine(ctx, 'Experience:', this.profileData.experience.toLocaleString(), leftX, startY, leftValueX);
+        // Prima riga: Level e Credits
+        this.drawStatLine(ctx, 'Level:', String(this.profileData.level), leftX, startY, leftValueX);
         this.drawStatLine(ctx, 'Credits:', this.profileData.credit.toLocaleString(), rightX, startY, rightValueX);
         
         // Seconda riga: Honor e Uridium
         this.drawStatLine(ctx, 'Honor:', this.profileData.honor.toLocaleString(), leftX, startY + lineHeight, leftValueX);
         this.drawStatLine(ctx, 'Uridium:', this.profileData.uridium.toLocaleString(), rightX, startY + lineHeight, rightValueX);
+
+        // Terza riga: Experience (solo a sinistra)
+        this.drawStatLine(ctx, 'Experience:', this.profileData.experience.toLocaleString(), leftX, startY + (lineHeight * 2), leftValueX);
     }
     
     // Disegna una riga di statistica
