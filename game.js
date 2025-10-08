@@ -63,6 +63,13 @@ class Game {
         this.width = this.canvas.width;
         this.height = this.canvas.height;
         
+        // Game loop settings
+        this.targetFPS = 60;
+        this.frameInterval = 1000 / this.targetFPS;
+        this.lastFrameTime = 0;
+        this.vsyncEnabled = true;
+        this.graphicsQuality = 2; // Default alta qualità
+        
         // Inizializza tutti i moduli
         this.ship = new Ship(8000, 5000, 40, this); // Centro del rettangolo 16000x10000
         this.camera = new Camera(this.width, this.height);
@@ -368,10 +375,7 @@ class Game {
             panel: this.homePanel
         });
         
-        this.uiManager.registerIcon({
-            ...configs.settings,
-            panel: this.settingsPanel
-        });
+        // Settings icon removed per user request
     }
     
     // Inizializza l'audio
@@ -792,13 +796,33 @@ class Game {
             }
         }
         
-        // Gestisci click nel pannello home
+        // Gestisci mouse up nel pannello home (per terminare drag)
+        if (this.homePanel.visible && this.input.isLeftClickJustReleased()) {
+            const mousePos = this.input.getMousePosition();
+            const handled = this.homePanel.handleMouseUp(mousePos.x, mousePos.y);
+            if (handled) {
+                this.input.resetLeftClickReleased();
+                return; // Mouse up gestito dal pannello
+            }
+        }
+        
+        // Gestisci click nel pannello home (solo se non è stato gestito come mouse up)
         if (this.homePanel.visible && this.input.isLeftClickJustReleased()) {
             const mousePos = this.input.getMousePosition();
             const handled = this.homePanel.handleClick(mousePos.x, mousePos.y);
             if (handled) {
                 this.input.resetLeftClickReleased();
                 return; // Click gestito dal pannello
+            }
+        }
+        
+        // Gestisci mouse down nel pannello home (per drag slider)
+        if (this.homePanel.visible && this.input.isMouseJustPressed()) {
+            const mousePos = this.input.getMousePosition();
+            const handled = this.homePanel.handleMouseDown(mousePos.x, mousePos.y);
+            if (handled) {
+                this.input.resetMouseJustPressed();
+                return; // Mouse down gestito dal pannello
             }
         }
         
@@ -1152,6 +1176,11 @@ class Game {
             return;
         }
         
+        // Gestisci attacco immediato con Ctrl
+        if (this.input.isCtrlJustPressed()) {
+            this.ship.startCombat();
+        }
+        
         const combatResult = this.ship.updateCombat(this.explosionManager);
 
         
@@ -1179,6 +1208,11 @@ class Game {
         // Aggiorna stazione spaziale
         this.spaceStation.update();
         this.spaceStation.checkAndShowMessage(this.ship, this);
+        
+        // Rigenera NPC test se necessario
+        if (this.mapManager) {
+            this.mapManager.regenerateTestNPC();
+        }
         
         // Aggiorna asteroidi interattivi
         for (let asteroid of this.interactiveAsteroids) {
@@ -2637,14 +2671,38 @@ class Game {
     
     gameLoop() {
         try {
-            this.update();
-            this.render();
+            const currentTime = performance.now();
+            
+            // Controlla se è il momento di aggiornare (per limitare FPS)
+            if (currentTime - this.lastFrameTime >= this.frameInterval) {
+                this.update();
+                this.render();
+                this.lastFrameTime = currentTime;
+            }
+            
             requestAnimationFrame(() => this.gameLoop());
         } catch (error) {
             console.error('❌ Error in game loop:', error);
             // Riavvia il game loop dopo un errore
             setTimeout(() => this.gameLoop(), 100);
         }
+    }
+    
+    /**
+     * Imposta il target FPS
+     * @param {number} fps - FPS target
+     */
+    setTargetFPS(fps) {
+        this.targetFPS = Math.max(1, Math.min(120, fps));
+        this.frameInterval = 1000 / this.targetFPS;
+    }
+    
+    /**
+     * Ottiene il target FPS
+     * @returns {number} FPS target
+     */
+    getTargetFPS() {
+        return this.targetFPS;
     }
     
     /**

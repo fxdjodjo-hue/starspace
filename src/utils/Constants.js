@@ -62,13 +62,13 @@ export const WEAPON_TYPES = {
 
 // Configurazione missili
 export const MISSILE_CONFIG = {
-    SPEED: 8, // Velocità base dei missili
+    SPEED: 15, // Velocità base dei missili (aumentata)
     DAMAGE: 50, // Danno base dei missili
     FIRE_RATE: 180, // Frequenza di sparo (frame)
-    LIFETIME: 180, // Durata massima (frame)
+    LIFETIME: 120, // Durata massima (frame) - ridotta per missili più veloci
     MAX_COUNT: 3, // Numero massimo di missili contemporanei
-    ACCELERATION: 0.3, // Velocità di accelerazione
-    MIN_SPEED_FACTOR: 0.5 // Fattore di velocità minima
+    ACCELERATION: 0.5, // Velocità di accelerazione (aumentata)
+    MIN_SPEED_FACTOR: 0.7 // Fattore di velocità minima (aumentato)
 };
 
 // Tipi di laser

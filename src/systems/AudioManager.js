@@ -299,7 +299,7 @@ export class AudioManager {
     setEnabled(enabled) {
         this.enabled = enabled;
         if (!enabled) {
-            this.forceStopAllEngineSounds();
+            this.stopEngineSound();
             this.stopBackgroundMusic();
         } else {
             // Se l'audio viene riabilitato, riavvia la musica se non sta suonando

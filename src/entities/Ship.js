@@ -257,11 +257,12 @@ export class Ship {
             }
         };
         
-        // Configurazione base laser
-        this.laserConfig = {
-            fireRate: 60,   // Fire rate fisso per tutti i laser (1 colpo al secondo)
-            speed: 16,     // Velocità proiettile aumentata per animazione più veloce
-            color: '#ff0000'
+        // Configurazioni laser per tipo
+        this.laserConfigs = {
+            x1: { fireRate: 30, speed: 16, color: '#ff0000' },    // 2 colpi/sec
+            x2: { fireRate: 30, speed: 18, color: '#ff6600' },    // 2 colpi/sec
+            x3: { fireRate: 30, speed: 20, color: '#ffaa00' },   // 2 colpi/sec
+            sab: { fireRate: 30, speed: 12, color: '#00ff00' }   // 2 colpi/sec
         };
         
         // Configurazioni missili
@@ -539,7 +540,7 @@ export class Ship {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // Zona morta per controllo preciso senza micro-movimenti
-        const deadZone = 80;
+        const deadZone = 30;
         
         if (distance > deadZone) {
             this.targetX = x;
@@ -827,61 +828,62 @@ export class Ship {
             return;
         }
         
-        // Calcola la direzione della nave per il lancio
-        const shipDirection = Math.atan2(this.targetY - this.y, this.targetX - this.x);
-        
-        // Offset laterali per i due proiettili
-        const lateralOffset = 35; // Distanza laterale dal centro della nave
-        
-        // Crea un proiettile visivo a sinistra (danno 0)
-        const leftOffsetX = this.x + Math.cos(shipDirection - Math.PI/2) * lateralOffset;
-        const leftOffsetY = this.y + Math.sin(shipDirection - Math.PI/2) * lateralOffset;
-        
-        const projectile1 = new Projectile(
-            leftOffsetX, 
-            leftOffsetY, 
-            this.selectedTarget.x, 
-            this.selectedTarget.y,
-            this.projectileSpeed,
-            0, // Nessun danno (solo visivo)
-            isSAB,
-            this.selectedLaser
-        );
-        
-        // Crea un proiettile visivo a destra (danno 0)
-        const rightOffsetX = this.x + Math.cos(shipDirection + Math.PI/2) * lateralOffset;
-        const rightOffsetY = this.y + Math.sin(shipDirection + Math.PI/2) * lateralOffset;
-        
-        const projectile2 = new Projectile(
-            rightOffsetX, 
-            rightOffsetY, 
-            this.selectedTarget.x, 
-            this.selectedTarget.y,
-            this.projectileSpeed,
-            0, // Nessun danno (solo visivo)
-            isSAB,
-            this.selectedLaser
-        );
-        
-        // Crea un proiettile invisibile al centro con il danno totale
-        const centerProjectile = new Projectile(
-            this.x,
-            this.y,
-            this.selectedTarget.x,
-            this.selectedTarget.y,
-            this.projectileSpeed,
-            isSAB ? 0 : this.projectileDamage, // Danno totale
-            isSAB,
-            this.selectedLaser
-        );
-        centerProjectile.isInvisible = true; // Flag per non renderizzare il proiettile
-        
-        this.projectiles.push(projectile1);
-        this.projectiles.push(projectile2);
-        this.projectiles.push(centerProjectile);
+        // Sistema laser: SAB usa laser centrale, altri usano laser laterali
+        if (isSAB) {
+            // SAB: un solo laser centrale
+            const centerProjectile = new Projectile(
+                this.x, 
+                this.y, 
+                this.selectedTarget.x, 
+                this.selectedTarget.y,
+                this.projectileSpeed,
+                this.projectileDamage, // Danno completo per SAB
+                isSAB,
+                this.selectedLaser
+            );
+            
+            this.projectiles.push(centerProjectile);
+        } else {
+            // X1, X2, X3: due laser laterali
+            const shipDirection = Math.atan2(this.targetY - this.y, this.targetX - this.x);
+            const lateralOffset = 35; // Distanza laterale dal centro della nave
+            
+            // Laser sinistro con danno
+            const leftOffsetX = this.x + Math.cos(shipDirection - Math.PI/2) * lateralOffset;
+            const leftOffsetY = this.y + Math.sin(shipDirection - Math.PI/2) * lateralOffset;
+            
+            const projectile1 = new Projectile(
+                leftOffsetX, 
+                leftOffsetY, 
+                this.selectedTarget.x, 
+                this.selectedTarget.y,
+                this.projectileSpeed,
+                this.projectileDamage, // Danno completo per laser laterale
+                isSAB,
+                this.selectedLaser
+            );
+            
+            // Laser destro visivo
+            const rightOffsetX = this.x + Math.cos(shipDirection + Math.PI/2) * lateralOffset;
+            const rightOffsetY = this.y + Math.sin(shipDirection + Math.PI/2) * lateralOffset;
+            
+            const projectile2 = new Projectile(
+                rightOffsetX, 
+                rightOffsetY, 
+                this.selectedTarget.x, 
+                this.selectedTarget.y,
+                this.projectileSpeed,
+                0, // Nessun danno (solo visivo)
+                isSAB,
+                this.selectedLaser
+            );
+            
+            this.projectiles.push(projectile1);
+            this.projectiles.push(projectile2);
+        }
         
         // Consuma munizioni per il laser selezionato
-        this.consumeAmmunition('laser', this.selectedLaser, 2); // 2 munizioni per i due proiettili
+        this.consumeAmmunition('laser', this.selectedLaser, 1); // 1 munizione per salva
         
         // Riproduci suono laser se l'audio manager è disponibile
         if (window.gameInstance && window.gameInstance.audioManager) {
@@ -933,8 +935,8 @@ export class Ship {
         const directionVariation = (Math.random() - 0.5) * 0.3; // ±0.15 radianti
         const initialDirection = shipDirection + directionVariation;
         
-        // Velocità iniziale più bassa per un effetto di lancio più realistico
-        const initialSpeed = this.missileSpeed * 0.6; // 60% della velocità normale
+        // Velocità iniziale più alta per un effetto di lancio più realistico
+        const initialSpeed = this.missileSpeed * 0.8; // 80% della velocità normale (era 60%)
         
         // Crea un nuovo missile
         const missile = new Missile(
@@ -1301,6 +1303,12 @@ export class Ship {
     
     // Processa reward per nemico distrutto usando RewardManager
     processEnemyKill(enemyType, enemyConfig = null) {
+        // Se è l'NPC test, non dare ricompense
+        if (enemyConfig && enemyConfig.isTestTarget) {
+            console.log('🎯 NPC Test eliminato - nessuna ricompensa');
+            return;
+        }
+        
         // Calcola i reward (RewardManager è solo un calcolatore)
         const results = this.rewardManager.processEnemyKill(enemyType, enemyConfig);
         
@@ -1868,10 +1876,13 @@ export class Ship {
     }
     
     applyWeaponConfigs() {
-        // Applica configurazione laser base + danno dei laser equipaggiati
-        this.projectileDamage = this.getTotalLaserDamage();  // Danno totale dei laser * moltiplicatore munizioni
-        this.fireRate = this.laserConfig.fireRate;           // Fire rate fisso
-        this.projectileSpeed = this.laserConfig.speed;       // Velocità fissa
+        // Applica configurazione laser specifica per tipo
+        const laserConfig = this.laserConfigs[this.selectedLaser];
+        if (laserConfig) {
+            this.projectileDamage = this.getTotalLaserDamage();  // Danno totale dei laser * moltiplicatore munizioni
+            this.fireRate = laserConfig.fireRate;               // Fire rate specifico per tipo
+            this.projectileSpeed = laserConfig.speed;           // Velocità specifica per tipo
+        }
         
         // Applica configurazione missile selezionata
         const missileConfig = this.missileConfigs[this.selectedMissile];
@@ -1883,12 +1894,14 @@ export class Ship {
     }
     
     getSelectedLaserInfo() {
+        const laserConfig = this.laserConfigs[this.selectedLaser];
         return {
             type: this.selectedLaser,
             ammunition: this.ammunition.laser[this.selectedLaser],
             damage: this.getTotalLaserDamage(),
-            fireRate: this.laserConfig.fireRate,
-            speed: this.laserConfig.speed
+            fireRate: laserConfig ? laserConfig.fireRate : 60,
+            speed: laserConfig ? laserConfig.speed : 16,
+            color: laserConfig ? laserConfig.color : '#ff0000'
         };
     }
     

@@ -13,6 +13,15 @@ export class HomePanel extends UIComponent {
         this.isOpen = false; // Aggiunta proprietà isOpen per compatibilità
         this.selectedCategory = 'info';
         this.lastSelectedCategory = 'info';
+        this.settingsCurrentTab = 'audio'; // Tab iniziale per impostazioni
+        
+        // Variabili per drag dei slider delle impostazioni
+        this.isDraggingSlider = false;
+        this.draggedSliderType = null;
+        this.dragStartX = 0;
+        
+        // Graphics settings
+        this.graphicsQuality = 2; // 0=Bassa, 1=Media, 2=Alta
         
         // Fazioni
         this.selectedFactionId = null;
@@ -1023,15 +1032,126 @@ export class HomePanel extends UIComponent {
             }
         }
         
+        // Se siamo nelle impostazioni, gestisci i click delle impostazioni
+        if (this.selectedCategory === 'settings') {
+            const contentX = panelX + this.navWidth;
+            const contentY = panelY + 60;
+            console.log('🎯 Settings click:', { x, y, panelX, panelY, contentX, contentY, navWidth: this.navWidth });
+            const handled = this.handleSettingsClick(x, y, contentX, contentY);
+            if (handled) {
+                return true;
+            }
+        }
+        
         // Se siamo nel pannello home e non è stato gestito, restituisci true
         // per evitare che il click venga gestito da altri elementi
         return true;
     }
     
-    // Gestisce il movimento del mouse per hover effects
+    handleMouseDown(x, y) {
+        if (!this.visible) return false;
+        
+        // Calcola posizione centrata
+        const panelX = (this.game.canvas.width - this.panelWidth) / 2;
+        const panelY = (this.game.canvas.height - this.panelHeight) / 2;
+        
+        // Se siamo nelle impostazioni e nella tab audio, controlla se inizia drag su slider
+        if (this.selectedCategory === 'settings' && this.settingsCurrentTab === 'audio') {
+            const contentX = panelX + this.navWidth;
+            const contentY = panelY + 60;
+            const settingsY = contentY + 120;
+            const sliderY = settingsY + 80;
+            const sliderWidth = 200;
+            const sliderHeight = 20;
+            
+            // Toggle Audio (gestito anche qui per evitare conflitti)
+            const toggleX = contentX + 20 + 100;
+            const toggleY = settingsY + 20;
+            if (x >= toggleX && x <= toggleX + 60 && 
+                y >= toggleY && y <= toggleY + 30) {
+                const settingsPanel = this.game.settingsPanel;
+                settingsPanel.audioEnabled = !settingsPanel.audioEnabled;
+                settingsPanel.applyAudioSettings();
+                settingsPanel.saveSettings();
+                return true;
+            }
+            
+            // Master Volume slider
+            if (x >= contentX + 20 && x <= contentX + 20 + sliderWidth && 
+                y >= sliderY + 20 && y <= sliderY + 20 + sliderHeight) {
+                this.isDraggingSlider = true;
+                this.draggedSliderType = 'master';
+                this.dragStartX = x;
+                return true;
+            }
+            
+            // Music Volume slider
+            if (x >= contentX + 20 && x <= contentX + 20 + sliderWidth && 
+                y >= sliderY + 80 && y <= sliderY + 80 + sliderHeight) {
+                this.isDraggingSlider = true;
+                this.draggedSliderType = 'music';
+                this.dragStartX = x;
+                return true;
+            }
+            
+            // SFX Volume slider
+            if (x >= contentX + 20 && x <= contentX + 20 + sliderWidth && 
+                y >= sliderY + 140 && y <= sliderY + 140 + sliderHeight) {
+                this.isDraggingSlider = true;
+                this.draggedSliderType = 'sfx';
+                this.dragStartX = x;
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     handleMouseMove(x, y) {
         if (!this.visible) {
             return;
+        }
+        
+        // Se stiamo trascinando uno slider, aggiorna il valore
+        if (this.isDraggingSlider && this.draggedSliderType) {
+            const panelX = (this.game.canvas.width - this.panelWidth) / 2;
+            const contentX = panelX + this.navWidth;
+            
+            if (this.draggedSliderType === 'fps') {
+                // FPS Slider
+                const graphicsOffsetY = 120;
+                const fpsSliderX = contentX + 100;
+                const fpsSliderWidth = 150;
+                const fpsPercent = Math.max(0, Math.min(1, (x - fpsSliderX) / fpsSliderWidth));
+                const newFPS = Math.round(30 + (fpsPercent * (120 - 30))); // Range 30-120
+                if (this.game.setTargetFPS) {
+                    this.game.setTargetFPS(Math.max(30, Math.min(120, newFPS)));
+                }
+                return;
+            } else {
+                // Audio Sliders
+                const sliderWidth = 200;
+                const sliderX = contentX + 20;
+                
+                const newVolume = Math.max(0, Math.min(1, (x - sliderX) / sliderWidth));
+                const settingsPanel = this.game.settingsPanel;
+                
+                switch (this.draggedSliderType) {
+                    case 'master':
+                        settingsPanel.masterVolume = newVolume;
+                        break;
+                    case 'music':
+                        settingsPanel.musicVolume = newVolume;
+                        break;
+                    case 'sfx':
+                        settingsPanel.sfxVolume = newVolume;
+                        break;
+                }
+                
+                settingsPanel.applyAudioSettings();
+                settingsPanel.saveSettings();
+                return;
+            }
         }
         
         // Calcola posizione centrata (stesso calcolo di draw)
@@ -1289,7 +1409,7 @@ export class HomePanel extends UIComponent {
                 this.drawComingSoon(ctx, contentX, contentY, 'Mappa spaziale');
                 break;
             case 'settings':
-                this.drawComingSoon(ctx, contentX, contentY, 'Impostazioni');
+                this.drawSettingsContent(ctx, contentX, contentY);
                 break;
             case 'exit':
                 this.drawLogoutContent(ctx, contentX, contentY);
@@ -1359,9 +1479,489 @@ export class HomePanel extends UIComponent {
         // Rimuoviamo la sezione eventi attivi
     }
     
+    drawSettingsContent(ctx, x, y) {
+        // Titolo sezione
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Impostazioni', x + this.contentWidth/2, y + 40);
+        
+        // Tab impostazioni
+        this.drawSettingsTabs(ctx, x + 20, y + 70);
+        
+        // Contenuto tab
+        if (this.settingsCurrentTab === 'audio') {
+            this.drawAudioSettings(ctx, x + 20, y + 120);
+        } else if (this.settingsCurrentTab === 'graphics') {
+            this.drawGraphicsSettings(ctx, x + 20, y + 120);
+        } else if (this.settingsCurrentTab === 'controls') {
+            this.drawControlsSettings(ctx, x + 20, y + 120);
+        }
+        
+        ctx.textAlign = 'left';
+    }
     
+    drawSettingsTabs(ctx, x, y) {
+        const tabWidth = 100;
+        const tabHeight = 35;
+        const tabSpacing = 5;
+        
+        const tabs = [
+            { id: 'audio', name: 'Audio' },
+            { id: 'graphics', name: 'Grafica' },
+            { id: 'controls', name: 'Comandi' }
+        ];
+        
+        tabs.forEach((tab, index) => {
+            const tabX = x + index * (tabWidth + tabSpacing);
+            const isSelected = this.settingsCurrentTab === tab.id;
+            
+            // Sfondo tab
+            ctx.fillStyle = isSelected ? 'rgba(40,40,44,0.95)' : 'rgba(28,28,32,0.95)';
+            ctx.fillRect(tabX, y, tabWidth, tabHeight);
+            
+            // Bordo tab
+            ctx.strokeStyle = isSelected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = isSelected ? 2 : 1;
+            ctx.strokeRect(tabX, y, tabWidth, tabHeight);
+            
+            // Testo tab
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(tab.name, tabX + tabWidth/2, y + 22);
+        });
+    }
     
+    drawAudioSettings(ctx, x, y) {
+        const settingsPanel = this.game.settingsPanel;
+        
+        // Audio Enabled Toggle
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Audio:', x, y + 30);
+        
+        // Toggle button
+        const toggleX = x + 100;
+        const toggleY = y + 20;
+        const toggleWidth = 60;
+        const toggleHeight = 30;
+        
+        ctx.fillStyle = settingsPanel.audioEnabled ? '#4CAF50' : '#666666';
+        ctx.fillRect(toggleX, toggleY, toggleWidth, toggleHeight);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(toggleX, toggleY, toggleWidth, toggleHeight);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(settingsPanel.audioEnabled ? 'ON' : 'OFF', toggleX + toggleWidth/2, toggleY + toggleHeight/2 + 4);
+        
+        // Volume sliders
+        const sliderY = y + 80;
+        const sliderWidth = 200;
+        const sliderHeight = 20;
+        
+        // Master Volume
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Volume Master:', x, sliderY);
+        
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, sliderY + 20, sliderWidth, sliderHeight);
+        
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(x, sliderY + 20, sliderWidth * settingsPanel.masterVolume, sliderHeight);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, sliderY + 20, sliderWidth, sliderHeight);
+        
+        // Music Volume
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.fillText('Volume Musica:', x, sliderY + 60);
+        
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, sliderY + 80, sliderWidth, sliderHeight);
+        
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(x, sliderY + 80, sliderWidth * settingsPanel.musicVolume, sliderHeight);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, sliderY + 80, sliderWidth, sliderHeight);
+        
+        // SFX Volume
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.fillText('Volume Effetti:', x, sliderY + 120);
+        
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(x, sliderY + 140, sliderWidth, sliderHeight);
+        
+        ctx.fillStyle = '#FF9800';
+        ctx.fillRect(x, sliderY + 140, sliderWidth * settingsPanel.sfxVolume, sliderHeight);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, sliderY + 140, sliderWidth, sliderHeight);
+    }
     
+    drawGraphicsSettings(ctx, x, y) {
+        // Titolo sezione
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Impostazioni Grafiche', x, y + 30);
+        
+        // FPS Lock
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('FPS Target:', x, y + 70);
+        
+        // FPS Slider
+        const fpsSliderX = x + 100;
+        const fpsSliderY = y + 60;
+        const fpsSliderWidth = 150;
+        const fpsSliderHeight = 20;
+        
+        // Background slider
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(fpsSliderX, fpsSliderY, fpsSliderWidth, fpsSliderHeight);
+        
+        // Current FPS value bar
+        const currentFPS = this.game.targetFPS || 60;
+        const fpsPercent = Math.max(0, Math.min(1, (currentFPS - 30) / (120 - 30))); // Range 30-120 FPS
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(fpsSliderX, fpsSliderY, fpsSliderWidth * fpsPercent, fpsSliderHeight);
+        
+        // Border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(fpsSliderX, fpsSliderY, fpsSliderWidth, fpsSliderHeight);
+        
+        // Slider handle (indicatore del valore corrente)
+        const handleX = fpsSliderX + (fpsSliderWidth * fpsPercent) - 3;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(handleX, fpsSliderY - 2, 6, fpsSliderHeight + 4);
+        
+        // FPS Value text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${currentFPS} FPS`, fpsSliderX + fpsSliderWidth + 10, fpsSliderY + 14);
+        
+        // Fullscreen Toggle
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Schermo Intero:', x, y + 110);
+        
+        const fullscreenX = x + 120;
+        const fullscreenY = y + 100;
+        const fullscreenWidth = 80;
+        const fullscreenHeight = 30;
+        
+        const isFullscreen = document.fullscreenElement !== null;
+        ctx.fillStyle = isFullscreen ? '#4CAF50' : '#666666';
+        ctx.fillRect(fullscreenX, fullscreenY, fullscreenWidth, fullscreenHeight);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(fullscreenX, fullscreenY, fullscreenWidth, fullscreenHeight);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(isFullscreen ? 'ON' : 'OFF', fullscreenX + fullscreenWidth/2, fullscreenY + fullscreenHeight/2 + 4);
+        
+        // VSync Toggle
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('VSync:', x, y + 160);
+        
+        const vsyncX = x + 80;
+        const vsyncY = y + 150;
+        const vsyncWidth = 60;
+        const vsyncHeight = 30;
+        
+        const vsyncEnabled = this.game.vsyncEnabled !== undefined ? this.game.vsyncEnabled : true;
+        ctx.fillStyle = vsyncEnabled ? '#4CAF50' : '#666666';
+        ctx.fillRect(vsyncX, vsyncY, vsyncWidth, vsyncHeight);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(vsyncX, vsyncY, vsyncWidth, vsyncHeight);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(vsyncEnabled ? 'ON' : 'OFF', vsyncX + vsyncWidth/2, vsyncY + vsyncHeight/2 + 4);
+        
+        // Quality Settings
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Qualità:', x, y + 210);
+        
+        const qualityOptions = ['Bassa', 'Media', 'Alta'];
+        const currentQuality = this.game.graphicsQuality || 2; // Default alta
+        
+        qualityOptions.forEach((quality, index) => {
+            const qualityX = x + 60 + (index * 100); // Spazio maggiore tra pulsanti
+            const qualityY = y + 200;
+            const qualityWidth = 90; // Pulsanti più larghi
+            const qualityHeight = 45; // Pulsanti più alti
+            
+            const isSelected = index === currentQuality;
+            ctx.fillStyle = isSelected ? '#2196F3' : '#333333';
+            ctx.fillRect(qualityX, qualityY, qualityWidth, qualityHeight);
+            
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(qualityX, qualityY, qualityWidth, qualityHeight);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(quality, qualityX + qualityWidth/2, qualityY + qualityHeight/2 + 3);
+        });
+        
+        // Reset text align
+        ctx.textAlign = 'left';
+    }
+    
+    drawControlsSettings(ctx, x, y) {
+        // Titolo sezione
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Controlli del Gioco', x, y + 30);
+        
+        // Lista comandi
+        const commands = [
+            { key: 'WASD / Frecce', action: 'Movimento nave' },
+            { key: 'Mouse', action: 'Rotazione nave' },
+            { key: 'Click Sinistro', action: 'Sparare laser' },
+            { key: 'Click Destro', action: 'Sparare missili' },
+            { key: 'CTRL', action: 'Modalità combattimento' },
+            { key: 'R', action: 'Mostra/nascondi range attacco' },
+            { key: 'S', action: 'Riparazione scudo' },
+            { key: 'E', action: 'Interagire (stazione/portali)' },
+            { key: 'I', action: 'Apri/chiudi Inventario' },
+            { key: 'M', action: 'Apri/chiudi Mappa spaziale' },
+            { key: 'Home', action: 'Apri/chiudi Home Dashboard' },
+            { key: 'N', action: 'Cambia nickname' },
+            { key: 'X', action: 'Aggiungi esperienza (+1000)' },
+            { key: 'F5', action: 'Salvataggio manuale' },
+            { key: 'ESC', action: 'Chiudi pannelli' }
+        ];
+        
+        // Disegna comandi in due colonne
+        const col1X = x;
+        const col2X = x + 300;
+        const lineHeight = 25;
+        
+        commands.forEach((cmd, index) => {
+            const colX = index < Math.ceil(commands.length / 2) ? col1X : col2X;
+            const cmdY = y + 60 + (index % Math.ceil(commands.length / 2)) * lineHeight;
+            
+            // Tasto
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(cmd.key, colX, cmdY);
+            
+            // Azione
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '12px Arial';
+            ctx.fillText('→ ' + cmd.action, colX + 120, cmdY);
+        });
+        
+        // Note aggiuntive
+        ctx.fillStyle = '#ff9800';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Note:', x, y + 60 + Math.ceil(commands.length / 2) * lineHeight + 30);
+        
+        ctx.fillStyle = '#cccccc';
+        ctx.font = '12px Arial';
+        const notes = [
+            '• Il movimento è fluido e continuo',
+            '• La rotazione segue il mouse in tempo reale',
+            '• I proiettili hanno munizioni limitate',
+            '• La riparazione scudo consuma energia',
+            '• Tutti i progressi vengono salvati automaticamente',
+            '• Il tasto R mostra/nasconde il range di attacco',
+            '• Il tasto X aggiunge esperienza per test'
+        ];
+        
+        notes.forEach((note, index) => {
+            ctx.fillText(note, x, y + 60 + Math.ceil(commands.length / 2) * lineHeight + 50 + (index * 20));
+        });
+    }
+    
+    handleMouseUp(x, y) {
+        if (this.isDraggingSlider) {
+            this.isDraggingSlider = false;
+            this.draggedSliderType = null;
+            this.dragStartX = 0;
+            return true;
+        }
+        return false;
+    }
+    
+    handleSettingsClick(x, y, contentX, contentY) {
+        // Controlla click sui tab delle impostazioni
+        const tabY = contentY + 70;
+        const tabWidth = 100;
+        const tabSpacing = 5;
+        
+        // Tab Audio
+        if (x >= contentX + 20 && x <= contentX + 20 + tabWidth && 
+            y >= tabY && y <= tabY + 35) {
+            this.settingsCurrentTab = 'audio';
+            return true;
+        }
+        
+        // Tab Grafica
+        if (x >= contentX + 20 + tabWidth + tabSpacing && 
+            x <= contentX + 20 + tabWidth + tabSpacing + tabWidth && 
+            y >= tabY && y <= tabY + 35) {
+            this.settingsCurrentTab = 'graphics';
+            return true;
+        }
+        
+        // Tab Comandi
+        if (x >= contentX + 20 + (tabWidth + tabSpacing) * 2 && 
+            x <= contentX + 20 + (tabWidth + tabSpacing) * 2 + tabWidth && 
+            y >= tabY && y <= tabY + 35) {
+            this.settingsCurrentTab = 'controls';
+            return true;
+        }
+        
+        // Controlla click sui controlli audio
+        if (this.settingsCurrentTab === 'audio') {
+            // Il toggle audio è ora gestito solo in handleMouseDown per evitare doppi toggle
+        }
+        
+        // Controlla click sui controlli grafici
+        if (this.settingsCurrentTab === 'graphics') {
+            // Offset aggiuntivo per il contenuto delle impostazioni grafiche
+            const graphicsOffsetY = 120;
+            
+            // FPS Slider
+            const fpsSliderX = contentX + 100;
+            const fpsSliderY = contentY + graphicsOffsetY + 60;
+            const fpsSliderWidth = 150;
+            const fpsSliderHeight = 20;
+            
+            if (x >= fpsSliderX && x <= fpsSliderX + fpsSliderWidth && 
+                y >= fpsSliderY && y <= fpsSliderY + fpsSliderHeight) {
+                console.log('✅ Click su FPS Slider');
+                this.isDraggingSlider = true;
+                this.draggedSliderType = 'fps';
+                this.dragStartX = x;
+                const fpsPercent = (x - fpsSliderX) / fpsSliderWidth;
+                const newFPS = Math.round(30 + (fpsPercent * (120 - 30))); // Range 30-120
+                if (this.game.setTargetFPS) {
+                    this.game.setTargetFPS(newFPS);
+                }
+                return true;
+            }
+            
+            // Fullscreen Toggle
+            const fullscreenX = contentX + 120;
+            const fullscreenY = contentY + graphicsOffsetY + 100;
+            const fullscreenWidth = 80;
+            const fullscreenHeight = 30;
+            
+            if (x >= fullscreenX && x <= fullscreenX + fullscreenWidth && 
+                y >= fullscreenY && y <= fullscreenY + fullscreenHeight) {
+                console.log('✅ Click su Fullscreen Toggle');
+                this.toggleFullscreen();
+                return true;
+            }
+            
+            // VSync Toggle
+            const vsyncX = contentX + 80;
+            const vsyncY = contentY + graphicsOffsetY + 150;
+            const vsyncWidth = 60;
+            const vsyncHeight = 30;
+            
+            if (x >= vsyncX && x <= vsyncX + vsyncWidth && 
+                y >= vsyncY && y <= vsyncY + vsyncHeight) {
+                console.log('✅ Click su VSync Toggle');
+                this.toggleVSync();
+                return true;
+            }
+            
+            // Quality Settings - Pulsanti più grandi per migliore usabilità
+            const qualityOptions = ['Bassa', 'Media', 'Alta'];
+            
+            qualityOptions.forEach((quality, index) => {
+                const qualityX = contentX + 60 + (index * 100);
+                const qualityY = contentY + graphicsOffsetY + 200;
+                const qualityWidth = 90;
+                const qualityHeight = 45;
+                
+                // Controlla click sui bounds esatti del pulsante
+                if (x >= qualityX && x <= qualityX + qualityWidth && 
+                    y >= qualityY && y <= qualityY + qualityHeight) {
+                    console.log(`✅ Click su Quality ${quality}`);
+                    this.setGraphicsQuality(index);
+                    return true;
+                }
+            });
+        }
+        
+        return false;
+    }
+    
+    // Metodi per le impostazioni grafiche
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log('Errore fullscreen:', err);
+            });
+        } else {
+            document.exitFullscreen().catch(err => {
+                console.log('Errore exit fullscreen:', err);
+            });
+        }
+    }
+    
+    toggleVSync() {
+        this.game.vsyncEnabled = !this.game.vsyncEnabled;
+        console.log('VSync:', this.game.vsyncEnabled ? 'ON' : 'OFF');
+    }
+    
+    setGraphicsQuality(quality) {
+        this.graphicsQuality = quality;
+        this.game.graphicsQuality = quality; // Sincronizza anche nel game
+        console.log('Qualità grafica impostata a:', ['Bassa', 'Media', 'Alta'][quality]);
+        
+        // Applica le impostazioni di qualità
+        if (this.game.renderer) {
+            switch (quality) {
+                case 0: // Bassa
+                    this.game.renderer.particleQuality = 0.5;
+                    this.game.renderer.effectsEnabled = false;
+                    break;
+                case 1: // Media
+                    this.game.renderer.particleQuality = 0.8;
+                    this.game.renderer.effectsEnabled = true;
+                    break;
+                case 2: // Alta
+                    this.game.renderer.particleQuality = 1.0;
+                    this.game.renderer.effectsEnabled = true;
+                    break;
+            }
+        }
+    }
     
     drawQuestContent(ctx, x, y) {
         // Titolo sezione

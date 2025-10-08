@@ -127,9 +127,9 @@ export const WeaponConfig = {
         }
     },
     MISSILE: {
-        r1: { damage: 50, fireRate: 180, speed: 4, color: '#00ff00' },
-        r2: { damage: 80, fireRate: 150, speed: 5, color: '#00aaff' },
-        r3: { damage: 120, fireRate: 120, speed: 6, color: '#ff00ff' }
+        r1: { damage: 50, fireRate: 180, speed: 12, color: '#00ff00' },
+        r2: { damage: 80, fireRate: 150, speed: 15, color: '#00aaff' },
+        r3: { damage: 120, fireRate: 120, speed: 18, color: '#ff00ff' }
     }
 };
 

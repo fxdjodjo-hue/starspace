@@ -105,6 +105,11 @@ export class Enemy {
     update(player) {
         if (!this.active) return;
         
+        // Se è un NPC test, non aggiornare nulla (rimane fermo)
+        if (this.isTestTarget) {
+            return;
+        }
+        
         // Aggiorna lo sprite animato
         this.sprite.update();
         
@@ -155,6 +160,11 @@ export class Enemy {
     
     takeDamage(damage, projectile = null, skipDamageNumber = false) {
         this.lastDamageTime = Date.now();
+        
+        // Se è un NPC test, non prendere mai danno (vita infinita)
+        if (this.isTestTarget) {
+            return;
+        }
         
         // Disattiva immediatamente il proiettile all'impatto
         if (projectile && projectile.active) {
@@ -214,6 +224,11 @@ export class Enemy {
     }
     
     die() {
+        // Se è un NPC test, non può morire (vita infinita)
+        if (this.isTestTarget) {
+            return;
+        }
+        
         this.active = false;
         this.isSelected = false; // Deseleziona quando muore
     }
@@ -222,6 +237,12 @@ export class Enemy {
         if (!this.active) return;
         
         const screenPos = camera.worldToScreen(this.x, this.y);
+        
+        // Rendering speciale per NPC test
+        if (this.isTestTarget) {
+            this.drawTestTarget(ctx, screenPos);
+            return;
+        }
         
         // Disegna lo sprite animato del Barracuda solo se caricato
         if (this.spriteLoaded) {
@@ -363,5 +384,75 @@ export class Enemy {
         if (barWidth * hpPercentage > 25) { // Solo se c'è abbastanza spazio
             ctx.fillText(`${Math.floor(this.hp)}/${this.maxHP}`, barX + barWidth/2, hpBarY + barHeight/2);
         }
+    }
+    
+    // Rendering speciale per NPC test
+    drawTestTarget(ctx, screenPos) {
+        ctx.save();
+        
+        // Disegna un cerchio grande e colorato per l'NPC test
+        const testRadius = this.radius * 1.5; // Più grande del normale
+        
+        // Colore arancione brillante per distinguerlo
+        ctx.fillStyle = '#ff8800';
+        ctx.strokeStyle = '#ff4400';
+        ctx.lineWidth = 3;
+        
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, testRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Disegna un bordo pulsante per attirare l'attenzione
+        const pulseRadius = testRadius + Math.sin(Date.now() * 0.005) * 5;
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, pulseRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Testo "TEST" sopra l'NPC
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('TEST', screenPos.x, screenPos.y - testRadius - 10);
+        
+        // Barra HP/Shield
+        this.drawTestTargetBars(ctx, screenPos, testRadius);
+        
+        ctx.restore();
+    }
+    
+    // Disegna le barre HP e Shield per l'NPC test
+    drawTestTargetBars(ctx, screenPos, radius) {
+        const barWidth = radius * 2;
+        const barHeight = 8;
+        const barY = screenPos.y + radius + 15;
+        
+        // Background delle barre
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(screenPos.x - barWidth/2, barY, barWidth, barHeight);
+        ctx.fillRect(screenPos.x - barWidth/2, barY + 12, barWidth, barHeight);
+        
+        // Barra HP sempre piena (vita infinita)
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(screenPos.x - barWidth/2, barY, barWidth, barHeight);
+        
+        // Barra Shield sempre piena (vita infinita)
+        ctx.fillStyle = '#0088ff';
+        ctx.fillRect(screenPos.x - barWidth/2, barY + 12, barWidth, barHeight);
+        
+        // Bordi delle barre
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(screenPos.x - barWidth/2, barY, barWidth, barHeight);
+        ctx.strokeRect(screenPos.x - barWidth/2, barY + 12, barWidth, barHeight);
+        
+        // Testo "INFINITO" sotto le barre
+        ctx.fillStyle = '#ffff00';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('INFINITO', screenPos.x, barY + 35);
     }
 }

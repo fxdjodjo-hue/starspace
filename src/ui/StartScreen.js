@@ -379,6 +379,8 @@ export class StartScreen {
             // Se non ci sono account, posiziona sotto l'input password
             this.startGameButton.y = this.passwordInput.y + this.passwordInput.height + 50;
         }
+        // Sposta ulteriormente più in basso per maggiore respiro
+        this.startGameButton.y += 60;
 
         // Rigenera stelle per le nuove dimensioni
         this.stars = this.generateStars(80);

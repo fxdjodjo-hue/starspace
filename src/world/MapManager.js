@@ -335,6 +335,66 @@ export class MapManager {
             GameConfig.WORLD.CENTER_X, 
             GameConfig.WORLD.CENTER_Y
         );
+        
+        // Aggiungi NPC test accanto alla base spaziale
+        this.generateTestNPC();
+    }
+    
+    // Genera NPC test per combattimento
+    generateTestNPC() {
+        // Rimuovi NPC test esistente se presente
+        if (this.game.testNPC) {
+            this.game.testNPC = null;
+        }
+        
+        // Posizione accanto alla base spaziale (a destra)
+        const npcX = GameConfig.WORLD.CENTER_X + 1200; // 1200 pixel a destra della base
+        const npcY = GameConfig.WORLD.CENTER_Y;
+        
+        // Crea NPC test semplice
+        this.game.testNPC = new Enemy(npcX, npcY, 'test_target');
+        
+        // Configurazione NPC test
+        this.game.testNPC.hp = 1000; // HP alto per test prolungati
+        this.game.testNPC.maxHP = 1000;
+        this.game.testNPC.shield = 500; // Scudo per test
+        this.game.testNPC.maxShield = 500;
+        this.game.testNPC.radius = 40; // Dimensione normale
+        this.game.testNPC.isTestTarget = true; // Flag per identificarlo
+        
+        // Disabilita completamente il movimento
+        this.game.testNPC.ai = null;
+        this.game.testNPC.speed = 0; // Velocità zero
+        this.game.testNPC.vx = 0; // Velocità X zero
+        this.game.testNPC.vy = 0; // Velocità Y zero
+        this.game.testNPC.patrolDirection = 0; // Nessuna direzione di pattuglia
+        
+        // Aggiungi alla lista nemici per il rendering
+        if (!this.game.enemies.includes(this.game.testNPC)) {
+            this.game.enemies.push(this.game.testNPC);
+        }
+        
+        console.log('🎯 NPC Test creato accanto alla base spaziale:', npcX, npcY);
+    }
+    
+    // Rigenera NPC test se distrutto
+    regenerateTestNPC() {
+        // Controlla se l'NPC test è ancora vivo
+        if (this.game.testNPC && this.game.testNPC.active) {
+            return; // È ancora vivo, non fare nulla
+        }
+        
+        // Rimuovi dalla lista nemici se presente
+        if (this.game.testNPC) {
+            const index = this.game.enemies.indexOf(this.game.testNPC);
+            if (index > -1) {
+                this.game.enemies.splice(index, 1);
+            }
+        }
+        
+        // Rigenera l'NPC test
+        this.generateTestNPC();
+        console.log('🔄 NPC Test rigenerato');
     }
     
     // Genera asteroidi interattivi

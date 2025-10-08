@@ -56,12 +56,12 @@ export class Missile {
                 const targetVx = (dx / distance) * this.speed;
                 const targetVy = (dy / distance) * this.speed;
                 
-                // Accelerazione ottimizzata per maggiore reattività
+                // Accelerazione più aggressiva per maggiore reattività
                 const acceleration = MISSILE_CONFIG.ACCELERATION;
                 this.vx += (targetVx - this.vx) * acceleration;
                 this.vy += (targetVy - this.vy) * acceleration;
                 
-                // Garantisce una velocità minima per evitare missili troppo lenti
+                // Forza velocità minima più alta per missili più veloci
                 const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
                 if (currentSpeed < this.speed * MISSILE_CONFIG.MIN_SPEED_FACTOR) {
                     const speedMultiplier = (this.speed * MISSILE_CONFIG.MIN_SPEED_FACTOR) / currentSpeed;

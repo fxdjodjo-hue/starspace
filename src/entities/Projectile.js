@@ -29,9 +29,17 @@ export class Projectile {
         this.maxLifetime = 60; // 1 secondo a 60 FPS
         this.lifetime = 0;
         
-        // Carica la texture base del laser
+        // Configurazione sprite per tipo di laser (PNG già pronti)
+        this.laserSprites = {
+            x1: 'assets/sprites/lasereffect/laser1.png',
+            x2: 'assets/sprites/lasereffect/laser2.png', 
+            x3: 'assets/sprites/lasereffect/laser3.png',
+            sab: 'assets/sprites/lasereffect/laser5.png'
+        };
+        
+        // Carica la texture del laser specifica per tipo
         this.texture = new Image();
-        this.texture.src = 'laser1.png';
+        this.texture.src = this.laserSprites[this.laserType] || 'assets/sprites/lasereffect/laser1.png';
         this.textureLoaded = false;
         this.texture.onload = () => {
             this.textureLoaded = true;
@@ -88,122 +96,24 @@ export class Projectile {
             ctx.translate(screenX, screenY);
             ctx.rotate(rotation);
             
-            // Dimensioni del laser (adatta la texture) - ANCORA PIÙ GRANDE
-            const laserWidth = 48;
-            const laserHeight = 18;
+            // Dimensioni del laser (dimensioni originali dello sprite)
+            const laserWidth = 60;
+            const laserHeight = 24;
             
-            // Determina il colore del laser
-            let color;
-            if (this.isSAB) {
-                color = '#4A90E2'; // Azzurro per SAB
-            } else {
-                switch(this.laserType) {
-                    case 'x1':
-                        color = '#FF0000'; // Rosso
-                        break;
-                    case 'x2':
-                        color = '#0000FF'; // Blu
-                        break;
-                    case 'x3':
-                        color = '#00FF00'; // Verde
-                        break;
-                    default:
-                        color = '#FF0000'; // Default rosso
-                }
-            }
-            
-            // Applica il colore alla texture
+            // Disegna direttamente lo sprite PNG (già colorato)
             ctx.globalCompositeOperation = 'source-over';
             ctx.drawImage(this.texture, -laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
-            
-            // Applica il colore come overlay
-            ctx.globalCompositeOperation = 'source-atop';
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.8; // Regola l'intensità del colore
-            ctx.fillRect(-laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
-            
-            // Aggiungi un glow del colore
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 10;
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(-laserWidth/2, -laserHeight/2, laserWidth, laserHeight);
             
             // Ripristina le impostazioni
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1.0;
             ctx.shadowBlur = 0;
         } else {
-            // Fallback: disegna un proiettile semplice
-            // Colori per tipo di laser
-            let color;
-            console.log('🎨 Rendering proiettile:', 
-                JSON.stringify({
-                    laserType: this.laserType,
-                    isSAB: this.isSAB
-                }, null, 2)
-            );
-            if (this.isSAB) {
-                color = '#4A90E2'; // Azzurro per SAB
-            } else {
-                // Rimuovi eventuali spazi e converti in minuscolo
-                const type = this.laserType.trim().toLowerCase();
-                switch(type) {
-                    case 'x1':
-                        color = '#FF0000'; // Rosso
-                        break;
-                    case 'x2':
-                        color = '#0000FF'; // Blu
-                        break;
-                    case 'x3':
-                        color = '#00FF00'; // Verde
-                        break;
-                    default:
-                        console.log('⚠️ Tipo laser non riconosciuto:', this.laserType, 'normalizzato a:', type);
-                        color = '#FF0000'; // Default rosso
-                }
-            }
-
-            // Effetto luminoso
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 8;
-            
-            if (this.isSAB) {
-                // Per SAB disegna cerchi concentrici
-                for (let i = 0; i < 3; i++) {
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(screenX, screenY, this.radius + (i * 3), 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-            } else {
-                // Proiettile principale
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Nucleo più luminoso (solo per non-SAB)
-            if (!this.isSAB) {
-                ctx.fillStyle = color; // Usa lo stesso colore del proiettile principale
-                ctx.beginPath();
-                ctx.arc(screenX, screenY, this.radius * 0.6, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Scia del proiettile
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.globalAlpha = 0.6;
-            
-            const trailLength = 15;
+            // Fallback: disegna un proiettile semplice se lo sprite non è caricato
+            ctx.fillStyle = '#ff0000'; // Colore di fallback
             ctx.beginPath();
-            ctx.moveTo(screenX, screenY);
-            ctx.lineTo(screenX - this.vx * trailLength / this.speed, 
-                       screenY - this.vy * trailLength / this.speed);
-            ctx.stroke();
+            ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+            ctx.fill();
         }
         
         ctx.restore();

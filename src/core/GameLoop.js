@@ -15,6 +15,7 @@ export class GameLoop {
         this.targetFPS = 60;
         this.frameInterval = 1000 / this.targetFPS;
         this.lastFrameTime = 0;
+        this.vsyncEnabled = true;
         
         // Binding per il loop
         this.loop = this.loop.bind(this);

@@ -4,6 +4,10 @@ export class Renderer {
         this.ctx = ctx;
         this.width = width;
         this.height = height;
+        
+        // Graphics quality settings
+        this.particleQuality = 1.0; // 0.0 - 1.0
+        this.effectsEnabled = true;
     }
     
     clear() {

@@ -90,7 +90,7 @@ export class UIManager {
             profile: {
                 type: 'profile',
                 icon: '🚀',
-                tooltipText: 'Ship',
+                tooltipText: 'User',
                 showCount: false
             },
             inventory: {
@@ -99,12 +99,12 @@ export class UIManager {
                 tooltipText: 'Inventory',
                 showCount: false
             },
-            settings: {
-                type: 'settings',
-                icon: '⚙️',
-                tooltipText: 'Settings',
-                showCount: false
-            },
+            // settings: {
+            //     type: 'settings',
+            //     icon: '⚙️',
+            //     tooltipText: 'Settings',
+            //     showCount: false
+            // },
             home: {
                 type: 'home',
                 icon: '🏠',
